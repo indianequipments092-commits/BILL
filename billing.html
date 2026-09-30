@@ -1474,6 +1474,21 @@ function createFirestoreAdapter(supabase) {
     collection: (name) => new CollectionRef(name),
     doc: (path) => { const parts = path.split('/'); const id = parts.pop(); return new DocRef(parts.join('/'), id); },
     batch: () => new WriteBatch(),
+    /* FIX: Firestore ka runTransaction Supabase adapter me tha hi nahi ("fbDb.runTransaction is not a function").
+       Reads live hote hain, writes buffer hoke callback ke baad sequentially commit hote hain.
+       Callback me throw hua to koi write nahi hota. (Truly atomic nahi hai — Supabase REST me multi-row transaction nahi.) */
+    runTransaction: async (fn) => {
+      const ops = [];
+      const tx = {
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => { ops.push(() => ref.set(data, opts || {})); return tx; },
+        update: (ref, data) => { ops.push(() => ref.update(data)); return tx; },
+        delete: (ref) => { ops.push(() => ref.delete()); return tx; }
+      };
+      const result = await fn(tx);
+      for (const op of ops) await op();
+      return result;
+    },
     FieldValue
   };
 }
@@ -4325,8 +4340,9 @@ function syncMyPublicConnectionsList(){
   const accepted=acceptedEntries.map(([u])=>u);
   // Followers = the other side sent the original request (they followed me first).
   // Following = I sent the original request.
-  const followerUids=acceptedEntries.filter(([,c])=>c.requestedBy!==currentUser.uid).map(([u])=>u);
-  const followingUids=acceptedEntries.filter(([,c])=>c.requestedBy===currentUser.uid).map(([u])=>u);
+  // CHANGE: request accept hote hi connection mutual hai — dono taraf follower bhi aur following bhi.
+  const followerUids=accepted.slice();
+  const followingUids=accepted.slice();
   fbDb.collection('publicProfiles').doc(currentUser.uid).set({connectionUids:accepted,followerUids,followingUids},{merge:true}).catch(()=>{});
 }
 function mutualCount(u){
@@ -4400,11 +4416,12 @@ function connSwitchTab(tab){
 function renderConnLists(){
   if(!currentUser) return;
   const entries=Object.entries(myConnections||{}).filter(([,c])=>c.status==='accepted');
-  const followers=entries.filter(([,c])=>c.requestedBy!==currentUser.uid).map(([uid])=>uid);
-  const following=entries.filter(([,c])=>c.requestedBy===currentUser.uid).map(([uid])=>uid);
+  // CHANGE: accept ke baad dono taraf follower + following (mutual connect)
+  const followers=entries.map(([uid])=>uid);
+  const following=entries.map(([uid])=>uid);
   const cf=id('connCountFollowers'); if(cf) cf.textContent='('+followers.length+')';
   const cg=id('connCountFollowing'); if(cg) cg.textContent='('+following.length+')';
-  const nb=id('fp2NetBadge'); if(nb){ const n=followers.length+following.length; nb.textContent=n; nb.style.display=n?'inline-flex':'none'; }
+  const nb=id('fp2NetBadge'); if(nb){ const n=followers.length; nb.textContent=n; nb.style.display=n?'inline-flex':'none'; }
   const list=id('connList');
   if(!list) return;
   const uids=connActiveTab==='followers'?followers:following;
