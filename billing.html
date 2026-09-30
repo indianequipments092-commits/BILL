@@ -20549,5 +20549,290 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
 })();
 </script>
 
+<style id="chat-premium-css">
+/* ===== IE Billing — Premium Chat (list + inside chat) ===== */
+#chats{max-width:680px}
+.cpx-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.cpx-top h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.cpx-ib{width:44px;height:44px;border-radius:14px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-main);font-size:19px;display:grid;place-items:center;cursor:pointer}
+.cpx-menu{display:none;position:absolute;right:0;top:50px;min-width:210px;background:#161c2e;border:1px solid var(--border-color);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.55);z-index:40;overflow:hidden}
+.cpx-menu.show{display:block;animation:iePop .16s ease-out}
+.cpx-menu button{display:block;width:100%;text-align:left;padding:14px 16px;background:none;border:0;color:var(--text-main);font-size:14px;cursor:pointer}
+.cpx-menu button:active{background:rgba(99,102,241,.2)}
+.cpx-search{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border-radius:17px;background:var(--bg-card);border:1px solid var(--border-color);margin:0 0 12px;transition:border-color .2s,box-shadow .2s}
+.cpx-search:focus-within{border-color:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.18)}
+.cpx-search input{flex:1;min-width:0;background:none!important;border:0!important;outline:0;color:var(--text-main);font-size:15px;margin:0!important;padding:0!important;box-shadow:none!important;height:auto!important}
+.cpx-search button{border:0;background:rgba(255,255,255,.1);color:var(--text-main);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:12px}
+.cpx-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.cpx-chips::-webkit-scrollbar{display:none}
+.cpx-chip{flex:none;height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.cpx-chip.on{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(99,102,241,.35)}
+.cpx-chip i{font-style:normal;margin-left:6px;font-size:11px;background:rgba(255,255,255,.22);padding:1px 7px;border-radius:9px}
+.cpx-list{display:flex;flex-direction:column;gap:4px}
+.cpx-row{display:flex;align-items:center;gap:13px;padding:12px;border-radius:18px;cursor:pointer;position:relative;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:background .15s,transform .1s;border:1px solid transparent}
+.cpx-row:active{transform:scale(.985)}
+.cpx-row:hover{background:rgba(255,255,255,.04)}
+.cpx-row.sel{background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.5)}
+.cpx-ava{position:relative;width:54px;height:54px;flex:none}
+.cpx-ava .av{width:100%;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 0 0 2px rgba(99,102,241,.35)}
+.cpx-ava .av img{width:100%;height:100%;object-fit:cover}
+.cpx-on{position:absolute;right:0;bottom:1px;width:14px;height:14px;border-radius:50%;background:#22c55e;border:3px solid #0b0f1a;display:none}
+.cpx-ava.on .cpx-on{display:block}
+.cpx-mid{flex:1;min-width:0}
+.cpx-l1,.cpx-l2{display:flex;align-items:center;gap:6px;min-width:0}
+.cpx-l1 b{font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-main)}
+.cpx-t{margin-left:auto;font-size:12px;color:var(--text-muted);flex:none}
+.cpx-row.un .cpx-t{color:#a5b4fc;font-weight:700}
+.cpx-l2{margin-top:4px}
+.cpx-pv{flex:1;min-width:0;font-size:13.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpx-row.un .cpx-pv{color:var(--text-main);font-weight:600}
+.cpx-pv mark{background:rgba(245,158,11,.32);color:inherit;border-radius:4px;padding:0 2px}
+.cpx-pend{font-style:normal;flex:none;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:9px;background:rgba(245,158,11,.16);color:#fbbf24}
+.cpx-un{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center}
+.cpx-mini{flex:none;font-size:12px;opacity:.75}
+.cpx-chk{display:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--border-color);flex:none;place-items:center;color:transparent;font-size:13px;font-weight:800}
+.cpx-selmode .cpx-chk{display:grid}
+.cpx-row.sel .cpx-chk{background:#6366f1;border-color:#6366f1;color:#fff}
+.cpx-sec{font-size:12px;font-weight:700;color:var(--text-muted);padding:12px 6px 4px}
+.cpx-empty{text-align:center;padding:52px 20px;color:var(--text-muted);font-size:14px;line-height:1.6}
+.cpx-empty b{display:block;color:var(--text-main);font-size:17px;margin:8px 0 4px}
+.cpx-selbar{display:none;align-items:center;gap:6px;padding:8px;border-radius:16px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.4);margin-bottom:12px;position:sticky;top:0;z-index:20;backdrop-filter:blur(14px)}
+.cpx-selbar.show{display:flex}
+.cpx-selbar span{flex:1;font-weight:700;font-size:14px;padding-left:6px}
+.cpx-selbar button{width:42px;height:42px;border-radius:12px;border:0;background:rgba(255,255,255,.09);color:var(--text-main);font-size:17px;cursor:pointer}
+.cpx-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1f2937;color:#fff;padding:11px 18px;border-radius:14px;font-size:13px;z-index:400;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.cpx-toast.out{opacity:0;transition:opacity .3s}
+
+/* ===== inside chat ===== */
+#chatModal .chat-modalbox{position:relative;border-radius:26px;background:linear-gradient(180deg,#121a2c,#0b1020);border:1px solid rgba(255,255,255,.08);overflow:hidden;height:min(92vh,var(--cpx-vh,92vh))}
+@media(max-width:600px){#chatModal .chat-modalbox{height:min(95vh,var(--cpx-vh,95vh))}}
+#chatModal .modalhead{padding:12px 14px!important;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);flex:none;display:flex;align-items:center;gap:8px}
+.cpx-hd{display:flex;align-items:center;gap:11px;flex:1;min-width:0}
+.cpx-hd .cpx-ava{width:44px;height:44px}
+.cpx-hd .cpx-ava .av{font-size:17px}
+#chatHeaderName{font-size:16px!important;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chatHeaderStatus{font-size:12px!important}
+#chatModal .modalhead .x{width:42px;height:42px;border-radius:14px}
+.chat-menu-dropdown{border-radius:16px;min-width:200px}
+.chat-menu-dropdown button{padding:14px 16px}
+.chat-body{padding:16px 14px 10px;gap:6px;background:radial-gradient(600px 300px at 90% 0,rgba(139,92,246,.10),transparent),radial-gradient(500px 300px at 0 100%,rgba(99,102,241,.08),transparent)}
+.chat-bubble{max-width:82%;padding:9px 13px 6px;font-size:15px;line-height:1.45;border-radius:20px}
+.chat-bubble.me{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 6px 18px rgba(99,102,241,.28);border-bottom-right-radius:6px}
+.chat-bubble.them{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);border-bottom-left-radius:6px}
+.chat-bubble .ts{font-size:10.5px;text-align:right;opacity:.6;margin-top:2px}
+.chat-bubble.doc{background:none!important;border:0;box-shadow:none;padding:0;backdrop-filter:none;max-width:90%;width:300px}
+.chat-bubble.doc .ts{padding:3px 6px 0}
+.chat-bubble.doc.selected{box-shadow:0 0 0 2px #6366f1;border-radius:22px}
+.cpx-day{align-self:center;margin:12px 0 4px;padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12px;font-weight:600;color:var(--text-muted)}
+.cdoc{position:relative;border-radius:20px;padding:0 0 14px;background:linear-gradient(165deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.35);color:var(--text-main);text-align:left}
+.cdoc::before{content:"";display:block;height:4px;background:var(--dc)}
+.cdoc>*{margin-left:14px;margin-right:14px}
+.cdoc-h{display:flex;align-items:center;gap:8px;margin-top:12px}
+.cdoc-ic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:16px;background:color-mix(in srgb,var(--dc) 24%,transparent)}
+.cdoc-k{font-size:13px;font-weight:700;color:var(--dc);filter:brightness(1.3)}
+.cdoc-st{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:9px}
+.st-pending{background:rgba(245,158,11,.16);color:#fbbf24}
+.st-accepted{background:rgba(34,197,94,.16);color:#4ade80}
+.st-rejected{background:rgba(244,63,94,.16);color:#fb7185}
+.cdoc-n{margin-top:10px;font-size:15px;font-weight:700}
+.cdoc-p{font-size:12.5px;color:var(--text-muted);margin-top:1px}
+.cdoc-a{margin-top:8px;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.cdoc-s{font-size:12px;color:var(--text-muted);margin-top:2px}
+.cdoc-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cdoc-b button{flex:1 1 auto;min-height:42px;padding:0 14px;border-radius:12px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:var(--text-main);cursor:pointer}
+.cdoc-b button.p{background:var(--dc);border-color:transparent;color:#fff}
+.cdoc-b button.ok{background:#16a34a;border-color:transparent;color:#fff}
+.cdoc-b button.no{background:rgba(244,63,94,.14);border-color:rgba(244,63,94,.4);color:#fb7185}
+.chat-file-card{border-radius:14px;padding:12px 14px}
+.chat-inputrow{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));gap:8px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);flex:none}
+.chat-inputrow input[type=text]{height:48px;border-radius:24px;padding:0 18px;font-size:15px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+.chat-attach-btn{width:48px;height:48px;border-radius:50%;font-size:22px}
+.chat-inputrow>.chat-attach-btn:last-child{box-shadow:0 8px 20px rgba(99,102,241,.4);transition:transform .15s}
+.chat-inputrow>.chat-attach-btn:last-child:active{transform:scale(.88) rotate(-14deg)}
+.chat-attach-menu{bottom:calc(100% + 12px);width:min(320px,86vw);padding:12px;border-radius:20px;background:#161c2e;grid-template-columns:repeat(3,1fr);gap:8px}
+.chat-attach-menu[style*="block"]{display:grid!important}
+.cpx-tile{display:flex!important;flex-direction:column;align-items:center;gap:6px;padding:12px 4px!important;border-radius:14px!important;text-align:center!important;font-size:12px!important}
+.cpx-tile b{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:21px;background:color-mix(in srgb,var(--dc) 24%,transparent)}
+#cpxDown{position:absolute;right:16px;bottom:88px;height:42px;min-width:42px;padding:0 14px;border-radius:21px;border:0;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-weight:700;font-size:14px;box-shadow:0 8px 22px rgba(0,0,0,.45);display:none;z-index:30;cursor:pointer}
+#cpxDown.show{display:block}
+[data-theme="light"] .cdoc{background:#fff;color:#0f172a;box-shadow:0 8px 24px rgba(15,23,42,.12);border-color:rgba(15,23,42,.1)}
+[data-theme="light"] .cdoc-b button{background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.12);color:#0f172a}
+[data-theme="light"] #chatModal .chat-modalbox{background:#f8fafc}
+[data-theme="light"] .chat-bubble.them{background:#fff;border-color:rgba(15,23,42,.08)}
+[data-theme="light"] .cpx-menu,[data-theme="light"] .chat-attach-menu{background:#fff}
+[data-theme="light"] .cpx-on{border-color:#fff}
+</style>
+<script id="chat-premium-js">
+(function(){
+if(window.__cpxInit) return; window.__cpxInit=true;
+var $=function(x){return document.getElementById(x)};
+var P={filter:'all',q:'',sel:new Set(),selMode:false,idx:{},prefs:null,pfor:'',jump:null,lastCount:0,newCount:0,rt:null,lp:null,lpFired:false,sx:0,sy:0};
+var DOC_T=['invoice','proforma','gendoc','receipt','paynotice'];
+var K={invoice:'#6366f1',proforma:'#f59e0b',quotation:'#06b6d4',challan:'#14b8a6',po:'#f97316',receipt:'#22c55e',notice:'#ec4899'};
+function me(){return (typeof currentUser!=='undefined'&&currentUser&&currentUser.uid)||'x'}
+function prefs(){var k='cpxPrefs_'+me();if(!P.prefs||P.pfor!==k){try{P.prefs=JSON.parse(localStorage.getItem(k)||'{}')}catch(e){P.prefs={}}['pin','mute','arch','read','del'].forEach(function(f){P.prefs[f]=P.prefs[f]||{}});P.pfor=k}return P.prefs}
+function save(){try{localStorage.setItem(P.pfor,JSON.stringify(P.prefs))}catch(e){}}
+function toast(t){var d=document.createElement('div');d.className='cpx-toast';d.textContent=t;document.body.appendChild(d);setTimeout(function(){d.classList.add('out')},1600);setTimeout(function(){d.remove()},2000)}
+function accepted(){return Object.keys(myConnections||{}).filter(function(u){return myConnections[u].status==='accepted'})}
+function online(p){try{return /online/i.test(pfLastSeenText(p)||'')}catch(e){return false}}
+function ava(u){var p=fpProfileCache[u]||{};return '<div class="cpx-ava'+(online(p)?' on':'')+'"><div class="av">'+(p.photoURL?'<img src="'+esc(p.photoURL)+'">':esc((p.name||'?').trim().slice(0,1).toUpperCase()))+'</div><i class="cpx-on"></i></div>'}
+function dinfo(m){var t=m.type,p,d;
+ if(t==='invoice'){p=m.invoicePayload||{};return{icon:'🧾',label:'Invoice',num:p.invoiceNumber,amt:p.amount}}
+ if(t==='proforma'){p=m.proformaPayload||{};d=p.doc||{};return{icon:'📄',label:'Proforma',num:d.number,amt:d.totals&&d.totals.grand}}
+ if(t==='gendoc'){return{icon:m.genKind==='po'?'📦':m.genKind==='challan'?'🚚':'📝',label:CHAT_GENDOC_LABELS[m.genKind]||'Document',num:chatGenDocNumber(m),amt:chatGenDocAmount(m)}}
+ if(t==='receipt'){p=m.receiptPayload||{};return{icon:'🧾',label:'Receipt',num:p.invoiceNumber,amt:p.amount}}
+ if(t==='paynotice'){p=m.noticePayload||{};return{icon:'💸',label:'Payment sent',num:p.invoiceNumber,amt:p.amount}}
+ return null}
+function pv(m){var y=m.senderId===me()?'You: ':'';if(m.type==='photo')return y+'📷 Photo';if(m.type==='file')return y+'📎 '+(m.fileName||'File');var d=dinfo(m);if(d)return y+d.icon+' '+d.label+(d.num?' '+d.num:'');return y+(m.text||'')}
+function stxt(m){var d=dinfo(m),a=[m.text,m.fileName];if(d)a.push(d.label,d.num,String(d.amt||''),money(d.amt||0));if(m.invoicePayload)a.push(m.invoicePayload.companyName);return a.filter(Boolean).join(' ').toLowerCase()}
+function snip(m){var d=dinfo(m);if(d)return d.icon+' '+d.label+' '+(d.num||'')+' · ₹'+money(d.amt||0);if(m.type==='file')return '📎 '+(m.fileName||'File');return m.text||''}
+function hl(s,q){s=String(s);var i=s.toLowerCase().indexOf(q);if(i<0)return esc(s.slice(0,90));var a=Math.max(0,i-22);return (a?'…':'')+esc(s.slice(a,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length,i+q.length+60))}
+function tfmt(ts){if(!ts)return'';var d=new Date(ts),n=new Date(),s=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();if(ts>=s)return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});if(ts>=s-864e5)return'Kal';return d.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'2-digit'})}
+function dayLabel(ts){var n=new Date(),s=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();if(ts>=s)return'Aaj';if(ts>=s-864e5)return'Kal';return new Date(ts).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}
+
+/* ---- data: har chat ke last messages (list, unread, search ke liye) ---- */
+function sync(uids){
+ Object.keys(P.idx).forEach(function(u){if(uids.indexOf(u)<0){P.idx[u].unsub&&P.idx[u].unsub();delete P.idx[u]}});
+ uids.forEach(function(u){if(P.idx[u])return;var o=P.idx[u]={cid:connDocId(me(),u),msgs:[],unsub:null};
+  o.unsub=fbDb.collection('chats').doc(o.cid).collection('messages').orderBy('createdAt','desc').limit(80).onSnapshot(function(s){var a=[];s.forEach(function(d){a.push(Object.assign({id:d.id},d.data()))});o.msgs=a.reverse();queue()},function(){})})}
+function queue(){clearTimeout(P.rt);P.rt=setTimeout(function(){var c=$('chats');if(c&&!c.classList.contains('hidden'))render()},120)}
+function vis(u){var o=P.idx[u];if(!o)return[];var h=chatGetHidden(o.cid);return h.size?o.msgs.filter(function(m){return!h.has(m.id)}):o.msgs}
+function info(u){var ms=vis(u),last=ms[ms.length-1],ra=prefs().read[u]||0;
+ return{u:u,ms:ms,last:last,
+  unread:ms.filter(function(m){return m.senderId!==me()&&!m.seen&&(m.createdAt||0)>ra}).length,
+  pend:ms.some(function(m){return DOC_T.indexOf(m.type)>=0&&m.senderId!==me()&&(m.status||'pending')==='pending'})}}
+
+/* ---- chat list (bahar) ---- */
+function shell(){var c=$('chats');if(!c||$('cpxQ'))return;
+ c.innerHTML='<div class="top cpx-top"><h1>Chats</h1><div style="position:relative"><button class="cpx-ib" id="cpxMore" title="More">⋮</button><div class="cpx-menu" id="cpxMenu"><button data-k="arch">📦 Archived chats</button><button data-k="sel">☑️ Select chats</button><button data-k="readall">✅ Mark all read</button><button data-k="muteall">🔕 Mute / unmute all</button></div></div></div>'
+ +'<div class="cpx-selbar" id="cpxSelBar"><button data-a="x" title="Cancel">✕</button><span id="cpxSelN">0 selected</span><button data-a="all" title="Select all">☑</button><button data-a="pin" title="Pin">📌</button><button data-a="mute" title="Mute">🔕</button><button data-a="arch" title="Archive">📦</button><button data-a="read" title="Mark read">✅</button><button data-a="del" title="Delete">🗑️</button></div>'
+ +'<label class="cpx-search"><span>🔍</span><input id="cpxQ" type="text" placeholder="Naam, message, invoice no. ya amount" autocomplete="off"><button id="cpxQx" type="button" style="display:none">✕</button></label>'
+ +'<div class="cpx-chips" id="cpxChips"></div><div id="chatsList" class="cpx-list"></div>';
+ $('cpxQ').addEventListener('input',function(){P.q=this.value;$('cpxQx').style.display=P.q?'block':'none';render()});
+ $('cpxQx').addEventListener('click',function(){P.q='';$('cpxQ').value='';this.style.display='none';render()});
+ $('cpxChips').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(!b)return;P.filter=b.dataset.f;render()});
+ $('cpxMore').addEventListener('click',function(e){e.stopPropagation();$('cpxMenu').classList.toggle('show')});
+ document.addEventListener('click',function(){var m=$('cpxMenu');m&&m.classList.remove('show')});
+ $('cpxMenu').addEventListener('click',function(e){var b=e.target.closest('[data-k]');if(!b)return;var k=b.dataset.k,pr=prefs(),us=accepted();
+  if(k==='arch')P.filter='arch';
+  else if(k==='sel'){P.selMode=true;P.sel=new Set()}
+  else if(k==='readall'){us.forEach(function(u){pr.read[u]=Date.now()});save();toast('Sab chats read mark ho gaye')}
+  else if(k==='muteall'){var all=us.every(function(u){return pr.mute[u]});us.forEach(function(u){if(all)delete pr.mute[u];else pr.mute[u]=1});save();toast(all?'Sab unmute ho gaye':'Sab chats mute ho gaye')}
+  render()});
+ $('cpxSelBar').addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='x'){P.selMode=false;P.sel=new Set();render()}else cpxAct(b.dataset.a)});
+ var list=$('chatsList');
+ function lpClear(){clearTimeout(P.lp)}
+ list.addEventListener('pointerdown',function(e){var r=e.target.closest('.cpx-row[data-c]');if(!r)return;P.lpFired=false;P.sx=e.clientX;P.sy=e.clientY;lpClear();P.lp=setTimeout(function(){P.lpFired=true;if(navigator.vibrate)navigator.vibrate(15);toggleSel(r.dataset.u,true)},450)});
+ list.addEventListener('pointermove',function(e){if(Math.abs(e.clientX-P.sx)>8||Math.abs(e.clientY-P.sy)>8)lpClear()});
+ ['pointerup','pointercancel','pointerleave'].forEach(function(t){list.addEventListener(t,lpClear)});
+ list.addEventListener('contextmenu',function(e){if(e.target.closest('.cpx-row'))e.preventDefault()});
+ list.addEventListener('click',function(e){if(P.lpFired){P.lpFired=false;return}var r=e.target.closest('.cpx-row');if(!r)return;if(P.selMode){if(r.dataset.c)toggleSel(r.dataset.u);return}window.cpxOpen(r.dataset.u,r.dataset.m)})}
+function toggleSel(u,force){if(force&&!P.selMode){P.selMode=true;P.sel=new Set([u])}else if(P.sel.has(u)){P.sel.delete(u);if(!P.sel.size)P.selMode=false}else P.sel.add(u);render()}
+window.cpxOpen=function(u,mid){P.jump=mid||null;openChat(u)};
+window.cpxAct=function(k){var pr=prefs(),us=Array.from(P.sel);
+ if(k==='all'){accepted().forEach(function(u){P.sel.add(u)});render();return}
+ if(!us.length)return;
+ if(k==='del'){if(!confirm(us.length+' chat ke saare messages sirf tumhare phone se hat jayenge. Samne wale ke paas chat waise hi rahegi. Delete karein?'))return;
+  us.forEach(function(u){var o=P.idx[u];if(!o)return;var h=chatGetHidden(o.cid);o.msgs.forEach(function(m){h.add(m.id)});chatSetHidden(o.cid,h);pr.del[u]=1})}
+ else if(k==='read'){us.forEach(function(u){pr.read[u]=Date.now()})}
+ else{var allOn=us.every(function(u){return pr[k][u]});us.forEach(function(u){if(allOn)delete pr[k][u];else pr[k][u]=1});
+  toast(k==='pin'?(allOn?'Unpin ho gaya':'Pin ho gaya'):k==='mute'?(allOn?'Unmute ho gaya':'Mute ho gaya'):(allOn?'Archive se bahar':'Archive ho gaya'))}
+ save();P.sel=new Set();P.selMode=false;render()};
+function rowHtml(i,q,mid,snippet){var p=fpProfileCache[i.u]||{},pr=prefs(),last=i.last,sel=P.sel.has(i.u);
+ var pvHtml=snippet!=null?snippet:esc(last?pv(last):'Abhi koi message nahi');
+ var ts=(snippet!=null&&mid)?((i.ms.filter(function(m){return m.id===mid})[0]||{}).createdAt):(last&&last.createdAt);
+ return '<div class="cpx-row'+(sel?' sel':'')+(i.unread?' un':'')+'" data-u="'+i.u+'"'+(mid?' data-m="'+mid+'"':' data-c="1"')+'>'
+  +'<div class="cpx-chk">✓</div>'+ava(i.u)
+  +'<div class="cpx-mid"><div class="cpx-l1"><b>'+esc(p.name||'Unnamed')+'</b>'+(p.uid?verifiedBadgeHtml(p):'')+'<span class="cpx-t">'+tfmt(ts)+'</span></div>'
+  +'<div class="cpx-l2"><span class="cpx-pv">'+pvHtml+'</span>'
+  +(i.pend&&!mid?'<em class="cpx-pend">Pending</em>':'')+(pr.mute[i.u]?'<span class="cpx-mini">🔕</span>':'')+(pr.pin[i.u]?'<span class="cpx-mini">📌</span>':'')
+  +(i.unread&&!mid?'<span class="cpx-un">'+i.unread+'</span>':'')+'</div></div></div>'}
+function render(){var box=$('chatsList');if(!box||!$('cpxChips'))return;
+ var pr=prefs(),all=accepted().map(info).filter(function(i){return!(pr.del[i.u]&&!i.ms.length)});
+ var live=all.filter(function(i){return!pr.arch[i.u]});
+ var cnt={unread:live.filter(function(i){return i.unread}).length,pend:live.filter(function(i){return i.pend}).length,pin:live.filter(function(i){return pr.pin[i.u]}).length,arch:all.length-live.length};
+ var chips=[['all','All',0],['unread','Unread',cnt.unread],['pend','Pending docs',cnt.pend],['pin','Pinned',cnt.pin],['arch','Archived',cnt.arch]];
+ $('cpxChips').innerHTML=chips.map(function(c){return '<button class="cpx-chip'+(P.filter===c[0]?' on':'')+'" data-f="'+c[0]+'">'+c[1]+(c[2]?'<i>'+c[2]+'</i>':'')+'</button>'}).join('');
+ $('cpxSelBar').classList.toggle('show',P.selMode);$('cpxSelN').textContent=P.sel.size+' selected';
+ box.classList.toggle('cpx-selmode',P.selMode);
+ var q=P.q.trim().toLowerCase();
+ if(q){var names=all.filter(function(i){return((fpProfileCache[i.u]||{}).name||'').toLowerCase().indexOf(q)>=0});
+  var hits=[];all.forEach(function(i){i.ms.slice().reverse().forEach(function(m){if(stxt(m).indexOf(q)>=0)hits.push({i:i,m:m})})});
+  hits.sort(function(a,b){return(b.m.createdAt||0)-(a.m.createdAt||0)});
+  var h='';if(names.length)h+='<div class="cpx-sec">Chats</div>'+names.map(function(i){return rowHtml(i)}).join('');
+  if(hits.length)h+='<div class="cpx-sec">Messages</div>'+hits.slice(0,40).map(function(x){return rowHtml(x.i,q,x.m.id,hl(snip(x.m),q))}).join('');
+  box.innerHTML=h||'<div class="cpx-empty">🔍<b>Kuch nahi mila</b>Naam, message, invoice number ya amount se try karo.</div>';return}
+ var rows=P.filter==='arch'?all.filter(function(i){return pr.arch[i.u]}):live.filter(function(i){return P.filter==='unread'?i.unread:P.filter==='pend'?i.pend:P.filter==='pin'?pr.pin[i.u]:true});
+ rows.sort(function(a,b){return(pr.pin[b.u]?1:0)-(pr.pin[a.u]?1:0)||((b.last&&b.last.createdAt)||0)-((a.last&&a.last.createdAt)||0)});
+ if(!rows.length){var em={all:['💬','Koi chat nahi','Find People se kisi ko connect karo, phir yahan baat shuru karo.'],unread:['✅','Sab read hai','Koi unread message nahi.'],pend:['🧾','Koi pending document nahi','Accept ya reject karne wala document yahan dikhega.'],pin:['📌','Koi pinned chat nahi','Chat ko long press karke pin karo.'],arch:['📦','Archive khaali hai','Archive ki hui chats yahan aayengi.']}[P.filter];
+  box.innerHTML='<div class="cpx-empty">'+em[0]+'<b>'+em[1]+'</b>'+em[2]+'</div>';return}
+ box.innerHTML=rows.map(function(i){return rowHtml(i)}).join('')}
+window.renderChatsList=function(){shell();var us=accepted();sync(us);
+ Promise.all(us.map(function(u){if(fpProfileCache[u])return 0;return fbDb.collection('publicProfiles').doc(u).get().then(function(s){if(s.exists)fpProfileCache[u]=Object.assign({uid:u},s.data())}).catch(function(){})})).then(render);render()};
+
+/* ---- chat ke andar ---- */
+function st(m){var s=m.status||'pending';return '<span class="cdoc-st st-'+(s==='accepted'||s==='rejected'?s:'pending')+'">'+(s==='accepted'?'Accepted':s==='rejected'?'Rejected':'Pending')+'</span>'}
+function B(t,fn,c){return '<button class="'+(c||'')+'" onclick="'+fn+'">'+t+'</button>'}
+function card(kind,m,o){return '<div class="cdoc" style="--dc:'+K[kind]+'"><div class="cdoc-h"><span class="cdoc-ic">'+o.icon+'</span><span class="cdoc-k">'+o.label+'</span>'+st(m)+'</div><div class="cdoc-n">'+esc(o.num||'—')+'</div>'+(o.party?'<div class="cdoc-p">'+esc(o.party)+'</div>':'')+'<div class="cdoc-a">₹ '+money(o.amt||0)+'</div>'+(o.sub?'<div class="cdoc-s">'+o.sub+'</div>':'')+(o.btns?'<div class="cdoc-b">'+o.btns+'</div>':'')+'</div>'}
+function act(m){return m.senderId!==me()&&(m.status||'pending')==='pending'}
+function ab(fn,m){return B('Accept',fn+"('"+m.id+"','accepted')",'ok')+B('Reject',fn+"('"+m.id+"','rejected')",'no')}
+window.chatInvoiceCardHtml=function(m){var p=m.invoicePayload||{},a=act(m);
+ return card('invoice',m,{icon:'🧾',label:'Invoice',num:p.invoiceNumber,party:p.companyName,amt:p.amount,sub:[p.balance!=null?'Balance ₹ '+money(p.balance):'',p.dueDate?'Due '+esc(p.dueDate):''].filter(Boolean).join(' · '),
+  btns:B('See invoice',"chatSeeInvoice('"+m.id+"')",'p')+(a?B('Accept',"chatAcceptInvoice('"+m.id+"')",'ok')+B('Reject',"chatRejectInvoice('"+m.id+"')",'no'):'')+B('Reply',"chatInvoiceReply('"+m.id+"')")})};
+window.chatProformaCardHtml=function(m){var p=m.proformaPayload||{},d=p.doc||{};
+ return card('proforma',m,{icon:'📄',label:'Proforma',num:d.number,party:p.seller&&p.seller.company,amt:d.totals&&d.totals.grand,sub:m.invoiceGenerated?'🧾 Tax Invoice bhej diya gaya':'',
+  btns:B('See',"chatSeeProforma('"+m.id+"')",'p')+(act(m)?ab('chatProformaRespond',m):'')+B('Reply',"chatProformaReply('"+m.id+"')")})};
+window.chatGenDocCardHtml=function(m){var k=CHAT_GENDOC_LABELS[m.genKind]?m.genKind:'quotation';
+ return card(k,m,{icon:m.genKind==='po'?'📦':m.genKind==='challan'?'🚚':'📝',label:CHAT_GENDOC_LABELS[m.genKind]||'Document',num:chatGenDocNumber(m),amt:chatGenDocAmount(m),
+  btns:B('See',"chatSeeGenDoc('"+m.id+"')",'p')+(act(m)?ab('chatGenDocRespond',m):'')+B('Reply',"chatGenDocReply('"+m.id+"')")})};
+window.chatReceiptCardHtml=function(m){var p=m.receiptPayload||{};
+ return card('receipt',m,{icon:'🧾',label:'Receipt',num:p.invoiceNumber,amt:p.amount,sub:p.mode?esc(p.mode):'',
+  btns:B('See receipt',"chatSeeReceipt('"+m.id+"')",'p')+(act(m)?ab('chatReceiptRespond',m):'')+B('Reply',"chatReceiptReply('"+m.id+"')")})};
+window.chatPayNoticeCardHtml=function(m){var p=m.noticePayload||{};
+ return card('notice',m,{icon:'💸',label:'Payment sent',num:p.invoiceNumber,amt:p.amount,sub:[p.mode,p.date,p.note].filter(Boolean).map(esc).join(' · '),btns:act(m)?ab('chatPayNoticeRespond',m):''})};
+
+function hdr(u){var w=$('cpxHdAva');if(w&&u)w.innerHTML=ava(u)}
+function updDown(){var b=$('chatBody'),d=$('cpxDown');if(!b||!d)return;var far=b.scrollHeight-b.scrollTop-b.clientHeight>140;if(!far)P.newCount=0;d.classList.toggle('show',far);d.textContent=P.newCount?'↓ '+P.newCount+' new':'↓'}
+window.renderChatMessages=function(msgs){
+ var body=$('chatBody');if(!body)return;
+ var prevTop=body.scrollTop,near=body.scrollHeight-body.scrollTop-body.clientHeight<90,first=P.lastCount===0;
+ var myRR=userProfile&&userProfile.readReceiptsEnabled!==false;
+ var theirRR=chatCurrentUid&&fpProfileCache[chatCurrentUid]&&fpProfileCache[chatCurrentUid].readReceiptsEnabled!==false;
+ var showR=myRR&&theirRR,lastDay='',html='';
+ msgs.forEach(function(m){
+  var mine=m.senderId===me(),ts=m.createdAt?new Date(m.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
+  if(m.createdAt){var dl=dayLabel(m.createdAt);if(dl!==lastDay){lastDay=dl;html+='<div class="cpx-day">'+dl+'</div>'}}
+  var doc=DOC_T.indexOf(m.type)>=0;
+  var c=m.type==='photo'?'<img src="'+esc(m.photoData||'')+'" alt="photo">':m.type==='invoice'?chatInvoiceCardHtml(m):m.type==='proforma'?chatProformaCardHtml(m):m.type==='gendoc'?chatGenDocCardHtml(m):m.type==='receipt'?chatReceiptCardHtml(m):m.type==='paynotice'?chatPayNoticeCardHtml(m):m.type==='file'?chatFileCardHtml(m):esc(m.text||'');
+  var tick=mine?(showR?'<span class="tick" style="color:'+(m.seen?'#38bdf8':'inherit')+'">✓✓</span>':'<span class="tick">✓</span>'):'';
+  html+='<div class="chat-bubble '+(mine?'me':'them')+(doc?' doc':'')+(chatSelectedIds.has(m.id)?' selected':'')+'" data-mid="'+m.id+'">'+c+'<span class="ts">'+ts+' '+tick+'</span></div>'});
+ body.innerHTML=html||'<div class="cpx-empty">👋<b>Abhi koi message nahi</b>“Hi” bolke baat shuru karo.</div>';
+ var inc=msgs.length-P.lastCount,lastMine=msgs.length&&msgs[msgs.length-1].senderId===me();
+ if(first||near||(inc>0&&lastMine)){body.scrollTop=body.scrollHeight;P.newCount=0}
+ else{body.scrollTop=prevTop;if(inc>0)P.newCount+=inc}
+ P.lastCount=msgs.length;updDown();hdr(chatCurrentUid);
+ if(chatCurrentUid){prefs().read[chatCurrentUid]=Date.now();save()}
+ if(P.jump&&msgs.length){var el=body.querySelector('.chat-bubble[data-mid="'+P.jump+'"]');P.jump=null;if(el)setTimeout(function(){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('search-hit');setTimeout(function(){el.classList.remove('search-hit')},1800)},80)}
+ if(myRR&&chatConnId){msgs.filter(function(m){return m.senderId!==me()&&!m.seen}).forEach(function(m){fbDb.collection('chats').doc(chatConnId).collection('messages').doc(m.id).set({seen:true,seenAt:Date.now()},{merge:true}).catch(function(){})})}};
+var _open=window.openChat;window.openChat=function(u){prefs().read[u]=Date.now();save();P.lastCount=0;P.newCount=0;_open.apply(this,arguments);hdr(u);setTimeout(updDown,50)};
+var _close=window.closeChatModal;window.closeChatModal=function(){if(chatCurrentUid){prefs().read[chatCurrentUid]=Date.now();save()}_close.apply(this,arguments);P.jump=null;queue()};
+window.cpxChatToggle=function(k){var u=chatCurrentUid;if(!u)return;chatCloseMenu();var pr=prefs(),on=!pr[k][u];if(on)pr[k][u]=1;else delete pr[k][u];save();
+ toast(k==='mute'?(on?'Chat mute ho gayi':'Unmute ho gayi'):(on?'Chat archive ho gayi':'Archive se bahar'));if(k==='arch'&&on)closeChatModal();queue()};
+
+/* ---- one-time DOM setup ---- */
+function setup(){
+ var head=document.querySelector('#chatModal .modalhead');
+ if(head&&!$('cpxHdAva')){var nb=head.firstElementChild,w=document.createElement('div');w.className='cpx-hd';var a=document.createElement('div');a.id='cpxHdAva';w.appendChild(a);head.insertBefore(w,nb);w.appendChild(nb);nb.style.minWidth='0'}
+ var mi=$('chatMenuNormalItems');if(mi&&!$('cpxMuteItem')){mi.insertAdjacentHTML('afterbegin','<button id="cpxMuteItem" onclick="cpxChatToggle(\'mute\')">🔕 Mute / unmute</button><button onclick="cpxChatToggle(\'arch\')">📦 Archive</button>')}
+ var am=$('chatAttachMenu');if(am&&!am.dataset.cpx){am.dataset.cpx='1';var T=[['invoice','🧾','Invoice','invoice'],['proforma','📄','Proforma','proforma'],['quotation','📝','Quotation','quotation'],['challan','🚚','Challan','challan'],['po','📦','Order (PO)','po'],['file','📎','File','notice']];
+  am.innerHTML=T.map(function(t){return '<button type="button" class="cpx-tile" style="--dc:'+K[t[3]]+'" onclick="chatAttachMenuPick(\''+t[0]+'\')"><b>'+t[1]+'</b>'+t[2]+'</button>'}).join('')}
+ var box=document.querySelector('#chatModal .chat-modalbox');
+ if(box&&!$('cpxDown')){var d=document.createElement('button');d.id='cpxDown';d.type='button';d.textContent='↓';d.onclick=function(){var b=$('chatBody');P.newCount=0;b.scrollTo({top:b.scrollHeight,behavior:'smooth'})};box.appendChild(d);$('chatBody').addEventListener('scroll',updDown,{passive:true})}
+ var inp=$('chatTextInput');if(inp&&!inp.dataset.cpx){inp.dataset.cpx='1';inp.addEventListener('focus',function(){setTimeout(function(){var b=$('chatBody');if(b)b.scrollTop=b.scrollHeight},300)})}
+ if(window.visualViewport&&!window.__cpxVV){window.__cpxVV=1;var f=function(){document.documentElement.style.setProperty('--cpx-vh',(visualViewport.height-12)+'px');var m=$('chatModal');if(m&&m.classList.contains('show')&&document.activeElement===$('chatTextInput')){var b=$('chatBody');if(b)b.scrollTop=b.scrollHeight}};visualViewport.addEventListener('resize',f);f()}
+ shell()}
+setup();
+})();
+</script>
 </body>
 </html>
