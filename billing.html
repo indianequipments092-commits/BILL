@@ -5986,10 +5986,12 @@ let notifSelectMode=false;
 let notifSelectedKeys=new Set();
 function computeNotifications(){
   const out=[];
-  if(typeof db==='undefined'||!db) return out;
+  // FIX: company workspace (db) na khula ho tab bhi follow/connect notifications dikhne chahiye,
+  // isliye yahan return nahi karte — sirf invoice/stock wale hisse db ke bina skip hote hain.
+  const hasDb=!(typeof db==='undefined'||!db);
   const todayStr=new Date().toISOString().slice(0,10);
   const todayDate=new Date(todayStr);
-  (db.invoices||[]).forEach(inv=>{
+  (hasDb?(db.invoices||[]):[]).forEach(inv=>{
     try{
       const grand=Number(inv.totals&&inv.totals.grand||0);
       const paid=(inv.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
@@ -6006,7 +6008,7 @@ function computeNotifications(){
       }
     }catch(e){}
   });
-  (db.items||[]).forEach(it=>{
+  (hasDb?(db.items||[]):[]).forEach(it=>{
     try{
       if(Number(it.stock)<=0){
         out.push({ic:'📦',type:'stock',sortKey:2,key:'stock:'+it.id,text:`<b>${esc(it.name||'Item')}</b> stock khatam ho gaya hai`});
@@ -20345,7 +20347,11 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
     regUid=u;
     p.addListener('registration',function(t){
       curToken=t.value;
-      var c=sbc(); if(c) c.rpc('register_push_token',{p_token:t.value,p_platform:'android'});
+      /* FIX: supabase rpc() builder tab tak request nahi bhejta jab tak .then() na lage —
+         pehle yahan .then nahi tha, isliye token kabhi save hi nahi hota tha (push_tokens khali). */
+      var c=sbc(); if(c) Promise.resolve(c.rpc('register_push_token',{p_token:t.value,p_platform:'android'}))
+        .then(function(r){ if(r&&r.error) console.warn('register_push_token failed',r.error); })
+        .catch(function(e){ console.warn('register_push_token error',e); });
     });
     p.addListener('registrationError',function(e){ console.warn('push reg error',e); });
     p.addListener('pushNotificationActionPerformed',function(a){
