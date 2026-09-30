@@ -1408,7 +1408,7 @@ function createFirestoreAdapter(supabase) {
         const col = `data->>${w.field}`;
         if (w.op === '==') q = q.eq(col, String(w.value));
         else if (w.op === '!=') q = q.neq(col, String(w.value));
-        else if (w.op === 'array-contains') q = q.contains(`data->${w.field}`, [w.value]);
+        else if (w.op === 'array-contains') q = q.contains(`data->${w.field}`, JSON.stringify([w.value])); // FIX: jsonb ke liye JSON string chahiye, warna PostgREST 400 deta tha
         else console.warn('Adapter: operator not fully supported yet ->', w.op);
       });
       if (this._orderBy) {
