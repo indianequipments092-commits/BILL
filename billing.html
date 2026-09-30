@@ -20320,6 +20320,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
     ['broadcast','Announcements','Naye announcements']
   ];
   var prefs={all:true,muted:{}}, prefsUid=null, curToken=null, regUid=null, pending=null;
+  var diag={native:'-',plugin:'-',perm:'-',token:'-',save:'-',err:'-'};
   function CAP(){ return window.Capacitor; }
   function native(){ try{ return !!(CAP()&&CAP().isNativePlatform&&CAP().isNativePlatform()); }catch(e){ return false; } }
   function PN(){ try{ return CAP().Plugins.PushNotifications; }catch(e){ return null; } }
@@ -20343,25 +20344,27 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
 
   /* ---- register token ---- */
   function registerPush(){
-    var u=uid(), p=PN(); if(!native()||!p||!u||regUid===u) return;
+    var u=uid(), p=PN(); diag.native=native()?'haan':'NAHI'; diag.plugin=p?'haan':'NAHI (APK me plugin nahi)';
+    if(!native()||!p||!u||regUid===u) return;
     regUid=u;
     p.addListener('registration',function(t){
-      curToken=t.value;
+      curToken=t.value; diag.token='mila ('+String(t.value).slice(0,10)+'...)'; diag.save='bhej raha...';
       /* FIX: supabase rpc() builder tab tak request nahi bhejta jab tak .then() na lage —
          pehle yahan .then nahi tha, isliye token kabhi save hi nahi hota tha (push_tokens khali). */
       var c=sbc(); if(c) Promise.resolve(c.rpc('register_push_token',{p_token:t.value,p_platform:'android'}))
-        .then(function(r){ if(r&&r.error) console.warn('register_push_token failed',r.error); })
-        .catch(function(e){ console.warn('register_push_token error',e); });
+        .then(function(r){ if(r&&r.error){ diag.save='FAIL: '+(r.error.message||JSON.stringify(r.error)); console.warn('register_push_token failed',r.error); } else diag.save='OK (save ho gaya)'; })
+        .catch(function(e){ diag.save='ERROR: '+(e&&e.message||e); console.warn('register_push_token error',e); });
     });
-    p.addListener('registrationError',function(e){ console.warn('push reg error',e); });
+    p.addListener('registrationError',function(e){ diag.err='reg error: '+(e&&e.error||JSON.stringify(e)); console.warn('push reg error',e); });
     p.addListener('pushNotificationActionPerformed',function(a){
       pending=(a&&a.notification&&a.notification.data)||null;
     });
     p.checkPermissions().then(function(s){
       return s.receive==='granted'?s:p.requestPermissions();
     }).then(function(s){
+      diag.perm=s.receive;
       if(s.receive==='granted') p.register();
-    }).catch(function(e){ console.warn(e); });
+    }).catch(function(e){ diag.err='perm error: '+(e&&e.message||e); console.warn(e); });
   }
 
   /* ---- tap routing ---- */
@@ -20410,6 +20413,8 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:15px">Push notifications</b><button type="button" id="psClose" style="background:none;border:0;color:var(--text-muted);font-size:20px;min-height:0;padding:0 4px">✕</button></div>'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0"><div><div style="font-weight:700;font-size:13.5px">Saare notifications</div><div style="font-size:11.5px;color:var(--text-muted)">Ek switch se sab ON/OFF</div></div>'+sw('psAll',prefs.all!==false)+'</div>'+
         rows+
+        '<div id="psDiag" style="border-top:1px solid var(--border-color);padding:12px 0;font-size:11.5px;line-height:1.7;color:var(--text-muted)"></div>'+
+        '<button type="button" id="psRetry" style="width:100%;margin-bottom:10px">🔄 Token dobara register karo</button>'+
         '<div style="border-top:1px solid var(--border-color);padding-top:12px;font-size:11.5px;color:var(--text-muted)">'+(mutedIds.length?('Muted chats: '+mutedIds.length+'. Chat ke menu me Unmute karo.'):'Kisi chat ko band karna ho to chat ke ⋮ menu me Mute dabao.')+'</div>'+
         '</div></div>');
       document.body.appendChild(m);
@@ -20420,6 +20425,15 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
         fn(on); savePrefs(); }); }
       bind('psAll',function(on){ prefs.all=on; });
       TYPES.forEach(function(t){ bind('psT_'+t[0],function(on){ prefs[t[0]]=on; }); });
+      function showDiag(){ var d=document.getElementById('psDiag'); if(!d) return;
+        diag.native=native()?'haan':'NAHI'; var pp=PN(); diag.plugin=pp?'haan':'NAHI (APK me plugin nahi)';
+        d.innerHTML='<b>Push status</b><br>Native app: '+diag.native+'<br>Push plugin: '+diag.plugin+'<br>Permission: '+diag.perm+'<br>Token: '+diag.token+'<br>Server save: '+diag.save+'<br>Error: '+diag.err; }
+      showDiag(); var dt=setInterval(function(){ if(!document.getElementById('psDiag')) clearInterval(dt); else showDiag(); },1000);
+      document.getElementById('psRetry').onclick=function(){ var pp=PN(); if(!pp){ diag.err='plugin hi nahi mila'; showDiag(); return; }
+        diag.token='-'; diag.save='-'; diag.err='-';
+        pp.checkPermissions().then(function(s){ return s.receive==='granted'?s:pp.requestPermissions(); })
+          .then(function(s){ diag.perm=s.receive; if(s.receive==='granted') return pp.register(); })
+          .catch(function(e){ diag.err='retry error: '+(e&&e.message||e); }).then(showDiag); };
       document.getElementById('psClose').onclick=function(){ m.remove(); };
       m.addEventListener('click',function(e){ if(e.target===m) m.remove(); });
     });
