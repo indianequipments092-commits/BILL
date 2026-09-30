@@ -3871,141 +3871,226 @@ function fpLoadSuggestions(){
     return out.slice(0,8);
   }).catch(e=>{ console.warn('suggestions query failed (may need a Firestore index — check console for a create-index link)',e); return []; });
 }
+function fpBtnState(uid){
+  const c=(typeof myConnections!=='undefined'&&myConnections)?myConnections[uid]:null;
+  if(!c) return `<button type="button" class="fp2-btn" onclick="event.stopPropagation();sendConnectionRequest('${uid}',this)">Follow</button>`;
+  if(c.status==='accepted') return `<button type="button" class="fp2-btn ghost" onclick="event.stopPropagation();fpViewProfile('${uid}')">Connected</button>`;
+  if(currentUser&&c.requestedBy===currentUser.uid) return `<button type="button" class="fp2-btn ghost" disabled>Requested</button>`;
+  return `<button type="button" class="fp2-btn" onclick="event.stopPropagation();fpViewProfile('${uid}')">Respond</button>`;
+}
+function fp2Hi(text,q){
+  text=String(text==null?'':text);
+  if(!q) return esc(text);
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i))+'<mark>'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length));
+}
+function fp2Row(u,o){
+  o=o||{}; const q=o.q||'';
+  const initials=(u.name||'?').trim().slice(0,1).toUpperCase();
+  const cos=Array.isArray(u.companyNames)?u.companyNames.filter(Boolean):[];
+  const types=Array.isArray(u.companyTypes)?[...new Set(u.companyTypes.filter(Boolean))]:[];
+  let m=0; try{ m=(typeof mutualCount==='function')?mutualCount(u):0; }catch(e){}
+  const tags=[];
+  const why=o.why||[];
+  if(why.indexOf('company')>-1&&q){ const hit=cos.find(c=>c.toLowerCase().indexOf(q.toLowerCase())>-1); if(hit) tags.push(`<span class="fp2-tag o">🏢 ${fp2Hi(hit,q)}</span>`); }
+  if(why.indexOf('gst')>-1) tags.push('<span class="fp2-tag o">GSTIN match</span>');
+  types.slice(0,2).forEach(t=>tags.push(`<span class="fp2-tag">${esc(t)}</span>`));
+  if(m>0) tags.push(`<span class="fp2-tag g">${m} mutual</span>`);
+  const coTxt=cos.length?(esc(cos[0])+(cos.length>1?' +'+(cos.length-1):'')):'';
+  const click=o.suggest?`fpViewProfile('${u.uid}')`:`fpOpenResult('${u.uid}')`;
+  return `<div class="fp2-row" onclick="${click}">
+    <div class="fp2-av"><div>${u.photoURL?`<img src="${esc(u.photoURL)}" alt="">`:esc(initials)}</div></div>
+    <div class="fp2-info">
+      <div class="fp2-name">${fp2Hi(u.name||'Unnamed',q)}${verifiedBadgeHtml(u)}</div>
+      <div class="fp2-sub"><span class="m">${fp2Hi(u.userId||'—',q)}</span>${coTxt?' · '+coTxt:''}</div>
+      ${tags.length?`<div class="fp2-tags">${tags.join('')}</div>`:''}
+    </div>
+    ${o.nobtn?'':fpBtnState(u.uid)}
+  </div>`;
+}
 function fpRenderSuggestions(){
   const box=id('fpSuggestions');
   if(!box) return;
   box.innerHTML='';
   fpLoadSuggestions().then(list=>{
     if(!list.length) return;
-    box.innerHTML=`<div style="margin-top:18px">
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Suggested connections</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${list.map(u=>{
-          const initials=(u.name||'?').trim().slice(0,1).toUpperCase();
-          const m=mutualCount(u);
-          return `<div class="pf-co-row" style="display:flex;align-items:center;gap:10px">
-            <div style="cursor:pointer;display:flex;align-items:center;gap:10px;flex:1;min-width:0" onclick="fpViewProfile('${u.uid}')">
-              <div class="pf-avatar-ic" style="width:32px;height:32px;font-size:13px;flex-shrink:0">${u.photoURL?`<img src="${esc(u.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(initials)}</div>
-              <div style="min-width:0;overflow:hidden">
-                <b style="font-size:12.5px">${esc(u.name||'Unnamed')}</b>${verifiedBadgeHtml(u)}
-                <div style="font-size:10.5px;color:var(--text-muted)">${m} mutual connection${m===1?'':'s'}</div>
-              </div>
-            </div>
-            <button type="button" class="btn primary" style="padding:4px 10px;font-size:11px;flex-shrink:0" onclick="event.stopPropagation();sendConnectionRequest('${u.uid}',this)">Send Request</button>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
+    box.innerHTML=`<div class="fp2-sec"><span>✨ Aapke liye suggested</span></div>
+      <div class="fp2-list">${list.map(u=>fp2Row(u,{suggest:true})).join('')}</div>`;
   });
 }
 
+/* ---- Recent searches ---- */
 function fpHistKey(){ return 'fpSearchHistory_'+(currentUser?currentUser.uid:'anon'); }
 function fpGetHistory(){
   try{ return JSON.parse(localStorage.getItem(fpHistKey())||'[]'); }catch(e){ return []; }
 }
 function fpAddHistory(term,type){
   term=(term||'').trim();
-  if(!term) return;
-  let h=fpGetHistory().filter(e=>!(e.term===term&&e.type===type));
-  h.unshift({term,type});
+  if(term.length<2) return;
+  let h=fpGetHistory().filter(e=>e.term.toLowerCase()!==term.toLowerCase());
+  h.unshift({term,type:type||'auto'});
   h=h.slice(0,8);
   try{ localStorage.setItem(fpHistKey(),JSON.stringify(h)); }catch(e){}
 }
 function fpClearHistory(){
   try{ localStorage.removeItem(fpHistKey()); }catch(e){}
-  initSearchPage();
+  fpRenderHistory();
+}
+function fpDelHistory(i){
+  const h=fpGetHistory(); h.splice(i,1);
+  try{ localStorage.setItem(fpHistKey(),JSON.stringify(h)); }catch(e){}
+  fpRenderHistory();
 }
 function fpRenderHistory(){
-  const results=id('fpResults');
-  if(!results) return;
+  const box=id('fpRecent');
+  if(!box) return;
   const h=fpGetHistory();
-  if(!h.length){ results.innerHTML='<div style="color:var(--text-muted);font-size:13px">Search karna shuru karo — Name, Unique ID, Company ya GST se.</div>'; return; }
-  results.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <span style="font-size:11px;color:var(--text-muted)">Recent searches</span>
-      <button type="button" class="btn" style="padding:2px 8px;font-size:11px" onclick="fpClearHistory()">Clear</button>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${h.map(e=>`<span class="chip" style="cursor:pointer" onclick="fpApplyHistory('${esc(e.term).replace(/'/g,"\\'")}','${e.type}')">${esc(e.term)}</span>`).join('')}
-    </div>`;
+  if(!h.length){
+    box.innerHTML='<div class="fp2-empty" style="padding:14px 10px"><div class="ic">🧭</div><b>Kisi ko dhundo</b>Naam, company ka naam, GSTIN ya 10-digit User ID — kuch bhi type karo.</div>';
+    return;
+  }
+  box.innerHTML=`<div class="fp2-sec"><span>🕘 Recent</span><button type="button" onclick="fpClearHistory()">Clear all</button></div>
+    <div class="fp2-rec">${h.map((e,i)=>`<span class="fp2-rc" onclick="fpApplyHistoryIdx(${i})">${esc(e.term)}<i onclick="event.stopPropagation();fpDelHistory(${i})">✕</i></span>`).join('')}</div>`;
 }
-function fpApplyHistory(term,type){
-  const input=id('fpSearchInput'); const typeSel=id('fpSearchType');
-  if(input) input.value=term;
-  if(typeSel) typeSel.value=type;
+function fpApplyHistoryIdx(i){
+  const e=fpGetHistory()[i]; if(!e) return;
+  const input=id('fpSearchInput'); if(input) input.value=e.term;
+  fpToggleClear();
   fpRunSearch();
+}
+function fpApplyHistory(term){
+  const input=id('fpSearchInput'); if(input) input.value=term;
+  fpToggleClear(); fpRunSearch();
+}
+
+/* ---- UI state ---- */
+let fpSeq=0;
+function fpToggleClear(){
+  const b=id('fpClearBtn'), v=(id('fpSearchInput')?.value||'');
+  if(b) b.style.display=v?'flex':'none';
+}
+function fpClearInput(){
+  const input=id('fpSearchInput'); if(input){ input.value=''; input.focus(); }
+  fpToggleClear(); fpShowIdle();
+}
+function fpSetBt(v,el){
+  const h=id('fpBusinessTypeFilter'); if(h) h.value=v;
+  document.querySelectorAll('#fpChips .fp2-chip').forEach(c=>c.classList.toggle('on',c===el));
+  if((id('fpSearchInput')?.value||'').trim()) fpRunSearch();
+}
+function fpSetSeg(name){
+  document.querySelectorAll('#fpSeg button').forEach(b=>b.classList.toggle('on',b.dataset.seg===name));
+  const map={discover:'fpPaneDiscover',network:'fpPaneNetwork',ann:'fpPaneAnn'};
+  Object.keys(map).forEach(k=>{ const p=id(map[k]); if(p) p.classList.toggle('on',k===name); });
+  const bar=document.querySelector('#search .fp2-bar'), ch=id('fpChips');
+  const show=name==='discover';
+  if(bar) bar.parentElement.style.display=show?'':'none';
+  if(name==='network'&&typeof renderConnLists==='function') renderConnLists();
+  if(name==='ann'&&typeof renderBroadcastInbox==='function') renderBroadcastInbox();
+}
+function fpShowIdle(){
+  fpSeq++;
+  const w=id('fpResultsWrap'), i=id('fpIdle');
+  if(w) w.style.display='none';
+  if(i) i.style.display='';
+  fpRenderHistory();
+  fpRenderSuggestions();
 }
 function initSearchPage(){
   const input=id('fpSearchInput');
   if(input) input.value='';
-  fpRenderHistory();
-  fpRenderSuggestions();
+  fpToggleClear();
+  fpSetSeg('discover');
+  fpShowIdle();
   if(typeof renderConnLists==='function') renderConnLists();
   if(typeof renderBroadcastInbox==='function') renderBroadcastInbox();
 }
 function fpOnInput(){
+  fpToggleClear();
   clearTimeout(fpSearchTimer);
-  fpSearchTimer=setTimeout(fpRunSearch,300); // 300ms debounce
+  if(!(id('fpSearchInput')?.value||'').trim()){ fpShowIdle(); return; }
+  fpSearchTimer=setTimeout(fpRunSearch,280);
+}
+function fpOpenResult(uid){
+  fpAddHistory(id('fpSearchInput')?.value||'','auto');
+  fpViewProfile(uid);
+}
+
+/* ---- Smart search: ek hi box, type khud pehchanta hai ---- */
+function fpDetect(raw){
+  const up=raw.toUpperCase().replace(/\s/g,'');
+  if(/^\d{10}$/.test(raw)) return 'id';
+  if(/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(up)) return 'gst';
+  if(/^\d{3,9}$/.test(raw)) return 'idprefix';
+  return 'text';
+}
+function fpVariants(raw){
+  const t=raw.trim();
+  const title=t.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
+  return [...new Set([t,t.toLowerCase(),t.toUpperCase(),title])];
 }
 function fpRunSearch(){
-  const results=id('fpResults');
-  const type=id('fpSearchType')?.value||'name';
   const raw=(id('fpSearchInput')?.value||'').trim();
-  if(!raw){ initSearchPage(); return; }
-  if(!results) return;
-  fpAddHistory(raw,type);
-  const sugg=id('fpSuggestions'); if(sugg) sugg.innerHTML='';
-  results.innerHTML='<div style="color:var(--text-muted);font-size:13px">Searching...</div>';
-
-  let query=fbDb.collection('publicProfiles').limit(15);
-  if(type==='id'){
-    query=query.where('userId','==',raw);
-  }else if(type==='name'){
-    query=query.where('name','>=',raw).where('name','<=',raw+'\uf8ff');
-  }else if(type==='company'){
-    query=query.where('companyNames','array-contains',raw);
-  }else if(type==='gst'){
-    query=query.where('companyGstins','array-contains',raw.toUpperCase());
-  }
-
-  const btFilter=id('fpBusinessTypeFilter')?.value||'';
-  query.get().then(snap=>{
-    const rows=[];
-    snap.forEach(doc=>{
-      if(currentUser && doc.id===currentUser.uid) return; // apna profile search me na dikhe
-      if(myBlocks[doc.id]) return; // blocked (either direction) — search mein na dikhe
-      const data=doc.data();
-      // Client-side filter (not a Firestore .where(), so no new composite index needed) —
-      // fine at this scale since the base query already caps results at 15.
-      if(btFilter&&!(Array.isArray(data.companyTypes)&&data.companyTypes.includes(btFilter))) return;
-      rows.push({uid:doc.id,...data});
+  if(!raw){ fpShowIdle(); return; }
+  const box=id('fpResults'), wrap=id('fpResultsWrap'), idle=id('fpIdle');
+  if(!box||!wrap) return;
+  if(idle) idle.style.display='none';
+  wrap.style.display='';
+  const my=++fpSeq;
+  box.innerHTML='<div class="fp2-list"><div class="fp2-sk"></div><div class="fp2-sk"></div><div class="fp2-sk"></div></div>';
+  const col=fbDb.collection('publicProfiles');
+  const kind=fpDetect(raw);
+  const jobs=[];
+  const add=(q,why)=>jobs.push(q.get().then(s=>{ const a=[]; s.forEach(d=>a.push({uid:d.id,data:d.data(),why})); return a; }));
+  if(kind==='id') add(col.where('userId','==',raw).limit(5),'id');
+  else if(kind==='gst') add(col.where('companyGstins','array-contains',raw.toUpperCase().replace(/\s/g,'')).limit(10),'gst');
+  else if(kind==='idprefix') add(col.where('userId','>=',raw).where('userId','<=',raw+'\uf8ff').limit(15),'id');
+  else{
+    fpVariants(raw).forEach(v=>{
+      add(col.where('name','>=',v).where('name','<=',v+'\uf8ff').limit(15),'name');
+      if(raw.length>=3) add(col.where('companyNames','array-contains',v).limit(10),'company');
     });
-    fpRenderResults(rows);
-  }).catch(e=>{
-    console.warn('search failed',e);
-    // Firestore range/array-contains + equality filters ke liye pehli baar composite index chahiye hota hai —
-    // console mein error ke saath ek direct link aayega index banane ke liye, wahi click karo.
-    results.innerHTML='<div style="color:#fb7185;font-size:13px">Search abhi nahi ho payi'+(e && e.message?(': '+esc(e.message)):'')+'. Agar Firestore console mein "index" wala link aaya ho to use ek baar click karke index create kar do.</div>';
+  }
+  const bt=id('fpBusinessTypeFilter')?.value||'';
+  Promise.allSettled(jobs).then(res=>{
+    if(my!==fpSeq) return; // purani search, ignore
+    const map=new Map(); let ok=0, lastErr=null;
+    res.forEach(r=>{
+      if(r.status!=='fulfilled'){ lastErr=r.reason; return; }
+      ok++;
+      r.value.forEach(x=>{
+        if(currentUser&&x.uid===currentUser.uid) return;
+        if(myBlocks[x.uid]) return;
+        const e=map.get(x.uid)||{uid:x.uid,...x.data,_why:new Set()};
+        e._why.add(x.why); map.set(x.uid,e);
+      });
+    });
+    if(!ok){
+      console.warn('search failed',lastErr);
+      box.innerHTML='<div class="fp2-empty"><div class="ic">⚠️</div><b>Search nahi ho payi</b>'+(lastErr&&lastErr.message?esc(lastErr.message)+'<br>':'')+'Agar Firestore console me "index" ka link aaya ho to ek baar click karke index bana do.</div>';
+      return;
+    }
+    const ql=raw.toLowerCase();
+    let rows=[...map.values()].filter(u=>!bt||(Array.isArray(u.companyTypes)&&u.companyTypes.includes(bt)));
+    rows.forEach(u=>{
+      fpProfileCache[u.uid]={...u,_why:undefined};
+      u._score=((u.name||'').toLowerCase().startsWith(ql)?3:0)+(u._why.has('id')||u._why.has('gst')?3:0)+(u._why.has('company')?1:0);
+    });
+    rows.sort((a,b)=>b._score-a._score);
+    fpRenderResults(rows,raw);
   });
 }
-function fpRenderResults(rows){
-  const results=id('fpResults');
-  if(!results) return;
-  if(!rows.length){ results.innerHTML='<div style="color:var(--text-muted);font-size:13px">No results.</div>'; return; }
-  results.innerHTML=rows.map(u=>{
-    const initials=(u.name||'?').trim().slice(0,1).toUpperCase();
-    const companyCount=Array.isArray(u.companyNames)?u.companyNames.length:0;
-    const types=Array.isArray(u.companyTypes)?[...new Set(u.companyTypes.filter(Boolean))]:[];
-    const typesHtml=types.length?' · '+types.map(t=>`<span style="background:var(--bg-subtle,#1e2130);border-radius:4px;padding:1px 6px;font-size:10px">${esc(t)}</span>`).join(' '):'';
-    return `<div class="pf-co-row" style="cursor:pointer" onclick="fpViewProfile('${u.uid}')">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0">
-        <div class="pf-avatar-ic" style="width:36px;height:36px;font-size:14px;flex-shrink:0">${u.photoURL?`<img src="${esc(u.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(initials)}</div>
-        <div style="min-width:0;overflow:hidden">
-          <b>${esc(u.name||'Unnamed')}</b>${verifiedBadgeHtml(u)}
-          <div style="font-size:11px;color:var(--text-muted);font-family:monospace">ID: ${esc(u.userId||'—')} · ${companyCount} compan${companyCount===1?'y':'ies'}${typesHtml}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+function fpRenderResults(rows,q){
+  const box=id('fpResults');
+  if(!box) return;
+  q=q||'';
+  if(!rows.length){
+    box.innerHTML='<div class="fp2-empty"><div class="ic">🔍</div><b>Kuch nahi mila</b>Spelling check karo, ya Naam / Company / GSTIN / 10-digit ID try karo.<br>Sirf <b style="display:inline;font-size:inherit">Public</b> profiles dikhte hain.</div>';
+    return;
+  }
+  box.innerHTML=`<div class="fp2-cnt">${rows.length} result${rows.length===1?'':'s'}</div>
+    <div class="fp2-list">${rows.map(u=>fp2Row(u,{q,why:[...(u._why||[])]})).join('')}</div>`;
 }
 /* ==================== Connections (Phase 1-B) ====================
    connections/{sortedUidA_sortedUidB} doc: {users:[uidA,uidB], requestedBy, status:'pending'|'accepted', createdAt}
@@ -4319,10 +4404,11 @@ function renderConnLists(){
   const following=entries.filter(([,c])=>c.requestedBy===currentUser.uid).map(([uid])=>uid);
   const cf=id('connCountFollowers'); if(cf) cf.textContent='('+followers.length+')';
   const cg=id('connCountFollowing'); if(cg) cg.textContent='('+following.length+')';
+  const nb=id('fp2NetBadge'); if(nb){ const n=followers.length+following.length; nb.textContent=n; nb.style.display=n?'inline-flex':'none'; }
   const list=id('connList');
   if(!list) return;
   const uids=connActiveTab==='followers'?followers:following;
-  if(!uids.length){ list.innerHTML='<div style="color:var(--text-muted);font-size:12px">Koi nahi.</div>'; return; }
+  if(!uids.length){ list.innerHTML='<div class="fp2-empty"><div class="ic">👥</div><b>'+(connActiveTab==='followers'?'Abhi koi follower nahi':'Abhi kisi ko follow nahi kiya')+'</b>Discover me search karke connect karo.</div>'; return; }
   list.innerHTML='<div style="color:var(--text-muted);font-size:12px">Loading...</div>';
   Promise.all(uids.map(uid=>{
     if(fpProfileCache[uid]) return Promise.resolve();
@@ -4332,10 +4418,7 @@ function renderConnLists(){
     list.innerHTML=uids.map(uid=>{
       const u=fpProfileCache[uid]||{};
       const initials=(u.name||'?').trim().slice(0,1).toUpperCase();
-      return `<div class="pf-co-row" style="cursor:pointer;display:flex;align-items:center;gap:10px" onclick="fpViewProfile('${uid}')">
-        <div class="pf-avatar-ic" style="width:32px;height:32px;font-size:13px;flex-shrink:0">${u.photoURL?`<img src="${esc(u.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(initials)}</div>
-        <b>${esc(u.name||'Unnamed')}</b>${verifiedBadgeHtml(u)}
-      </div>`;
+      return fp2Row(Object.assign({uid},u),{suggest:true,nobtn:true});
     }).join('');
   });
 }
@@ -7712,56 +7795,134 @@ fbAuth.onAuthStateChanged(user=>{
   </div>
 </div>
 
-<!-- Find People (Search) -->
+<!-- Find People (Search) — Instagram-style redesign -->
+<style id="fp2-css">
+#search .fp2{max-width:640px}
+#search .fp2-sticky{position:sticky;top:0;z-index:30;padding:8px 0 10px;margin:0 -2px;background:linear-gradient(180deg,rgba(9,13,24,.96) 70%,rgba(9,13,24,0));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+[data-theme="light"] #search .fp2-sticky{background:linear-gradient(180deg,rgba(244,246,252,.97) 70%,rgba(244,246,252,0))}
+#search .fp2-bar{display:flex;align-items:center;gap:10px;padding:0 8px 0 16px;height:52px;border-radius:26px;background:var(--bg-card);border:1px solid var(--border-color);box-shadow:0 6px 24px rgba(0,0,0,.18);transition:border-color .2s,box-shadow .2s}
+#search .fp2-bar:focus-within{border-color:rgba(124,108,255,.65);box-shadow:0 0 0 4px rgba(124,108,255,.16),0 6px 24px rgba(0,0,0,.2)}
+#search .fp2-bar svg{flex-shrink:0;color:var(--text-muted)}
+#search .fp2-bar input{flex:1;min-width:0;background:transparent!important;border:0!important;outline:0!important;box-shadow:none!important;font-size:15px;padding:0!important;height:100%;color:var(--text-main)}
+#search .fp2-ib{width:38px;height:38px;border-radius:50%;border:0;background:rgba(124,108,255,.14);color:#a5a0ff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;min-height:0}
+#search .fp2-ib:active{transform:scale(.92)}
+#search .fp2-clear{display:none;background:rgba(255,255,255,.08);color:var(--text-muted);font-size:14px}
+#search .fp2-chips{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 2px;scrollbar-width:none}
+#search .fp2-chips::-webkit-scrollbar{display:none}
+#search .fp2-chip{flex-shrink:0;padding:7px 15px;border-radius:20px;font-size:12.5px;font-weight:600;background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-muted);cursor:pointer;min-height:0;transition:all .18s}
+#search .fp2-chip.on{background:linear-gradient(135deg,#7c6cff,#a78bfa);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(124,108,255,.4)}
+#search .fp2-seg{display:flex;gap:4px;padding:4px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--border-color);margin:8px 0 14px}
+[data-theme="light"] #search .fp2-seg{background:rgba(15,23,42,.05)}
+#search .fp2-seg button{flex:1;position:relative;padding:10px 4px;border-radius:12px;border:0;background:transparent;color:var(--text-muted);font-size:13px;font-weight:700;min-height:0;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+#search .fp2-seg button.on{background:linear-gradient(135deg,rgba(124,108,255,.42),rgba(167,139,250,.24));color:#fff;box-shadow:0 3px 14px rgba(124,108,255,.3)}
+[data-theme="light"] #search .fp2-seg button.on{color:#3730a3}
+#search .fp2-badge{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#f43f5e;color:#fff;font-size:10.5px;font-weight:800;display:none;align-items:center;justify-content:center}
+#search .fp2-qr{display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:linear-gradient(135deg,rgba(124,108,255,.18),rgba(244,114,182,.10));border:1px solid rgba(124,108,255,.28);margin-bottom:18px}
+#search .fp2-qr .t{flex:1;min-width:0}
+#search .fp2-qr b{display:block;font-size:14px}
+#search .fp2-qr small{color:var(--text-muted);font-size:11.5px}
+#search .fp2-sec{display:flex;justify-content:space-between;align-items:center;margin:16px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--text-muted)}
+#search .fp2-sec button{background:none;border:0;color:#a5a0ff;font-size:12px;font-weight:700;padding:0;min-height:0;text-transform:none;letter-spacing:0}
+#search .fp2-rec{display:flex;flex-wrap:wrap;gap:8px}
+#search .fp2-rc{display:inline-flex;align-items:center;gap:6px;padding:7px 8px 7px 13px;border-radius:20px;background:var(--bg-card);border:1px solid var(--border-color);font-size:12.5px;cursor:pointer}
+#search .fp2-rc i{font-style:normal;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:10px}
+#search .fp2-list{display:flex;flex-direction:column;gap:8px}
+#search .fp2-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:18px;background:var(--bg-card);border:1px solid var(--border-color);cursor:pointer;transition:transform .15s,border-color .2s,background .2s;animation:fp2in .28s ease both}
+#search .fp2-row:active{transform:scale(.985);border-color:rgba(124,108,255,.5)}
+@keyframes fp2in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#search .fp2-av{width:54px;height:54px;border-radius:50%;padding:2.5px;flex-shrink:0;background:conic-gradient(from 210deg,#7c6cff,#f472b6,#f5c451,#7c6cff)}
+#search .fp2-av>div{width:100%;height:100%;border-radius:50%;overflow:hidden;border:2.5px solid var(--bg-card-hover,#111);background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:19px}
+#search .fp2-av img{width:100%;height:100%;object-fit:cover;display:block}
+#search .fp2-info{flex:1;min-width:0}
+#search .fp2-name{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#search .fp2-sub{font-size:11.5px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#search .fp2-sub .m{font-family:ui-monospace,monospace}
+#search .fp2-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#search .fp2-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(124,108,255,.16);color:#b6b1ff}
+#search .fp2-tag.g{background:rgba(16,185,129,.16);color:#34d399}
+#search .fp2-tag.o{background:rgba(245,196,81,.16);color:#f5c451}
+#search mark{background:rgba(245,196,81,.35);color:inherit;border-radius:3px;padding:0 1px}
+#search .fp2-btn{flex-shrink:0;padding:8px 16px;min-height:0;border-radius:20px;border:0;font-size:12.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#7c6cff,#a78bfa);box-shadow:0 4px 14px rgba(124,108,255,.35);cursor:pointer}
+#search .fp2-btn:active{transform:scale(.93)}
+#search .fp2-btn.ghost{background:rgba(255,255,255,.08);color:var(--text-muted);box-shadow:none;border:1px solid var(--border-color)}
+[data-theme="light"] #search .fp2-btn.ghost{background:rgba(15,23,42,.06)}
+#search .fp2-btn.sm{padding:9px 14px}
+#search .fp2-cnt{font-size:12px;color:var(--text-muted);margin:2px 2px 10px}
+#search .fp2-empty{text-align:center;padding:34px 14px;color:var(--text-muted);font-size:13px;line-height:1.6}
+#search .fp2-empty .ic{font-size:40px;margin-bottom:6px}
+#search .fp2-empty b{display:block;color:var(--text-main);font-size:15px;margin-bottom:4px}
+#search .fp2-sk{height:78px;border-radius:18px;background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.10) 50%,rgba(255,255,255,.04) 70%);background-size:220% 100%;animation:fp2sh 1.2s linear infinite}
+@keyframes fp2sh{from{background-position:120% 0}to{background-position:-120% 0}}
+#search .fp2-sub-tabs{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);margin-bottom:12px}
+[data-theme="light"] #search .fp2-sub-tabs{background:rgba(15,23,42,.05)}
+#search .fp2-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+#search .fp2-head b{font-size:15px}
+#search .pane{display:none}
+#search .pane.on{display:block;animation:fp2in .25s ease both}
+</style>
+
 <div id="search" class="page hidden">
   <div class="top"><h1>🔍 Find People</h1></div>
-  <div class="card" style="max-width:640px">
-    <button type="button" class="btn muted" style="margin-bottom:12px" onclick="connectQrScan()">📷 Scan QR to Connect</button>
-    <div class="grid g2">
-      <div>
-        <label>Search By</label>
-        <select id="fpSearchType">
-          <option value="name">Name</option>
-          <option value="id">Unique User ID</option>
-          <option value="company">Company Name</option>
-          <option value="gst">GSTIN</option>
-        </select>
+  <div class="fp2">
+    <div class="fp2-sticky">
+      <div class="fp2-bar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+        <input id="fpSearchInput" type="text" inputmode="search" enterkeyhint="search" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="Naam, company, GSTIN ya ID search karo" oninput="fpOnInput()" onkeydown="if(event.key==='Enter'){fpAddHistory(this.value,'auto');this.blur();fpRunSearch();}">
+        <button type="button" class="fp2-ib fp2-clear" id="fpClearBtn" onclick="fpClearInput()" aria-label="Clear">✕</button>
+        <button type="button" class="fp2-ib" onclick="connectQrScan()" aria-label="Scan QR">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+        </button>
       </div>
-      <div>
-        <label>Search</label>
-        <input id="fpSearchInput" placeholder="Type to search..." oninput="fpOnInput()" autocomplete="off">
+      <input type="hidden" id="fpBusinessTypeFilter" value="">
+      <div class="fp2-chips" id="fpChips">
+        <button type="button" class="fp2-chip on" onclick="fpSetBt('',this)">Sab</button>
+        <button type="button" class="fp2-chip" onclick="fpSetBt('Supplier',this)">Supplier</button>
+        <button type="button" class="fp2-chip" onclick="fpSetBt('Distributor',this)">Distributor</button>
+        <button type="button" class="fp2-chip" onclick="fpSetBt('Retailer',this)">Retailer</button>
+        <button type="button" class="fp2-chip" onclick="fpSetBt('Manufacturer',this)">Manufacturer</button>
       </div>
     </div>
-    <div style="margin-top:10px">
-      <label>Business Type (optional filter)</label>
-      <select id="fpBusinessTypeFilter" onchange="if(id('fpSearchInput')&&id('fpSearchInput').value) fpRunSearch()">
-        <option value="">Sab</option>
-        <option value="Supplier">Supplier</option>
-        <option value="Distributor">Distributor</option>
-        <option value="Retailer">Retailer</option>
-        <option value="Manufacturer">Manufacturer</option>
-      </select>
+
+    <div class="fp2-seg" id="fpSeg">
+      <button type="button" class="on" data-seg="discover" onclick="fpSetSeg('discover')">🔎 Discover</button>
+      <button type="button" data-seg="network" onclick="fpSetSeg('network')">👥 Network <span class="fp2-badge" id="fp2NetBadge"></span></button>
+      <button type="button" data-seg="ann" onclick="fpSetSeg('ann')">📢 Updates</button>
     </div>
-    <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Sirf wahi log dikhenge jinhone apni profile <b>Public</b> rakhi hai. Apni visibility Settings → Profile Visibility mein control kar sakte ho.</p>
-  </div>
-  <div class="card" style="max-width:640px">
-    <div class="section-title">Results</div>
-    <div id="fpResults" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div id="fpSuggestions"></div>
-  </div>
-  <div class="card" style="max-width:640px">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button type="button" class="pf-tab active" id="connTabFollowers" onclick="connSwitchTab('followers')">Followers <span id="connCountFollowers">(0)</span></button>
-      <button type="button" class="pf-tab" id="connTabFollowing" onclick="connSwitchTab('following')">Following <span id="connCountFollowing">(0)</span></button>
+
+    <!-- Discover -->
+    <div class="pane on" id="fpPaneDiscover">
+      <div id="fpIdle">
+        <div class="fp2-qr">
+          <div style="font-size:30px">📲</div>
+          <div class="t"><b>QR se turant connect</b><small>Saamne wale ka QR scan karo ya apna dikhao</small></div>
+          <button type="button" class="fp2-btn sm" onclick="connectQrScan()">Scan</button>
+          <button type="button" class="fp2-btn sm ghost" onclick="connectQrShowMine()">My QR</button>
+        </div>
+        <div id="fpRecent"></div>
+        <div id="fpSuggestions"></div>
+      </div>
+      <div id="fpResultsWrap" style="display:none">
+        <div id="fpResults"></div>
+      </div>
     </div>
-    <div id="connList" style="display:flex;flex-direction:column;gap:6px"></div>
-  </div>
-  <div class="card" style="max-width:640px">
-    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span>📢 Announcements</span>
-      <button type="button" class="btn muted" style="padding:5px 10px;min-height:28px;font-size:12px" onclick="broadcastOpenCompose()">New Broadcast</button>
+
+    <!-- Network -->
+    <div class="pane" id="fpPaneNetwork">
+      <div class="fp2-sub-tabs">
+        <button type="button" class="pf-tab active" id="connTabFollowers" onclick="connSwitchTab('followers')">Followers <span id="connCountFollowers">(0)</span></button>
+        <button type="button" class="pf-tab" id="connTabFollowing" onclick="connSwitchTab('following')">Following <span id="connCountFollowing">(0)</span></button>
+      </div>
+      <div id="connList" class="fp2-list"></div>
     </div>
-    <div id="broadcastInbox" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+
+    <!-- Announcements -->
+    <div class="pane" id="fpPaneAnn">
+      <div class="fp2-head">
+        <b>📢 Announcements</b>
+        <button type="button" class="fp2-btn sm" onclick="broadcastOpenCompose()">＋ New Broadcast</button>
+      </div>
+      <div id="broadcastInbox" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
   </div>
 </div>
 
