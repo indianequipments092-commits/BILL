@@ -1990,6 +1990,19 @@ function planAllows(feature){
   const perms=PLAN_FEATURES[currentPlan]||PLAN_FEATURES.free;
   return !!perms[feature];
 }
+/* Chat se aaye document ko sender ke plan ke hisaab se dikhane ke liye:
+   jab db.settings ko seller ke data se swap kiya jaata hai, tab sellerPlan wahi se padha jaata hai. */
+function docEffPlan(){
+  const sp=((typeof db!=='undefined'&&db&&db.settings)||{}).sellerPlan;
+  return sp||currentPlan;
+}
+function docPlanAllows(feature){
+  const sp=((typeof db!=='undefined'&&db&&db.settings)||{}).sellerPlan;
+  if(!sp) return planAllows(feature);
+  if(!paidModeOn()) return true;
+  const perms=PLAN_FEATURES[sp]||PLAN_FEATURES.free;
+  return !!perms[feature];
+}
 function requirePlan(feature,niceName){
   if(planAllows(feature)) return true;
   showUpgradeModal(niceName||feature);
@@ -5116,11 +5129,29 @@ function chatAutoImportAcceptedInvoices(msgs){
   });
 }
 
-function chatInvoicePayload(inv){
+function chatSellerPayload(){
   const s=db.settings||{};
   const seller={};
-  ['company','address','city','pin','gstin','state','stateCode','phone','email','logo','stamp','upiId','upiName'].forEach(key=>{ seller[key]=s[key]||''; });
+  ['company','address','city','pin','gstin','state','stateCode','phone','email','logo','stamp','upiId','upiName',
+   'bankName','accName','accNo','ifsc','pan','prefix','fy'].forEach(key=>{ seller[key]=s[key]||''; });
   seller.gst=seller.gstin; seller.contact=seller.phone;
+  seller.docTheme=String(s.docTheme||'2');
+  seller.docColors=JSON.parse(JSON.stringify(s.docColors||{}));
+  seller.docFonts=JSON.parse(JSON.stringify(s.docFonts||{}));
+  // Device par save kiye custom (uploaded) fonts receiver ke paas nahi hote, isliye unka @font-face bhi bhejte hain (size limit ke andar).
+  const faces={}; let total=0;
+  Object.values(seller.docFonts).forEach(fid=>{
+    if(typeof fid!=='string'||fid.indexOf('cu:')!==0||faces[fid]) return;
+    const r=(typeof IC_FONT_MEM!=='undefined')&&IC_FONT_MEM[fid];
+    if(r&&r.css&&total+r.css.length<200000){ faces[fid]={id:r.id,name:r.name,family:r.family,css:r.css}; total+=r.css.length; }
+  });
+  seller.docFontFaces=faces;
+  seller.sellerPlan=(typeof currentPlan==='string'&&currentPlan)||'free';
+  return seller;
+}
+function chatInvoicePayload(inv){
+  const s=db.settings||{};
+  const seller=chatSellerPayload();
   const invoice={};
   ['invoiceNumber','date','dueDate','customer','companyState','companyStateCode','taxType','discountType','discountValue','roundOffEnabled','payment','transport','notes','deliveryNote','supplierRef','otherRef','buyerOrderNo','buyerOrderDate','deliveryNoteDate','destination','totals'].forEach(key=>{ invoice[key]=inv[key]??''; });
   invoice.items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).map(r=>({
@@ -5291,11 +5322,7 @@ function chatSendProforma(docId){
   const d=(db.documents||[]).find(x=>x.id===docId&&x.type==='proforma'); if(!d||!chatConnId) return;
   if(!d.totals) docCalc(d);
   const s=db.settings||{};
-  const seller={
-    company:s.company||'',address:s.address||'',city:s.city||'',pin:s.pin||'',
-    gst:s.gst||'',state:s.state||'',stateCode:s.stateCode||'',contact:s.contact||'',email:s.email||'',
-    logo:s.logo||'',stamp:s.stamp||'',upiId:s.upiId||'',upiName:s.upiName||''
-  };
+  const seller=chatSellerPayload();
   const payload={doc:docClone(d),seller};
   closeModal('chatProformaPickerModal');
   fbDb.collection('chats').doc(chatConnId).collection('messages').add({
@@ -5452,11 +5479,7 @@ function chatRenderGenDocPicker(){
 function chatSendGenDoc(docOrPoId){
   const kind=chatGenDocPickerKind; if(!kind||!chatConnId) return;
   const s=db.settings||{};
-  const seller={
-    company:s.company||'',address:s.address||'',city:s.city||'',pin:s.pin||'',
-    gst:s.gst||'',state:s.state||'',stateCode:s.stateCode||'',contact:s.contact||'',email:s.email||'',
-    logo:s.logo||'',stamp:s.stamp||'',upiId:s.upiId||'',upiName:s.upiName||''
-  };
+  const seller=chatSellerPayload();
   let payload;
   if(kind==='po'){
     const p=(db.purchaseOrders||[]).find(x=>x.id===docOrPoId); if(!p) return;
@@ -5600,8 +5623,7 @@ function chatSendReceiptForPayment(invId,paymentId){
   openChat(inv.chatSentUid);
   const connId=chatConnId;
   const s=db.settings||{};
-  const seller={company:s.company||'',address:s.address||'',city:s.city||'',pin:s.pin||'',
-    gst:s.gstin||s.gst||'',state:s.state||'',stateCode:s.stateCode||'',contact:s.phone||s.contact||'',email:s.email||''};
+  const seller=chatSellerPayload();
   const cu=inv.customer||{};
   const buyer={name:cu.name||'',address:cu.address||'',city:cu.city||'',pin:cu.pin||'',
     gst:cu.gst||'',state:cu.state||'',stateCode:cu.stateCode||''};
@@ -5611,14 +5633,41 @@ function chatSendReceiptForPayment(invId,paymentId){
     receiptNo:p.receiptNo||'',sourceInvoiceMsgId:inv.chatSentMsgId,
     invoiceGrand:grand,balanceAfter:bal,seller,buyer,buyerPaymentId:p.buyerPaymentId||''};
   // Asli receipt (Payment Journal wala) hi snapshot karke bhejte hain, taaki samne wale ko bilkul wahi format dikhe.
-  try{
-    let h=buildReceiptDocument(inv,p);
-    if(h.length>800000) h=h.replace(/<img src="data:[^"]{20000,}"[^>]*>/g,''); // Firestore 1MB limit se bachne ke liye sirf bade logo/stamp hatate hain
-    payload.html=h;
-  }catch(e){ console.warn('Receipt snapshot failed',e); }
-  fbDb.collection('chats').doc(connId).collection('messages').add({
-    type:'receipt',receiptPayload:payload,status:'pending',senderId:currentUser.uid,createdAt:Date.now()
+  let h='';
+  try{ h=buildReceiptDocument(inv,p); }catch(e){ console.warn('Receipt snapshot failed',e); }
+  // Firestore 1MB limit: bade logo/stamp hatane ke bajay compress (chhota) karte hain, taaki receipt me dikhte rahein.
+  Promise.resolve(h?chatShrinkHtmlImages(h,800000).catch(()=>h):'').then(h2=>{
+    if(h2) payload.html=h2;
+    return fbDb.collection('chats').doc(connId).collection('messages').add({
+      type:'receipt',receiptPayload:payload,status:'pending',senderId:currentUser.uid,createdAt:Date.now()
+    });
   }).catch(e=>alert('Receipt nahi bheja gaya: '+(e.message||e)));
+}
+function chatShrinkImg(src,maxDim){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>{try{
+      const sc=Math.min(1,maxDim/Math.max(im.width,im.height));
+      const c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(im.width*sc)); c.height=Math.max(1,Math.round(im.height*sc));
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      res(c.toDataURL(/^data:image\/jpe?g/i.test(src)?'image/jpeg':'image/png',0.85));
+    }catch(e){res('');}};
+    im.onerror=()=>res('');
+    im.src=src;
+  });
+}
+async function chatShrinkHtmlImages(h,limit){
+  if(h.length<=limit) return h;
+  const re=/src="(data:image\/[^"]{20000,})"/g, found=new Set(); let m;
+  while((m=re.exec(h))) found.add(m[1]);
+  for(const src of found){
+    let n=await chatShrinkImg(src,360);
+    if(n&&n.length>60000) n=await chatShrinkImg(src,200);
+    if(n) h=h.split(src).join(n);
+  }
+  if(h.length>limit) h=h.replace(/<img src="data:[^"]{20000,}"[^>]*>/g,'');
+  return h;
 }
 function chatReceiptCardHtml(m){
   const p=m.receiptPayload||{}, mine=m.senderId===currentUser.uid, status=m.status||'pending';
@@ -11273,6 +11322,7 @@ var IC_GF_FONTS=[
  ['Roboto Mono','mono']
 ];
 var IC_FONT_MEM={}, IC_FONT_DBH=null;
+function icFontRec(id){return IC_FONT_MEM[id]||((((typeof db!=='undefined'&&db)||{}).settings||{}).docFontFaces||{})[id]||null}
 function icFontIdb(){
   return new Promise(function(res,rej){
     if(IC_FONT_DBH) return res(IC_FONT_DBH);
@@ -11309,7 +11359,7 @@ document.addEventListener('DOMContentLoaded',function(){icFontLoadAll()});
 function icFontName(id){
   id=String(id||'');
   if(id.indexOf('sys:')===0||id.indexOf('gf:')===0) return id.slice(id.indexOf(':')+1).replace(/_/g,' ');
-  if(id.indexOf('cu:')===0){const r=IC_FONT_MEM[id];return r?r.name:'';}
+  if(id.indexOf('cu:')===0){const r=icFontRec(id);return r?r.name:'';}
   return '';
 }
 function icFontStack(id){
@@ -11320,7 +11370,7 @@ function icFontStack(id){
     const f=IC_GF_FONTS.find(function(x){return x[0]===n}); if(!f) return '';
     return "'"+n+"',"+(f[1]==='serif'?"Georgia,'Noto Serif',serif":f[1]==='mono'?"'Courier New',monospace":"Arial,'Noto Sans',sans-serif");
   }
-  if(id.indexOf('cu:')===0){const r=IC_FONT_MEM[id];return r?"'"+r.family+"',Arial,'Noto Sans',sans-serif":'';}
+  if(id.indexOf('cu:')===0){const r=icFontRec(id);return r?"'"+r.family+"',Arial,'Noto Sans',sans-serif":'';}
   return '';
 }
 // pre = @font-face / @import (must be at the very top of the stylesheet), post = rule that forces the font everywhere
@@ -11329,7 +11379,7 @@ function icFontParts(type){
   if(!id) return null;
   const st=icFontStack(id); if(!st) return null;
   let pre='';
-  const rec=IC_FONT_MEM[id];
+  const rec=icFontRec(id);
   if(rec&&rec.css) pre=rec.css+'\n';
   else if(id.indexOf('gf:')===0) pre="@import url('https://fonts.googleapis.com/css2?family="+icFontName(id).replace(/ /g,'+')+":wght@400;700&display=swap');\n";
   return {pre:pre,post:'\nhtml,body,body *{font-family:'+st+'!important}\n'};
@@ -12281,7 +12331,7 @@ function invoiceHTML(inv,copy='ORIGINAL FOR RECIPIENT',opts){
   let halfRate=gstRate?String(gstRate/2):'';
 
   const logoBlock=s.logo?`<div class="inv-logo has-img"><img src="${s.logo}" alt="Logo"></div>`:'';
-  const hasQr=planAllows('qr')&&!!s.upiId;
+  const hasQr=docPlanAllows('qr')&&!!s.upiId;
   const qrBlock=hasQr?`<div class="inv-qr">
         <img src="${qrImageUrl(upiLinkFor(inv),160)}" alt="UPI QR">
         <div>SCAN &amp; PAY<br>UPI / QR</div>
@@ -12443,7 +12493,7 @@ function invoiceHTML(inv,copy='ORIGINAL FOR RECIPIENT',opts){
         <div class="auth">Authorised Signatory</div>
       </div>
     </div>
-    ${currentPlan==='free'?'<div class="inv-credit" style="text-align:center;font-size:9px;color:#94a3b8;margin-top:6px">This Invoice Generated By IE Billing</div>':''}
+    ${docEffPlan()==='free'?'<div class="inv-credit" style="text-align:center;font-size:9px;color:#94a3b8;margin-top:6px">This Invoice Generated By IE Billing</div>':''}
     </div>`:pageNote;
 
   return `<div class="invoice">
@@ -19239,7 +19289,7 @@ function docHTML(d,copy){
   let bankBox='',qrBox='';
   if(d.type!=='challan'){
     const B=(typeof currentReminderBank==='function')?currentReminderBank():{bank:s.bankName||'',acc:s.accNo||'',ifsc:s.ifsc||'',pan:s.pan||'',set:!!s.bankName};
-    if((d.type==='proforma'||d.type==='quotation')&&s.upiId&&planAllows('qr')){
+    if((d.type==='proforma'||d.type==='quotation')&&s.upiId&&docPlanAllows('qr')){
       const amt=(d.type==='proforma'&&adv>0)?adv:t.grand;
       const link='upi://pay?pa='+encodeURIComponent(s.upiId)+'&pn='+encodeURIComponent(s.upiName||s.company||'Merchant')+'&am='+Number(amt).toFixed(2)+'&cu=INR&tn='+encodeURIComponent((T.label+' '+d.number).slice(0,50));
       qrBox=`<div class="box qrbox"><img src="${qrImageUrl(link,160)}" alt="UPI QR"><span>Scan &amp; pay via UPI<br>₹ ${money(amt)}</span></div>`;
@@ -19261,7 +19311,7 @@ function docHTML(d,copy){
   return `<section class="sheet" style="--acc:${acc}${imp};--gold:${gold}${imp}${extra}">
     ${header}${partiesHtml}${stripHtml}${subject}${table}
     <div class="end">${totalsHtml}${twoHtml}${signHtml}
-    <div class="foot">This is a computer-generated ${T.label.toLowerCase()}.${currentPlan==='free'?' This '+T.label+' Generated By IE Billing.':''}</div></div>
+    <div class="foot">This is a computer-generated ${T.label.toLowerCase()}.${docEffPlan()==='free'?' This '+T.label+' Generated By IE Billing.':''}</div></div>
   </section>`;
 }
 </script>
