@@ -7885,10 +7885,51 @@ function pf2Update(){
 </script>
 
 <!-- Settings -->
-<div id="settings" class="page hidden">
+<style id="st2-css">
+#settings.st2{--sa:#7c6cff;--sb:#a78bfa;--sg:#f5c451}
+#settings.st2 .st2-tools{position:sticky;top:0;z-index:6;padding:8px 0 6px;background:linear-gradient(var(--bg-dark,#05070d) 78%,transparent)}
+#settings.st2 .st2-search{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border-color)}
+#settings.st2 .st2-search input{flex:1;min-width:0;background:none;border:0;outline:0;box-shadow:none;font-size:15px;font-weight:600;color:var(--text-main);min-height:0;padding:0}
+#settings.st2 .st2-search:focus-within{border-color:var(--sb);box-shadow:0 0 0 3px rgba(124,108,255,.18)}
+#settings.st2 .st2-nav{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+#settings.st2 .st2-nav::-webkit-scrollbar{display:none}
+#settings.st2 .st2-chip{flex:none;height:38px;padding:0 15px;border-radius:99px;font-size:13px;font-weight:700;background:var(--bg-card);border:1px solid var(--border-color);color:var(--text-muted);cursor:pointer;min-height:0;margin:0;transition:background .2s,color .2s}
+#settings.st2 .st2-chip.on{background:linear-gradient(120deg,var(--sa),var(--sb));border-color:transparent;color:#fff;box-shadow:0 8px 20px rgba(124,108,255,.3)}
+#settings.st2 .st2-body{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+#settings.st2 .st2-body>.card{margin:0;border-radius:24px;padding:20px 18px;scroll-margin-top:130px;background:linear-gradient(165deg,rgba(124,108,255,.08),var(--bg-card) 52%);border:1px solid var(--border-color);position:relative;overflow:hidden}
+#settings.st2 .st2-body>.card::after{content:"";position:absolute;left:0;top:22px;width:3px;height:26px;border-radius:0 3px 3px 0;background:linear-gradient(var(--sa),var(--sb))}
+#settings.st2 .st2-body>.card[data-sec="pay"]::after{background:linear-gradient(#34d399,#22c1c3)}
+#settings.st2 .st2-body>.card[data-sec="docs"]::after{background:linear-gradient(var(--sg),#fb923c)}
+#settings.st2 .st2-body>.card[data-sec="tools"]::after{background:linear-gradient(#f472b6,var(--sb))}
+#settings.st2 .st2-body>.card[data-sec="privacy"]::after{background:linear-gradient(#60a5fa,var(--sa))}
+#settings.st2 .section-title{font-size:16px;font-weight:800;letter-spacing:-.01em}
+#settings.st2 .card label{font-size:12.5px;font-weight:600}
+#settings.st2 .card input:not([type=checkbox]):not([type=radio]):not([type=file]),#settings.st2 .card select{border-radius:14px}
+#settings.st2 .card input:focus{border-color:var(--sb)!important;box-shadow:0 0 0 3px rgba(124,108,255,.16)}
+#settings.st2 .card button[onclick="saveSettings()"]{display:none}
+#settings.st2 .st2-empty{text-align:center;padding:30px 10px;color:var(--text-muted);font-size:14px}
+#settings.st2 .st2-save{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(92vw,520px);transform:translate(-50%,140%);transition:transform .35s cubic-bezier(.3,.9,.3,1);z-index:60}
+#settings.st2 .st2-save.on{transform:translate(-50%,0)}
+#settings.st2 .st2-save .in{display:flex;align-items:center;gap:12px;padding:9px 9px 9px 18px;border-radius:20px;background:#182036;border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 40px rgba(0,0,0,.5);color:#f2f4fb}
+#settings.st2 .st2-save span{flex:1;font-size:13.5px;font-weight:600}
+#settings.st2 .st2-save button{height:44px;padding:0 20px;border-radius:14px;border:0;font-weight:700;color:#fff;background:linear-gradient(120deg,var(--sa),var(--sb));cursor:pointer;min-height:0;margin:0}
+@media (prefers-reduced-motion:reduce){#settings.st2 *{transition:none!important}}
+</style>
+<div id="settings" class="page hidden st2">
   <div class="top"><h1>Business Settings</h1></div>
-  <div class="card">
-    <div class="section-title">Company & Invoice Prefix Config</div>
+  <div class="st2-tools">
+    <div class="st2-search"><span aria-hidden="true">🔎</span><input id="st2Search" type="search" placeholder="Search settings (GSTIN, UPI, logo…)" autocomplete="off"></div>
+    <div class="st2-nav" id="st2Nav">
+      <button type="button" class="st2-chip on" data-go="business">🏢 Business</button>
+      <button type="button" class="st2-chip" data-go="docs">🧾 Documents</button>
+      <button type="button" class="st2-chip" data-go="pay">💳 Payments</button>
+      <button type="button" class="st2-chip" data-go="tools">✨ Smart tools</button>
+      <button type="button" class="st2-chip" data-go="privacy">🔐 Privacy</button>
+    </div>
+  </div>
+  <div class="st2-body" id="st2Body">
+  <div class="card" id="st-business" data-sec="business" style="order:10">
+    <div class="section-title">Business details</div>
     <div class="grid g3">
       <div><label>Company Name</label><input id="setCompany" value="ABC ENTERPRISES"></div>
       <div><label>Full Address</label><input id="setAddress" value="Plot No.1/10, Opp.Shri Nandkishor Vadiyalay Nr. Post Office ,GIDC Nandesari, Vadodara – 391340"></div>
@@ -7897,13 +7938,20 @@ function pf2Update(){
       <div><label>GSTIN</label><div style="display:flex;gap:6px;align-items:stretch"><input id="setGSTIN" value="24CNXPS9976F1ZU" oninput="gstinFieldCheck('setGSTIN')" style="text-transform:uppercase;flex:1;min-width:0"><button type="button" id="setGSTIN_vbtn" onclick="gstinVerifyUI('setGSTIN',null)" style="padding:0 14px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;min-height:38px">Verify</button></div><div id="setGSTIN_err" class="gst-msg"></div></div>
       <div><label>Phone Number</label><input id="setPhone" value="+91 9824063863 , +91 9426781409"></div>
       <div><label>Email Address</label><input id="setEmail" value="indianequipments09@gmail.com"></div>
+      </div>
+  </div>
+  <div class="card" id="st-docs" data-sec="docs" style="order:20">
+    <div class="section-title">Invoice numbering</div>
+    <div class="grid g3">
       <div><label>Invoice Prefix</label><input id="setPrefix" value="IE"></div>
       <div><label>Starting Index</label><input id="setStart" type="number" value="1"></div>
       <div><label>Financial Year (Auto)</label><input id="setFY" readonly style="opacity:0.75;cursor:not-allowed"></div>
     </div>
     <div style="margin-top:10px"><button class="btn muted" type="button" onclick="icOpenNumModal()">🔢 Document Numbering (sabhi documents ka format)</button></div>
     <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Financial Year ab khud-ba-khud device ki aaj ki date se set hoti hai — isko manually change karne ki zaroorat nahi. Jaise hi 1 April aayega, agla naya invoice khud naye FY (jaise IE/2027-28/1) se shuru ho jayega, purane invoices apni FY par hi rahenge.</p>
-    <div class="section-title" style="margin-top:18px">AI HSN (Gemini)</div>
+    </div>
+  <div class="card" id="st-tools" data-sec="tools" style="order:40">
+    <div class="section-title">AI HSN (Gemini)</div>
     <div>
       <label>Gemini API Key</label>
       <input id="setGeminiKey" type="password" placeholder="AIzaSy... yahan paste karo" autocomplete="off">
@@ -7911,7 +7959,7 @@ function pf2Update(){
     </div>
     <button class="btn success" style="margin-top:14px" onclick="saveSettings()">Save Configuration</button>
   </div>
-  <div class="card">
+  <div class="card" data-sec="pay" style="order:31">
     <div class="section-title">Auto Payment Reminder (Email)</div>
     <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;color:var(--text-main)"><input type="checkbox" id="setReminderEnabled" style="width:auto;min-height:auto"> Enable automatic email reminders</label>
     <div class="grid g2" style="margin-top:12px">
@@ -7920,7 +7968,7 @@ function pf2Update(){
     <p style="font-size:11px;color:var(--text-muted);margin-top:8px">Jab enable hoga, customer ko unke saved email pe reminder khud-ba-khud jayega: due date se itne din pehle ek baar, aur agar overdue ho jaye to roz ek baar. Ye background mein (server pe) chalta hai — app band ho ya phone off ho, tab bhi chalega. Customer ka Email address har invoice/customer profile me hona zaroori hai, warna reminder nahi ja payega.</p>
     <button class="btn success" style="margin-top:14px" onclick="saveSettings()">Save Configuration</button>
   </div>
-  <div class="card">
+  <div class="card" id="st-pay" data-sec="pay" style="order:30">
     <div class="section-title">UPI Payment (QR Code)</div>
     <div class="grid g2">
       <div><label>UPI ID (VPA)</label><input id="setUpiId" placeholder="e.g. yourname@okhdfcbank"></div>
@@ -7929,7 +7977,7 @@ function pf2Update(){
     <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Yeh UPI ID set karne ke baad, har Finalized invoice ke Payment screen pe uska apna QR code (bill ke exact balance amount ke saath) auto-generate hoga.</p>
     <button class="btn success" style="margin-top:14px" onclick="saveSettings()">Save Configuration</button>
   </div>
-  <div class="card">
+  <div class="card" data-sec="docs" style="order:21">
     <div class="section-title">🎨 Document Theme</div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:0">Ye theme Invoice, Quotation, Proforma, Delivery Challan, Purchase Bill aur Purchase Order — sabhi 6 documents pe apply hoga (Preview, Print/PDF, WhatsApp share — har jagah).</p>
     <div class="grid" style="gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
@@ -8007,11 +8055,11 @@ function pf2Update(){
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn success" onclick="applyDocTheme()">Apply Theme</button><button class="btn muted" type="button" onclick="icOpenColorModal()">🎨 Change Colour</button><button class="btn muted" type="button" onclick="icOpenFontModal()">🔤 Change Font</button></div>
   </div>
-  <div class="card">
+  <div class="card" data-sec="tools" style="order:41">
     <div class="section-title">💎 Inventory Premium</div>
     <div id="invPremiumBody"><p class="sub" style="margin:0">Loading…</p></div>
   </div>
-  <div class="card">
+  <div class="card" id="st-privacy" data-sec="privacy" style="order:50">
     <div class="section-title">Profile Visibility</div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:0">Ye control karta hai ki koi aur user tumhe "Find People" search mein dhoondh sakta hai ya nahi.</p>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:460px">
@@ -8040,7 +8088,7 @@ function pf2Update(){
       </label>
     </div>
   </div>
-  <div class="card">
+  <div class="card" data-sec="docs" style="order:22">
     <div class="section-title">Branding & Assets</div>
     <div class="grid g3">
       <div><label>Company Logo</label><input type="file" accept="image/*" onchange="loadImage(this,'logo')"></div>
@@ -8048,12 +8096,39 @@ function pf2Update(){
     </div>
     <p style="font-size:11px;color:var(--text-muted);margin-top:6px">Payment QR ab manually upload nahi karna — UPI Payment card me UPI ID daalne se har invoice ka QR khud-ba-khud (sahi amount ke saath) ban jayega.</p>
   </div>
-  <div class="card" style="border-color:rgba(244,63,94,.35)">
+  <div class="card" style="border-color:rgba(244,63,94,.35)" data-sec="privacy" style="order:60">
     <div class="section-title" style="color:#fb7185">⚠️ Danger Zone</div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:0">Account delete karne par tumhari saari companies, invoices, customers, inventory — sab HAMESHA KE LIYE mit jayega. Isi Gmail se dobara login karoge to bilkul naye account jaisa fresh start milega. Purane chats me tumhara naam automatically "Deleted account 🚫" dikhega.</p>
     <button class="btn danger" id="deleteAccountBtn" onclick="openDeleteAccountConfirm()">🚫 Delete Account Permanently</button>
   </div>
+  </div>
+  <div class="st2-empty" id="st2Empty" style="display:none">Koi setting nahi mili. Dusra shabd try karo.</div>
+  <div class="st2-save" id="st2Save"><div class="in"><span>Unsaved changes</span><button type="button" id="st2Go">Save settings</button></div></div>
 </div>
+<script id="st2-js">
+(function(){
+  var root=document.getElementById('settings');if(!root)return;
+  var q=function(i){return document.getElementById(i)};
+  var chips=root.querySelectorAll('.st2-chip'),cards=root.querySelectorAll('.st2-body>.card');
+  chips.forEach(function(b){b.addEventListener('click',function(){
+    var t=q('st-'+b.dataset.go);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+    chips.forEach(function(x){x.classList.toggle('on',x===b)});
+  })});
+  var s=q('st2Search');
+  if(s)s.addEventListener('input',function(){
+    var v=s.value.trim().toLowerCase(),n=0;
+    cards.forEach(function(c){var ok=!v||(c.textContent||'').toLowerCase().indexOf(v)>-1||((c.querySelector('input[placeholder]')||{}).placeholder||'').toLowerCase().indexOf(v)>-1;c.style.display=ok?'':'none';if(ok)n++});
+    q('st2Empty').style.display=(v&&!n)?'block':'none';
+    q('st2Nav').style.display=v?'none':'';
+  });
+  var bar=q('st2Save');
+  function dirty(e){var t=e.target;if(t&&t.id&&/^set/.test(t.id))bar.classList.add('on')}
+  root.addEventListener('input',dirty);root.addEventListener('change',dirty);
+  q('st2Go').addEventListener('click',function(){
+    Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(function(){bar.classList.remove('on')},function(){});
+  });
+})();
+</script>
 
 <!-- Backup -->
 <div id="backup" class="page hidden">
@@ -19705,6 +19780,8 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
 #ieSpot .sp-keys{display:flex;gap:14px;flex-wrap:wrap}
 @media(max-width:640px){#ieSpot{padding:6px}#ieSpot .sp-panel{max-height:94vh;border-radius:18px}#ieSpot .sp-keys{display:none}#ieSpot .sp-r b{font-size:12px}#ieSpot .sp-sc{display:none!important}}
 @media (prefers-reduced-motion:reduce){#ieSpot,#ieSpot .sp-panel{animation:none!important}}
+#ieSpot .sp-head>kbd{cursor:pointer;-webkit-tap-highlight-color:transparent}
+@media(max-width:640px){#ieSpot .sp-head>kbd{padding:11px 13px;font-size:12px;border-radius:10px;min-width:44px;text-align:center}}
 @media print{#ieSpot{display:none!important}}
 .sp-flash{animation:spFlash 2.2s ease}
 @keyframes spFlash{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,0);background-color:transparent}12%,60%{box-shadow:0 0 0 4px rgba(99,102,241,.45),0 0 28px rgba(99,102,241,.35);background-color:rgba(99,102,241,.10)}}
@@ -20020,6 +20097,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
     document.body.appendChild(ov);
     inp=ov.querySelector('.sp-in'); listEl=ov.querySelector('.sp-list'); chipsEl=ov.querySelector('.sp-chips'); clrEl=ov.querySelector('.sp-clr'); footN=ov.querySelector('.sp-n');
     ov.addEventListener('mousedown',function(e){ if(e.target===ov) close(); });
+    ov.addEventListener('click',function(e){ var k=e.target.closest&&e.target.closest('.sp-head>kbd'); if(k){ e.preventDefault(); close(); } });
     inp.addEventListener('input',function(){ run(); });
     clrEl.addEventListener('click',function(){ inp.value=''; type='all'; run(); inp.focus(); });
     chipsEl.addEventListener('click',function(e){ var b=e.target.closest('.sp-chip'); if(!b) return; type=b.getAttribute('data-type'); var m=/^\s*[a-z]{1,10}:\s*/i.exec(inp.value); if(m&&PFX[m[0].replace(/[:\s]/g,'').toLowerCase()]) inp.value=inp.value.slice(m[0].length); run(); inp.focus(); });
@@ -20042,18 +20120,22 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
       else if(k==='Backspace'&&!inp.value&&type!=='all'){ type='all'; run(); }
     });
   }
+  var spPushed=false;
   function open(seed){
     var a=document.getElementById('authOverlay'); if(a&&!a.classList.contains('hidden')) return;
     var c=document.getElementById('companyOverlay'); if(c&&!c.classList.contains('hidden')) return;
     ensure(); if(isOpen){ inp.focus(); inp.select(); return; }
     recs=build(); type='all'; inp.value=seed||''; isOpen=true;
+    try{ history.pushState({ieSpot:1},''); spPushed=true; }catch(e){}
     ov.classList.add('on'); ov.setAttribute('aria-hidden','false'); root.classList.add('sp-open'); document.body.style.overflow='hidden';
     run(); setTimeout(function(){ inp.focus(); var l=inp.value.length; try{ inp.setSelectionRange(l,l); }catch(e){} },0); inp.focus();
   }
   function close(){
     if(!isOpen) return; isOpen=false; ov.classList.remove('on'); ov.setAttribute('aria-hidden','true'); root.classList.remove('sp-open'); document.body.style.overflow=''; try{ inp.blur(); }catch(e){}
+    if(spPushed){ spPushed=false; setTimeout(function(){ try{ if(history.state&&history.state.ieSpot) history.back(); }catch(e){} },0); }
   }
   window.ieSpot={open:open,close:close};
+  window.addEventListener('popstate',function(){ if(isOpen){ spPushed=false; close(); } });
 
   function hook(){
     var ss=document.getElementById('sbSearch'); if(!ss||ss.dataset.spHook) return; ss.dataset.spHook='1';
