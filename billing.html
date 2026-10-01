@@ -8580,7 +8580,7 @@ function pf2Update(){
        <option value="all">All</option>
        <option value="purchase">Purchase Only</option>
        <option value="sale">Sale Only</option>
-       <option value="manual">No Purchase Data</option>
+       <option value="manual">Manual Stock</option>
      </select>
    </div>
    <div style="flex:0 1 170px;min-width:150px">
@@ -8612,7 +8612,6 @@ function pf2Update(){
    <table><thead><tr><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th class="right">Qty In</th><th class="right">Qty Out</th><th class="right">Purchase Rate</th><th class="right">Sales Rate</th><th class="right">Balance Stock</th><th class="right">Margin</th></tr></thead>
    <tbody id="itemHistBody"></tbody></table>
  </div>
- <div class="ih-cards" id="itemHistCards"></div>
 
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
    <button class="btn muted" onclick="exportItemHistoryCSV()">Export Excel/CSV</button>
@@ -14783,7 +14782,7 @@ function renderItemHistoryDetail(){
   body.innerHTML=rows.length?rows.map(r=>{
     const isIn=r.type==='IN';
     const noPB=r.source==='manual';
-    const refLabel=isIn?(noPB?'<span style="color:#fbbf24">No Purchase Data</span>':`<button class="btn muted" style="padding:5px 8px;min-height:30px" onclick="openPBFromHistory('${r.refId}')">${esc(r.ref)}</button>`)
+    const refLabel=isIn?(noPB?'<span style="color:#fbbf24">Manual Stock</span>':`<button class="btn muted" style="padding:5px 8px;min-height:30px" onclick="openPBFromHistory('${r.refId}')">${esc(r.ref)}</button>`)
                         :`<button class="btn muted" style="padding:5px 8px;min-height:30px" onclick="openInvoiceFromHistory('${r.refId}')">${esc(r.ref)}</button>`;
     const marginCell=isIn?'—':(r.margin==null?'<span style="color:var(--text-muted)">N/A (no cost data)</span>':`<span style="color:${r.margin<0?'#fb7185':'#34d399'}">₹ ${money(r.margin)}${r.marginPct!=null?` (${r.marginPct}%)`:''}</span>`);
     return `<tr style="${!isIn&&r.margin!=null&&r.margin<0?'background:rgba(251,113,133,.08)':''}">
@@ -14799,19 +14798,6 @@ function renderItemHistoryDetail(){
       <td class="right">${marginCell}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="10" class="center">No records match the current filters.</td></tr>';
-  const cards=id('itemHistCards');
-  if(cards) cards.innerHTML=rows.length?rows.map(r=>{
-    const isIn=r.type==='IN', noPB=r.source==='manual', pr=ihPRate(r), sr=ihSRate(r);
-    const ref=isIn?(noPB?'Manual Stock':esc(r.ref)):esc(r.ref);
-    const click=isIn?(noPB?'':`onclick="openPBFromHistory('${r.refId}')"`):`onclick="openInvoiceFromHistory('${r.refId}')"`;
-    const perQty=(!isIn&&r.margin!=null&&r.costedQty>0)?` · ₹ ${money(r.margin/r.costedQty)}/qty`:'';
-    const mg=isIn?'':(r.margin==null?'<span style="color:var(--text-muted)">Margin: N/A (no cost data)</span>':`<span style="color:${r.margin<0?'#fb7185':'#34d399'}">Margin: ₹ ${money(r.margin)}${r.marginPct!=null?' ('+r.marginPct+'%)':''}${perQty}</span>`);
-    return `<div class="ih-card" ${click}>
-      <div class="ih-ch"><span class="badge ${isIn?'final':'archived'}">${isIn?(noPB?'Manual':'Purchase'):'Sale'}</span><b>${ref}</b><span class="ih-d">${fmtDateShort(r.date)}</span></div>
-      <div class="ih-p">${esc(r.party&&r.party!=='—'?r.party:'')}</div>
-      <div class="ih-g"><div><i>${isIn?'Qty In':'Qty Out'}</i>${money(r.qty)}</div><div><i>Purchase Rate</i>${pr!=null?'₹ '+money(pr):'—'}</div><div><i>Sales Rate</i>${sr!=null?'₹ '+money(sr):'—'}</div><div><i>Balance</i><b>${money(r.balance)}</b></div></div>
-      ${mg?`<div class="ih-m">${mg}</div>`:''}</div>`;
-  }).join(''):'<div class="ih-card" style="text-align:center">No records match the current filters.</div>';
 }
 
 function openInvoiceFromHistory(invId){
@@ -21358,14 +21344,6 @@ document.addEventListener('click',function(e){
 .cmb-btn[disabled]{opacity:.4;cursor:not-allowed}
 [data-theme="light"] .cmb-btn{border-color:rgba(15,23,42,.18)}
 #customerModal,#vendorModal{z-index:120}
-.ih-cards{display:none}
-.ih-card{border:1px solid var(--border-color);background:var(--bg-card-hover);border-radius:14px;padding:12px;margin-bottom:10px}
-.ih-ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ih-d{margin-left:auto;font-size:12px;color:var(--text-muted)}
-.ih-p{font-size:12px;color:var(--text-muted);margin:4px 0 8px}
-.ih-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ih-g div{font-size:14px}
-.ih-g i{display:block;font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
-.ih-m{margin-top:8px;font-size:13px;font-weight:700}
-@media(max-width:760px){#itemHistoryModal .table-wrap{display:none}.ih-cards{display:block}}
 </style>
 <script id="combo-pick-js">
 (function(){
