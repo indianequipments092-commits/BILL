@@ -21163,5 +21163,64 @@ document.addEventListener('click',function(e){
   if(t&&t.closest&&t.closest('#chatModal .cpx-hd')&&!t.closest('#chatHeaderName')) chatOpenProfile();
 });
 </script>
+
+<!-- ===== Item picker: keyboard navigation (Arrow Up/Down, Enter, Tab, Esc) + dropdown overlap fix =====
+     Invoice, Purchase Order, Purchase Bill aur Quotation/Challan/Proforma — sabke item pickers ke liye ek hi handler. -->
+<style id="item-pick-kb-css">
+.item-pick-opt.active{background:rgba(99,102,241,.34);box-shadow:inset 3px 0 0 #818cf8}
+/* .card me backdrop-filter hai (alag stacking context) — isliye neeche wala card dropdown ke upar aa jata tha */
+.card:focus-within{position:relative;z-index:40}
+</style>
+<script id="item-pick-kb-js">
+(function(){
+  var PICK_CLS=['po-item-pick-input','pb-item-pick-input','doc-item-pick-input'];
+  function ddOf(inp){ var w=inp.closest('.item-pick-wrap'); return w&&w.querySelector('.item-pick-dropdown'); }
+  function optsOf(d){ return [].slice.call(d.querySelectorAll('.item-pick-opt')); }
+  function activeIdx(opts){ for(var i=0;i<opts.length;i++) if(opts[i].classList.contains('active')) return i; return -1; }
+  function setActive(opts,n){
+    opts.forEach(function(o){ o.classList.remove('active'); });
+    if(n>=0&&opts[n]){ opts[n].classList.add('active'); try{ opts[n].scrollIntoView({block:'nearest'}); }catch(e){} }
+  }
+  function choose(inp,opt){
+    var row=inp.getAttribute('data-row');
+    var scope=inp.closest('.card')||document;
+    var cls=PICK_CLS.filter(function(c){return inp.classList.contains(c);})[0];
+    var sel=cls?('.'+cls):('.item-pick-input:not(.po-item-pick-input):not(.pb-item-pick-input):not(.doc-item-pick-input)');
+    // options ke inline onmousedown (itemPickChoose / poItemPickChoose / ...) ko hi chalate hain
+    opt.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+    // row re-render hone ke baad focus Qty par le jao taaki typing continue rahe
+    setTimeout(function(){
+      var el=scope.querySelector(sel+'[data-row="'+row+'"]'); if(!el) return;
+      var card=el.closest('.item-card'); var q=card&&card.querySelector('input[type=number]');
+      if(q){ q.focus(); try{ q.select(); }catch(e){} }
+    },30);
+  }
+  document.addEventListener('keydown',function(e){
+    var inp=e.target;
+    if(!inp||!inp.classList||!inp.classList.contains('item-pick-input')) return;
+    if(e.ctrlKey||e.altKey||e.metaKey) return;
+    var d=ddOf(inp); if(!d) return;
+    var k=e.key, open=d.classList.contains('show'), opts=open?optsOf(d):[], cur=activeIdx(opts);
+
+    if(k==='ArrowDown'||k==='ArrowUp'){
+      e.preventDefault(); e.stopPropagation();
+      if(!open){ inp.dispatchEvent(new Event('input',{bubbles:true})); open=d.classList.contains('show'); opts=open?optsOf(d):[]; cur=-1; }
+      if(!opts.length||!opts[0].onmousedown&&!opts[0].getAttribute('onmousedown')) return; // "koi item nahi" wali line select nahi hoti
+      var n=k==='ArrowDown'?(cur+1)%opts.length:(cur<=0?opts.length-1:cur-1);
+      setActive(opts,n);
+    } else if(k==='Enter'||k==='Tab'){
+      if(!open||!opts.length||e.shiftKey&&k==='Tab') return;
+      var pick=cur>=0?opts[cur]:null;
+      // Enter par bina arrow dabaye pehla match le lo (sirf inventory-only pickers me; Quotation/Challan me custom naam allowed hai)
+      if(!pick&&k==='Enter'&&!inp.classList.contains('doc-item-pick-input')&&opts[0].getAttribute('onmousedown')) pick=opts[0];
+      if(!pick){ if(k==='Enter'){ d.classList.remove('show'); } return; }
+      e.preventDefault(); e.stopPropagation();
+      choose(inp,pick);
+    } else if(k==='Escape'){
+      if(open){ e.preventDefault(); e.stopPropagation(); d.classList.remove('show'); }
+    }
+  },true);
+})();
+</script>
 </body>
 </html>
