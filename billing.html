@@ -14723,7 +14723,7 @@ function renderItemHistoryModal(){
   const it=d.item;
   id('itemHistTitle').textContent=it.name||'Item';
   id('itemHistChips').innerHTML=[
-    it.itemCode?`<span class="inv-chip-mini">Code: <b>${esc(it.itemCode)}</b></span>`:'',
+    `<span class="inv-chip-mini">Code: <b>${(it.itemCode&&String(it.itemCode).trim())?esc(it.itemCode):'-'}</b></span>`,
     it.hsn?`<span class="inv-chip-mini">HSN: <b>${esc(it.hsn)}</b></span>`:'',
     it.unit?`<span class="inv-chip-mini">Unit: <b>${esc(it.unit)}</b></span>`:'',
     d.manualQty>0.0005?`<span class="inv-chip-mini" style="color:#fbbf24">⚠️ ${d.manualQty} qty bina Purchase Bill ke (No Purchase Data)</span>`:''
@@ -14829,23 +14829,24 @@ function openPBFromHistory(pbId){
    (filters ignore — A to Z, oldest se newest). Landscape A4, same print-window pattern. */
 function buildItemHistoryReportDocument(){
   const d=itemHistoryData, it=d.item, s=db.settings||{};
-  const logoHtml=s.logo?`<img src="${s.logo}" alt="Logo" style="max-height:44px;max-width:80px;object-fit:contain">`:'';
+  const logoHtml=s.logo?`<div class="logo"><img src="${s.logo}" alt="Logo"></div>`:'';
   const rows=d.ledger.slice();
   const P=v=>v!=null?'₹ '+money(v):'—';
-  const mc=v=>v==null?'#475569':(v<0?'#b91c1c':'#0a7a4c');
+  const mc=v=>v==null?'#64748b':(v<0?'#b91c1c':'#047857');
+  const code=(it.itemCode&&String(it.itemCode).trim())?esc(it.itemCode):'-';
   let inQty=0,outQty=0;
   const body=rows.map((r,i)=>{
     const isIn=r.type==='IN', noPB=r.source==='manual';
     if(isIn) inQty+=r.qty; else outQty+=r.qty;
     const um=ihUnitMargin(r), up=ihUnitMarginPct(r);
-    const umCell=!isIn?(um==null?'N/A':`<span style="color:${mc(um)}">₹ ${money(um)}${up!=null?' ('+up+'%)':''}</span>`):'—';
-    const tmCell=isIn?'—':(r.margin==null?'N/A':`<span style="color:${mc(r.margin)}">₹ ${money(r.margin)}${r.marginPct!=null?' ('+r.marginPct+'%)':''}</span>`);
+    const umCell=!isIn?(um==null?'<span class="na">N/A</span>':`<b style="color:${mc(um)}">₹ ${money(um)}</b>${up!=null?`<div class="pc" style="color:${mc(um)}">${up}%</div>`:''}`):'—';
+    const tmCell=isIn?'—':(r.margin==null?'<span class="na">N/A</span>':`<b style="color:${mc(r.margin)}">₹ ${money(r.margin)}</b>${r.marginPct!=null?`<div class="pc" style="color:${mc(r.margin)}">${r.marginPct}%</div>`:''}`);
+    const badge=isIn?(noPB?'<span class="bd bm">MANUAL</span>':'<span class="bd bp">PURCHASE</span>'):'<span class="bd bs">SALE</span>';
     return `<tr>
-      <td class="c">${i+1}</td>
-      <td class="c">${isIn?(noPB?'Manual':'Purchase'):'Sale'}</td>
+      <td class="c mu">${i+1}</td>
+      <td class="c">${badge}</td>
       <td class="c">${r.date?fmtDateShort(r.date):'—'}</td>
-      <td>${noPB?'Manual Stock':esc(r.ref||'—')}</td>
-      <td>${esc(r.party||'—')}</td>
+      <td><b>${noPB?'Manual Stock':esc(r.ref||'—')}</b><div class="pc">${esc(r.party&&r.party!=='—'?r.party:(noPB?'Opening / manual entry':'—'))}</div></td>
       <td class="r">${isIn?money(r.qty):'—'}</td>
       <td class="r">${isIn?'—':money(r.qty)}</td>
       <td class="r">${P(ihPRate(r))}</td>
@@ -14855,45 +14856,55 @@ function buildItemHistoryReportDocument(){
       <td class="r">${tmCell}</td>
     </tr>`;
   }).join('');
-  const avgBuy=d.totalPurchasedQty+d.manualQty>0.0005?d.totalPurchaseValue/(d.totalPurchasedQty+d.manualQty):null;
+  const totQ=d.totalPurchasedQty+d.manualQty;
+  const avgBuy=totQ>0.0005?d.totalPurchaseValue/totQ:null;
   const avgSell=d.totalSoldQty>0.0005?d.totalSaleValue/d.totalSoldQty:null;
-  const stat=(l,v,c)=>`<div class="st"><div class="sl">${l}</div><div class="sv" style="${c?'color:'+c:''}">${v}</div></div>`;
+  const avgM=(avgBuy!=null&&avgSell!=null)?avgSell-avgBuy:null;
+  const mini=(l,v,c)=>`<div class="mc"><div class="ml">${l}</div><div class="mv" style="${c?'color:'+c:''}">${v}</div></div>`;
   return `<div class="rep">
-    <div class="top">
-      <div class="brand">${logoHtml}<div><div class="co">${esc(s.company||'')}</div><div class="sm">${esc((s.address||'').split('\n')[0]||'')}${s.gstin?' • GSTIN: '+esc(s.gstin):''}${s.phone?' • Ph: '+esc(s.phone):''}</div></div></div>
-      <div class="sm" style="text-align:right">Generated ${esc(new Date().toLocaleDateString('en-IN'))}<br>${rows.length} ledger record(s)</div>
+    <div class="hdr">
+      <div class="hl">${logoHtml}<div><div class="co">${esc(s.company||'')}</div><div class="ad">${esc((s.address||'').split('\n')[0]||'')}</div><div class="ad">${s.gstin?'GSTIN: '+esc(s.gstin):''}${s.gstin&&s.phone?'  •  ':''}${s.phone?'Ph: '+esc(s.phone):''}</div></div></div>
+      <div class="hr"><div class="rt">ITEM STOCK LEDGER</div><div class="rs">Generated ${esc(new Date().toLocaleDateString('en-IN'))}</div><div class="rs">${rows.length} ledger record(s)</div></div>
     </div>
-    <div class="title">ITEM STOCK LEDGER REPORT</div>
-    <div class="iname">${esc(it.name||'Item')}</div>
-    <div class="chips">
-      ${it.itemCode?`<span><b>Code:</b> ${esc(it.itemCode)}</span>`:''}
-      ${it.hsn?`<span><b>HSN:</b> ${esc(it.hsn)}</span>`:''}
-      ${it.unit?`<span><b>Unit:</b> ${esc(it.unit)}</span>`:''}
-      ${it.size?`<span><b>Size:</b> ${esc(it.size)}</span>`:''}
-      ${it.rate?`<span><b>Current Sales Rate:</b> ₹ ${money(it.rate)}</span>`:''}
-      ${it.purchaseRate?`<span><b>Current Purchase Rate:</b> ₹ ${money(it.purchaseRate)}</span>`:''}
+    <div class="gold"></div>
+
+    <div class="itemrow">
+      <div>
+        <div class="iname">${esc(it.name||'Item')}</div>
+        <div class="chips">
+          <span><b>Item Code</b> ${code}</span>
+          <span><b>HSN</b> ${esc(it.hsn||'-')}</span>
+          <span><b>Unit</b> ${esc(it.unit||'-')}</span>
+          ${it.size?`<span><b>Size</b> ${esc(it.size)}</span>`:''}
+        </div>
+      </div>
     </div>
     ${d.manualQty>0.0005?`<div class="warn">⚠ ${d.manualQty} qty bina Purchase Bill ke (No Purchase Data)</div>`:''}
-    <div class="stats">
-      ${stat('CURRENT STOCK (computed)',money(d.computedStock),d.computedStock<=0?'#b91c1c':'#0a7a4c')}
-      ${stat('TOTAL PURCHASED (incl. manual)',money(d.totalPurchasedQty+d.manualQty))}
-      ${stat('PURCHASED VIA BILLS',money(d.totalPurchasedQty))}
-      ${stat('LIFETIME MANUAL STOCK',money(d.manualQty),'#b45309')}
-      ${stat('TOTAL SOLD',money(d.totalSoldQty))}
-      ${stat('LIFETIME MARGIN','₹ '+money(d.totalMargin)+(d.totalMarginPct!=null?' ('+d.totalMarginPct+'%)':''),mc(d.totalMargin))}
-      ${stat('PURCHASE VALUE','₹ '+money(d.totalPurchaseValue))}
-      ${stat('SALE VALUE','₹ '+money(d.totalSaleValue))}
-      ${stat('AVG PURCHASE RATE',P(avgBuy))}
-      ${stat('AVG SALES RATE',P(avgSell))}
-      ${stat('AVG MARGIN / UNIT',avgBuy!=null&&avgSell!=null?'₹ '+money(avgSell-avgBuy):'—',avgBuy!=null&&avgSell!=null?mc(avgSell-avgBuy):'')}
+
+    <div class="hero">
+      <div class="hc h1"><div class="hl2">CURRENT STOCK</div><div class="hv" style="color:${d.computedStock<=0?'#fca5a5':'#6ee7b7'}">${money(d.computedStock)}</div><div class="hs">${esc(it.unit||'')} • computed</div></div>
+      <div class="hc h2"><div class="hl2">LIFETIME MARGIN</div><div class="hv" style="color:${d.totalMargin<0?'#fca5a5':'#6ee7b7'}">₹ ${money(d.totalMargin)}</div><div class="hs">${d.totalMarginPct!=null?d.totalMarginPct+'% on cost':'—'}</div></div>
+      <div class="hc h3"><div class="hl2">SALE VALUE</div><div class="hv">₹ ${money(d.totalSaleValue)}</div><div class="hs">${money(d.totalSoldQty)} ${esc(it.unit||'')} sold</div></div>
     </div>
-    <div class="sec">Stock Ledger — Purchase (kaha se aaya) &amp; Sale (kaha gaya)</div>
+
+    <div class="grid">
+      ${mini('TOTAL PURCHASED (incl. manual)',money(totQ))}
+      ${mini('PURCHASED VIA BILLS',money(d.totalPurchasedQty))}
+      ${mini('LIFETIME MANUAL STOCK',money(d.manualQty),'#b45309')}
+      ${mini('TOTAL SOLD',money(d.totalSoldQty))}
+      ${mini('PURCHASE VALUE','₹ '+money(d.totalPurchaseValue))}
+      ${mini('AVG PURCHASE RATE',P(avgBuy))}
+      ${mini('AVG SALES RATE',P(avgSell))}
+      ${mini('AVG MARGIN / UNIT',avgM!=null?'₹ '+money(avgM):'—',avgM!=null?mc(avgM):'')}
+    </div>
+
+    <div class="sec"><span>Stock Ledger</span> Purchase (kaha se aaya) &amp; Sale (kaha gaya)</div>
     <table>
-      <thead><tr><th style="width:26px">#</th><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th>Qty In</th><th>Qty Out</th><th>Purchase Rate</th><th>Sales Rate</th><th>Margin / Unit</th><th>Balance Stock</th><th>Total Margin</th></tr></thead>
-      <tbody>${body||'<tr><td colspan="12" class="c">No records.</td></tr>'}</tbody>
-      <tfoot><tr><td colspan="5" class="r"><b>TOTAL</b></td><td class="r"><b>${money(inQty)}</b></td><td class="r"><b>${money(outQty)}</b></td><td></td><td></td><td></td><td class="r"><b>${money(d.computedStock)}</b></td><td class="r"><b style="color:${mc(d.totalMargin)}">₹ ${money(d.totalMargin)}</b></td></tr></tfoot>
+      <thead><tr><th style="width:22px">#</th><th style="width:54px">Type</th><th style="width:58px">Date</th><th>Bill / Party</th><th style="width:44px">Qty In</th><th style="width:44px">Qty Out</th><th style="width:60px">Purchase Rate</th><th style="width:60px">Sales Rate</th><th style="width:66px">Margin / Unit</th><th style="width:48px">Balance</th><th style="width:78px">Total Margin</th></tr></thead>
+      <tbody>${body||'<tr><td colspan="11" class="c">No records.</td></tr>'}</tbody>
+      <tfoot><tr><td colspan="4" class="r">TOTAL</td><td class="r">${money(inQty)}</td><td class="r">${money(outQty)}</td><td></td><td></td><td></td><td class="r">${money(d.computedStock)}</td><td class="r" style="color:${mc(d.totalMargin)}">₹ ${money(d.totalMargin)}</td></tr></tfoot>
     </table>
-    <div class="foot">${esc(s.company||'IE BILLING')} — Item Stock Ledger Report • Margin = (Sales Rate − FIFO Purchase Rate) × Qty</div>
+    <div class="foot">Margin = (Sales Rate − FIFO Purchase Rate) × Qty &nbsp;•&nbsp; ${esc(s.company||'IE BILLING')}</div>
   </div>`;
 }
 function exportItemHistoryPDF(){
@@ -14901,22 +14912,41 @@ function exportItemHistoryPDF(){
   if(!d){alert('Pehle koi item kholo.');return;}
   const w=window.open('','_blank');
   if(!w){alert('Popup blocked. Please allow popups.');return;}
-  const css=`@page{size:A4 landscape;margin:8mm}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e3a5f;padding-bottom:8px}
-.brand{display:flex;gap:10px;align-items:center}.co{font-size:16px;font-weight:800;color:#1e3a5f}.sm{font-size:9px;color:#475569}
-.title{margin-top:10px;background:#1e3a5f;color:#fff;text-align:center;font-weight:800;letter-spacing:1px;padding:6px;font-size:12px}
-.iname{font-size:20px;font-weight:800;margin:10px 0 4px}
-.chips span{display:inline-block;border:1px solid #b9c4d0;border-radius:12px;padding:2px 9px;margin:0 6px 4px 0;font-size:9.5px;background:#f0f4f8}
-.warn{margin:4px 0;padding:5px 9px;border:1px solid #f59e0b;background:#fffbeb;color:#b45309;font-weight:700;border-radius:6px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
-.st{border:1px solid #b9c4d0;border-radius:6px;padding:6px 8px;background:#f8fafc;break-inside:avoid}.sl{font-size:8px;color:#475569;font-weight:700}.sv{font-size:14px;font-weight:800;margin-top:2px}
-.sec{font-weight:800;color:#1e3a5f;margin:10px 0 5px;font-size:11px}
-table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;border:1px solid #1e3a5f;padding:5px 4px;font-size:9px}
-td{border:1px solid #b9c4d0;padding:4px;font-size:9px}tbody tr:nth-child(even){background:#f0f4f8}
-tr{break-inside:avoid}thead{display:table-header-group}tfoot td{background:#e2e8f0}
-.c{text-align:center}.r{text-align:right}.foot{margin-top:8px;text-align:center;font-size:8.5px;color:#64748b}`;
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Item Ledger - ${esc(d.item.name||'Item')}</title><style>${css}</style></head><body>${buildItemHistoryReportDocument()}</body></html>`);
+  const navy='#0f2a4a', gold='#b8893b';
+  const css=`@page{size:A4 portrait;margin:8mm 8mm 12mm 8mm;@bottom-center{content:"Page " counter(page) " of " counter(pages);font-size:9px;color:#64748b;font-family:Arial,sans-serif}}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#0f172a;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.hdr{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,${navy},#1d4373);color:#fff;padding:16px 18px;border-radius:10px 10px 0 0}
+.hl{display:flex;align-items:center;gap:12px}
+.logo{width:54px;height:54px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:4px}.logo img{max-width:100%;max-height:100%;object-fit:contain}
+.co{font-size:19px;font-weight:800;letter-spacing:.3px}.ad{font-size:10.5px;color:#cbd5e1;margin-top:2px}
+.hr{text-align:right}.rt{font-size:15px;font-weight:800;letter-spacing:2px;color:#f3d9a4}.rs{font-size:10.5px;color:#cbd5e1;margin-top:3px}
+.gold{height:4px;background:linear-gradient(90deg,${gold},#e7c987,${gold});border-radius:0 0 4px 4px}
+.iname{font-size:28px;font-weight:800;color:${navy};margin:16px 0 8px;letter-spacing:.2px}
+.chips span{display:inline-block;border:1px solid #d6c08f;background:#fbf6ea;color:#5b4413;border-radius:20px;padding:4px 12px;margin:0 8px 6px 0;font-size:11.5px}
+.chips b{color:${gold};font-size:9.5px;letter-spacing:.8px;margin-right:6px;text-transform:uppercase}
+.warn{margin:6px 0 4px;padding:8px 12px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;font-weight:700;border-radius:8px;font-size:11.5px}
+.hero{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0 10px}
+.hc{border-radius:12px;padding:14px 16px;color:#fff;break-inside:avoid;border-bottom:3px solid ${gold}}
+.h1{background:linear-gradient(135deg,#0f2a4a,#1d4373)}.h2{background:linear-gradient(135deg,#0b3b34,#0f5a4d)}.h3{background:linear-gradient(135deg,#2b2a5c,#40408a)}
+.hl2{font-size:10px;letter-spacing:1.4px;color:#cbd5e1;font-weight:700}.hv{font-size:25px;font-weight:800;margin:6px 0 2px}.hs{font-size:10.5px;color:#cbd5e1}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+.mc{border:1px solid #e2e8f0;border-left:3px solid ${gold};border-radius:8px;padding:8px 10px;background:#f8fafc;break-inside:avoid}
+.ml{font-size:8.5px;letter-spacing:.7px;color:#64748b;font-weight:700}.mv{font-size:15px;font-weight:800;margin-top:3px;color:${navy}}
+.sec{margin:16px 0 8px;font-size:12px;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:6px}.sec span{font-size:15px;font-weight:800;color:${navy};margin-right:8px}
+table{width:100%;border-collapse:collapse;table-layout:auto}
+thead{display:table-header-group}tfoot{display:table-footer-group}
+th{background:${navy};color:#fff;padding:8px 5px;font-size:9.5px;letter-spacing:.4px;text-align:center;font-weight:700}
+td{padding:7px 5px;font-size:10.5px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+tbody tr:nth-child(even) td{background:#f8fafc}tr{break-inside:avoid}
+tfoot td{background:#eef2f7;font-weight:800;border-top:2px solid ${navy};font-size:11px;padding:9px 5px}
+.c{text-align:center}.r{text-align:right}.mu{color:#94a3b8}.na{color:#94a3b8;font-size:9.5px}
+.pc{font-size:9px;color:#64748b;margin-top:1px}
+.bd{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:800;letter-spacing:.5px}
+.bp{background:#dbeafe;color:#1e40af}.bs{background:#fee2e2;color:#991b1b}.bm{background:#fef3c7;color:#92400e}
+.foot{margin-top:12px;text-align:center;font-size:9.5px;color:#94a3b8}`;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Item Ledger - ${esc(d.item.name||'Item')}</title><style>${css}</style></head><body>${buildItemHistoryReportDocument()}</body></html>`);
   w.document.close();
   setTimeout(()=>{ try{w.focus();w.print();}catch(e){} },600);
 }
