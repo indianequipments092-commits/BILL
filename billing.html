@@ -11051,10 +11051,23 @@ function rowStockInfo(itemId,qty){
   const it=itemId?(db.items||[]).find(x=>x.id===itemId):null;
   if(!it) return null;
   const soldMap=buildSoldQtyMap(current?.id);
-  const total=trueStock(it,soldMap), used=Number(qty||0);
-  const remaining=total-used;
+  const total=trueStock(it,soldMap);
+  // Same item agar kai rows me hai (Duplicate Last / dobara add), to un sabki qty jodkar stock ghatao
+  let used=0;
+  if(current&&Array.isArray(current.items)) current.items.forEach(x=>{ if(x&&x.itemId===itemId) used+=Number(x.qty||0); });
+  else used=Number(qty||0);
+  const remaining=+(total-used).toFixed(3);
   const color=remaining<10?'#fb7185':'#34d399';
   return {remaining,color,total};
+}
+// Kisi bhi row ki qty/item badalne par saari rows ke stock indicators ek saath refresh karo
+function refreshRowStocks(){
+  if(!current||!Array.isArray(current.items)) return;
+  current.items.forEach((r,i)=>{
+    const el=document.querySelector(`.row-stock[data-row="${i}"]`);
+    const s=rowStockInfo(r.itemId,r.qty);
+    if(el&&s){ el.style.color=s.color; el.textContent='📦 '+money(s.remaining)+' left'; }
+  });
 }
 function rowStockHtml(i){
   const r=current&&current.items[i]; if(!r) return '';
@@ -11066,8 +11079,9 @@ function itemPickInput(i,v){
   const dd=document.getElementById('itemPickDD_'+i); if(!dd) return;
   const matches=itemPickMatches(v);
   const soldMap=buildSoldQtyMap(current?.id);
+  const usedElsewhere=id=>{ let u=0; (current&&current.items||[]).forEach((x,j)=>{ if(j!==i&&x&&x.itemId===id) u+=Number(x.qty||0); }); return u; };
   dd.innerHTML=matches.length?matches.map(it=>{
-    const stk=trueStock(it,soldMap);
+    const stk=+(trueStock(it,soldMap)-usedElsewhere(it.id)).toFixed(3);
     return `<div class="item-pick-opt" onmousedown="itemPickChoose(${i},'${it.id}')">
       <b>${esc(it.name)}</b>
       <span class="ipo-sub">${esc(it.size||'')} ${it.rate?('₹'+money(it.rate)):''}${it.unit?(' / '+esc(it.unit)):''} · Stock: ${money(stk)}</span>
@@ -11820,9 +11834,7 @@ function rowVal(i,k,v){
   const r=current.items[i];
   if(cell) cell.textContent=(r.itemId&&Number(r.qty)>0&&r.rate!=='')?'₹ '+money(r.amount):'—';
   if(k==='qty'){
-    const stockEl=document.querySelector(`.row-stock[data-row="${i}"]`);
-    const s=rowStockInfo(r.itemId,r.qty);
-    if(stockEl&&s){ stockEl.style.color=s.color; stockEl.textContent='📦 '+money(s.remaining)+' left'; }
+    refreshRowStocks();
   }
 }
 function removeRow(i){
@@ -11913,6 +11925,18 @@ function finalizeInvoice(){
   syncForm();
   if(!current.customer?.name?.trim()){alert('Customer name is required.');return;}
   if(!current.items.some(r=>r.itemId&&Number(r.qty)>0)){alert('At least one valid item is required.');return;}
+  {
+    // Stock check: same item ki saari rows ki qty jodkar available stock se compare
+    const need=new Map();
+    current.items.forEach(r=>{ if(r.itemId&&Number(r.qty)>0) need.set(r.itemId,(need.get(r.itemId)||0)+Number(r.qty)); });
+    const soldMap=buildSoldQtyMap(current.id), short=[];
+    need.forEach((q,iid)=>{
+      const it=db.items.find(x=>x.id===iid); if(!it) return;
+      const avail=trueStock(it,soldMap);
+      if(q>avail+0.0001) short.push('• '+it.name+' — stock '+money(avail)+', bill me '+money(q));
+    });
+    if(short.length&&!confirm('⚠️ In items ka stock kam hai:\n\n'+short.join('\n')+'\n\nFir bhi Finalize karna hai?')) return;
+  }
   let duplicate=db.invoices.find(x=>x.invoiceNumber===current.invoiceNumber&&x.id!==current.id);
   if(duplicate){alert('Duplicate invoice number blocked.');return;}
   current.status='Finalized'; persistInvoice(); alert('Invoice finalized.');
@@ -21222,5 +21246,26 @@ document.addEventListener('click',function(e){
   },true);
 })();
 </script>
+
+<style id="light-status-fix">
+/* ===== Light mode: pastel (dark-theme) status colours -> readable shades =====
+   Dark mode bilkul waisa hi rahega; sirf [data-theme="light"] me override. */
+[data-theme="light"] .badge.final,[data-theme="light"] .badge.finalized,[data-theme="light"] .badge.paid,
+[data-theme="light"] .dz-st.green,[data-theme="light"] .st-accepted,[data-theme="light"] #search .fp2-tag.g{background:rgba(16,185,129,.16);color:#047857;border-color:rgba(5,150,105,.45)}
+[data-theme="light"] .badge.draft,[data-theme="light"] .badge.partial,[data-theme="light"] .dz-st,
+[data-theme="light"] .st-pending,[data-theme="light"] .cpx-pend,[data-theme="light"] #search .fp2-tag.o{background:rgba(245,158,11,.18);color:#92400e;border-color:rgba(180,83,9,.45)}
+[data-theme="light"] .badge.unpaid,[data-theme="light"] .dz-st.red,[data-theme="light"] .st-rejected{background:rgba(244,63,94,.13);color:#be123c;border-color:rgba(225,29,72,.45)}
+[data-theme="light"] .badge.overdue{background:rgba(244,63,94,.16);color:#9f1239;border-color:rgba(225,29,72,.6)}
+[data-theme="light"] .badge.archived{background:rgba(107,114,128,.15);color:#4b5563;border-color:rgba(75,85,99,.4)}
+[data-theme="light"] .dz-st.blue{background:rgba(59,130,246,.14);color:#1d4ed8;border-color:rgba(37,99,235,.4)}
+[data-theme="light"] .dz-tag.quotation{background:rgba(99,102,241,.14);color:#4338ca}
+[data-theme="light"] .dz-tag.challan{background:rgba(16,185,129,.15);color:#047857}
+[data-theme="light"] .dz-tag.proforma{background:rgba(245,158,11,.18);color:#92400e}
+[data-theme="light"] .item-card-head .amt{color:#047857}
+[data-theme="light"] .cdoc-b button.no{color:#be123c}
+[data-theme="light"] .pf-avatar-remove,[data-theme="light"] .pf-photo-msg.err{color:#be123c}
+[data-theme="light"] .pf-photo-msg.ok{color:#047857}
+[data-theme="light"] .due-cell .sub{color:#475569}
+</style>
 </body>
 </html>
