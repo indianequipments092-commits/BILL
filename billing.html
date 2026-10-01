@@ -5005,7 +5005,7 @@ function chatRenderMatchRows(){
       </select></div>`:''}
       ${row.mode==='add'||row.itemId?`<div class="grid g2" style="margin-top:8px">
         ${field('My Inventory Item Name *','name')}${field('Description','description')}
-        ${field('Default Rate (₹)','rate','number')}${field('Size / Specification','size')}
+        ${field('Sales Rate (₹)','rate','number')}${field('Size / Specification','size')}
         ${field('GST %','gst','number')}${field('Unit of Measure','unit')}
         ${field('HSN / SAC','hsn')}${field('Barcode / QR','barcode')}
         ${row.mode==='add'?field('Opening Stock','stock','number'):''}
@@ -5115,7 +5115,7 @@ function chatImportAcceptedInvoice(m,connId,validateOnly=false,pendingMapping){
   if(!vendor) db.vendors.push(newVendor);
   pendingItems.forEach(it=>db.items.push(it));
   updates.forEach(({item,settings})=>Object.assign(item,settings));
-  billItems.forEach(row=>{const item=db.items.find(it=>it.id===row.itemId); item.stock=+((Number(item.stock)||0)+row.qty).toFixed(3);});
+  billItems.forEach(row=>{const item=db.items.find(it=>it.id===row.itemId); item.stock=+((Number(item.stock)||0)+row.qty).toFixed(3); item.purchaseRate=Number(row.rate);});
   db.purchaseBills.push(pb);
   db.importedChatInvoices=db.importedChatInvoices||[];
   db.importedChatInvoices.push(sourceKey);
@@ -8508,7 +8508,9 @@ function pf2Update(){
   <div><label>Item Name *</label><input id="miName"></div>
   <div id="miItemCodeWrap" style="display:none"><label>Item Code (Inventory Premium — locked)</label><input id="miItemCode" readonly style="opacity:.7;cursor:not-allowed"></div>
   <div><label>Description</label><input id="miDesc"></div>
-  <div><label>Default Rate</label><input id="miRate" type="number" step="0.01"></div>
+  <div><label>Purchase Rate (₹)</label><input id="miPRate" type="number" step="0.01" oninput="miMarginUpdate()"></div>
+  <div><label>Sales Rate (₹)</label><input id="miRate" type="number" step="0.01" oninput="miMarginUpdate()"></div>
+  <div style="grid-column:1/-1"><label>Margin</label><input id="miMargin" readonly style="opacity:.85" value="—"></div>
   <div><label>Size / Specification</label><input id="miSize"></div>
   <div><label>GST %</label><input id="miGST" type="number" step="0.01" value="18"></div>
   <div>
@@ -14325,7 +14327,7 @@ function renderInventory(){
     <td><b>${esc(i.name)}</b>${invPremiumIsNewBadge(i)?' <span class="badge final" style="background:rgba(251,191,36,.18);color:#fbbf24">🆕 NEW</span>':''}</td>
     <td>${i.itemCode?'<code style="font-size:11px">'+esc(i.itemCode)+'</code>':'—'}</td>
     <td>${esc(i.description)}</td>
-    <td>₹ ${money(i.rate)}</td>
+    <td>₹ ${money(i.rate)}${Number(i.purchaseRate)>0?`<div style="font-size:11px;color:var(--text-muted)">Buy ₹ ${money(i.purchaseRate)} · <span style="color:${Number(i.rate)-Number(i.purchaseRate)<0?'#fb7185':'#34d399'}">${(((Number(i.rate)-Number(i.purchaseRate))/Number(i.purchaseRate))*100).toFixed(1)}%</span></div>`:''}</td>
     <td>${esc(i.size)}</td>
     <td>${esc(i.gst)}%</td>
     <td>${esc(i.unit)}</td>
@@ -14489,6 +14491,8 @@ function openItemModal(){
   if(id('miItemCodeWrap')) id('miItemCodeWrap').style.display='none';
   id('miDesc').value = '';
   id('miRate').value = '';
+  if(id('miPRate')) id('miPRate').value = '';
+  miMarginUpdate();
   id('miSize').value = '';
   id('miGST').value = '18';
   id('miUnit').value = 'Nos';
@@ -14499,6 +14503,12 @@ function openItemModal(){
   id('itemModal').classList.add('show');
 }
 
+function miMarginUpdate(){
+  const el=id('miMargin'); if(!el) return;
+  const pr=parseFloat(id('miPRate')?.value), sr=parseFloat(id('miRate')?.value);
+  if(!(pr>0)||isNaN(sr)){ el.value='—'; return; }
+  el.value='₹ '+(sr-pr).toFixed(2)+' ('+(((sr-pr)/pr)*100).toFixed(1)+'%)';
+}
 function editItem(itemId){
   const item = db.items.find(a => a.id === itemId);
   if(!item) return;
@@ -14511,6 +14521,8 @@ function editItem(itemId){
   }
   id('miDesc').value = item.description || '';
   id('miRate').value = item.rate ?? '';
+  if(id('miPRate')) id('miPRate').value = item.purchaseRate ?? '';
+  miMarginUpdate();
   id('miSize').value = item.size || '';
   id('miGST').value = item.gst ?? 18;
   const unitSel = id('miUnit');
@@ -14540,6 +14552,7 @@ function saveItem(){
     name,
     description: id('miDesc').value,
     rate: Number(id('miRate').value || 0),
+    purchaseRate: Number(id('miPRate')?.value || 0),
     size: id('miSize').value,
     gst: Number(id('miGST').value || 0),
     unit: id('miUnit').value || 'Nos',
@@ -14875,7 +14888,7 @@ function poItemChanged(i,val){
   const r=poRowsData[i]; r.itemId=val;
   const it=db.items.find(x=>x.id===val);
   if(it){
-    r.itemName=it.name; r.description=it.description||''; r.rate=it.rate; r.size=it.size||'';
+    r.itemName=it.name; r.description=it.description||''; r.rate=(Number(it.purchaseRate)>0?it.purchaseRate:''); r.size=it.size||'';
     r.gst=it.gst; r.unit=it.unit||'Nos'; r.hsn=it.hsn||'';
   }else{ Object.assign(r,poBlankRow()); }
   poRenderRows();
@@ -14887,7 +14900,7 @@ function poItemPickInput(i,v){
   const matches=itemPickMatches(v);
   dd.innerHTML=matches.length?matches.map(it=>`<div class="item-pick-opt" onmousedown="poItemPickChoose(${i},'${it.id}')">
       <b>${esc(it.name)}</b>
-      <span class="ipo-sub">${esc(it.size||'')} ${it.rate?('₹'+money(it.rate)):''}${it.unit?(' / '+esc(it.unit)):''} · Stock: ${money(trueStock(it))}</span>
+      <span class="ipo-sub">${esc(it.size||'')} ${it.purchaseRate>0?('Buy ₹'+money(it.purchaseRate)):''}${it.unit?(' / '+esc(it.unit)):''} · Stock: ${money(trueStock(it))}</span>
     </div>`).join(''):'<div class="item-pick-empty">Koi item nahi mila</div>';
   dd.classList.add('show');
 }
@@ -15553,7 +15566,7 @@ function pbItemChanged(i,val){
   const it=db.items.find(x=>x.id===val);
   if(it){
     r.itemName=it.name; r.description=it.description||''; r.hsn=it.hsn||''; r.unit=it.unit||'Nos'; r.size=it.size||'';
-    if(!r.rate) r.rate=it.rate;
+    if(Number(it.purchaseRate)>0) r.rate=it.purchaseRate; else if(!r.rate) r.rate='';
     r.gst=it.gst;
   }else{ Object.assign(r,pbBlankRow(),{itemId:''}); }
   pbRenderRows();
@@ -15565,7 +15578,7 @@ function pbItemPickInput(i,v){
   const matches=itemPickMatches(v);
   dd.innerHTML=matches.length?matches.map(it=>`<div class="item-pick-opt" onmousedown="pbItemPickChoose(${i},'${it.id}')">
       <b>${esc(it.name)}</b>
-      <span class="ipo-sub">${esc(it.size||'')} ${it.rate?('₹'+money(it.rate)):''}${it.unit?(' / '+esc(it.unit)):''} · Current Stock: ${money(trueStock(it))}</span>
+      <span class="ipo-sub">${esc(it.size||'')} ${it.purchaseRate>0?('Buy ₹'+money(it.purchaseRate)):''}${it.unit?(' / '+esc(it.unit)):''} · Current Stock: ${money(trueStock(it))}</span>
     </div>`).join(''):'<div class="item-pick-empty">Koi item nahi mila</div>';
   dd.classList.add('show');
 }
@@ -15751,7 +15764,7 @@ function savePB(){
   // module ka Inventory se poora connection hai.
   items.forEach(it=>{
     const invItem=db.items.find(x=>x.id===it.itemId);
-    if(invItem) invItem.stock=+((Number(invItem.stock)||0)+Number(it.qty)).toFixed(3);
+    if(invItem){ invItem.stock=+((Number(invItem.stock)||0)+Number(it.qty)).toFixed(3); if(Number(it.rate)>=0) invItem.purchaseRate=Number(it.rate); }
   });
   const advRes=pb.poId?poApplyAdvanceToBill(pb):null;
   saveDB(); closeModal('pbModal'); renderPurchaseBills(); renderInventory(); renderPurchaseOrders();
