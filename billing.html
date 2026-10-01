@@ -4254,16 +4254,17 @@ function sendConnectionRequest(uid,btn){
     if(myBlocks[uid]){ appToast('Ye user blocked hai','err'); return; }
     if(typeof fbDb==='undefined'||!fbDb){ appToast('Server se connect nahi hua, dobara try karo','err'); return; }
     const old=btn?btn.innerHTML:'';
-    if(btn){ btn.disabled=true; btn.textContent='Sending...'; }
+    if(btn){ btn.disabled=true; btn.classList.add('fb-busy'); btn.innerHTML='<i class="fb-spin"></i>'; }
     fbDb.collection('connections').doc(connDocId(currentUser.uid,uid)).set({
       users:[currentUser.uid,uid],requestedBy:currentUser.uid,status:'pending',createdAt:Date.now()
     }).then(()=>{
       appToast('Request bhej di gayi');
-      if(btn&&btn.isConnected){ btn.textContent='Sent'; }
-      fpRefreshProfileModal();
+      if(typeof fpcSent!=='undefined') fpcSent[uid]=1;
+      if(btn&&btn.isConnected){ btn.classList.remove('fb-busy'); btn.classList.add('fb-done'); btn.innerHTML='<svg class="fb-ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Requested'; }
+      setTimeout(fpRefreshProfileModal,900);
     }).catch(e=>{
       console.error('sendConnectionRequest failed',e);
-      if(btn&&btn.isConnected){ btn.disabled=false; btn.innerHTML=old; }
+      if(btn&&btn.isConnected){ btn.disabled=false; btn.classList.remove('fb-busy','fb-done'); btn.innerHTML=old; }
       appToast('Request nahi gayi: '+((e&&e.code)?e.code+' - ':'')+((e&&e.message)||e),'err');
     });
   }catch(e){ console.error(e); appToast('Error: '+(e.message||e),'err'); }
@@ -4577,9 +4578,8 @@ function fpRenderProfileModal(u){
   } else if(blockedByMe){
     actionHtml=`<button class="btn" onclick="unblockUser('${u.uid}')">Unblock</button>`;
   } else if(isAccepted){
-    actionHtml=`<span style="font-size:12px;color:var(--success);font-weight:700;align-self:center">✅ Connected</span>
-      <button class="btn" onclick="unfollowConnection('${u.uid}')">Unfollow</button>
-      <button class="btn primary" onclick="fpCloseProfileModal();openChat('${u.uid}')">💬 Chat</button>
+    actionHtml=`<button class="btn" onclick="unfollowConnection('${u.uid}')">Unfollow</button>
+      <button class="btn primary" onclick="fpCloseProfileModal();fpcClose();openChat('${u.uid}')">Message</button>
       <button class="btn danger" onclick="blockUser('${u.uid}')">Block</button>`;
   } else if(isIncoming){
     actionHtml=`<button class="btn primary" onclick="acceptConnectionReq('${u.uid}')">Accept</button>
@@ -4588,7 +4588,7 @@ function fpRenderProfileModal(u){
   } else if(isOutgoing){
     actionHtml=`<button class="btn" onclick="cancelConnectionRequest('${u.uid}')">Cancel Request</button>`;
   } else {
-    actionHtml=`<button class="btn primary" onclick="sendConnectionRequest('${u.uid}',this)">Send Request</button>
+    actionHtml=`<button class="btn primary" onclick="sendConnectionRequest('${u.uid}',this)">Follow</button>
       <button class="btn danger" onclick="blockUser('${u.uid}')">Block</button>`;
   }
 
@@ -4611,18 +4611,15 @@ function fpRenderProfileModal(u){
     : '<div style="color:var(--text-muted);font-size:12px">Koi company nahi.</div>';
 
   body.innerHTML=`
-    <div style="display:flex;align-items:center;gap:14px">
-      <div class="pf-avatar-ic" style="width:56px;height:56px;font-size:22px;flex-shrink:0">${u.photoURL?`<img src="${esc(u.photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:esc(initials)}</div>
-      <div style="min-width:0">
-        <div style="font-size:17px;font-weight:700">${esc(u.name||'Unnamed')}${verifiedBadgeHtml(u)}</div>
-        <div style="font-size:11px;color:var(--text-muted);font-family:monospace">ID: ${esc(u.userId||'—')}</div>
-        ${(!blockedByThem&&pfLastSeenText(u))?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">${pfLastSeenText(u)}</div>`:''}
-        ${(!blockedByThem&&mutual>0)?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px">${mutual} mutual connection${mutual>1?'s':''}</div>`:''}
-        ${(!blockedByThem)?fpAvgRatingHtml(u):''}
-        ${(!blockedByThem)?fpConnCountsHtml(u,isAccepted):''}
-      </div>
+    <div class="fph-top">
+      <div class="pf-avatar-ic fph-av">${u.photoURL?`<img src="${esc(u.photoURL)}" alt="">`:esc(initials)}</div>
+      <div class="fph-stats">${blockedByThem?'':fpStatsHtml(u,isAccepted)}</div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">${actionHtml}</div>
+    <div class="fph-name">${esc(u.name||'Unnamed')}${verifiedBadgeHtml(u)}${isAccepted?'<span class="fph-conn">Connected</span>':''}</div>
+    <div class="fph-meta">ID: ${esc(u.userId||'—')}</div>
+    ${(!blockedByThem&&pfLastSeenText(u))?`<div class="fph-meta">${pfLastSeenText(u)}</div>`:''}
+    ${(!blockedByThem&&mutual>0)?`<div class="fph-meta">${mutual} mutual connection${mutual>1?'s':''}</div>`:''}
+    <div class="fph-acts">${actionHtml}</div>
     <div id="fpOtherConnList"></div>
     ${detailsHtml}
     ${!blockedByThem?`<div style="margin-top:16px">
@@ -20933,5 +20930,149 @@ setup();
 [data-theme="light"] .cpx-gbox{background:#f8fafc}
 </style>
 <script>(function(){setInterval(function(){if(typeof window.iePushToggleMuteChat==='function'&&!window.iePushToggleMuteChat.__c){var o=window.iePushToggleMuteChat;window.iePushToggleMuteChat=function(){var r=o.apply(this,arguments);try{window.cpxSyncMute&&window.cpxSyncMute()}catch(e){}return r};window.iePushToggleMuteChat.__c=1}},1500)})();</script>
+<style id="fpcStyle">
+/* ===== Profile header (Instagram-style) ===== */
+#fpProfileModal{z-index:140}
+.fph-top{display:flex;align-items:center;gap:20px}
+.fph-av{width:88px;height:88px;flex:none;aspect-ratio:1/1;overflow:hidden;font-size:34px;box-shadow:0 0 0 3px #111827,0 0 0 5px var(--primary),0 10px 28px var(--primary-glow)}
+[data-theme="light"] .fph-av{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--primary),0 10px 28px var(--primary-glow)}
+.fph-av img{width:100%;height:100%;object-fit:cover;display:block}
+.fph-stats{flex:1;min-width:0;display:flex;justify-content:space-around;text-align:center}
+.fph-st{background:none;border:0;padding:6px 4px;display:block;color:inherit;border-radius:12px}
+button.fph-st:active{background:var(--primary-glow)}
+.fph-st b{display:block;font-size:20px;font-weight:800;line-height:1.2}
+.fph-st span{display:block;font-size:12px;color:var(--text-muted)}
+.fph-star{color:#fbbf24}
+.fph-name{margin-top:14px;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fph-conn{font-size:11.5px;font-weight:700;color:var(--success);background:var(--success-glow);padding:3px 10px;border-radius:20px}
+.fph-meta{font-size:12.5px;color:var(--text-muted);margin-top:2px}
+.fph-acts{display:flex;gap:8px;margin-top:16px}
+.fph-acts .btn{flex:1;min-width:0;height:42px;border-radius:12px;font-weight:700;padding:0 10px}
+.fph-acts .btn.danger{flex:0 0 auto}
+/* ===== Full-screen followers / following page ===== */
+.fpc{position:fixed;inset:0;z-index:130;background:var(--bg-dark);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);transform:translateX(100%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
+.fpc.show{transform:none;visibility:visible;transition-delay:0s}
+.fpc-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;backdrop-filter:blur(14px);border-bottom:1px solid var(--border-color)}
+.fpc-bar h2{font-size:18px;font-weight:800;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpc-back{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--border-color);background:var(--bg-card);display:grid;place-items:center;color:var(--text-main)}
+.fpc-back svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.fpc-tabs{display:flex;border-bottom:1px solid var(--border-color)}
+.fpc-tabs button{flex:1;padding:13px 4px;background:none;border:0;border-bottom:2.5px solid transparent;color:var(--text-muted);font-weight:700;font-size:14px;transition:color .2s,border-color .2s}
+.fpc-tabs button.on{color:var(--text-main);border-color:var(--primary)}
+.fpc-search{margin:12px 16px 6px;display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:0 14px;height:46px}
+.fpc-search:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+.fpc-search svg{width:18px;height:18px;flex:none;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round}
+.fpc-search input{flex:1;min-width:0;background:none!important;border:0!important;outline:0;box-shadow:none!important;padding:0!important;color:var(--text-main);font:inherit}
+#fpcRows{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:6px 0 calc(24px + env(safe-area-inset-bottom,0px))}
+.fpc-row{display:flex;align-items:center;gap:14px;padding:10px 18px;cursor:pointer;transition:background .15s}
+.fpc-row:active{background:var(--bg-card)}
+.fpc-av{width:52px;height:52px;min-width:52px;flex:none;aspect-ratio:1/1;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:20px;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 0 0 2px var(--bg-dark),0 0 0 3.5px var(--border-color)}
+.fpc-av img{width:100%;height:100%;object-fit:cover;display:block}
+.fpc-tx{flex:1;min-width:0}
+.fpc-tx b{display:block;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fpc-tx span{display:block;font-size:12.5px;color:var(--text-muted);font-family:monospace}
+.fpc-you{font-size:12.5px;color:var(--text-muted);font-weight:600;padding:0 8px}
+.fpc-b,.fp2-btn.fb-busy,.fp2-btn.fb-done{position:relative}
+.fpc-b{flex:none;min-width:104px;height:38px;padding:0 14px;border:0;border-radius:12px;font-weight:800;font-size:13.5px;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 6px 18px var(--primary-glow);transition:transform .15s,background .25s,box-shadow .25s}
+.fpc-b:active{transform:scale(.93)}
+.fpc-b.ghost{background:var(--bg-card);color:var(--text-main);box-shadow:inset 0 0 0 1px var(--border-color)}
+.fpc-empty{text-align:center;color:var(--text-muted);padding:48px 24px;font-size:14px}
+.fpc-sk{display:flex;align-items:center;gap:14px;padding:10px 18px}
+.fpc-sk i{display:block;border-radius:50%;width:52px;height:52px;flex:none}
+.fpc-sk u{display:block;flex:1;height:34px;border-radius:10px;text-decoration:none}
+.fpc-sk i,.fpc-sk u{background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-card-hover) 50%,var(--bg-card) 75%);background-size:200% 100%;animation:fpcSh 1.2s linear infinite}
+@keyframes fpcSh{to{background-position:-200% 0}}
+/* ===== Follow button animation (used by every Follow button) ===== */
+button.fb-busy,button.fb-done{position:relative;pointer-events:none}
+.fb-spin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;vertical-align:middle;animation:fbSpin .6s linear infinite}
+@keyframes fbSpin{to{transform:rotate(360deg)}}
+button.fb-done{background:var(--success)!important;color:#fff!important;box-shadow:0 6px 18px var(--success-glow)!important;animation:fbPop .5s cubic-bezier(.2,1.6,.4,1)}
+button.fb-done::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid var(--success);animation:fbRing .65s ease-out forwards;pointer-events:none}
+.fb-ck{width:16px;height:16px;margin-right:6px;vertical-align:-3px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;animation:fbCk .4s .12s ease-out forwards}
+@keyframes fbPop{0%{transform:scale(.85)}100%{transform:scale(1)}}
+@keyframes fbRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.35)}}
+@keyframes fbCk{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.fpc,.fb-spin,button.fb-done,button.fb-done::after,.fb-ck{transition:none;animation:none}.fb-ck{stroke-dashoffset:0}}
+</style>
+
+<div class="fpc" id="fpcPage" role="dialog" aria-label="Connections">
+  <div class="fpc-bar">
+    <button type="button" class="fpc-back" onclick="fpcClose()" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2 id="fpcTitle"></h2>
+  </div>
+  <div class="fpc-tabs" id="fpcTabs"></div>
+  <div class="fpc-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="fpcQ" placeholder="Search name or ID" autocomplete="off" oninput="fpcRows()"></div>
+  <div id="fpcRows"></div>
+</div>
+
+<script>
+var fpcUid=null,fpcTab='followers',fpcSent={},fpcTok=0;
+function fpStatsHtml(u,acc){
+  var can=u.showConnectionsList!==false||acc,has=Array.isArray(u.followerUids)||Array.isArray(u.followingUids),a=[];
+  if(has){a.push([(u.followerUids||[]).length,'Followers','followers']);a.push([(u.followingUids||[]).length,'Following','following']);}
+  else a.push([(u.connectionUids||[]).length,'Connections','all']);
+  var h=a.map(function(s){var t='<b>'+s[0]+'</b><span>'+s[1]+'</span>';
+    return can?'<button type="button" class="fph-st" onclick="fpcOpen(\''+u.uid+'\',\''+s[2]+'\')">'+t+'</button>':'<div class="fph-st">'+t+'</div>';}).join('');
+  if(u.ratingCount){var av=typeof u.avgRating==='number'?u.avgRating.toFixed(1):u.avgRating;
+    h+='<div class="fph-st"><b class="fph-star">'+esc(String(av))+'</b><span>'+u.ratingCount+' review'+(u.ratingCount>1?'s':'')+'</span></div>';}
+  return h;
+}
+function fpcLists(u){
+  var me=currentUser&&currentUser.uid,L=[];
+  var mine=function(x){return x!==me&&myConnections[x]&&myConnections[x].status==='accepted';};
+  if(Array.isArray(u.followerUids)||Array.isArray(u.followingUids)){
+    L.push(['followers','Followers',u.followerUids||[]]);L.push(['following','Following',u.followingUids||[]]);
+  }else L.push(['all','Connections',u.connectionUids||[]]);
+  L.push(['mutual','Mutual',(u.connectionUids||[]).filter(mine)]);
+  return L;
+}
+function fpcOpen(uid,type){
+  var u=fpProfileCache[uid]; if(!u) return;
+  fpcUid=uid; fpcTab=type; id('fpcQ').value='';
+  id('fpcTitle').textContent=u.name||'Connections';
+  id('fpcPage').classList.add('show');
+  fpcDraw();
+}
+function fpcClose(){var p=id('fpcPage'); if(p) p.classList.remove('show'); fpcTok++;}
+function fpcSet(t){fpcTab=t; id('fpcQ').value=''; fpcDraw();}
+function fpcCur(){
+  var u=fpProfileCache[fpcUid]; if(!u) return null;
+  var L=fpcLists(u),cur=L.filter(function(x){return x[0]===fpcTab;})[0]||L[0];
+  fpcTab=cur[0]; return {u:u,L:L,cur:cur};
+}
+function fpcDraw(){
+  var c=fpcCur(); if(!c) return;
+  id('fpcTabs').innerHTML=c.L.map(function(x){
+    return '<button type="button" class="'+(x[0]===fpcTab?'on':'')+'" onclick="fpcSet(\''+x[0]+'\')">'+x[2].length+' '+x[1]+'</button>';}).join('');
+  var uids=c.cur[2],miss=uids.filter(function(x){return !fpProfileCache[x];}),tok=++fpcTok;
+  if(miss.length){
+    id('fpcRows').innerHTML=miss.slice(0,6).map(function(){return '<div class="fpc-sk"><i></i><u></u></div>';}).join('');
+    Promise.all(miss.map(function(x){return fbDb.collection('publicProfiles').doc(x).get().then(function(s){if(s.exists) fpProfileCache[x]=Object.assign({uid:x},s.data());}).catch(function(){});}))
+      .then(function(){ if(tok===fpcTok) fpcRows(); });
+  }else fpcRows();
+}
+function fpcBtn(x){
+  if(currentUser&&x===currentUser.uid) return '<span class="fpc-you">You</span>';
+  var c=myConnections[x];
+  if(c&&c.status==='accepted') return '<button type="button" class="fpc-b ghost" onclick="event.stopPropagation();fpcGo(\''+x+'\')">Following</button>';
+  if((c&&c.status==='pending'&&currentUser&&c.requestedBy===currentUser.uid)||fpcSent[x]) return '<button type="button" class="fpc-b ghost" disabled>Requested</button>';
+  if(c) return '<button type="button" class="fpc-b" onclick="event.stopPropagation();fpcGo(\''+x+'\')">Respond</button>';
+  return '<button type="button" class="fpc-b" onclick="event.stopPropagation();sendConnectionRequest(\''+x+'\',this)">Follow</button>';
+}
+function fpcGo(x){fpViewProfile(x);}
+function fpcRows(){
+  var c=fpcCur(); if(!c) return;
+  var q=id('fpcQ').value.trim().toLowerCase();
+  var h=c.cur[2].map(function(x){
+    var p=fpProfileCache[x]||{uid:x},name=p.name||'Unnamed',uid2=String(p.userId||'');
+    if(q&&(name+' '+uid2).toLowerCase().indexOf(q)<0) return '';
+    return '<div class="fpc-row" onclick="fpcGo(\''+x+'\')"><div class="fpc-av">'+(p.photoURL?'<img src="'+esc(p.photoURL)+'" alt="">':esc(name.trim().slice(0,1).toUpperCase()))+'</div>'+
+      '<div class="fpc-tx"><b>'+esc(name)+verifiedBadgeHtml(p)+'</b><span>ID: '+esc(uid2||'—')+'</span></div>'+fpcBtn(x)+'</div>';
+  }).join('');
+  var none={followers:'Abhi koi follower nahi.',following:'Abhi kisiko follow nahi karte.',all:'Abhi koi connection nahi.',mutual:'Koi mutual connection nahi.'}[fpcTab];
+  id('fpcRows').innerHTML=h||'<div class="fpc-empty">'+(q?'Koi nahi mila. Naam ya ID badal ke dekho.':none)+'</div>';
+}
+</script>
+
 </body>
 </html>
