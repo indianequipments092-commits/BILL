@@ -7440,7 +7440,7 @@ fbAuth.onAuthStateChanged(user=>{
 <div class="modal" id="chatModal"><div class="modalbox chat-modalbox">
   <div class="modalhead" style="padding:14px 16px">
     <div style="min-width:0;overflow:hidden">
-      <h2 id="chatHeaderName" style="font-size:15px;cursor:pointer;margin:0" onclick="if(chatCurrentUid){closeChatModal();fpViewProfile(chatCurrentUid);}" title="View profile">Chat</h2>
+      <h2 id="chatHeaderName" style="font-size:15px;cursor:pointer;margin:0" onclick="chatOpenProfile()" title="View profile">Chat</h2>
       <div id="chatHeaderStatus" style="font-size:11px;color:var(--text-muted);margin-top:2px"></div>
     </div>
     <div class="chat-menu-wrap">
@@ -18317,7 +18317,7 @@ html,body{margin:0;padding:0;background:#fff;color:#111827;font-family:'Segoe UI
 .meta td{padding:2.5px 0;border-bottom:1px solid #e5e7eb;vertical-align:top}
 .meta td:first-child{color:#6b7280;font-size:9px;text-align:left;padding-right:8px;white-space:nowrap}
 .meta td:last-child{font-weight:700;text-align:right}
-.rule{border-top:2.5px solid var(--acc);border-bottom:1px solid var(--gold);height:4px;margin:9px 0 10px}
+.rule{border-top:2.5px solid var(--acc);border-bottom:0;height:0;margin:9px 0 10px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .parties.one{grid-template-columns:1fr}
 .pn{border:1px solid #cfd6df;border-radius:5px;overflow:hidden}
@@ -18351,7 +18351,7 @@ html,body{margin:0;padding:0;background:#fff;color:#111827;font-family:'Segoe UI
 .it-r{font-style:italic}
 .items .blank td{height:24px}
 .items tfoot td{background:#eef2f7;font-weight:800;padding:6px 5px;border-top:1.5px solid var(--acc)}
-.end{break-inside:avoid;page-break-inside:avoid;margin-top:8px}
+.end{margin-top:8px}.end>*{break-inside:avoid;page-break-inside:avoid}
 .tot-wrap{display:grid;grid-template-columns:1fr 64mm;gap:10px;align-items:start}
 .words{border:1px solid #cfd6df;border-radius:5px;padding:6px 9px;background:#f6f8fb}
 .words small{display:block;color:var(--acc);font-weight:800;font-size:8.5px;margin-bottom:2px}
@@ -18432,7 +18432,7 @@ html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:'Inter
 .meta td{padding:3px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .meta td:first-child{color:var(--gold);font-size:8.7px;text-align:left;padding-right:8px;white-space:nowrap;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
 .meta td:last-child{font-weight:600;text-align:right}
-.rule{border-top:2px solid var(--ink);height:0;margin:10px 0 11px}
+.rule{border:0;height:0;margin:0 0 11px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .parties.one{grid-template-columns:1fr}
 .pn{border:1px solid var(--line);border-radius:4px;overflow:hidden}
@@ -18466,7 +18466,7 @@ html,body{margin:0;padding:0;background:#fff;color:var(--ink);font-family:'Inter
 .it-r{font-style:italic}
 .items .blank td{height:24px}
 .items tfoot td{background:var(--paper);font-weight:700;padding:7px 5px;border-top:2px solid var(--ink);color:var(--ink)}
-.end{break-inside:avoid;page-break-inside:avoid;margin-top:10px}
+.end{margin-top:10px}.end>*{break-inside:avoid;page-break-inside:avoid}
 .tot-wrap{display:grid;grid-template-columns:1fr 64mm;gap:10px;align-items:start}
 .words{border:1px solid var(--line);border-radius:4px;padding:7px 10px;background:var(--paper)}
 .words small{display:block;color:var(--gold);font-weight:700;font-size:8.5px;margin-bottom:3px;text-transform:uppercase;letter-spacing:1px}
@@ -18569,7 +18569,7 @@ html,body{margin:0;padding:0;background:#fff;color:#232323;font-family:'Manrope'
 .meta td{padding:3px 0;border-bottom:1px solid #ece7dd;vertical-align:top}
 .meta td:first-child{color:var(--acc);font-size:8.7px;text-align:left;padding-right:8px;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
 .meta td:last-child{font-weight:600;text-align:right}
-.rule{border-top:1px solid #e6e0d8;height:0;margin:12px 0 12px}
+.rule{border:0;height:0;margin:0 0 12px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .parties.one{grid-template-columns:1fr}
 .pn{border:1px solid #e6e0d8;border-radius:8px;overflow:hidden}
@@ -18602,7 +18602,7 @@ html,body{margin:0;padding:0;background:#fff;color:#232323;font-family:'Manrope'
 .it-r{font-style:italic}
 .items .blank td{height:24px}
 .items tfoot td{background:#faf6f1;font-weight:700;padding:7px 5px;border-top:1px solid #e6e0d8}
-.end{break-inside:avoid;page-break-inside:avoid;margin-top:10px}
+.end{margin-top:10px}.end>*{break-inside:avoid;page-break-inside:avoid}
 .tot-wrap{display:grid;grid-template-columns:1fr 64mm;gap:10px;align-items:start}
 .words{border:1px solid #e6e0d8;border-radius:8px;padding:7px 10px;background:#faf6f1}
 .words small{display:block;color:var(--acc);font-weight:700;font-size:8.5px;margin-bottom:2px;text-transform:uppercase}
@@ -18772,7 +18772,7 @@ html,body{margin:0;padding:0;background:#fff;color:#0e1116;font-family:'Space Gr
 .meta td{padding:2.5px 0;vertical-align:top}
 .meta td:first-child{color:#8a8e94;font-size:8.7px;text-align:left;padding-right:8px;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
 .meta td:last-child{font-weight:700;text-align:right;color:#0e1116}
-.rule{border-top:1px solid #d8d5cb;height:0;margin:12px 0 12px}
+.rule{border:0;height:0;margin:0 0 12px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .parties.one{grid-template-columns:1fr}
 .pn{border:1px solid #d8d5cb;border-radius:8px;overflow:hidden}
@@ -18804,7 +18804,7 @@ html,body{margin:0;padding:0;background:#fff;color:#0e1116;font-family:'Space Gr
 .it-r{font-style:italic}
 .items .blank td{height:24px}
 .items tfoot td{font-weight:700;padding:7px 5px;border-top:2px solid #0e1116;color:#0e1116}
-.end{break-inside:avoid;page-break-inside:avoid;margin-top:10px}
+.end{margin-top:10px}.end>*{break-inside:avoid;page-break-inside:avoid}
 .tot-wrap{display:grid;grid-template-columns:1fr 64mm;gap:10px;align-items:start}
 .words{border:1px solid #d8d5cb;border-radius:8px;padding:7px 10px}
 .words small{display:block;color:var(--acc);font-weight:700;font-size:8.5px;margin-bottom:2px;text-transform:uppercase}
@@ -18975,7 +18975,7 @@ html,body{margin:0;padding:0;background:#fff;color:#101114;font-family:'Inter',s
 .meta td{padding:2.5px 0;vertical-align:top}
 .meta td:first-child{color:#5b5f66;font-size:9px;text-align:left;padding-right:8px;white-space:nowrap}
 .meta td:last-child{font-weight:700;text-align:right;color:#101114}
-.rule{border-top:1px solid #e2e0d8;height:0;margin:12px 0 12px}
+.rule{border:0;height:0;margin:0 0 12px}
 .parties{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .parties.one{grid-template-columns:1fr}
 .pn{border:1px solid #e2e0d8;border-radius:8px;overflow:hidden}
@@ -19007,7 +19007,7 @@ html,body{margin:0;padding:0;background:#fff;color:#101114;font-family:'Inter',s
 .it-r{font-style:italic}
 .items .blank td{height:24px}
 .items tfoot td{background:#faf9f5;font-weight:800;padding:7px 5px;border-top:2px solid #101114}
-.end{break-inside:avoid;page-break-inside:avoid;margin-top:10px}
+.end{margin-top:10px}.end>*{break-inside:avoid;page-break-inside:avoid}
 .tot-wrap{display:grid;grid-template-columns:1fr 64mm;gap:10px;align-items:start}
 .words{border:1px solid #e2e0d8;border-radius:8px;padding:8px 10px;font-size:9.5px;color:#5b5f66}
 .words small{display:block;color:var(--acc);font-weight:700;font-size:8.5px;margin-bottom:2px;text-transform:uppercase}
@@ -21145,5 +21145,23 @@ function fpcRows(){
 [data-theme="light"] #chatModal .modalhead .x{background:rgba(15,23,42,.06)!important;border-color:rgba(15,23,42,.1)!important}
 [data-theme="light"] .cpx-day,[data-theme="light"] .chat-menu-dropdown,[data-theme="light"] .chat-attach-menu{background:rgba(255,255,255,.92)!important}
 </style>
+<style id="chatFixes">
+#chatModal .cpx-hd{cursor:pointer}
+#chatModal .chat-bubble.doc{border:0!important;border-radius:0!important}
+#chatModal .chat-bubble.doc:not(.selected){box-shadow:none!important}
+#chatModal .cpx-day{position:static}
+</style>
+<script>
+function chatOpenProfile(){
+  var u=chatCurrentUid;
+  if(!u) return;
+  closeChatModal();
+  fpViewProfile(u);
+}
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(t&&t.closest&&t.closest('#chatModal .cpx-hd')&&!t.closest('#chatHeaderName')) chatOpenProfile();
+});
+</script>
 </body>
 </html>
