@@ -8609,11 +8609,12 @@ function pf2Update(){
    </div>
  </div>
  <div class="table-wrap">
-   <table><thead><tr><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th class="right">Qty In</th><th class="right">Qty Out</th><th class="right">Purchase Rate</th><th class="right">Sales Rate</th><th class="right">Balance Stock</th><th class="right">Margin</th></tr></thead>
+   <table><thead><tr><th>#</th><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th class="right">Qty In</th><th class="right">Qty Out</th><th class="right">Purchase Rate</th><th class="right">Sales Rate</th><th class="right">Margin / Unit</th><th class="right">Balance Stock</th><th class="right">Total Margin</th></tr></thead>
    <tbody id="itemHistBody"></tbody></table>
  </div>
 
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
+   <button class="btn muted" onclick="exportItemHistoryPDF()">Export PDF</button>
    <button class="btn muted" onclick="exportItemHistoryCSV()">Export Excel/CSV</button>
    <button class="btn primary" onclick="closeModal('itemHistoryModal')">Close</button>
  </div>
@@ -14732,6 +14733,7 @@ function renderItemHistoryModal(){
     <div class="stat-card"><div class="sub">CURRENT STOCK (computed)</div><div class="stat" style="font-size:20px;color:${d.computedStock<=0?'#fb7185':'#34d399'}">${money(d.computedStock)}</div></div>
     <div class="stat-card"><div class="sub">TOTAL PURCHASED</div><div class="stat" style="font-size:20px">${money(d.totalPurchasedQty+d.manualQty)}</div></div>
     <div class="stat-card"><div class="sub">TOTAL SOLD</div><div class="stat" style="font-size:20px">${money(d.totalSoldQty)}</div></div>
+    <div class="stat-card"><div class="sub">LIFETIME MANUAL STOCK</div><div class="stat" style="font-size:20px;color:#fbbf24">${money(d.manualQty)}</div></div>
     <div class="stat-card"><div class="sub">LIFETIME MARGIN</div><div class="stat" style="font-size:20px;color:${d.totalMargin<0?'#fb7185':'#34d399'}">₹ ${money(d.totalMargin)}${d.totalMarginPct!=null?` <span style="font-size:12px;color:var(--text-muted)">(${d.totalMarginPct}%)</span>`:''}</div></div>`;
   id('itemHistSub').textContent=`Purchase Value: ₹ ${money(d.totalPurchaseValue)}  •  Sale Value: ₹ ${money(d.totalSaleValue)}`;
 
@@ -14740,6 +14742,16 @@ function renderItemHistoryModal(){
 
 function ihPRate(r){ return r.type==='IN'?(r.rate!=null?r.rate:null):(r.avgCost!=null?r.avgCost:null); }
 function ihSRate(r){ return r.type==='OUT'?r.rate:null; }
+// Per-unit margin = Sales Rate − Purchase (FIFO avg cost) Rate. Sirf Sale rows ke liye.
+function ihUnitMargin(r){ return (r.type==='OUT'&&r.avgCost!=null)?+(r.rate-r.avgCost).toFixed(2):null; }
+function ihUnitMarginPct(r){ return (r.type==='OUT'&&r.avgCost>0.0005&&r.avgCost!=null)?+(((r.rate-r.avgCost)/r.avgCost)*100).toFixed(1):null; }
+function ihUnitMarginCell(r){
+  if(r.type!=='OUT') return '—';
+  const u=ihUnitMargin(r);
+  if(u==null) return '<span style="color:var(--text-muted)">N/A</span>';
+  const pc=ihUnitMarginPct(r);
+  return `<span style="color:${u<0?'#fb7185':'#34d399'}">₹ ${money(u)}${pc!=null?` (${pc}%)`:''}</span>`;
+}
 function itemHistoryFilteredRows(){
   const d=itemHistoryData;
   if(!d) return [];
@@ -14779,13 +14791,14 @@ function renderItemHistoryDetail(){
   const rows=itemHistoryFilteredRows();
   const body=id('itemHistBody');
   if(!body) return;
-  body.innerHTML=rows.length?rows.map(r=>{
+  body.innerHTML=rows.length?rows.map((r,idx)=>{
     const isIn=r.type==='IN';
     const noPB=r.source==='manual';
     const refLabel=isIn?(noPB?'<span style="color:#fbbf24">Manual Stock</span>':`<button class="btn muted" style="padding:5px 8px;min-height:30px" onclick="openPBFromHistory('${r.refId}')">${esc(r.ref)}</button>`)
                         :`<button class="btn muted" style="padding:5px 8px;min-height:30px" onclick="openInvoiceFromHistory('${r.refId}')">${esc(r.ref)}</button>`;
     const marginCell=isIn?'—':(r.margin==null?'<span style="color:var(--text-muted)">N/A (no cost data)</span>':`<span style="color:${r.margin<0?'#fb7185':'#34d399'}">₹ ${money(r.margin)}${r.marginPct!=null?` (${r.marginPct}%)`:''}</span>`);
     return `<tr style="${!isIn&&r.margin!=null&&r.margin<0?'background:rgba(251,113,133,.08)':''}">
+      <td>${idx+1}</td>
       <td><span class="badge ${isIn?'final':'archived'}">${isIn?(noPB?'Manual':'Purchase'):'Sale'}</span></td>
       <td>${fmtDateShort(r.date)}</td>
       <td>${refLabel}</td>
@@ -14794,10 +14807,11 @@ function renderItemHistoryDetail(){
       <td class="right">${isIn?'—':money(r.qty)}</td>
       <td class="right">${ihPRate(r)!=null?'₹ '+money(ihPRate(r)):'—'}</td>
       <td class="right">${ihSRate(r)!=null?'₹ '+money(ihSRate(r)):'—'}</td>
+      <td class="right">${ihUnitMarginCell(r)}</td>
       <td class="right"><b>${money(r.balance)}</b></td>
       <td class="right">${marginCell}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="10" class="center">No records match the current filters.</td></tr>';
+  }).join(''):'<tr><td colspan="12" class="center">No records match the current filters.</td></tr>';
 }
 
 function openInvoiceFromHistory(invId){
@@ -14809,14 +14823,111 @@ function openPBFromHistory(pbId){
   if(typeof openPBModal==='function') openPBModal(pbId);
   else if(typeof showPage==='function') showPage('purchaseBills');
 }
+
+/* ===== Item History — Export PDF =====
+   Jo item abhi khula hai (historyItemId) sirf uska FULL data: summary + poora ledger
+   (filters ignore — A to Z, oldest se newest). Landscape A4, same print-window pattern. */
+function buildItemHistoryReportDocument(){
+  const d=itemHistoryData, it=d.item, s=db.settings||{};
+  const logoHtml=s.logo?`<img src="${s.logo}" alt="Logo" style="max-height:44px;max-width:80px;object-fit:contain">`:'';
+  const rows=d.ledger.slice();
+  const P=v=>v!=null?'₹ '+money(v):'—';
+  const mc=v=>v==null?'#475569':(v<0?'#b91c1c':'#0a7a4c');
+  let inQty=0,outQty=0;
+  const body=rows.map((r,i)=>{
+    const isIn=r.type==='IN', noPB=r.source==='manual';
+    if(isIn) inQty+=r.qty; else outQty+=r.qty;
+    const um=ihUnitMargin(r), up=ihUnitMarginPct(r);
+    const umCell=!isIn?(um==null?'N/A':`<span style="color:${mc(um)}">₹ ${money(um)}${up!=null?' ('+up+'%)':''}</span>`):'—';
+    const tmCell=isIn?'—':(r.margin==null?'N/A':`<span style="color:${mc(r.margin)}">₹ ${money(r.margin)}${r.marginPct!=null?' ('+r.marginPct+'%)':''}</span>`);
+    return `<tr>
+      <td class="c">${i+1}</td>
+      <td class="c">${isIn?(noPB?'Manual':'Purchase'):'Sale'}</td>
+      <td class="c">${r.date?fmtDateShort(r.date):'—'}</td>
+      <td>${noPB?'Manual Stock':esc(r.ref||'—')}</td>
+      <td>${esc(r.party||'—')}</td>
+      <td class="r">${isIn?money(r.qty):'—'}</td>
+      <td class="r">${isIn?'—':money(r.qty)}</td>
+      <td class="r">${P(ihPRate(r))}</td>
+      <td class="r">${P(ihSRate(r))}</td>
+      <td class="r">${umCell}</td>
+      <td class="r"><b>${money(r.balance)}</b></td>
+      <td class="r">${tmCell}</td>
+    </tr>`;
+  }).join('');
+  const avgBuy=d.totalPurchasedQty+d.manualQty>0.0005?d.totalPurchaseValue/(d.totalPurchasedQty+d.manualQty):null;
+  const avgSell=d.totalSoldQty>0.0005?d.totalSaleValue/d.totalSoldQty:null;
+  const stat=(l,v,c)=>`<div class="st"><div class="sl">${l}</div><div class="sv" style="${c?'color:'+c:''}">${v}</div></div>`;
+  return `<div class="rep">
+    <div class="top">
+      <div class="brand">${logoHtml}<div><div class="co">${esc(s.company||'')}</div><div class="sm">${esc((s.address||'').split('\n')[0]||'')}${s.gstin?' • GSTIN: '+esc(s.gstin):''}${s.phone?' • Ph: '+esc(s.phone):''}</div></div></div>
+      <div class="sm" style="text-align:right">Generated ${esc(new Date().toLocaleDateString('en-IN'))}<br>${rows.length} ledger record(s)</div>
+    </div>
+    <div class="title">ITEM STOCK LEDGER REPORT</div>
+    <div class="iname">${esc(it.name||'Item')}</div>
+    <div class="chips">
+      ${it.itemCode?`<span><b>Code:</b> ${esc(it.itemCode)}</span>`:''}
+      ${it.hsn?`<span><b>HSN:</b> ${esc(it.hsn)}</span>`:''}
+      ${it.unit?`<span><b>Unit:</b> ${esc(it.unit)}</span>`:''}
+      ${it.size?`<span><b>Size:</b> ${esc(it.size)}</span>`:''}
+      ${it.rate?`<span><b>Current Sales Rate:</b> ₹ ${money(it.rate)}</span>`:''}
+      ${it.purchaseRate?`<span><b>Current Purchase Rate:</b> ₹ ${money(it.purchaseRate)}</span>`:''}
+    </div>
+    ${d.manualQty>0.0005?`<div class="warn">⚠ ${d.manualQty} qty bina Purchase Bill ke (No Purchase Data)</div>`:''}
+    <div class="stats">
+      ${stat('CURRENT STOCK (computed)',money(d.computedStock),d.computedStock<=0?'#b91c1c':'#0a7a4c')}
+      ${stat('TOTAL PURCHASED (incl. manual)',money(d.totalPurchasedQty+d.manualQty))}
+      ${stat('PURCHASED VIA BILLS',money(d.totalPurchasedQty))}
+      ${stat('LIFETIME MANUAL STOCK',money(d.manualQty),'#b45309')}
+      ${stat('TOTAL SOLD',money(d.totalSoldQty))}
+      ${stat('LIFETIME MARGIN','₹ '+money(d.totalMargin)+(d.totalMarginPct!=null?' ('+d.totalMarginPct+'%)':''),mc(d.totalMargin))}
+      ${stat('PURCHASE VALUE','₹ '+money(d.totalPurchaseValue))}
+      ${stat('SALE VALUE','₹ '+money(d.totalSaleValue))}
+      ${stat('AVG PURCHASE RATE',P(avgBuy))}
+      ${stat('AVG SALES RATE',P(avgSell))}
+      ${stat('AVG MARGIN / UNIT',avgBuy!=null&&avgSell!=null?'₹ '+money(avgSell-avgBuy):'—',avgBuy!=null&&avgSell!=null?mc(avgSell-avgBuy):'')}
+    </div>
+    <div class="sec">Stock Ledger — Purchase (kaha se aaya) &amp; Sale (kaha gaya)</div>
+    <table>
+      <thead><tr><th style="width:26px">#</th><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th>Qty In</th><th>Qty Out</th><th>Purchase Rate</th><th>Sales Rate</th><th>Margin / Unit</th><th>Balance Stock</th><th>Total Margin</th></tr></thead>
+      <tbody>${body||'<tr><td colspan="12" class="c">No records.</td></tr>'}</tbody>
+      <tfoot><tr><td colspan="5" class="r"><b>TOTAL</b></td><td class="r"><b>${money(inQty)}</b></td><td class="r"><b>${money(outQty)}</b></td><td></td><td></td><td></td><td class="r"><b>${money(d.computedStock)}</b></td><td class="r"><b style="color:${mc(d.totalMargin)}">₹ ${money(d.totalMargin)}</b></td></tr></tfoot>
+    </table>
+    <div class="foot">${esc(s.company||'IE BILLING')} — Item Stock Ledger Report • Margin = (Sales Rate − FIFO Purchase Rate) × Qty</div>
+  </div>`;
+}
+function exportItemHistoryPDF(){
+  const d=itemHistoryData;
+  if(!d){alert('Pehle koi item kholo.');return;}
+  const w=window.open('','_blank');
+  if(!w){alert('Popup blocked. Please allow popups.');return;}
+  const css=`@page{size:A4 landscape;margin:8mm}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e3a5f;padding-bottom:8px}
+.brand{display:flex;gap:10px;align-items:center}.co{font-size:16px;font-weight:800;color:#1e3a5f}.sm{font-size:9px;color:#475569}
+.title{margin-top:10px;background:#1e3a5f;color:#fff;text-align:center;font-weight:800;letter-spacing:1px;padding:6px;font-size:12px}
+.iname{font-size:20px;font-weight:800;margin:10px 0 4px}
+.chips span{display:inline-block;border:1px solid #b9c4d0;border-radius:12px;padding:2px 9px;margin:0 6px 4px 0;font-size:9.5px;background:#f0f4f8}
+.warn{margin:4px 0;padding:5px 9px;border:1px solid #f59e0b;background:#fffbeb;color:#b45309;font-weight:700;border-radius:6px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.st{border:1px solid #b9c4d0;border-radius:6px;padding:6px 8px;background:#f8fafc;break-inside:avoid}.sl{font-size:8px;color:#475569;font-weight:700}.sv{font-size:14px;font-weight:800;margin-top:2px}
+.sec{font-weight:800;color:#1e3a5f;margin:10px 0 5px;font-size:11px}
+table{width:100%;border-collapse:collapse}th{background:#1e3a5f;color:#fff;border:1px solid #1e3a5f;padding:5px 4px;font-size:9px}
+td{border:1px solid #b9c4d0;padding:4px;font-size:9px}tbody tr:nth-child(even){background:#f0f4f8}
+tr{break-inside:avoid}thead{display:table-header-group}tfoot td{background:#e2e8f0}
+.c{text-align:center}.r{text-align:right}.foot{margin-top:8px;text-align:center;font-size:8.5px;color:#64748b}`;
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Item Ledger - ${esc(d.item.name||'Item')}</title><style>${css}</style></head><body>${buildItemHistoryReportDocument()}</body></html>`);
+  w.document.close();
+  setTimeout(()=>{ try{w.focus();w.print();}catch(e){} },600);
+}
 function exportItemHistoryCSV(){
   const d=itemHistoryData;
   if(!d) return;
   const rows=itemHistoryFilteredRows();
-  let csv=['Type,Date,Reference,Party,Qty In,Qty Out,Purchase Rate,Sales Rate,Balance,Margin'];
-  rows.forEach(r=>{
+  let csv=['Sr,Type,Date,Reference,Party,Qty In,Qty Out,Purchase Rate,Sales Rate,Margin Per Unit,Balance,Total Margin'];
+  rows.forEach((r,idx)=>{
     const isIn=r.type==='IN';
-    csv.push([isIn?(r.source==='manual'?'Manual':'Purchase'):'Sale',r.date,r.ref,r.party,isIn?r.qty:'',isIn?'':r.qty,ihPRate(r)??'',ihSRate(r)??'',r.balance,r.margin??''].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','));
+    csv.push([idx+1,isIn?(r.source==='manual'?'Manual':'Purchase'):'Sale',r.date,r.ref,r.party,isIn?r.qty:'',isIn?'':r.qty,ihPRate(r)??'',ihSRate(r)??'',ihUnitMargin(r)??'',r.balance,r.margin??''].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','));
   });
   downloadBlob(csv.join('\n'),'IE-ITEM-HISTORY-'+(d.item.name||'item').replace(/[^a-z0-9]+/gi,'-')+'.csv','text/csv');
 }
