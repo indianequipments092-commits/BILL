@@ -34,10 +34,10 @@ a{text-decoration:none;color:inherit}
 .grad-gold{background:linear-gradient(120deg,#fde68a,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
 
 .mesh{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.blob{position:absolute;border-radius:50%;will-change:transform}
-.b1{width:46vw;height:46vw;left:-10%;top:-8%;background:radial-gradient(circle,var(--indigo),transparent 70%);animation:f1 90s ease-in-out infinite}
-.b2{width:40vw;height:40vw;right:-8%;top:4%;background:radial-gradient(circle,var(--violet),transparent 70%);animation:f2 110s ease-in-out infinite}
-.b3{width:36vw;height:36vw;left:20%;bottom:-16%;background:radial-gradient(circle,var(--cyan),transparent 70%);animation:f3 130s ease-in-out infinite}
+.blob{position:absolute;border-radius:50%}
+.b1{width:46vw;height:46vw;left:-10%;top:-8%;background:radial-gradient(circle,var(--indigo),transparent 70%)}
+.b2{width:40vw;height:40vw;right:-8%;top:4%;background:radial-gradient(circle,var(--violet),transparent 70%)}
+.b3{width:36vw;height:36vw;left:20%;bottom:-16%;background:radial-gradient(circle,var(--cyan),transparent 70%)}
 @keyframes f1{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(4%,6%,0)}}
 @keyframes f2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-5%,4%,0)}}
 @keyframes f3{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(3%,-5%,0)}}
@@ -288,6 +288,21 @@ html:not(.paid-mode) .live-grid{grid-template-columns:repeat(2,1fr);max-width:52
 .brand b span{background:linear-gradient(90deg,#818cf8,#c084fc 55%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
 :root[data-theme=light] .brand b span{background-image:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#0891b2)}
 :root[data-theme=light] .grad-gold{background-image:linear-gradient(120deg,#d97706,#b45309)}
+
+/* ===== mobile nav fix ===== */
+:root{--navbg:#070910}:root[data-theme=light]{--navbg:#ffffff}
+.brand,.brand b,.btn-pill{white-space:nowrap}
+.nav-login-m{display:none}
+@media (max-width:900px){nav.open .nav-links{background:var(--navbg);box-shadow:0 18px 40px rgba(0,0,0,.35);max-height:calc(100vh - 70px);overflow-y:auto}}
+@media (max-width:520px){
+ .nav-in{padding:10px 14px;gap:8px}
+ .brand{gap:7px}.brand .logo{width:30px;height:30px}.brand b{font-size:16px}
+ .nav-right{gap:8px}
+ .nav-right>a:not(.btn-pill){display:none}
+ .nav-right .btn-pill{padding:8px 13px;font-size:12.5px}
+ .tg,.burger{width:34px;height:34px}
+ nav.open .nav-login-m{display:block;color:var(--text);font-weight:700}
+}
 </style>
 <script>
 /* Pichli baar ki value turant lagao taaki page flash na kare (fresh value neeche load hoti hai) */
@@ -310,6 +325,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
       <a href="#who">Kis Ke Liye</a>
       <a href="#features">Features</a>
       <a href="#docs">Documents</a>
+      <a href="billing.html" class="nav-login-m">Login</a>
       <a href="#pricing" class="paid-only">Plans</a>
     </div>
     <div class="nav-right">
