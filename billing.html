@@ -6076,7 +6076,7 @@ function computeNotifications(){
   });
   (hasDb?(db.items||[]):[]).forEach(it=>{
     try{
-      if(Number(it.stock)<=0){
+      if(trueStock(it)<=0){
         out.push({ic:'📦',type:'stock',sortKey:2,key:'stock:'+it.id,text:`<b>${esc(it.name||'Item')}</b> stock khatam ho gaya hai`});
       }
     }catch(e){}
@@ -7006,7 +7006,7 @@ fbAuth.onAuthStateChanged(user=>{
  <div class="card">
   <div class="section-title">Customer Selection</div>
   <div class="grid g3">
-   <div><label>Select Saved Customer</label><select id="customerSelect" onchange="loadCustomer()"></select></div>
+   <div><label>Select Saved Customer</label><select id="customerSelect" data-combo="customer" onchange="loadCustomer()"></select></div>
    <div><label>Customer Name</label><input id="custName"></div>
    <div><label>GST Number</label><input id="custGST"></div>
   </div>
@@ -8542,10 +8542,11 @@ function pf2Update(){
     </select>
   </div>
   <div><label>HSN / SAC Code</label><input id="miHSN" placeholder="HSN / SAC code"></div>
-  <div><label>Current Stock</label><input id="miStock" type="number" step="0.001" value="0"></div>
+  <div><label>Current Stock (Manual + Purchase − Sales)</label><input id="miStockCur" type="number" value="0" readonly style="opacity:.85"></div>
+  <div><label>Add Manual Stock (+)</label><input id="miStock" type="number" step="0.001" value="0" placeholder="0"></div>
   <div><label>Barcode / QR</label><div style="display:flex;gap:6px"><input id="miBarcode" placeholder="Scan or type code" style="flex:1"><button type="button" class="btn muted" style="padding:0 14px;min-height:44px" onclick="openBarcodeScanner(function(code){id('miBarcode').value=code;})">📷</button></div></div>
 </div>
-<p class="sub" style="margin:8px 0 0">Stock Purchase Bill save karne par khud-ba-khud badh jaata hai. Yahan sirf shuruaati/manual correction ke liye edit karo.</p>
+<p class="sub" style="margin:8px 0 0">Current Stock = Manual + Purchase − Sales. Purchase Bill se stock khud badhta hai. Yahan jo qty daaloge wo Manual Stock me judegi (kam karne ke liye minus likho).</p>
 <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
   <button class="btn muted" onclick="closeModal('itemModal')">Cancel</button>
   <button class="btn primary" type="button" id="btnAiHsn" onclick="aiSuggestHSN()">AI HSN</button>
@@ -8634,7 +8635,7 @@ function pf2Update(){
    <div><label>Date</label><input id="poDate" type="date"></div>
    <div>
      <label>Vendor *</label>
-     <select id="poVendor"></select>
+     <select id="poVendor" data-combo="vendor"></select>
    </div>
    <div><label>Delivery Date (expected)</label><input id="poDelivery" type="date"></div>
    <div><label>Payment Terms</label><input id="poPayTerms" placeholder="e.g. 30% advance, balance on delivery"></div>
@@ -8693,7 +8694,7 @@ function pf2Update(){
    <div><label>Date</label><input id="pbDate" type="date"></div>
    <div>
      <label>Vendor *</label>
-     <select id="pbVendor" onchange="populatePbPoRefSelect(this.value)"></select>
+     <select id="pbVendor" data-combo="vendor" onchange="populatePbPoRefSelect(this.value)"></select>
    </div>
    <div><label>Vendor's Bill/Invoice No.</label><input id="pbVendorBillNo" placeholder="Unke invoice/bill ka number"></div>
    <div><label>Against PO (optional)</label><select id="pbPoRef" onchange="pbPoChanged()"><option value="">— None —</option></select></div>
@@ -11029,7 +11030,12 @@ function buildSoldQtyMap(excludeInvoiceId){
   });
   return map;
 }
+let _soldMapCache=null;
 function trueStock(it,soldMap){
+  if(!soldMap){
+    if(!_soldMapCache){ _soldMapCache=buildSoldQtyMap(); setTimeout(()=>{_soldMapCache=null;},0); }
+    soldMap=_soldMapCache;
+  }
   const sold=(soldMap?soldMap.get(it.id):0)||0;
   return +((Number(it.stock)||0)-sold).toFixed(3);
 }
@@ -11785,7 +11791,7 @@ function renderRows(){
         </div>
         <div>
           <label>Qty</label>
-          <input data-field="qty" data-row="${i}" type="number" step="0.01" value="${esc(r.qty)}" oninput="rowVal(${i},'qty',this.value)" placeholder="0">
+          <input data-field="qty" data-row="${i}" type="number" step="0.01" value="${esc(r.qty)}" oninput="rowVal(${i},'qty',this.value)" onchange="rowQtyStockWarn(${i})" placeholder="0">
         </div>
         <div>
           <label>Unit (Per)</label>
@@ -11839,6 +11845,13 @@ function rowVal(i,k,v){
   if(k==='qty'){
     refreshRowStocks();
   }
+}
+function rowQtyStockWarn(i){
+  if(!current||!current.items[i]) return;
+  const r=current.items[i]; if(!r.itemId||!(Number(r.qty)>0)) return;
+  const s=rowStockInfo(r.itemId,r.qty); if(!s||s.remaining>=-0.0001) return;
+  const it=db.items.find(x=>x.id===r.itemId);
+  alert('⚠️ '+(it?it.name:'Item')+' ka stock '+(s.total<=0?'khatam hai':'kam hai')+'.\n\nAvailable stock: '+money(s.total)+'\nBill me qty: '+money(s.total-s.remaining)+'\n\nStock minus me chala jayega. Aap chaho to aage badh sakte ho.');
 }
 function removeRow(i){
   if(!current) return;
@@ -14481,6 +14494,7 @@ function openItemModal(){
   id('miUnit').value = 'Nos';
   id('miHSN').value = '';
   id('miStock').value = '0';
+  if(id('miStockCur')) id('miStockCur').value = '0';
   id('miBarcode').value = '';
   id('itemModal').classList.add('show');
 }
@@ -14508,7 +14522,8 @@ function editItem(itemId){
   }
   if(unitSel) unitSel.value = u;
   id('miHSN').value = item.hsn || '';
-  id('miStock').value = item.stock ?? 0;
+  id('miStock').value = '0';
+  if(id('miStockCur')) id('miStockCur').value = trueStock(item);
   id('miBarcode').value = item.barcode || '';
   id('itemModal').classList.add('show');
 }
@@ -14529,15 +14544,17 @@ function saveItem(){
     gst: Number(id('miGST').value || 0),
     unit: id('miUnit').value || 'Nos',
     hsn: id('miHSN').value,
-    stock: Number(id('miStock')?.value || 0),
+    stock: 0,
     barcode
   };
+  const addStock = Number(id('miStock')?.value || 0);
   let savedItem = null;
   if(editingItemId){
     const existing = db.items.find(a => a.id === editingItemId);
-    if(existing){ Object.assign(existing, data); savedItem = existing; }
+    if(existing){ data.stock = +((Number(existing.stock)||0)+addStock).toFixed(3); Object.assign(existing, data); savedItem = existing; }
     editingItemId = null;
   } else {
+    data.stock = addStock;
     savedItem = { id: crypto.randomUUID(), ...data, active: true };
     db.items.push(savedItem);
   }
@@ -17847,7 +17864,7 @@ function docCustomerCard(){
   const opts='<option value="">— Select Customer —</option>'+db.customers.map(c=>`<option value="${c.id}" ${c.id===d.customerId?'selected':''}>${esc(c.name)}${c.gst?' — '+esc(c.gst):''}</option>`).join('');
   return `<div class="card"><div class="section-title">Customer</div>
     <div class="grid g3">
-      <div><label>Select Saved Customer</label><select id="dzCustSelect" onchange="docLoadCustomer(this.value)">${opts}</select></div>
+      <div><label>Select Saved Customer</label><select id="dzCustSelect" data-combo="customer" onchange="docLoadCustomer(this.value)">${opts}</select></div>
       ${dzC('Customer Name','name')}
       ${dzC('GST Number','gst')}
     </div>
@@ -20228,7 +20245,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
         break;
       case 'itm':
         v.t=hl(o.name||'(no name)'); v.s=hl([o.hsn?'HSN '+o.hsn:'',o.itemCode,o.barcode?'Barcode '+o.barcode:''].filter(Boolean).join(' · ')||'Item');
-        v.r='₹ '+M(o.rate); var stk=Number(o.stock);
+        v.r='₹ '+M(o.rate); var _ts=T('trueStock'); var stk=_ts?_ts(o):Number(o.stock);
         if(!isNaN(stk)&&o.stock!==''&&o.stock!=null){ v.b=stk<=0?'Out of stock':'Stock '+stk; v.bc=stk<=0?'bad':'mute'; }
         v.act=function(){ var f=T('openItemHistory'); if(f) f(o.id); };
         v.sc.push(['Edit',function(){ var f=T('editItem'); if(f) f(o.id); }]);
@@ -21277,5 +21294,115 @@ document.addEventListener('click',function(e){
   if(weak) document.documentElement.classList.add('mesh-static');
 }catch(e){}})();
 </script>
+<style id="combo-pick-css">
+.cmb-row{display:flex;gap:6px;align-items:center}
+.cmb-row .item-pick-wrap{flex:1;min-width:0}
+.cmb-row .cmb-input{width:100%}
+.cmb-btn{flex:0 0 auto;border:1px solid rgba(255,255,255,.14);background:rgba(99,102,241,.16);color:inherit;border-radius:10px;padding:0 10px;height:40px;cursor:pointer;font-size:14px}
+.cmb-btn:hover{background:rgba(99,102,241,.32)}
+.cmb-btn[disabled]{opacity:.4;cursor:not-allowed}
+[data-theme="light"] .cmb-btn{border-color:rgba(15,23,42,.18)}
+#customerModal,#vendorModal{z-index:120}
+</style>
+<script id="combo-pick-js">
+(function(){
+  var CFG={
+    customer:{list:function(){return db.customers||[];},edit:function(i){editCustomer(i);},add:null,noun:'customer'},
+    vendor:{list:function(){return db.vendors||[];},edit:function(i){editVendor(i);},add:function(){openVendorModal();},noun:'vendor'}
+  };
+  var vd=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+  function hay(kind,sel,o){
+    var r=(CFG[kind].list().filter(function(x){return x.id===o.value;})[0])||{};
+    return [o.textContent,r.name,r.gst,r.city,r.state,r.contact].join(' ').toLowerCase();
+  }
+  function enhance(sel){
+    if(sel._cmb) return; var kind=sel.getAttribute('data-combo'); if(!CFG[kind]) return;
+    var cfg=CFG[kind], P=sel.parentNode;
+    var row=document.createElement('div'); row.className='cmb-row';
+    row.innerHTML='<div class="item-pick-wrap"><input class="cmb-input" type="text" autocomplete="off" placeholder="Type to search '+cfg.noun+'..."><div class="item-pick-dropdown"></div></div>'+
+      '<button type="button" class="cmb-btn cmb-edit" title="Edit '+cfg.noun+' details">✏️</button>'+(cfg.add?'<button type="button" class="cmb-btn cmb-add" title="Add new '+cfg.noun+'">➕</button>':'');
+    P.insertBefore(row,sel); sel.style.display='none';
+    var inp=row.querySelector('.cmb-input'), dd=row.querySelector('.item-pick-dropdown'), be=row.querySelector('.cmb-edit'), ba=row.querySelector('.cmb-add');
+    var typed=false, act=-1;
+    function curText(){ var o=sel.options[sel.selectedIndex]; return (o&&o.value)?o.textContent:''; }
+    function sync(){ if(document.activeElement!==inp||!typed) inp.value=curText(); inp.disabled=sel.disabled; be.disabled=sel.disabled&&false; if(ba) ba.disabled=sel.disabled; }
+    sel._cmb={sync:sync,row:row};
+    Object.defineProperty(sel,'value',{get:function(){return vd.get.call(sel);},set:function(v){vd.set.call(sel,v);sync();},configurable:true});
+    new MutationObserver(sync).observe(sel,{childList:true,attributes:true,attributeFilter:['disabled']});
+    function opts(){ return [].slice.call(dd.querySelectorAll('.item-pick-opt[data-id]')); }
+    function setAct(n){ var o=opts(); o.forEach(function(x){x.classList.remove('active');}); act=n; if(o[n]){o[n].classList.add('active'); try{o[n].scrollIntoView({block:'nearest'});}catch(e){}} }
+    function render(){
+      var q=typed?inp.value.toLowerCase().trim().split(/\s+/).filter(Boolean):[], out=[];
+      [].slice.call(sel.options).forEach(function(o){ if(!o.value) return; var h=hay(kind,sel,o); if(q.every(function(w){return h.indexOf(w)>-1;})) out.push(o); });
+      dd.innerHTML=out.length?out.slice(0,60).map(function(o){ var r=(cfg.list().filter(function(x){return x.id===o.value;})[0])||{}; var sub=[r.city,r.contact].filter(Boolean).join(' · ');
+        return '<div class="item-pick-opt" data-id="'+o.value+'"><b>'+esc(o.textContent)+'</b>'+(sub?'<span class="ipo-sub">'+esc(sub)+'</span>':'')+'</div>'; }).join(''):'<div class="item-pick-opt" style="cursor:default"><span class="ipo-sub">Koi '+cfg.noun+' nahi mila</span></div>';
+      dd.classList.add('show'); act=-1;
+      if(typed&&opts().length) setAct(0);
+    }
+    function pick(id0){ vd.set.call(sel,id0); typed=false; dd.classList.remove('show'); sync(); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+    inp.addEventListener('focus',function(){ typed=false; try{inp.select();}catch(e){} render(); });
+    inp.addEventListener('input',function(){ typed=true; render(); });
+    inp.addEventListener('blur',function(){ setTimeout(function(){ dd.classList.remove('show'); typed=false; inp.value=curText(); },120); });
+    dd.addEventListener('mousedown',function(e){ e.preventDefault(); var t=e.target.closest('.item-pick-opt[data-id]'); if(t) pick(t.getAttribute('data-id')); });
+    inp.addEventListener('keydown',function(e){
+      var o=opts(), k=e.key, open=dd.classList.contains('show');
+      if(k==='ArrowDown'||k==='ArrowUp'){ e.preventDefault(); if(!open){render();o=opts();} if(!o.length) return; setAct(k==='ArrowDown'?(act+1)%o.length:(act<=0?o.length-1:act-1)); }
+      else if(k==='Enter'||k==='Tab'){ if(!open||!o.length||(k==='Tab'&&e.shiftKey)) return; var p=act>=0?o[act]:(k==='Enter'&&typed?o[0]:null); if(p){ e.preventDefault(); pick(p.getAttribute('data-id')); } else if(k==='Enter'){ e.preventDefault(); dd.classList.remove('show'); } }
+      else if(k==='Escape'){ dd.classList.remove('show'); typed=false; inp.value=curText(); }
+    });
+    be.addEventListener('click',function(){ var v=sel.value; if(!v){ alert('Pehle '+cfg.noun+' select karo, phir edit karo.'); return; } cfg.edit(v); });
+    if(ba) ba.addEventListener('click',function(){ cfg.add(); });
+    sync();
+  }
+  function scan(){ [].slice.call(document.querySelectorAll('select[data-combo]')).forEach(enhance); }
+  var q=false; new MutationObserver(function(){ if(q) return; q=true; requestAnimationFrame(function(){q=false;scan();}); }).observe(document.documentElement,{childList:true,subtree:true});
+  scan();
+  function visible(sel){ return sel._cmb&&sel._cmb.row.offsetParent!==null; }
+  function allSel(kind){ return [].slice.call(document.querySelectorAll('select[data-combo="'+kind+'"]')); }
+  function fire(sel){ sel.dispatchEvent(new Event('change',{bubbles:true})); }
+
+  // Invoice open hone par saved customer select dikhao
+  var _bi=window.bindInvoice;
+  if(typeof _bi==='function') window.bindInvoice=bindInvoice=function(){ var r=_bi.apply(this,arguments); try{ var s=document.getElementById('customerSelect'); if(s&&current){ vd.set.call(s,current.customerId||''); s._cmb&&s._cmb.sync(); } }catch(e){} return r; };
+
+  // Customer save ke baad: edit => document me details refresh, naya => document me auto-select
+  var _sc=window.saveCustomer;
+  if(typeof _sc==='function') window.saveCustomer=saveCustomer=function(){
+    var wasEdit=editingCustomerId, n0=db.customers.length, prev={};
+    allSel('customer').forEach(function(s,i){prev[i]=s.value;});
+    var r=_sc.apply(this,arguments);
+    try{
+      var m=document.getElementById('customerModal'); if(m&&m.classList.contains('show')) return r;
+      var nid=wasEdit||(db.customers.length>n0?db.customers[db.customers.length-1].id:null);
+      if(typeof docRefreshCustSelect==='function') try{docRefreshCustSelect();}catch(e){}
+      allSel('customer').forEach(function(s,i){
+        if(prev[i]) s.value=prev[i];
+        if(!nid||!visible(s)) return;
+        if(wasEdit){ if(s.value===nid) fire(s); }
+        else { s.value=nid; fire(s); }
+      });
+    }catch(e){}
+    return r;
+  };
+  // Vendor save ke baad: list refresh + naya vendor auto-select
+  var _sv=window.saveVendor;
+  if(typeof _sv==='function') window.saveVendor=saveVendor=function(){
+    var wasEdit=editingVendorId, n0=db.vendors.length;
+    var r=_sv.apply(this,arguments);
+    try{
+      var m=document.getElementById('vendorModal'); if(m&&m.classList.contains('show')) return r;
+      var nid=wasEdit||(db.vendors.length>n0?db.vendors[db.vendors.length-1].id:null);
+      allSel('vendor').forEach(function(s){
+        if(!visible(s)) return; var cur=s.value;
+        populateVendorSelectInto(s.id);
+        s.value=wasEdit?cur:(nid||cur);
+        if(!wasEdit&&nid) fire(s);
+      });
+    }catch(e){}
+    return r;
+  };
+})();
+</script>
+
 </body>
 </html>
