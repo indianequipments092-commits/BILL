@@ -8583,6 +8583,15 @@ function pf2Update(){
        <option value="manual">No Purchase Data</option>
      </select>
    </div>
+   <div style="flex:0 1 170px;min-width:150px">
+     <label>Margin</label>
+     <select id="itemHistMargin" onchange="renderItemHistoryDetail()">
+       <option value="all">All</option>
+       <option value="profit">Profit only</option>
+       <option value="loss">Loss only</option>
+       <option value="nocost">No cost data</option>
+     </select>
+   </div>
    <div style="flex:0 1 200px;min-width:180px">
      <label>Sort</label>
      <select id="itemHistSort" onchange="renderItemHistoryDetail()">
@@ -8592,13 +8601,18 @@ function pf2Update(){
        <option value="qty_asc">Qty (Low to High)</option>
        <option value="margin_desc">Margin (High to Low)</option>
        <option value="margin_asc">Margin (Low to High)</option>
+       <option value="prate_desc">Purchase Rate (High to Low)</option>
+       <option value="prate_asc">Purchase Rate (Low to High)</option>
+       <option value="srate_desc">Sales Rate (High to Low)</option>
+       <option value="srate_asc">Sales Rate (Low to High)</option>
      </select>
    </div>
  </div>
  <div class="table-wrap">
-   <table><thead><tr><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th class="right">Qty In</th><th class="right">Qty Out</th><th class="right">Rate</th><th class="right">Balance Stock</th><th class="right">Margin</th></tr></thead>
+   <table><thead><tr><th>Type</th><th>Date</th><th>Bill / Invoice No.</th><th>Vendor / Customer</th><th class="right">Qty In</th><th class="right">Qty Out</th><th class="right">Purchase Rate</th><th class="right">Sales Rate</th><th class="right">Balance Stock</th><th class="right">Margin</th></tr></thead>
    <tbody id="itemHistBody"></tbody></table>
  </div>
+ <div class="ih-cards" id="itemHistCards"></div>
 
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
    <button class="btn muted" onclick="exportItemHistoryCSV()">Export Excel/CSV</button>
@@ -14561,6 +14575,8 @@ function saveItem(){
     barcode
   };
   const addStock = Number(id('miStock')?.value || 0);
+  { const hasPB=(db.purchaseBills||[]).some(pb=>(pb.items||[]).some(r=>r.itemId===editingItemId));
+    if((addStock>0||!hasPB) && data.purchaseRate>0) data.manualRate=data.purchaseRate; }
   let savedItem = null;
   if(editingItemId){
     const existing = db.items.find(a => a.id === editingItemId);
@@ -14651,7 +14667,8 @@ function itemLedgerData(itemId){
   let manualQty=+((Number(it.stock)||0)-totalPurchasedQty).toFixed(3);
   if(manualQty>0.0005){
     const earliestDate=purchaseEvents[0]?.date||saleEvents[0]?.date||'';
-    purchaseEvents.unshift({date:earliestDate,qty:manualQty,rate:null,ref:'—',party:'—',source:'manual'});
+    const manualRate=Number(it.manualRate)>0?Number(it.manualRate):(Number(it.purchaseRate)>0?Number(it.purchaseRate):null);
+    purchaseEvents.unshift({date:earliestDate,qty:manualQty,rate:manualRate,ref:'—',party:'—',source:'manual'});
   } else manualQty=0;
 
   const computedStock=+((totalPurchasedQty+manualQty)-totalSoldQty).toFixed(3);
@@ -14664,7 +14681,7 @@ function itemLedgerData(itemId){
       if(need<=0.0005) break;
       if(b.remaining<=0.0005) continue;
       const take=Math.min(b.remaining,need);
-      if(b.rate!=null){ costTotal+=take*b.rate; costedQty+=take; srcParts.push((b.source==='manual'?'No Purchase Data':b.ref)); }
+      if(b.rate!=null){ costTotal+=take*b.rate; costedQty+=take; srcParts.push((b.source==='manual'?'Manual Stock':b.ref)); }
       else { srcParts.push('No Purchase Data'); costedQty+=0; /* rate unknown */ }
       b.remaining-=take; need-=take;
     }
@@ -14694,8 +14711,8 @@ function openItemHistory(itemId){
   historyItemId=itemId;
   itemHistoryData=itemLedgerData(itemId);
   if(!itemHistoryData){alert('Item not found.');return;}
-  const f=id('itemHistFrom'),t=id('itemHistTo'),q=id('itemHistSearch'),ty=id('itemHistType'),so=id('itemHistSort');
-  if(f) f.value=''; if(t) t.value=''; if(q) q.value=''; if(ty) ty.value='all'; if(so) so.value='date_desc';
+  const f=id('itemHistFrom'),t=id('itemHistTo'),q=id('itemHistSearch'),ty=id('itemHistType'),so=id('itemHistSort'),mf=id('itemHistMargin');
+  if(f) f.value=''; if(t) t.value=''; if(q) q.value=''; if(ty) ty.value='all'; if(so) so.value='date_desc'; if(mf) mf.value='all';
   renderItemHistoryModal();
   id('itemHistoryModal').classList.add('show');
 }
@@ -14722,6 +14739,8 @@ function renderItemHistoryModal(){
   renderItemHistoryDetail();
 }
 
+function ihPRate(r){ return r.type==='IN'?(r.rate!=null?r.rate:null):(r.avgCost!=null?r.avgCost:null); }
+function ihSRate(r){ return r.type==='OUT'?r.rate:null; }
 function itemHistoryFilteredRows(){
   const d=itemHistoryData;
   if(!d) return [];
@@ -14735,6 +14754,11 @@ function itemHistoryFilteredRows(){
   if(typeF==='sale') rows=rows.filter(r=>r.type==='OUT');
   if(typeF==='manual') rows=rows.filter(r=>r.source==='manual');
   if(q) rows=rows.filter(r=>[r.ref,r.party,r.costFrom].join(' ').toLowerCase().includes(q));
+  const mF=id('itemHistMargin')?.value||'all';
+  if(mF==='profit') rows=rows.filter(r=>r.type==='OUT'&&r.margin!=null&&r.margin>=0);
+  if(mF==='loss') rows=rows.filter(r=>r.type==='OUT'&&r.margin!=null&&r.margin<0);
+  if(mF==='nocost') rows=rows.filter(r=>r.type==='OUT'&&r.margin==null);
+  const pr=r=>ihPRate(r)??-1, sr=r=>ihSRate(r)??-1;
   const sortV=id('itemHistSort')?.value||'date_desc';
   rows.sort((a,b)=>{
     if(sortV==='date_asc') return String(a.date).localeCompare(String(b.date));
@@ -14743,6 +14767,10 @@ function itemHistoryFilteredRows(){
     if(sortV==='qty_asc') return a.qty-b.qty;
     if(sortV==='margin_desc') return (b.margin||0)-(a.margin||0);
     if(sortV==='margin_asc') return (a.margin||0)-(b.margin||0);
+    if(sortV==='prate_desc') return pr(b)-pr(a);
+    if(sortV==='prate_asc') return pr(a)-pr(b);
+    if(sortV==='srate_desc') return sr(b)-sr(a);
+    if(sortV==='srate_asc') return sr(a)-sr(b);
     return 0;
   });
   return rows;
@@ -14765,11 +14793,25 @@ function renderItemHistoryDetail(){
       <td>${esc(r.party||'—')}</td>
       <td class="right">${isIn?money(r.qty):'—'}</td>
       <td class="right">${isIn?'—':money(r.qty)}</td>
-      <td class="right">${r.rate!=null?'₹ '+money(r.rate):'—'}</td>
+      <td class="right">${ihPRate(r)!=null?'₹ '+money(ihPRate(r)):'—'}</td>
+      <td class="right">${ihSRate(r)!=null?'₹ '+money(ihSRate(r)):'—'}</td>
       <td class="right"><b>${money(r.balance)}</b></td>
       <td class="right">${marginCell}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="9" class="center">No records match the current filters.</td></tr>';
+  }).join(''):'<tr><td colspan="10" class="center">No records match the current filters.</td></tr>';
+  const cards=id('itemHistCards');
+  if(cards) cards.innerHTML=rows.length?rows.map(r=>{
+    const isIn=r.type==='IN', noPB=r.source==='manual', pr=ihPRate(r), sr=ihSRate(r);
+    const ref=isIn?(noPB?'Manual Stock':esc(r.ref)):esc(r.ref);
+    const click=isIn?(noPB?'':`onclick="openPBFromHistory('${r.refId}')"`):`onclick="openInvoiceFromHistory('${r.refId}')"`;
+    const perQty=(!isIn&&r.margin!=null&&r.costedQty>0)?` · ₹ ${money(r.margin/r.costedQty)}/qty`:'';
+    const mg=isIn?'':(r.margin==null?'<span style="color:var(--text-muted)">Margin: N/A (no cost data)</span>':`<span style="color:${r.margin<0?'#fb7185':'#34d399'}">Margin: ₹ ${money(r.margin)}${r.marginPct!=null?' ('+r.marginPct+'%)':''}${perQty}</span>`);
+    return `<div class="ih-card" ${click}>
+      <div class="ih-ch"><span class="badge ${isIn?'final':'archived'}">${isIn?(noPB?'Manual':'Purchase'):'Sale'}</span><b>${ref}</b><span class="ih-d">${fmtDateShort(r.date)}</span></div>
+      <div class="ih-p">${esc(r.party&&r.party!=='—'?r.party:'')}</div>
+      <div class="ih-g"><div><i>${isIn?'Qty In':'Qty Out'}</i>${money(r.qty)}</div><div><i>Purchase Rate</i>${pr!=null?'₹ '+money(pr):'—'}</div><div><i>Sales Rate</i>${sr!=null?'₹ '+money(sr):'—'}</div><div><i>Balance</i><b>${money(r.balance)}</b></div></div>
+      ${mg?`<div class="ih-m">${mg}</div>`:''}</div>`;
+  }).join(''):'<div class="ih-card" style="text-align:center">No records match the current filters.</div>';
 }
 
 function openInvoiceFromHistory(invId){
@@ -14785,10 +14827,10 @@ function exportItemHistoryCSV(){
   const d=itemHistoryData;
   if(!d) return;
   const rows=itemHistoryFilteredRows();
-  let csv=['Type,Date,Reference,Party,Qty In,Qty Out,Rate,Balance,Margin'];
+  let csv=['Type,Date,Reference,Party,Qty In,Qty Out,Purchase Rate,Sales Rate,Balance,Margin'];
   rows.forEach(r=>{
     const isIn=r.type==='IN';
-    csv.push([isIn?(r.source==='manual'?'Manual':'Purchase'):'Sale',r.date,r.ref,r.party,isIn?r.qty:'',isIn?'':r.qty,r.rate??'',r.balance,r.margin??''].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','));
+    csv.push([isIn?(r.source==='manual'?'Manual':'Purchase'):'Sale',r.date,r.ref,r.party,isIn?r.qty:'',isIn?'':r.qty,ihPRate(r)??'',ihSRate(r)??'',r.balance,r.margin??''].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','));
   });
   downloadBlob(csv.join('\n'),'IE-ITEM-HISTORY-'+(d.item.name||'item').replace(/[^a-z0-9]+/gi,'-')+'.csv','text/csv');
 }
@@ -21316,6 +21358,14 @@ document.addEventListener('click',function(e){
 .cmb-btn[disabled]{opacity:.4;cursor:not-allowed}
 [data-theme="light"] .cmb-btn{border-color:rgba(15,23,42,.18)}
 #customerModal,#vendorModal{z-index:120}
+.ih-cards{display:none}
+.ih-card{border:1px solid var(--border-color);background:var(--bg-card-hover);border-radius:14px;padding:12px;margin-bottom:10px}
+.ih-ch{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ih-d{margin-left:auto;font-size:12px;color:var(--text-muted)}
+.ih-p{font-size:12px;color:var(--text-muted);margin:4px 0 8px}
+.ih-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ih-g div{font-size:14px}
+.ih-g i{display:block;font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted)}
+.ih-m{margin-top:8px;font-size:13px;font-weight:700}
+@media(max-width:760px){#itemHistoryModal .table-wrap{display:none}.ih-cards{display:block}}
 </style>
 <script id="combo-pick-js">
 (function(){
