@@ -6840,6 +6840,7 @@ fbAuth.onAuthStateChanged(user=>{
       <button data-page="acctPdc" onclick="showPage('acctPdc',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16M8 15h4"/></svg><span class="nl">Post-dated Cheques</span></button>
       <button data-page="acctControl" onclick="showPage('acctControl',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span class="nl">Audit &amp; Security</span></button>
       <button data-page="acctGst" onclick="showPage('acctGst',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h3M14 14l2 2M16 14l-2 2"/></svg><span class="nl">GST &amp; Tax</span></button>
+      <button data-page="acctExt" onclick="showPage('acctExt',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 3"/></svg><span class="nl">Cost, Budget &amp; Assets</span></button>
       </div></div>
     </div>
     <div class="nav-group open" data-group="tools">
@@ -7354,6 +7355,18 @@ fbAuth.onAuthStateChanged(user=>{
     </div>
   </div>
   <div class="card" style="margin-top:18px"><div id="ivSub" class="sub" style="margin-bottom:12px"></div><div id="ivBody" class="table-wrap"></div></div>
+</div>
+<div id="acctExt" class="page hidden">
+  <div class="top"><h1>Cost, Budget &amp; Assets</h1></div>
+  <div class="card" style="margin-top:18px">
+    <div id="exTabs" class="toolbar" style="flex-wrap:wrap;gap:8px"></div>
+    <div id="exRange" class="grid g4" style="margin-top:14px">
+      <div><label>From</label><input id="exFrom" type="date" onchange="exRender()"></div>
+      <div><label>To</label><input id="exTo" type="date" onchange="exRender()"></div>
+    </div>
+    <div class="toolbar" style="margin-top:10px"><button class="btn muted" onclick="exCSV()">CSV</button><button class="btn muted" onclick="exPrint()">Print</button></div>
+  </div>
+  <div class="card" style="margin-top:18px"><div id="exSub" class="sub" style="margin-bottom:12px"></div><div id="exBody" class="table-wrap"></div></div>
 </div>
 <div id="acctControl" class="page hidden">
   <div class="top"><h1>Audit &amp; Security</h1></div>
@@ -8589,6 +8602,7 @@ function pf2Update(){
  <div style="margin-top:14px"><div class="section-title" id="avLinesTitle">Paid to</div><div id="avLines"></div>
    <div class="toolbar"><button class="btn muted" id="avAdd" onclick="acctAdd()">+ Add line</button><button class="btn muted" onclick="acctOpenLedger()">+ New ledger</button></div></div>
  <div class="card" style="margin:14px 0 0;padding:12px 16px" id="avTot"></div>
+ <div id="avCcWrap" style="margin-top:12px;display:none"><label>Cost centre (optional)</label><select id="avCc"></select></div>
  <div style="margin-top:12px"><label>Narration</label><textarea id="avNarr" rows="2" placeholder="Optional note"></textarea></div>
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctVoucherModal')">Cancel</button><button class="btn success" onclick="acctSaveVoucher()">Save voucher</button></div>
 </div></div>
@@ -10352,7 +10366,7 @@ const DEFAULT_SETTINGS={
 };
 function acctNormalize(a){
   a=a&&typeof a==='object'?a:{};
-  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:'',gst:a.gst&&typeof a.gst==='object'?a.gst:{},inv:a.inv&&typeof a.inv==='object'?a.inv:{}};
+  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:'',gst:a.gst&&typeof a.gst==='object'?a.gst:{},inv:a.inv&&typeof a.inv==='object'?a.inv:{},p7:a.p7&&typeof a.p7==='object'?a.p7:{}};
   function ens(k,nm,g){ if(o.ledgers.some(function(l){return l.id==='lg_'+k})) return; if(o.ledgers.some(function(l){return String(l.name).toLowerCase()===nm.toLowerCase()})) nm+=' (Auto)'; o.ledgers.push({id:'lg_'+k,name:nm,group:g,opening:{amt:0,dc:'Dr'}}); }
   [['cash','Cash','cash'],['bank','Bank Account','bank'],['sales','Sales','salesAcc'],['salesret','Sales Return','salesAcc'],['purchase','Purchase','purchAcc'],['purchret','Purchase Return','purchAcc'],['cgst','CGST','dutiesTaxes'],['sgst','SGST','dutiesTaxes'],['igst','IGST','dutiesTaxes'],['icgst','Input CGST','dutiesTaxes'],['isgst','Input SGST','dutiesTaxes'],['iigst','Input IGST','dutiesTaxes'],['discount','Discount Allowed','indirectExp'],['discrec','Discount Received','indirectInc'],['roundoff','Round Off','indirectExp']].forEach(function(x){ens(x[0],x[1],x[2])});
   [['tdspay','TDS Payable','dutiesTaxes'],['tcspay','TCS Payable','dutiesTaxes'],['tdsrec','TDS Receivable','loansAdv'],['tcsrec','TCS Receivable','loansAdv']].forEach(function(x){ens(x[0],x[1],x[2])});
@@ -11166,6 +11180,7 @@ function showPage(id,btn){
   if(id==='acctControl'&&typeof acctRenderControl==='function')acctRenderControl();
   if(id==='acctGst'&&typeof acctRenderGst==='function')acctRenderGst();
   if(id==='invAdv'&&typeof invRender==='function')invRender();
+  if(id==='acctExt'&&typeof exRender==='function')exRender();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -17989,6 +18004,12 @@ function importJSON(){
           ['godowns','transfers','lists','boms','prod','sj'].forEach(k=>{IV[k]=Array.isArray(IV[k])?IV[k]:[]; (x.accounts.inv[k]||[]).forEach(n=>{ if(!n||!n.id) return; const i=IV[k].findIndex(a=>a.id===n.id); if(i>=0) IV[k][i]=n; else IV[k].push(n); });});
           ['partyList','alt','reorder'].forEach(k=>{IV[k]=IV[k]&&typeof IV[k]==='object'?IV[k]:{}; Object.assign(IV[k],x.accounts.inv[k]||{});});
         }
+        if(x.accounts.p7&&typeof x.accounts.p7==='object'){
+          const P7=AC.p7=AC.p7&&typeof AC.p7==='object'?AC.p7:{};
+          ['cc','assets'].forEach(k=>{P7[k]=Array.isArray(P7[k])?P7[k]:[]; (x.accounts.p7[k]||[]).forEach(n=>{ if(!n||!n.id) return; const i=P7[k].findIndex(a=>a.id===n.id); if(i>=0) P7[k][i]=n; else P7[k].push(n); });});
+          P7.cur=Array.isArray(P7.cur)?P7.cur:[]; (x.accounts.p7.cur||[]).forEach(n=>{ if(!n||!n.code) return; const i=P7.cur.findIndex(a=>a.code===n.code); if(i>=0) P7.cur[i]=n; else P7.cur.push(n); });
+          P7.budgets=P7.budgets&&typeof P7.budgets==='object'?P7.budgets:{}; Object.assign(P7.budgets,x.accounts.p7.budgets||{});
+        }
         Object.keys(x.accounts.counters||{}).forEach(t=>{AC.counters[t]=Math.max(AC.counters[t]||0,x.accounts.counters[t]||0)});
       }
       migrateReceiptNumbers();
@@ -20511,7 +20532,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
   var CHIPS=[['all','All'],['inv','Invoices'],['cus','Customers'],['itm','Items'],['ven','Vendors'],['po','PO'],['pb','Purchase Bills'],['doc','Docs'],['rcp','Receipts'],['set','Settings'],['page','Pages'],['act','Actions']];
   var PFX={inv:['inv'],invoice:['inv'],bill:['inv'],c:['cus'],cust:['cus'],customer:['cus'],party:['cus'],i:['itm'],item:['itm'],items:['itm'],v:['ven'],vendor:['ven'],supplier:['ven'],po:['po'],pb:['pb'],doc:['doc'],q:['doc','quotation'],qt:['doc','quotation'],quote:['doc','quotation'],quotation:['doc','quotation'],pi:['doc','proforma'],proforma:['doc','proforma'],dc:['doc','challan'],challan:['doc','challan'],r:['rcp'],rcp:['rcp'],receipt:['rcp'],p:['page'],page:['page'],s:['set'],set:['set'],setting:['set'],settings:['set'],a:['act'],act:['act']};
   var STW={paid:1,unpaid:1,partial:1,overdue:1,due:1,draft:1,finalized:1,sent:1,accepted:1,rejected:1,expired:1,dispatched:1,delivered:1,returned:1,received:1,cancelled:1};
-  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',invAdv:'godown warehouse transfer price list rate reorder low stock bom manufacturing production stock journal alternate unit',acctGst:'gst gstr gstr1 gstr3b itc rcm tds tcs 2a 2b tax return',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
+  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',acctExt:'cost centre budget fixed asset depreciation currency forex dollar tally xml import export',invAdv:'godown warehouse transfer price list rate reorder low stock bom manufacturing production stock journal alternate unit',acctGst:'gst gstr gstr1 gstr3b itc rcm tds tcs 2a 2b tax return',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
   var IC={
     inv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     cus:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/>',
@@ -22167,7 +22188,7 @@ function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=f
 
 /* ---- Roles ---- */
 var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)'},
-DENY={owner:[],accountant:['settings','backup'],salesman:['invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
+DENY={owner:[],accountant:['settings','backup'],salesman:['acctExt','invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
 function role(){try{var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
 function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
 function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
@@ -22763,6 +22784,187 @@ if(typeof _ri==='function')window.rowItem=function(i){var o=_ri.apply(this,argum
 var _lc=window.loadCustomer;
 if(typeof _lc==='function')window.loadCustomer=function(){var o=_lc.apply(this,arguments);try{if(current&&current.customerId){var ch=false;(current.items||[]).forEach(function(r){if(!r.itemId)return;var it=itemById(r.itemId),p=listRate(current.customerId,r.itemId);if(p!==null&&it&&+r.rate===(+it.rate||0)&&+r.rate!==p){r.rate=p;ch=true}});if(ch){renderRows();recalc()}}}catch(e){}return o};
 setTimeout(badge,2500);
+})();
+/* ===== ACCOUNTS (Phase 7): Cost Centres, Budgets, Fixed Assets & Depreciation, Multi-currency, Tally XML import/export ===== */
+(function(){
+var X=window.__acct,$=function(i){return document.getElementById(i)},tab='cc',ccSel='',impPend=null,
+TABS=[['cc','Cost Centres'],['bd','Budgets'],['fa','Fixed Assets'],['fx','Multi-currency'],['ty','Tally XML']];
+function A(){return db&&db.accounts}
+function P(){var a=A();if(!a)return null;var p=a.p7=a.p7&&typeof a.p7==='object'?a.p7:{};['cc','assets','cur'].forEach(function(k){p[k]=Array.isArray(p[k])?p[k]:[]});p.budgets=p.budgets&&typeof p.budgets==='object'&&!Array.isArray(p.budgets)?p.budgets:{};return p}
+function r2(n){return Math.round((+n||0)*100)/100}
+function m2(n){n=r2(n);return(n<0?'-':'')+money(Math.abs(n))}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return ymd(new Date())}
+function tt(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
+function role(){try{return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
+function ro(){if(role()==='viewer'){tt('View-only role: changes allowed nahi','#f43f5e');return true}return false}
+function lk(d){var l=A().lockDate;if(l&&d&&String(d)<=l){alert('Period lock: '+l+' tak ki entries add / edit / delete nahi ho sakti. Owner Audit & Security page se lock hata sakta hai.');return true}return false}
+function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
+function empty(c,t){return'<tr><td colspan="'+c+'" class="sub" style="text-align:center;padding:18px">'+esc(t||'Abhi kuch nahi.')+'</td></tr>'}
+function tbl(head,body){return'<table>'+th(head)+'<tbody>'+body+'</tbody></table>'}
+function sec(t,sub){return'<div class="section-title" style="margin:22px 0 4px">'+esc(t)+'</div>'+(sub?'<div class="sub" style="margin-bottom:8px">'+sub+'</div>':'')}
+function opt(v,l,s){return'<option value="'+esc(v)+'"'+(String(v)===String(s)?' selected':'')+'>'+esc(l)+'</option>'}
+function inR(d,f,t){d=String(d||'');return d>=f&&d<=t}
+function days(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000)}
+function fyOf(d){var y=+String(d).slice(0,4),m=+String(d).slice(5,7);return m>=4?y:y-1}
+function fyLbl(y){return y+'-'+String((y+1)%100).padStart(2,'0')}
+function ledMap(){var m={};X.ledgers().forEach(function(l){m[l.id]=l});return m}
+function nat(l){return l?X.gOf(l.group).nature:'A'}
+function ensL(id,name,group){var a=A(),f=a.ledgers.find(function(l){return String(l.name).toLowerCase()===name.toLowerCase()});if(f)return f.id;if(!a.ledgers.some(function(l){return l.id===id}))a.ledgers.push({id:id,name:name,group:group,opening:{amt:0,dc:'Dr'}});return id}
+function postJ(date,narr,lines,extra){var a=A();if(lk(date))return null;var m=X.nameMap(),n=(a.counters.Journal||0)+1;lines.forEach(function(x){x.name=m[x.ledger]||''});
+ var v={id:crypto.randomUUID(),type:'Journal',no:X.pfx('Journal')+'-'+String(n).padStart(4,'0'),date:date,narration:narr,lines:lines,head:'',createdAt:Date.now()};if(extra)Object.keys(extra).forEach(function(k){v[k]=extra[k]});a.counters.Journal=n;a.vouchers.push(v);return v}
+function ln(L,l,dc,a){a=r2(a);if(a>0.004)L.push({ledger:l,dc:dc,amount:a})}
+function curFY(){return fyOf(today())}
+function defRange(){if(!$('exFrom').value||!$('exTo').value){var y=curFY();$('exFrom').value=y+'-04-01';$('exTo').value=(y+1)+'-03-31'}}
+
+/* ---- Cost Centres ---- */
+function ccTab(f,t){var p=P(),h='',lm=ledMap(),tot={};
+ h+='<div class="grid g4"><div><label>Naya cost centre</label><input id="exCn" placeholder="Jaise: Shop 1, Project A, Delhi branch"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="exCcAdd()">+ Add</button></div></div>';
+ if(!p.cc.length)return{sub:'Cost centre se alag-alag department/project ka kharcha aur kamai alag dekh sakte ho.',h:h+'<div class="sub" style="margin-top:10px">Abhi koi cost centre nahi. Banane ke baad Vouchers me "Cost centre" ka dropdown aa jayega.</div>'};
+ var rows='';A().vouchers.forEach(function(v){if(!v.cc||!inR(v.date,f,t))return;var o=tot[v.cc]=tot[v.cc]||{i:0,e:0,l:{}};v.lines.forEach(function(x){var l=lm[x.ledger],n=nat(l),a=0;if(n==='E')a=x.dc==='Dr'?x.amount:-x.amount;else if(n==='I')a=x.dc==='Cr'?x.amount:-x.amount;else return;if(n==='E')o.e+=a;else o.i+=a;var k=l.id;o.l[k]=(o.l[k]||0)+a})});
+ var TI=0,TE=0;p.cc.forEach(function(c){var o=tot[c.id]||{i:0,e:0};TI+=o.i;TE+=o.e;rows+='<tr><td><a href="#" onclick="exCcSel(\''+c.id+'\');return false">'+esc(c.name)+'</a></td><td class="right">'+m2(o.i)+'</td><td class="right">'+m2(o.e)+'</td><td class="right"><b>'+m2(o.i-o.e)+'</b></td><td class="noprint"><a href="#" onclick="exCcRen(\''+c.id+'\');return false">Rename</a> <a href="#" onclick="exCcDel(\''+c.id+'\');return false" style="color:#f43f5e">Delete</a></td></tr>'});
+ rows+='<tr style="border-top:2px solid var(--border-color)"><td><b>Total</b></td><td class="right"><b>'+m2(TI)+'</b></td><td class="right"><b>'+m2(TE)+'</b></td><td class="right"><b>'+m2(TI-TE)+'</b></td><td></td></tr>';
+ h+=sec('Cost centre-wise Income / Expense','Centre ke naam par click karo to ledger-wise detail dikhegi.')+tbl(['Cost centre','>Income','>Expense','>Profit / (Loss)',''],rows);
+ var s=ccSel&&p.cc.find(function(c){return c.id===ccSel}),o=s&&tot[s.id];
+ if(s){var r2s=Object.keys(o&&o.l||{}).map(function(k){return'<tr><td>'+esc(lm[k]?lm[k].name:k)+'</td><td>'+(nat(lm[k])==='E'?'Expense':'Income')+'</td><td class="right">'+m2(o.l[k])+'</td></tr>'}).join('');h+=sec('Detail: '+s.name)+tbl(['Ledger','Type','>Amount'],r2s||empty(3,'Is period me is centre par koi entry nahi.'))}
+ return{sub:'Sirf wahi vouchers ginte hain jinme cost centre chuna gaya hai. Invoice aur purchase bill se bani auto entries abhi cost centre me nahi aati.',h:h}}
+window.exCcAdd=function(){if(ro())return;var n=$('exCn').value.trim();if(!n)return alert('Naam likho');if(P().cc.some(function(c){return c.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ka cost centre pehle se hai');P().cc.push({id:'cc_'+crypto.randomUUID(),name:n});saveDB();exRender();tt('Cost centre add hua')};
+window.exCcSel=function(i){ccSel=i;exRender()};
+window.exCcRen=function(i){if(ro())return;var c=P().cc.find(function(x){return x.id===i});if(!c)return;var n=prompt('Naya naam',c.name);if(n===null)return;n=n.trim();if(!n)return;c.name=n;saveDB();exRender()};
+window.exCcDel=function(i){if(ro())return;if(A().vouchers.some(function(v){return v.cc===i})&&!confirm('Is cost centre ke vouchers hain. Delete karoge to wo vouchers bina cost centre ke ho jayenge. Delete karna hai?'))return;if(!confirm('Cost centre delete karna hai?'))return;A().vouchers.forEach(function(v){if(v.cc===i)delete v.cc});P().cc=P().cc.filter(function(c){return c.id!==i});if(ccSel===i)ccSel='';saveDB();exRender()};
+
+/* ---- Budgets ---- */
+function bdTab(f,t){var p=P(),lm=ledMap(),act={},h='',n=days(f,t)+1;
+ X.allV().forEach(function(v){if(!inR(v.date,f,t))return;v.lines.forEach(function(x){var l=lm[x.ledger],k=nat(l);if(k!=='E'&&k!=='I')return;act[x.ledger]=(act[x.ledger]||0)+(k==='E'?(x.dc==='Dr'?x.amount:-x.amount):(x.dc==='Cr'?x.amount:-x.amount))})});
+ function block(nt,title){var rows='',TB=0,TA=0;X.ledgers().filter(function(l){return nat(l)===nt&&!l.party}).forEach(function(l){var b=+p.budgets[l.id]||0,pb=b*n/365,a=act[l.id]||0;if(!b&&Math.abs(a)<0.005&&!l.own)return;TB+=pb;TA+=a;var v=a-pb,bad=b&&(nt==='E'?v>0.005:v<-0.005),pc=pb>0?Math.round(a/pb*100)+'%':'-';
+  rows+='<tr><td>'+esc(l.name)+'</td><td class="right"><input class="exBd" data-id="'+esc(l.id)+'" type="number" step="0.01" min="0" value="'+(b||'')+'" style="width:110px;text-align:right" placeholder="Annual"></td><td class="right">'+(b?m2(pb):'-')+'</td><td class="right">'+m2(a)+'</td><td class="right"'+(bad?' style="color:#f43f5e"':'')+'>'+(b?m2(v):'-')+'</td><td class="right">'+pc+'</td></tr>'});
+  rows+='<tr style="border-top:2px solid var(--border-color)"><td><b>Total</b></td><td></td><td class="right"><b>'+m2(TB)+'</b></td><td class="right"><b>'+m2(TA)+'</b></td><td class="right"><b>'+m2(TA-TB)+'</b></td><td></td></tr>';
+  return sec(title)+tbl(['Ledger','>Annual budget','>Period budget','>Actual','>Variance','>Used'],rows)}
+ h+=block('E','Expenses (Actual - Budget zyada = lal)')+block('I','Income (Actual - Budget kam = lal)')+'<div class="toolbar" style="margin-top:12px"><button class="btn success" onclick="exBdSave()">Save budgets</button></div>';
+ return{sub:'Annual budget ko selected period ke dino se baanta gaya hai (din / 365). Actual me invoice, bill aur vouchers sab aate hain.',h:h}}
+window.exBdSave=function(){if(ro())return;var b=P().budgets={};document.querySelectorAll('.exBd').forEach(function(e){if(+e.value>0)b[e.dataset.id]=r2(e.value)});saveDB();exRender();tt('Budgets save hue')};
+
+/* ---- Fixed Assets ---- */
+var faFY=null;
+function posted(a,y){var d=a.dep&&a.dep[fyLbl(y)];if(!d)return null;return A().vouchers.some(function(v){return v.id===d.vid})?d:null}
+function calc(a,y,acc){var fs=y+'-04-01',fe=(y+1)+'-03-31',pd=a.date,end=a.disposed&&a.disposed.date&&a.disposed.date<fe?a.disposed.date:fe;if(pd>fe||end<fs)return 0;
+ var st=pd>fs?pd:fs,d=days(st,end)+1,dfy=days(fs,fe)+1,fr=a.basis==='it'?(d>=180?1:0.5):d/dfy,cap=Math.max(0,a.cost-(+a.salvage||0)-acc),x=a.method==='WDV'?Math.max(0,a.cost-acc)*a.rate/100*fr:(a.cost-(+a.salvage||0))*a.rate/100*fr;return r2(Math.min(x,cap))}
+function dep(a,y){var acc=0,py=fyOf(a.date);for(var k=py;k<y;k++){var po=posted(a,k);acc+=po?po.amt:calc(a,k,acc)}var po2=posted(a,y);return{open:r2(acc),d:po2?po2.amt:calc(a,y,acc),posted:!!po2}}
+function faTab(){var p=P(),y=faFY==null?curFY():faFY,h='',yrs=[];for(var k=curFY()+1;k>=curFY()-6;k--)yrs.push(k);
+ h+='<div class="grid g4"><div><label>Asset ka naam</label><input id="exAn" placeholder="Jaise: Computer, Machine"></div><div><label>Purchase date</label><input id="exAd" type="date"></div><div><label>Cost</label><input id="exAc" type="number" step="0.01" min="0"></div><div><label>Salvage / scrap value</label><input id="exAs" type="number" step="0.01" min="0" value="0"></div>'+
+ '<div><label>Method</label><select id="exAm"><option value="SLM">Straight Line (SLM)</option><option value="WDV">Written Down Value (WDV)</option></select></div><div><label>Rate % (saal ka)</label><input id="exAr" type="number" step="0.01" min="0" placeholder="15"></div><div><label>Pehle saal ka hisaab</label><select id="exAb"><option value="days">Dino ke hisaab se</option><option value="it">IT Act: 180 din se kam = aadha</option></select></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="exFaAdd()">+ Add Asset</button></div></div>';
+ if(!p.assets.length)return{sub:'Asset register aur depreciation. Financial year April se March.',h:h+'<div class="sub" style="margin-top:10px">Abhi koi asset nahi.</div>'};
+ h+='<div class="grid g4" style="margin-top:16px"><div><label>Financial year</label><select id="exFy" onchange="exFaFy(this.value)">'+yrs.map(function(k){return opt(k,fyLbl(k),y)}).join('')+'</select></div><div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn success" onclick="exFaPost()">Depreciation post karo</button><button class="btn muted" onclick="exFaUndo()">Is FY ki posting hatao</button></div></div>';
+ var rows='',T={c:0,o:0,d:0,w:0};p.assets.forEach(function(a){var r=dep(a,y);if(a.date>(y+1)+'-03-31')return;var w=r2(a.cost-r.open-r.d),st=a.disposed?'Disposed '+a.disposed.date:r.posted?'Posted':(r.d>0?'Pending':'-');T.c+=a.cost;T.o+=r.open;T.d+=r.d;T.w+=w;
+  var gl=a.disposed?r2(a.disposed.amt-w):null;
+  rows+='<tr><td>'+esc(a.name)+'</td><td>'+esc(a.date)+'</td><td class="right">'+m2(a.cost)+'</td><td>'+esc(a.method)+' '+a.rate+'%</td><td class="right">'+m2(r.open)+'</td><td class="right"><b>'+m2(r.d)+'</b></td><td class="right">'+m2(w)+'</td><td>'+esc(st)+(gl!==null?' ('+(gl>=0?'Gain ':'Loss ')+m2(Math.abs(gl))+')':'')+'</td><td class="noprint">'+(a.disposed?'':'<a href="#" onclick="exFaDisp(\''+a.id+'\');return false">Dispose</a> ')+'<a href="#" onclick="exFaDel(\''+a.id+'\');return false" style="color:#f43f5e">Delete</a></td></tr>'});
+ rows+='<tr style="border-top:2px solid var(--border-color)"><td colspan="2"><b>Total</b></td><td class="right"><b>'+m2(T.c)+'</b></td><td></td><td class="right"><b>'+m2(T.o)+'</b></td><td class="right"><b>'+m2(T.d)+'</b></td><td class="right"><b>'+m2(T.w)+'</b></td><td colspan="2"></td></tr>';
+ h+=sec('Register: FY '+fyLbl(y),'Closing WDV = Cost - ab tak ki depreciation.')+tbl(['Asset','Purchase','>Cost','Method','>Opening dep','>Dep this FY','>Closing WDV','Status',''],rows);
+ return{sub:'Post karne par Journal voucher banta hai: Depreciation Dr, Accumulated Depreciation Cr (31 March ki date). Asset ki kharid ka voucher aap alag se banate ho.',h:h}}
+window.exFaFy=function(v){faFY=+v;exRender()};
+window.exFaAdd=function(){if(ro())return;var n=$('exAn').value.trim(),d=$('exAd').value,c=+$('exAc').value,s=+$('exAs').value||0,r=+$('exAr').value;if(!n)return alert('Asset ka naam likho');if(!d)return alert('Purchase date chuno');if(!(c>0))return alert('Cost 0 se zyada honi chahiye');if(!(r>0&&r<=100))return alert('Rate 0 se 100 ke beech likho');if(s<0||s>=c)return alert('Salvage value cost se kam honi chahiye');
+ P().assets.push({id:'fa_'+crypto.randomUUID(),name:n,date:d,cost:r2(c),salvage:r2(s),method:$('exAm').value,rate:r,basis:$('exAb').value,dep:{}});saveDB();exRender();tt('Asset add hua')};
+window.exFaDel=function(i){if(ro())return;var a=P().assets.find(function(x){return x.id===i});if(!a)return;if(Object.keys(a.dep||{}).some(function(k){return posted(a,+k.slice(0,4))}))return alert('Is asset ki depreciation post ho chuki hai. Pehle us FY ki posting hatao.');if(!confirm('Asset delete karna hai?'))return;P().assets=P().assets.filter(function(x){return x.id!==i});saveDB();exRender()};
+window.exFaDisp=function(i){if(ro())return;var a=P().assets.find(function(x){return x.id===i});if(!a)return;var d=prompt('Bechne ki date (YYYY-MM-DD)',today());if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)||d<a.date)return d&&alert('Date galat hai');var m=prompt('Bikri ki rakam (scrap me 0)','0');if(m===null)return;a.disposed={date:d,amt:r2(m)};saveDB();exRender();tt('Disposed mark hua. Gain/Loss ka voucher alag se banao.','#0ea5e9')};
+window.exFaPost=function(){if(ro())return;var y=faFY==null?curFY():faFY,tot=0,list=[];P().assets.forEach(function(a){var r=dep(a,y);if(!r.posted&&r.d>0.004){tot+=r.d;list.push([a,r.d])}});
+ if(!list.length)return alert('Is FY me post karne ke liye kuch pending nahi hai.');if(!confirm('FY '+fyLbl(y)+' ki depreciation ₹ '+m2(tot)+' post karni hai ('+list.length+' asset)?'))return;
+ var L=[];ln(L,ensL('lg_deprexp','Depreciation','indirectExp'),'Dr',tot);ln(L,ensL('lg_accdep','Accumulated Depreciation','fixedAssets'),'Cr',tot);
+ var v=postJ((y+1)+'-03-31','Depreciation FY '+fyLbl(y),L,{dep:fyLbl(y)});if(!v)return;list.forEach(function(x){x[0].dep=x[0].dep||{};x[0].dep[fyLbl(y)]={amt:x[1],vid:v.id}});saveDB();exRender();tt(v.no+' ban gaya')};
+window.exFaUndo=function(){if(ro())return;var y=faFY==null?curFY():faFY,lb=fyLbl(y),vs=A().vouchers.filter(function(v){return v.dep===lb});if(!vs.length)return alert('Is FY ki koi posting nahi mili.');if(lk(vs[0].date))return;if(!confirm('FY '+lb+' ka depreciation voucher delete karna hai?'))return;
+ A().vouchers=A().vouchers.filter(function(v){return v.dep!==lb});P().assets.forEach(function(a){if(a.dep)delete a.dep[lb]});saveDB();exRender()};
+
+/* ---- Multi-currency ---- */
+function fxTab(){var p=P(),h='',lm=X.ledgers();
+ h+='<div class="grid g4"><div><label>Currency code</label><input id="exCc" maxlength="3" placeholder="USD" style="text-transform:uppercase"></div><div><label>Rate (1 = ? ₹)</label><input id="exCr" type="number" step="0.0001" min="0"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="exCurAdd()">+ Add / Update</button></div></div>';
+ h+=tbl(['Currency','>Rate (₹)',''],p.cur.map(function(c){return'<tr><td>'+esc(c.code)+'</td><td class="right">'+c.rate+'</td><td class="noprint"><a href="#" onclick="exCurDel(\''+esc(c.code)+'\');return false" style="color:#f43f5e">Delete</a></td></tr>'}).join('')||empty(3,'Abhi koi currency nahi.'));
+ if(!p.cur.length)return{sub:'Foreign currency me paisa aaya ya gaya to ₹ me entry yahan se banti hai.',h:h};
+ var party=lm.filter(function(l){return l.group!=='cash'&&l.group!=='bank'}),bank=lm.filter(function(l){return l.group==='cash'||l.group==='bank'});
+ h+=sec('Foreign currency receipt / payment','Booked rate: jis rate par invoice/bill ki entry thi. Khaali chhodo to gain/loss nahi banega.');
+ h+='<div class="grid g4"><div><label>Type</label><select id="exFt"><option value="R">Receipt (paisa aaya)</option><option value="P">Payment (paisa gaya)</option></select></div><div><label>Party ledger</label><select id="exFp"><option value="">— chuno —</option>'+party.map(function(l){return opt(l.id,l.name,'')}).join('')+'</select></div><div><label>Bank / Cash</label><select id="exFb"><option value="">— chuno —</option>'+bank.map(function(l){return opt(l.id,l.name,'')}).join('')+'</select></div><div><label>Date</label><input id="exFd" type="date" value="'+today()+'"></div>'+
+ '<div><label>Currency</label><select id="exFc" onchange="exFxRate()">'+p.cur.map(function(c){return opt(c.code,c.code,'')}).join('')+'</select></div><div><label>Foreign amount</label><input id="exFa" type="number" step="0.01" min="0" oninput="exFxPrev()"></div><div><label>Aaj ka rate (₹)</label><input id="exFr" type="number" step="0.0001" min="0" oninput="exFxPrev()"></div><div><label>Booked rate (₹) optional</label><input id="exFk" type="number" step="0.0001" min="0" oninput="exFxPrev()"></div><div style="grid-column:span 3"><label>Note</label><input id="exFn" placeholder="Optional"></div></div><div id="exFpv" class="sub" style="margin-top:8px"></div><div class="toolbar" style="margin-top:8px"><button class="btn success" onclick="exFxPost()">Voucher banao</button></div>';
+ var rows=A().vouchers.filter(function(v){return v.fc}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))}).slice(0,200).map(function(v){return'<tr><td>'+esc(v.date)+'</td><td>'+esc(v.no)+'</td><td>'+esc(v.narration||'')+'</td><td class="right">'+esc(v.fc.cur)+' '+m2(v.fc.amt)+'</td><td class="right">'+(v.fc.rate)+'</td><td class="right">'+m2(v.fc.inr)+'</td></tr>'}).join('');
+ h+=sec('Foreign currency vouchers')+tbl(['Date','Voucher','Narration','>Foreign','>Rate','>₹'],rows||empty(6,'Abhi koi entry nahi.'));
+ return{sub:'Ye voucher Journal type ke hote hain. Edit/delete Vouchers page se karo. Exchange Gain/Loss ledger apne aap ban jata hai.',h:h}}
+window.exCurAdd=function(){if(ro())return;var c=$('exCc').value.trim().toUpperCase(),r=+$('exCr').value;if(!/^[A-Z]{3}$/.test(c))return alert('Currency code 3 letter ka likho (jaise USD)');if(!(r>0))return alert('Rate 0 se zyada likho');var p=P(),f=p.cur.find(function(x){return x.code===c});if(f)f.rate=r;else p.cur.push({code:c,rate:r});saveDB();exRender();tt('Currency save hui')};
+window.exCurDel=function(c){if(ro())return;if(!confirm(c+' delete karni hai? Purane vouchers waise hi rahenge.'))return;P().cur=P().cur.filter(function(x){return x.code!==c});saveDB();exRender()};
+window.exFxRate=function(){if(!$('exFc'))return;var c=P().cur.find(function(x){return x.code===$('exFc').value});if(c&&$('exFr'))$('exFr').value=c.rate;exFxPrev()};
+function fxCalc(){var t=$('exFt').value,a=+$('exFa').value,r=+$('exFr').value,k=+$('exFk').value||0;if(!(a>0&&r>0))return null;var inr=r2(a*r),bk=k>0?r2(a*k):inr,d=r2(t==='R'?inr-bk:bk-inr);return{t:t,inr:inr,bk:bk,d:d}}
+window.exFxPrev=function(){var e=$('exFpv');if(!e)return;var c=fxCalc();e.textContent=c?('Bank: ₹ '+m2(c.inr)+(Math.abs(c.d)>0.004?' | Party: ₹ '+m2(c.bk)+' | Exchange '+(c.d>0?'Gain':'Loss')+': ₹ '+m2(Math.abs(c.d)):'')):''};
+window.exFxPost=function(){if(ro())return;var d=$('exFd').value,pl=$('exFp').value,bl=$('exFb').value,cur=$('exFc').value,a=+$('exFa').value,r=+$('exFr').value,c=fxCalc();
+ if(!d)return alert('Date chuno');if(!pl)return alert('Party chuno');if(!bl)return alert('Bank / Cash chuno');if(!c)return alert('Foreign amount aur rate likho');
+ var rec=c.t==='R',L=[],fx=ensL('lg_forex','Exchange Gain/Loss','indirectExp');
+ if(rec){ln(L,bl,'Dr',c.inr);ln(L,pl,'Cr',c.bk);if(c.d>0)ln(L,fx,'Cr',c.d);else ln(L,fx,'Dr',-c.d)}else{ln(L,pl,'Dr',c.bk);ln(L,bl,'Cr',c.inr);if(c.d>0)ln(L,fx,'Cr',c.d);else ln(L,fx,'Dr',-c.d)}
+ var v=postJ(d,(rec?'Receipt ':'Payment ')+cur+' '+a+' @ '+r+($('exFn').value.trim()?' - '+$('exFn').value.trim():''),L,{fc:{cur:cur,amt:r2(a),rate:r,inr:c.inr,booked:+$('exFk').value||0}});if(!v)return;saveDB();exRender();tt(v.no+' ban gaya')};
+
+/* ---- Tally XML ---- */
+function xe(s){return String(s==null?'':s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function tdate(d){return String(d||'').replace(/-/g,'')}
+function uniq(){var used={},m={};X.ledgers().forEach(function(l){var n=String(l.name||'').trim()||'Ledger',k=n.toLowerCase(),i=1;while(used[k]){i++;k=(n+' ('+i+')').toLowerCase()}used[k]=1;m[l.id]=i>1?n+' ('+i+')':n});return m}
+function env(report,body){return'<?xml version="1.0" encoding="UTF-8"?>\n<ENVELOPE>\n <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>\n <BODY><IMPORTDATA>\n  <REQUESTDESC><REPORTNAME>'+report+'</REPORTNAME><STATICVARIABLES><SVCURRENTCOMPANY>'+xe(db.settings.company||'')+'</SVCURRENTCOMPANY></STATICVARIABLES></REQUESTDESC>\n  <REQUESTDATA>\n'+body+'  </REQUESTDATA>\n </IMPORTDATA></BODY>\n</ENVELOPE>\n'}
+window.exTyMasters=function(){var nm=uniq(),b='';A().groups.forEach(function(g){b+='   <TALLYMESSAGE xmlns:UDF="TallyUDF"><GROUP NAME="'+xe(g.name)+'" ACTION="Create"><NAME>'+xe(g.name)+'</NAME><PARENT>'+xe(X.gOf(g.parent).name)+'</PARENT></GROUP></TALLYMESSAGE>\n'});
+ X.ledgers().forEach(function(l){var o=r2(l.o);b+='   <TALLYMESSAGE xmlns:UDF="TallyUDF"><LEDGER NAME="'+xe(nm[l.id])+'" ACTION="Create"><NAME>'+xe(nm[l.id])+'</NAME><PARENT>'+xe(X.gOf(l.group).name)+'</PARENT>'+(Math.abs(o)>0.004?'<OPENINGBALANCE>'+(-o).toFixed(2)+'</OPENINGBALANCE>':'')+'</LEDGER></TALLYMESSAGE>\n'});
+ downloadBlob(env('All Masters',b),'IE-Tally-Masters.xml','application/xml');tt('Masters XML ban gaya')};
+window.exTyVouchers=function(){defRange();var f=$('exFrom').value,t=$('exTo').value,auto=$('exAuto').checked;if(f>t)return alert('From date, To date se pehle honi chahiye');var nm=uniq(),b='',n=0;
+ var V=(auto?X.allV():A().vouchers).filter(function(v){return inR(v.date,f,t)}).sort(function(a,c){return String(a.date).localeCompare(String(c.date))});
+ V.forEach(function(v){var party='';v.lines.forEach(function(x){if(!party&&/^[cv]/.test(String(x.ledger))&&String(x.ledger).charAt(1)===':')party=nm[x.ledger]||x.name});
+  var tp=v.type==='Receipt'||v.type==='Payment'||v.type==='Journal'||v.type==='Contra'||v.type==='Credit Note'||v.type==='Debit Note'||v.type==='Sales'||v.type==='Purchase'?v.type:'Journal';
+  b+='   <TALLYMESSAGE xmlns:UDF="TallyUDF"><VOUCHER VCHTYPE="'+xe(tp)+'" ACTION="Create"><DATE>'+tdate(v.date)+'</DATE><VOUCHERTYPENAME>'+xe(tp)+'</VOUCHERTYPENAME><VOUCHERNUMBER>'+xe(v.no)+'</VOUCHERNUMBER>'+(party&&(tp==='Sales'||tp==='Purchase'||tp==='Credit Note'||tp==='Debit Note')?'<PARTYLEDGERNAME>'+xe(party)+'</PARTYLEDGERNAME>':'')+'<PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW><NARRATION>'+xe(v.narration||'')+'</NARRATION>';
+  v.lines.forEach(function(x){var dr=x.dc==='Dr';b+='<ALLLEDGERENTRIES.LIST><LEDGERNAME>'+xe(nm[x.ledger]||x.name||'Unknown')+'</LEDGERNAME><ISDEEMEDPOSITIVE>'+(dr?'Yes':'No')+'</ISDEEMEDPOSITIVE><AMOUNT>'+(dr?'-':'')+r2(x.amount).toFixed(2)+'</AMOUNT></ALLLEDGERENTRIES.LIST>'});
+  b+='</VOUCHER></TALLYMESSAGE>\n';n++});
+ if(!n)return alert('Is period me koi voucher nahi.');downloadBlob(env('Vouchers',b),'IE-Tally-Vouchers-'+f+'-to-'+t+'.xml','application/xml');tt(n+' vouchers export hue')};
+function tx(el,tag){var c=el.getElementsByTagName(tag)[0];return c?String(c.textContent||'').trim():''}
+function nameOf(el){return(el.getAttribute('NAME')||tx(el,'NAME')||'').trim()}
+function tDate(s){s=String(s||'').replace(/\D/g,'');return s.length===8?s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8):''}
+window.exTyFile=function(inp){var f=inp.files&&inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{impPend=parseTally(String(rd.result||''));showImp()}catch(e){impPend=null;$('exImp').innerHTML='<div class="sub" style="color:#f43f5e">File padh nahi payi: '+esc(e.message)+'</div>'}};rd.readAsText(f);inp.value=''};
+function parseTally(txt){txt=txt.replace(/&#(\d+);/g,function(m,n){n=+n;return n<32&&n!==9&&n!==10&&n!==13?'':m}).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+ var doc=new DOMParser().parseFromString(txt,'text/xml');if(doc.getElementsByTagName('parsererror').length)throw new Error('XML sahi format me nahi hai');
+ var lm=X.ledgers(),byName={};lm.forEach(function(l){byName[String(l.name).trim().toLowerCase()]=l});var gm={};X.groups().forEach(function(g){gm[g.name.toLowerCase()]=g});
+ var out={ledgers:[],vouchers:[],warn:[],dup:0,unbal:0,locked:0,skipped:0,newL:{}},seen={};
+ var lock=A().lockDate||'';
+ Array.prototype.forEach.call(doc.getElementsByTagName('LEDGER'),function(el){var n=nameOf(el);if(!n||el.parentNode&&el.parentNode.nodeName==='LEDGERENTRIES.LIST')return;var k=n.toLowerCase();if(byName[k]||seen[k])return;seen[k]=1;var pr=tx(el,'PARENT').toLowerCase(),g=gm[pr],ob=parseFloat(String(tx(el,'OPENINGBALANCE')).replace(/[^0-9.\-]/g,''))||0;if(!g)out.warn.push(n+' (group "'+tx(el,'PARENT')+'" nahi mila)');
+  out.ledgers.push({name:n,group:g?g.id:'suspense',open:ob});out.newL[k]=1});
+ var have={};A().vouchers.forEach(function(v){if(v.tally)have[v.tally]=1});
+ Array.prototype.forEach.call(doc.getElementsByTagName('VOUCHER'),function(el){if(/^yes$/i.test(tx(el,'ISCANCELLED'))||/^yes$/i.test(tx(el,'ISOPTIONAL'))){out.skipped++;return}
+  var d=tDate(tx(el,'DATE')),tp=el.getAttribute('VCHTYPE')||tx(el,'VOUCHERTYPENAME')||'Journal',no=tx(el,'VOUCHERNUMBER'),nar=tx(el,'NARRATION'),L=[],ents=el.getElementsByTagName('ALLLEDGERENTRIES.LIST');if(!ents.length)ents=el.getElementsByTagName('LEDGERENTRIES.LIST');
+  Array.prototype.forEach.call(ents,function(e){var n=tx(e,'LEDGERNAME'),a=parseFloat(String(tx(e,'AMOUNT')).replace(/[^0-9.\-]/g,''));if(!n||!a)return;L.push({name:n,dc:a<0?'Dr':'Cr',amount:r2(Math.abs(a))})});
+  if(!d||L.length<2){out.skipped++;return}var dr=0,cr=0;L.forEach(function(x){if(x.dc==='Dr')dr+=x.amount;else cr+=x.amount});if(Math.abs(dr-cr)>0.01){out.unbal++;return}
+  var key=[d,tp,no,r2(dr)].join('|');if(have[key]){out.dup++;return}have[key]=1;if(lock&&d<=lock){out.locked++;return}
+  L.forEach(function(x){var k=x.name.toLowerCase();if(!byName[k]&&!out.newL[k]){out.newL[k]=1;out.ledgers.push({name:x.name,group:'suspense',open:0});out.warn.push(x.name+' (voucher me mila, Suspense me banega)')}});
+  out.vouchers.push({key:key,date:d,type:tp,no:no,narr:nar,lines:L})});
+ return out}
+function showImp(){var o=impPend,e=$('exImp');if(!o)return;e.innerHTML='<div class="card" style="margin-top:10px"><b>Preview</b><div class="sub" style="margin-top:6px">Naye ledgers: '+o.ledgers.length+' | Naye vouchers: '+o.vouchers.length+' | Pehle se hain (skip): '+o.dup+' | Balance nahi (skip): '+o.unbal+' | Period lock (skip): '+o.locked+' | Cancelled/khaali (skip): '+o.skipped+'</div>'+(o.warn.length?'<div class="sub" style="margin-top:6px;color:#f59e0b">Dhyan: '+esc(o.warn.slice(0,6).join('; '))+(o.warn.length>6?' ... +'+(o.warn.length-6)+' aur':'')+'</div>':'')+'<div class="toolbar" style="margin-top:10px"><button class="btn success" onclick="exTyApply()"'+(o.ledgers.length||o.vouchers.length?'':' disabled')+'>Import karo</button><button class="btn muted" onclick="exTyCancel()">Cancel</button></div></div>'}
+window.exTyCancel=function(){impPend=null;$('exImp').innerHTML=''};
+window.exTyApply=function(){if(ro())return;var o=impPend;if(!o)return;var a=A(),nm={};X.ledgers().forEach(function(l){nm[String(l.name).trim().toLowerCase()]=l.id});
+ o.ledgers.forEach(function(l){var id='tl_'+crypto.randomUUID();a.ledgers.push({id:id,name:l.name,group:l.group,opening:{amt:Math.abs(r2(l.open)),dc:l.open<0?'Dr':'Cr'}});nm[l.name.toLowerCase()]=id});
+ var seq=(a.counters.Journal||0);o.vouchers.forEach(function(v){seq++;a.vouchers.push({id:crypto.randomUUID(),type:'Journal',no:'TLY-'+(v.no||String(seq)),date:v.date,narration:('[Tally '+v.type+'] '+v.narr).trim(),lines:v.lines.map(function(x){return{ledger:nm[x.name.toLowerCase()],dc:x.dc,amount:x.amount,name:x.name}}),head:'',tally:v.key,tallyType:v.type,createdAt:Date.now()})});
+ var n=o.vouchers.length,l=o.ledgers.length;impPend=null;saveDB();exRender();tt(l+' ledgers, '+n+' vouchers import hue')};
+function tyTab(){defRange();var h='';
+ h+=sec('Export (Tally ke liye)','Pehle Masters import karo, phir Vouchers. Tally me: Import Data > Masters / Vouchers.');
+ h+='<div class="grid g4"><div><label>From</label><input id="exFrom2" type="date" onchange="document.getElementById(\'exFrom\').value=this.value"></div><div><label>To</label><input id="exTo2" type="date" onchange="document.getElementById(\'exTo\').value=this.value"></div><div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><label style="display:flex;gap:6px;align-items:center;margin:0"><input id="exAuto" type="checkbox" checked> Invoice/bill ki auto entries bhi</label></div><div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn primary" onclick="exTyMasters()">Masters XML</button><button class="btn primary" onclick="exTyVouchers()">Vouchers XML</button></div></div>';
+ h+=sec('Import (Tally se)','Tally se export ki XML file (Masters ya Vouchers) chuno. Preview dikhega, phir confirm karna hoga.');
+ h+='<div class="grid g4"><div><input id="exFile" type="file" accept=".xml,text/xml" onchange="exTyFile(this)"></div></div><div id="exImp"></div>';
+ return{sub:'Import hue vouchers Journal type ke bante hain (original type narration me likha rehta hai). Inventory items Tally se nahi aate, sirf accounts.',h:h}}
+
+/* ---- Page ---- */
+window.exTab=function(t){tab=t;exRender()};
+window.exRender=function(){if(!A()||!P())return;defRange();
+ $('exTabs').innerHTML=TABS.map(function(x){return'<button class="btn '+(tab===x[0]?'primary':'muted')+'" onclick="exTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+ $('exRange').style.display=tab==='cc'||tab==='bd'?'':'none';
+ var f=$('exFrom').value,t=$('exTo').value;if(f>t){$('exSub').textContent='';$('exBody').innerHTML='<div class="sub">From date, To date se pehle honi chahiye.</div>';return}
+ var r=tab==='cc'?ccTab(f,t):tab==='bd'?bdTab(f,t):tab==='fa'?faTab():tab==='fx'?fxTab():tyTab();
+ $('exSub').innerHTML=r.sub;$('exBody').innerHTML=r.h;
+ if(tab==='ty'){$('exFrom2').value=f;$('exTo2').value=t}if(tab==='fx')exFxRate();if(impPend&&tab==='ty')showImp()};
+function title(){return TABS.filter(function(a){return a[0]===tab})[0][1]+' | '+(db.settings.company||'')+' | '+$('exFrom').value+' to '+$('exTo').value}
+window.exCSV=function(){var csv=[];document.querySelectorAll('#exBody tr').forEach(function(tr){csv.push(Array.prototype.map.call(tr.children,function(c){var e=c.querySelector('select,input');var t=e&&e.type!=='file'?(e.tagName==='SELECT'?e.options[e.selectedIndex].text:e.value):c.innerText;return'"'+String(t).replace(/\s*\n\s*/g,' ').replace(/"/g,'""')+'"'}).join(','))});downloadBlob(ieCreditCsv(csv,'accounts report'),'IE-'+tab.toUpperCase()+'-Accounts.csv','text/csv')};
+window.exPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}var box=document.createElement('div');box.innerHTML=$('exBody').innerHTML;box.querySelectorAll('.noprint,button,.toolbar,.grid').forEach(function(n){n.remove()});box.querySelectorAll('input,select').forEach(function(n){var s=document.createElement('span');s.textContent=n.tagName==='SELECT'?n.options[n.selectedIndex].text:n.value;n.replaceWith(s)});
+ w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:11px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.right{text-align:right}.sub{color:#555;font-size:10px}.section-title{font-weight:700;margin:10px 0 4px}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2>'+box.innerHTML+'</body></html>');w.document.close()};
+
+/* ---- Voucher modal: cost centre dropdown ---- */
+function ccFill(sel){var w=$('avCcWrap'),s=$('avCc');if(!w||!s||!A())return;var p=P();w.style.display=p.cc.length?'':'none';s.innerHTML='<option value="">— Koi nahi —</option>'+p.cc.map(function(c){return opt(c.id,c.name,sel||'')}).join('')}
+var _ov=window.acctOpenVoucher;
+if(typeof _ov==='function')window.acctOpenVoucher=function(type,exp,vid){var r=_ov.apply(this,arguments);try{var v=vid&&A().vouchers.find(function(x){return x.id===vid});ccFill(v&&v.cc)}catch(e){}return r};
+var _sv=window.acctSaveVoucher;
+if(typeof _sv==='function')window.acctSaveVoucher=function(){var no=$('avNo').value,cc=$('avCc')?$('avCc').value:'',r=_sv.apply(this,arguments);try{if(!$('acctVoucherModal').classList.contains('show')){var v=A().vouchers.find(function(x){return x.no===no});if(v&&(v.cc||'')!==cc){if(cc)v.cc=cc;else delete v.cc;saveDB()}}}catch(e){}return r};
 })();
 </script>
 
