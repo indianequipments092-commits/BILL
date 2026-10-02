@@ -6838,6 +6838,7 @@ fbAuth.onAuthStateChanged(user=>{
       <button data-page="acctRecon" onclick="showPage('acctRecon',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></svg><span class="nl">Bank Reconciliation</span></button>
       <button data-page="acctPdc" onclick="showPage('acctPdc',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16M8 15h4"/></svg><span class="nl">Post-dated Cheques</span></button>
       <button data-page="acctControl" onclick="showPage('acctControl',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span class="nl">Audit &amp; Security</span></button>
+      <button data-page="acctGst" onclick="showPage('acctGst',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h3M14 14l2 2M16 14l-2 2"/></svg><span class="nl">GST &amp; Tax</span></button>
       </div></div>
     </div>
     <div class="nav-group open" data-group="tools">
@@ -7328,6 +7329,19 @@ fbAuth.onAuthStateChanged(user=>{
       <div><label>Status</label><select id="pdFS" onchange="acctRenderPdc()"><option value="">All</option><option selected>Pending</option><option>Cleared</option><option>Bounced</option><option>Cancelled</option></select></div></div>
     <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Cheque date</th><th>Type</th><th>Party</th><th>Bank</th><th>Cheque no</th><th class="right">Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="pdBody"></tbody></table></div>
   </div>
+</div>
+<div id="acctGst" class="page hidden">
+  <div class="top"><h1>GST &amp; Tax</h1></div>
+  <div class="card" style="margin-top:18px">
+    <div id="gsTabs" class="toolbar" style="flex-wrap:wrap;gap:8px"></div>
+    <div class="grid g4" style="margin-top:14px">
+      <div><label>From</label><input id="gsFrom" type="date" onchange="acctRenderGst()"></div>
+      <div><label>To</label><input id="gsTo" type="date" onchange="acctRenderGst()"></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn muted" onclick="acctGstRange(-1)">Pichla mahina</button><button class="btn muted" onclick="acctGstRange(0)">Is mahina</button></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn muted" onclick="acctGstCSV()">CSV</button><button class="btn muted" onclick="acctGstPrint()">Print</button></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px"><div id="gsSub" class="sub" style="margin-bottom:12px"></div><div id="gsBody" class="table-wrap"></div></div>
 </div>
 <div id="acctControl" class="page hidden">
   <div class="top"><h1>Audit &amp; Security</h1></div>
@@ -10326,9 +10340,10 @@ const DEFAULT_SETTINGS={
 };
 function acctNormalize(a){
   a=a&&typeof a==='object'?a:{};
-  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:''};
+  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:'',gst:a.gst&&typeof a.gst==='object'?a.gst:{}};
   function ens(k,nm,g){ if(o.ledgers.some(function(l){return l.id==='lg_'+k})) return; if(o.ledgers.some(function(l){return String(l.name).toLowerCase()===nm.toLowerCase()})) nm+=' (Auto)'; o.ledgers.push({id:'lg_'+k,name:nm,group:g,opening:{amt:0,dc:'Dr'}}); }
   [['cash','Cash','cash'],['bank','Bank Account','bank'],['sales','Sales','salesAcc'],['salesret','Sales Return','salesAcc'],['purchase','Purchase','purchAcc'],['purchret','Purchase Return','purchAcc'],['cgst','CGST','dutiesTaxes'],['sgst','SGST','dutiesTaxes'],['igst','IGST','dutiesTaxes'],['icgst','Input CGST','dutiesTaxes'],['isgst','Input SGST','dutiesTaxes'],['iigst','Input IGST','dutiesTaxes'],['discount','Discount Allowed','indirectExp'],['discrec','Discount Received','indirectInc'],['roundoff','Round Off','indirectExp']].forEach(function(x){ens(x[0],x[1],x[2])});
+  [['tdspay','TDS Payable','dutiesTaxes'],['tcspay','TCS Payable','dutiesTaxes'],['tdsrec','TDS Receivable','loansAdv'],['tcsrec','TCS Receivable','loansAdv']].forEach(function(x){ens(x[0],x[1],x[2])});
   if(!a.seeded)[['capital','Capital Account','capital'],['rent','Rent','indirectExp'],['salary','Salary & Wages','indirectExp'],['elec','Electricity','indirectExp'],['transport','Transport','indirectExp'],['office','Office Expenses','indirectExp'],['intrec','Interest Received','indirectInc']].forEach(function(x){ens(x[0],x[1],x[2])});
   return o;
 }
@@ -11137,6 +11152,7 @@ function showPage(id,btn){
   if(id==='acctRecon'&&typeof acctRenderRecon==='function')acctRenderRecon();
   if(id==='acctPdc'&&typeof acctRenderPdc==='function')acctRenderPdc();
   if(id==='acctControl'&&typeof acctRenderControl==='function')acctRenderControl();
+  if(id==='acctGst'&&typeof acctRenderGst==='function')acctRenderGst();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -20477,7 +20493,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
   var CHIPS=[['all','All'],['inv','Invoices'],['cus','Customers'],['itm','Items'],['ven','Vendors'],['po','PO'],['pb','Purchase Bills'],['doc','Docs'],['rcp','Receipts'],['set','Settings'],['page','Pages'],['act','Actions']];
   var PFX={inv:['inv'],invoice:['inv'],bill:['inv'],c:['cus'],cust:['cus'],customer:['cus'],party:['cus'],i:['itm'],item:['itm'],items:['itm'],v:['ven'],vendor:['ven'],supplier:['ven'],po:['po'],pb:['pb'],doc:['doc'],q:['doc','quotation'],qt:['doc','quotation'],quote:['doc','quotation'],quotation:['doc','quotation'],pi:['doc','proforma'],proforma:['doc','proforma'],dc:['doc','challan'],challan:['doc','challan'],r:['rcp'],rcp:['rcp'],receipt:['rcp'],p:['page'],page:['page'],s:['set'],set:['set'],setting:['set'],settings:['set'],a:['act'],act:['act']};
   var STW={paid:1,unpaid:1,partial:1,overdue:1,due:1,draft:1,finalized:1,sent:1,accepted:1,rejected:1,expired:1,dispatched:1,delivered:1,returned:1,received:1,cancelled:1};
-  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
+  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',acctGst:'gst gstr gstr1 gstr3b itc rcm tds tcs 2a 2b tax return',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
   var IC={
     inv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     cus:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/>',
@@ -22133,7 +22149,7 @@ function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=f
 
 /* ---- Roles ---- */
 var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)'},
-DENY={owner:[],accountant:['settings','backup'],salesman:['acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
+DENY={owner:[],accountant:['settings','backup'],salesman:['acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
 function role(){try{var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
 function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
 function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
@@ -22195,12 +22211,15 @@ window.acctRenderControl=function(){if(!A())return;var r=role(),own=r==='owner',
   '<div class="sub" style="margin:12px 0"><b>Owner:</b> sab kuch. <b>Accountant:</b> Settings aur Backup chhodkar sab. <b>Salesman:</b> sirf sales side (accounts, purchase, analytics, settings band), delete band. <b>Viewer:</b> sirf dekh sakta hai, kuch save nahi hota.</div>'+
   '<div class="section-title" style="margin-top:18px">Owner PIN</div><div class="grid g3"><div><label>Naya PIN (4 se 8 digit, khaali = PIN hatao)</label><input id="ctPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSavePin()">PIN save</button></div></div>'+
   '<div class="sub" style="margin-top:12px">'+(A().rolePin?'PIN laga hua hai.':'PIN abhi nahi hai, to koi bhi device par Owner ban sakta hai. Pehle PIN set karo.')+' Dhyan: role har device par alag chunna padta hai aur ye app ke andar ki rok hai, bank jaisi security nahi.</div>'}
- else{h='<div class="section-title">Owner ban jao</div><div class="grid g3"><div><label>Owner PIN</label><input id="ctOwnPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctToOwner()">Owner mode</button></div></div>'}
+ else{h='<div class="section-title">Owner ban jao</div><div class="grid g3"><div><label>Owner PIN</label><input id="ctOwnPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctToOwner()">Owner mode</button></div></div><div class="sub" style="margin-top:14px">PIN bhool gaye ya chal nahi raha? <a href="#" style="color:#a5b4fc;font-weight:600" onclick="acctPinReset();return false">PIN reset karo</a> (company ka GSTIN ya naam daalna padega).</div>'}
  $('ctBody').innerHTML=h};
 window.acctSaveLock=function(){A().lockDate=$('ctLock').value||'';saveDB();acctRenderControl();toast(A().lockDate?'Lock: '+A().lockDate:'Lock hata diya')};
 window.acctSaveRole=function(){var r=$('ctRoleSel').value;try{localStorage.setItem('IE_ROLE',r);localStorage.setItem('IE_UNAME',$('ctName').value.trim())}catch(e){}if(r!=='owner'&&!A().rolePin)alert('Dhyan: PIN set nahi hai, isliye koi bhi ye role hata kar Owner ban sakta hai.');applyRole();acctRenderControl();toast('Role: '+ROLES[r])};
 window.acctSavePin=function(){var p=$('ctPin').value.trim();if(p&&!/^\d{4,8}$/.test(p))return alert('PIN 4 se 8 digit ka hona chahiye');A().rolePin=p?hash(p):'';saveDB();acctRenderControl();toast(p?'PIN save ho gaya':'PIN hata diya')};
-window.acctToOwner=function(){var p=$('ctOwnPin').value;if(A().rolePin&&hash(p)!==A().rolePin)return alert('Galat PIN');try{localStorage.setItem('IE_ROLE','owner')}catch(e){}applyRole();acctRenderControl();toast('Owner mode')};
+window.acctToOwner=function(){var p=$('ctOwnPin').value.trim();if(A().rolePin&&hash(p)!==A().rolePin)return alert('Galat PIN');try{localStorage.setItem('IE_ROLE','owner')}catch(e){}applyRole();acctRenderControl();toast('Owner mode')};
+window.acctPinReset=function(){var k=String(db.settings.gstin||db.settings.company||'').trim().toUpperCase().replace(/\s+/g,'');if(!k)return alert('Company GSTIN ya naam Settings me nahi hai, reset nahi ho sakta.');
+ var v=prompt('Company ka '+(db.settings.gstin?'GSTIN':'naam')+' daalo');if(v===null)return;if(String(v).trim().toUpperCase().replace(/\s+/g,'')!==k)return alert('Match nahi hua');
+ A().rolePin='';try{localStorage.setItem('IE_ROLE','owner')}catch(e){}saveDB();applyRole();acctRenderControl();toast('PIN hata diya, Owner mode. Naya PIN set kar lo.')};
 window.acctAuditClear=function(){if(!confirm('Poora audit log delete karna hai?'))return;A().audit=[];saveDB();acctRenderControl()};
 
 /* ---- Bank Reconciliation ---- */
@@ -22252,6 +22271,287 @@ window.acctPdcReopen=function(i){var p=pf(i);if(!p)return;p.status='Pending';del
 window.acctPdcDel=function(i){var p=pf(i);if(!p||!confirm('Cheque entry delete karni hai?'))return;A().pdc=A().pdc.filter(function(x){return x.id!==i});saveDB();acctRenderPdc()};
 
 applyRole();diff();
+})();
+
+/* ===== ACCOUNTS (Phase 5): GSTR-1, GSTR-3B, ITC Register, RCM, 2A/2B Match, TDS/TCS ===== */
+(function(){
+var X=window.__acct,$=function(i){return document.getElementById(i)},tab='g1',mf='',
+TABS=[['g1','GSTR-1'],['g3b','GSTR-3B'],['itc','ITC Register'],['rcm','RCM'],['match','2A/2B Match'],['tds','TDS / TCS']],
+GRX=/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]$/,
+KINDS={tdsP:'TDS Payable (humne kaata)',tdsR:'TDS Receivable (customer ne kaata)',tcsP:'TCS Payable (humne collect kiya)',tcsR:'TCS Receivable (seller ne liya)'};
+function A(){return db&&db.accounts}
+function G(){var a=A(),g=a.gst=a.gst&&typeof a.gst==='object'?a.gst:{};g.itc=g.itc&&typeof g.itc==='object'?g.itc:{};g.rcm=Array.isArray(g.rcm)?g.rcm:[];g.tds=Array.isArray(g.tds)?g.tds:[];g.itcOpen=g.itcOpen&&typeof g.itcOpen==='object'?g.itcOpen:{igst:0,cgst:0,sgst:0};return g}
+function r2(n){return Math.round((+n||0)*100)/100}
+function m2(n){n=r2(n);return(n<0?'-':'')+money(Math.abs(n))}
+function ymd(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+function today(){var d=new Date();return ymd(d.getFullYear(),d.getMonth(),d.getDate())}
+function tt(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
+function gok(s){return GRX.test(String(s||'').trim().toUpperCase())}
+function inR(d,f,t){d=String(d||'');return d>=f&&d<=t}
+function sameState(p){var cs=String(db.settings.state||'').trim().toUpperCase(),ps=String(p&&p.state||'').trim().toUpperCase();
+ if(p&&p.stateCode&&db.settings.stateCode)return String(p.stateCode)===String(db.settings.stateCode);if(!ps||!cs)return true;return ps===cs}
+function split(tax,inter){tax=r2(tax);if(inter)return{i:tax,c:0,s:0};var h=r2(tax/2);return{i:0,c:h,s:r2(tax-h)}}
+function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
+function empty(c,t){return'<tr><td colspan="'+c+'" class="sub" style="text-align:center;padding:18px">'+esc(t||'Is period me kuch nahi.')+'</td></tr>'}
+function R(n){return'<td class="right">'+(Math.abs(n)>0.004?m2(n):'-')+'</td>'}
+function sec(t,sub){return'<div class="section-title" style="margin:22px 0 4px">'+esc(t)+'</div>'+(sub?'<div class="sub" style="margin-bottom:8px">'+sub+'</div>':'')}
+function tbl(head,body){return'<table>'+th(head)+'<tbody>'+body+'</tbody></table>'}
+function totRow(cols,label,vals){return'<tr style="border-top:2px solid var(--border-color)"><td colspan="'+cols+'"><b>'+esc(label)+'</b></td>'+vals.map(function(v){return'<td class="right"><b>'+m2(v)+'</b></td>'}).join('')+'</tr>'}
+function sum4(a){var s={tx:0,i:0,c:0,s:0};a.forEach(function(x){s.tx+=x.tx;s.i+=x.i;s.c+=x.c;s.s+=x.s});s.tx=r2(s.tx);s.i=r2(s.i);s.c=r2(s.c);s.s=r2(s.s);return s}
+function partyRec(id){id=String(id||'');if(id.indexOf('c:')===0)return(db.customers||[]).find(function(x){return'c:'+x.id===id});if(id.indexOf('v:')===0)return(db.vendors||[]).find(function(x){return'v:'+x.id===id})}
+function posOf(c){var code=String(c&&c.stateCode||'').trim(),st=String(c&&c.state||'').trim();return code||st?(code?code+'-':'')+st:'-'}
+function custGst(v){var c=v.customer||{},g=String(c.gst||'').trim().toUpperCase();if(!g&&v.customerId){var cu=(db.customers||[]).find(function(x){return x.id===v.customerId});if(cu)g=String(cu.gst||'').trim().toUpperCase()}return g}
+function ledOK(id){return X.ledgers().some(function(l){return l.id===id})}
+
+/* ---- Outward (invoices + credit notes) ---- */
+function outward(f,t){
+ var o={inv:[],cn:[],hsn:{},warn:[],noHsn:0,disc:0,docs:{first:'',last:'',n:0,cancel:0}},nm=X.nameMap(),nos=[];
+ (db.invoices||[]).forEach(function(v){
+  if(v.status!=='Finalized'||!inR(v.date,f,t))return;
+  var T=v.totals||{},inter=(+T.igst||0)>0,c=v.customer||{},g=custGst(v),reg=gok(g),L={};
+  if(g&&!reg)o.warn.push('Invoice '+(v.invoiceNumber||'?')+': GSTIN "'+g+'" ka format galat hai, isliye B2C me gina gaya.');
+  if((+T.discount||0)>0)o.disc++;
+  (v.items||[]).forEach(function(r){
+   var tx=+r.taxable||0;if(!r.itemId||tx<=0)return;
+   var rt=+r.gst||0,k=String(rt),l=L[k]=L[k]||{rate:rt,tx:0,i:0,c:0,s:0};
+   l.tx+=tx;l.i+=+r.igst||0;l.c+=+r.cgst||0;l.s+=+r.sgst||0;
+   var hs=String(r.hsn||'').trim();if(!hs)o.noHsn++;
+   var hk=hs+'|'+(r.unit||'Nos')+'|'+rt,h=o.hsn[hk]=o.hsn[hk]||{hsn:hs,desc:r.itemName||'',unit:r.unit||'Nos',rate:rt,qty:0,val:0,tx:0,i:0,c:0,s:0};
+   h.qty+=+r.qty||0;h.tx+=tx;h.i+=+r.igst||0;h.c+=+r.cgst||0;h.s+=+r.sgst||0;h.val+=(+r.amount||0)});
+  var lines=Object.keys(L).map(function(k){var l=L[k];l.tx=r2(l.tx);l.i=r2(l.i);l.c=r2(l.c);l.s=r2(l.s);return l}).sort(function(a,b){return a.rate-b.rate});
+  if(!lines.length&&(+T.taxable||0)>0){var tx=+T.taxable,tax=(+T.igst||0)+(+T.cgst||0)+(+T.sgst||0);lines=[{rate:Math.round(tax/tx*100),tx:r2(tx),i:r2(+T.igst||0),c:r2(+T.cgst||0),s:r2(+T.sgst||0)}]}
+  o.inv.push({no:v.invoiceNumber||'',date:v.date||'',party:c.name||'',gstin:reg?g:'',reg:reg,pos:posOf(c),val:+T.grand||0,inter:inter,lines:lines});
+  if(v.invoiceNumber)nos.push(String(v.invoiceNumber))});
+ o.inv.sort(function(a,b){return String(a.date).localeCompare(String(b.date))||String(a.no).localeCompare(String(b.no),undefined,{numeric:true})});
+ (A().vouchers||[]).forEach(function(v){
+  if(v.type!=='Credit Note'||!inR(v.date,f,t))return;
+  var p=partyRec(v.party)||{},g=String(p.gst||'').trim().toUpperCase(),reg=gok(g),tx=+v.taxable||0,tax=r2(tx*(+v.rate||0)/100),s=split(tax,!!v.inter);
+  o.cn.push({no:v.no||'',date:v.date||'',party:nm[v.party]||v.partyName||'',gstin:reg?g:'',reg:reg,pos:posOf(p),ref:v.ref||'',rate:+v.rate||0,tx:tx,i:s.i,c:s.c,s:s.s,val:r2(tx+tax),inter:!!v.inter})});
+ o.cn.sort(function(a,b){return String(a.date).localeCompare(String(b.date))});
+ nos.sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
+ o.docs={first:nos[0]||'',last:nos[nos.length-1]||'',n:nos.length,cancel:(db.deletedInvoices||[]).filter(function(v){return inR(v&&v.date,f,t)}).length};
+ return o}
+
+/* ---- GSTR-1 ---- */
+function g1(f,t){
+ var o=outward(f,t),b2b=[],b2cl=[],b2cs={},T={tx:0,i:0,c:0,s:0},h='';
+ o.inv.forEach(function(v){v.lines.forEach(function(l){T.tx+=l.tx;T.i+=l.i;T.c+=l.c;T.s+=l.s});
+  if(v.reg)b2b.push(v);else if(v.inter&&v.val>250000)b2cl.push(v);
+  else v.lines.forEach(function(l){var k=v.pos+'|'+l.rate+'|'+(v.inter?1:0),e=b2cs[k]=b2cs[k]||{pos:v.pos,rate:l.rate,inter:v.inter,tx:0,i:0,c:0,s:0};e.tx+=l.tx;e.i+=l.i;e.c+=l.c;e.s+=l.s})});
+ var rowsInv=function(arr,reg){var b='',s={tx:0,i:0,c:0,s:0};arr.forEach(function(v){v.lines.forEach(function(l,ix){s.tx+=l.tx;s.i+=l.i;s.c+=l.c;s.s+=l.s;
+   b+='<tr>'+(reg?'<td>'+esc(v.gstin)+'</td>':'')+'<td>'+(ix?'':esc(v.no))+'</td><td>'+(ix?'':esc(v.date))+'</td><td>'+(ix?'':esc(v.party))+'</td><td>'+(ix?'':esc(v.pos))+'</td><td class="right">'+l.rate+'</td>'+R(l.tx)+R(l.i)+R(l.c)+R(l.s)+'<td class="right">'+(ix?'':money(v.val))+'</td></tr>'})});
+  return{b:b,s:s}};
+ var hd=function(reg){return(reg?['GSTIN']:[]).concat(['Invoice','Date','Party','Place of supply','>Rate %','>Taxable','>IGST','>CGST','>SGST','>Invoice value'])};
+ var x=rowsInv(b2b,true);
+ h+=sec('4A/4B: B2B (GSTIN wale customers)')+tbl(hd(true),(x.b||empty(11,'Koi B2B invoice nahi.'))+(b2b.length?totRow(6,'Total',[x.s.tx,x.s.i,x.s.c,x.s.s]):''));
+ x=rowsInv(b2cl,false);
+ h+=sec('5: B2C Large (inter-state, GSTIN nahi, invoice ₹ 2,50,000 se zyada)')+tbl(hd(false),x.b||empty(10,'Koi nahi.'));
+ var cs=Object.keys(b2cs).map(function(k){return b2cs[k]}).sort(function(a,b){return a.pos.localeCompare(b.pos)||a.rate-b.rate}),sc=sum4(cs);
+ h+=sec('7: B2C Small (baaki bina-GSTIN sales, state aur rate ke hisaab se)')+tbl(['Type','Place of supply','>Rate %','>Taxable','>IGST','>CGST','>SGST'],cs.length?cs.map(function(e){return'<tr><td>'+(e.inter?'Inter-state':'Intra-state')+'</td><td>'+esc(e.pos)+'</td><td class="right">'+e.rate+'</td>'+R(e.tx)+R(e.i)+R(e.c)+R(e.s)+'</tr>'}).join('')+totRow(3,'Total',[sc.tx,sc.i,sc.c,sc.s]):empty(7,'Koi nahi.'));
+ var cr=o.cn.filter(function(n){return n.reg}),cu=o.cn.filter(function(n){return!n.reg});
+ var cnRows=function(a,reg){var s=sum4(a);return a.length?a.map(function(n){return'<tr>'+(reg?'<td>'+esc(n.gstin)+'</td>':'')+'<td>'+esc(n.party)+'</td><td>'+esc(n.no)+'</td><td>'+esc(n.date)+'</td><td>'+esc(n.ref)+'</td><td class="right">'+n.rate+'</td>'+R(n.tx)+R(n.i)+R(n.c)+R(n.s)+'<td class="right">'+money(n.val)+'</td></tr>'}).join('')+totRow(reg?6:5,'Total',[s.tx,s.i,s.c,s.s]):empty(reg?11:10,'Koi credit note nahi.')};
+ var ch=function(reg){return(reg?['GSTIN']:[]).concat(['Party','Note no','Date','Invoice ref','>Rate %','>Taxable','>IGST','>CGST','>SGST','>Note value'])};
+ h+=sec('9B: Credit Notes (registered)')+tbl(ch(true),cnRows(cr,true));
+ h+=sec('9B: Credit Notes (unregistered)')+tbl(ch(false),cnRows(cu,false));
+ var hs=Object.keys(o.hsn).map(function(k){return o.hsn[k]}).sort(function(a,b){return a.hsn.localeCompare(b.hsn)||a.rate-b.rate}),hsT=sum4(hs);
+ h+=sec('12: HSN summary','Credit note ka HSN alag nahi aata, isliye ye sirf invoices ka hai.')+tbl(['HSN','Description','UQC','>Qty','>Rate %','>Taxable','>IGST','>CGST','>SGST','>Total value'],hs.length?hs.map(function(e){return'<tr><td>'+(esc(e.hsn)||'<span style="color:#fb7185">khaali</span>')+'</td><td>'+esc(e.desc)+'</td><td>'+esc(e.unit)+'</td><td class="right">'+r2(e.qty)+'</td><td class="right">'+e.rate+'</td>'+R(e.tx)+R(e.i)+R(e.c)+R(e.s)+'<td class="right">'+money(e.val)+'</td></tr>'}).join('')+totRow(5,'Total',[hsT.tx,hsT.i,hsT.c,hsT.s]):empty(10,'Koi item nahi.'));
+ h+=sec('13: Documents issued')+tbl(['Document','From','To','>Total','>Cancelled'],'<tr><td>Invoices</td><td>'+esc(o.docs.first||'-')+'</td><td>'+esc(o.docs.last||'-')+'</td><td class="right">'+o.docs.n+'</td><td class="right">'+o.docs.cancel+'</td></tr>');
+ var w=o.warn.slice(0,8);if(o.noHsn)w.push(o.noHsn+' item line me HSN nahi hai (portal par HSN summary ke liye chahiye).');
+ if(o.disc)w.push(o.disc+' invoice me discount hai. App discount ko tax ke baad ghatata hai, to taxable value discount se pehle ki hai. Portal par daalne se pehle apne CA se check kara lo.');
+ var unk=o.inv.filter(function(v){return v.pos==='-'}).length;if(unk)w.push(unk+' invoice me customer ka state nahi bhara, Place of supply "-" dikh raha hai.');
+ var sub='Invoices '+o.inv.length+' | Taxable ₹ '+money(T.tx)+' | Tax ₹ '+money(T.i+T.c+T.s)+' | Credit notes '+o.cn.length+' | GSTR-1 aam taur par agle mahine ki 11 tarikh tak (QRMP me 13). Ye report taiyaari ke liye hai, portal par upload nahi hoti.'+
+  (w.length?'<div style="margin-top:8px;color:#fbbf24">'+w.map(function(x){return'⚠ '+esc(x)}).join('<br>')+'</div>':'');
+ return{h:h,sub:sub}}
+
+/* ---- ITC + RCM data ---- */
+function itcIn(f,t){var rows=[],dn=[],g=G(),nm=X.nameMap();
+ (db.purchaseBills||[]).forEach(function(b){if(!inR(b.date,f,t))return;
+  var v=(db.vendors||[]).find(function(x){return x.id===b.vendorId}),T=b.totals||{},tax=+T.tax||0,gt=+T.grand||0,s=split(tax,v?!sameState(v):false),gs=String(v&&v.gst||'').trim().toUpperCase(),def=gok(gs),fl=g.itc[b.id],el=fl==='Y'?true:fl==='N'?false:def;
+  rows.push({id:b.id,no:b.pbNumber||'',vno:b.vendorBillNo||'',date:b.date||'',vendor:b.vendorName||(v&&v.name)||'',gstin:gs,tx:r2(T.taxable!=null?+T.taxable:Math.max(0,gt-tax)),i:s.i,c:s.c,s:s.s,tax:r2(tax),el:el,noG:!def,manual:!!fl})});
+ rows.sort(function(a,b){return String(a.date).localeCompare(String(b.date))});
+ (A().vouchers||[]).forEach(function(v){if(v.type!=='Debit Note'||!inR(v.date,f,t))return;
+  var tx=+v.taxable||0,tax=r2(tx*(+v.rate||0)/100),s=split(tax,!!v.inter);
+  dn.push({no:v.no||'',date:v.date||'',vendor:nm[v.party]||v.partyName||'',tx:tx,i:s.i,c:s.c,s:s.s,tax:tax})});
+ return{rows:rows,dn:dn}}
+function rcmIn(f,t){return G().rcm.filter(function(r){return inR(r.date,f,t)}).map(function(r){var tx=+r.taxable||0,tax=r2(tx*(+r.rate||0)/100),s=split(tax,!!r.inter);return Object.assign({},r,{tx:tx,tax:tax,i:s.i,c:s.c,s:s.s})}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))})}
+
+/* ---- GSTR-3B ---- */
+function utilize(L,C){var l={i:Math.max(0,L.i),c:Math.max(0,L.c),s:Math.max(0,L.s)},c={i:Math.max(0,C.i),c:Math.max(0,C.c),s:Math.max(0,C.s)},u={ii:0,ic:0,is:0,cc:0,ci:0,ss:0,si:0};
+ function use(a,b){var x=r2(Math.min(l[a],c[b]));l[a]=r2(l[a]-x);c[b]=r2(c[b]-x);return x}
+ u.ii=use('i','i');u.ci=use('c','i');u.si=use('s','i');u.cc=use('c','c');u.ss=use('s','s');u.ic=use('i','c');u.is=use('i','s');
+ return{cash:l,left:c,u:u}}
+function calc3b(f,t){
+ var o=outward(f,t),a={tx:0,i:0,c:0,s:0},nil=0,unr={};
+ o.inv.forEach(function(v){v.lines.forEach(function(l){if(l.rate>0){a.tx+=l.tx;a.i+=l.i;a.c+=l.c;a.s+=l.s}else nil+=l.tx;
+  if(!v.reg&&v.inter&&l.rate>0){var u=unr[v.pos]=unr[v.pos]||{pos:v.pos,tx:0,i:0};u.tx+=l.tx;u.i+=l.i}})});
+ o.cn.forEach(function(n){if(n.rate>0){a.tx-=n.tx;a.i-=n.i;a.c-=n.c;a.s-=n.s}else nil-=n.tx;
+  if(!n.reg&&n.inter&&n.rate>0){var u=unr[n.pos]=unr[n.pos]||{pos:n.pos,tx:0,i:0};u.tx-=n.tx;u.i-=n.i}});
+ a=sum4([a]);
+ var rc=rcmIn(f,t),rs=sum4(rc),rcI=sum4(rc.filter(function(r){return r.itc!==false})),it=itcIn(f,t),el=sum4(it.rows.filter(function(r){return r.el})),bl=sum4(it.rows.filter(function(r){return!r.el})),rev=sum4(it.dn),op=G().itcOpen,
+ O={i:+op.igst||0,c:+op.cgst||0,s:+op.sgst||0};
+ var cr={i:r2(el.i+rcI.i-rev.i+O.i),c:r2(el.c+rcI.c-rev.c+O.c),s:r2(el.s+rcI.s-rev.s+O.s)},ut=utilize({i:a.i,c:a.c,s:a.s},cr);
+ return{o:o,a:a,nil:r2(nil),unr:Object.keys(unr).map(function(k){return unr[k]}),rs:rs,rcI:rcI,el:el,bl:bl,rev:rev,O:O,cr:cr,ut:ut,neg:cr.i<0||cr.c<0||cr.s<0}}
+function g3b(f,t){var c=calc3b(f,t),h='',a=c.a,u=c.ut.u;
+ var row=function(l,x){return'<tr><td>'+l+'</td>'+R(x.tx)+R(x.i)+R(x.c)+R(x.s)+'</tr>'};
+ h+=sec('3.1: Outward supplies aur RCM wali inward supplies (credit note ghatakar)')+tbl(['Nature','>Taxable','>IGST','>CGST','>SGST'],
+  row('(a) Outward taxable supplies (rate wali)',a)+'<tr><td>(c) Nil-rated / 0% supplies</td>'+R(c.nil)+'<td></td><td></td><td></td></tr>'+row('(d) Inward supplies liable to reverse charge (RCM)',c.rs));
+ h+=sec('3.2: Unregistered ko inter-state supplies (state-wise)')+tbl(['Place of supply','>Taxable','>IGST'],c.unr.length?c.unr.map(function(x){return'<tr><td>'+esc(x.pos)+'</td>'+R(x.tx)+R(x.i)+'</tr>'}).join(''):empty(3,'Koi nahi.'));
+ h+=sec('4: Eligible ITC')+tbl(['Detail','>IGST','>CGST','>SGST'],
+  '<tr><td>(A)(3) RCM wali inward supplies (ITC claim wali)</td>'+R(c.rcI.i)+R(c.rcI.c)+R(c.rcI.s)+'</tr>'+
+  '<tr><td>(A)(5) Baaki sab ITC (purchase bills, eligible)</td>'+R(c.el.i)+R(c.el.c)+R(c.el.s)+'</tr>'+
+  '<tr><td>(B)(2) ITC reverse: Debit Notes (purchase return)</td>'+R(-c.rev.i)+R(-c.rev.c)+R(-c.rev.s)+'</tr>'+
+  '<tr><td>Pichle mahine se aaya ITC (opening, neeche bharo)</td>'+R(c.O.i)+R(c.O.c)+R(c.O.s)+'</tr>'+
+  '<tr style="border-top:2px solid var(--border-color)"><td><b>Net ITC available</b></td>'+R(c.cr.i)+R(c.cr.c)+R(c.cr.s)+'</tr>'+
+  '<tr><td class="sub">(D) Ineligible / blocked ITC (claim nahi hota)</td>'+R(c.bl.i)+R(c.bl.c)+R(c.bl.s)+'</tr>');
+ h+=sec('6.1: Tax payable aur payment')+tbl(['Detail','>IGST','>CGST','>SGST'],
+  '<tr><td>Outward tax liability</td>'+R(Math.max(0,a.i))+R(Math.max(0,a.c))+R(Math.max(0,a.s))+'</tr>'+
+  '<tr><td>ITC se: IGST credit ka use</td>'+R(u.ii)+R(u.ci)+R(u.si)+'</tr>'+
+  '<tr><td>ITC se: CGST credit ka use</td>'+R(u.ic)+R(u.cc)+'<td class="right">-</td></tr>'+
+  '<tr><td>ITC se: SGST credit ka use</td>'+R(u.is)+'<td class="right">-</td>'+R(u.ss)+'</tr>'+
+  '<tr><td>RCM tax (sirf cash se bharna hota hai)</td>'+R(c.rs.i)+R(c.rs.c)+R(c.rs.s)+'</tr>'+
+  '<tr style="border-top:2px solid var(--border-color)"><td><b>Cash me bharna hai</b></td>'+R(c.ut.cash.i+c.rs.i)+R(c.ut.cash.c+c.rs.c)+R(c.ut.cash.s+c.rs.s)+'</tr>'+
+  '<tr><td>Agle mahine ke liye bacha ITC</td>'+R(c.ut.left.i)+R(c.ut.left.c)+R(c.ut.left.s)+'</tr>');
+ h+='<div class="noprint" style="margin-top:18px"><div class="section-title">Opening ITC (pichle mahine ka bacha hua)</div><div class="sub" style="margin-bottom:8px">Ye number har period ke liye lagta hai jo upar dikh raha hai. Mahina badlo to isse update karna.</div><div class="grid g4"><div><label>IGST</label><input id="gsOi" type="number" step="0.01" value="'+(c.O.i||'')+'"></div><div><label>CGST</label><input id="gsOc" type="number" step="0.01" value="'+(c.O.c||'')+'"></div><div><label>SGST</label><input id="gsOs" type="number" step="0.01" value="'+(c.O.s||'')+'"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctItcOpen()">Save</button></div></div></div>';
+ var w=[];if(c.neg)w.push('Debit Note ka ITC reversal available ITC se zyada hai. Ye minus balance cash me dena pad sakta hai, CA se pooch lo.');
+ if(a.i<0||a.c<0||a.s<0)w.push('Credit notes sales se zyada hain, outward liability minus me hai. Isko 0 maana gaya hai.');
+ var sub='Outward tax ₹ '+money(Math.max(0,a.i)+Math.max(0,a.c)+Math.max(0,a.s))+' | RCM ₹ '+money(c.rs.i+c.rs.c+c.rs.s)+' | Net ITC ₹ '+money(c.cr.i+c.cr.c+c.cr.s)+' | GSTR-3B aam taur par agle mahine ki 20 tarikh tak. ITC use IGST, CGST, SGST ke standard order me nikala hai. Taiyaari ke liye hai, portal par file CA/portal se hi hoga.'+(w.length?'<div style="margin-top:8px;color:#fbbf24">'+w.map(function(x){return'⚠ '+esc(x)}).join('<br>')+'</div>':'');
+ return{h:h,sub:sub}}
+window.acctItcOpen=function(){var g=G();g.itcOpen={igst:r2($('gsOi').value),cgst:r2($('gsOc').value),sgst:r2($('gsOs').value)};saveDB();acctRenderGst();tt('Opening ITC save hua')};
+
+/* ---- ITC Register ---- */
+function itc(f,t){var d=itcIn(f,t),h='',e=sum4(d.rows.filter(function(r){return r.el})),b=sum4(d.rows.filter(function(r){return!r.el})),rv=sum4(d.dn),noG=d.rows.filter(function(r){return r.noG&&!r.manual}).length;
+ h+=tbl(['Date','Bill','Vendor bill no','Vendor','GSTIN','>Taxable','>IGST','>CGST','>SGST','ITC','Action'],d.rows.length?d.rows.map(function(r){
+  return'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.no)+'</td><td>'+esc(r.vno||'-')+'</td><td>'+esc(r.vendor)+'</td><td>'+(r.gstin?esc(r.gstin):'<span style="color:#fb7185">GSTIN nahi</span>')+'</td>'+R(r.tx)+R(r.i)+R(r.c)+R(r.s)+'<td><span class="badge '+(r.el?'paid':'unpaid')+'">'+(r.el?'Eligible':'Blocked')+'</span></td><td><button class="btn muted" onclick="acctItcToggle(\''+esc(r.id)+'\')">'+(r.el?'Block karo':'Allow karo')+'</button></td></tr>'}).join('')+
+  totRow(5,'Eligible ITC',[e.tx,e.i,e.c,e.s])+totRow(5,'Blocked / ineligible',[b.tx,b.i,b.c,b.s]):empty(11,'Is period me koi purchase bill nahi.'));
+ h+=sec('Debit Notes (purchase return): ITC reverse hota hai')+tbl(['Date','Note','Vendor','>Taxable','>IGST','>CGST','>SGST'],d.dn.length?d.dn.map(function(r){return'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.no)+'</td><td>'+esc(r.vendor)+'</td>'+R(r.tx)+R(r.i)+R(r.c)+R(r.s)+'</tr>'}).join('')+totRow(3,'Total reversal',[rv.tx,rv.i,rv.c,rv.s]):empty(7,'Koi debit note nahi.'));
+ var sub='Eligible ITC ₹ '+money(e.i+e.c+e.s)+' | Blocked ₹ '+money(b.i+b.c+b.s)+' | Reversal ₹ '+money(rv.i+rv.c+rv.s)+'. Vendor ka GSTIN na ho to ITC apne aap Blocked rehta hai (Allow karke badal sakte ho). CGST/SGST ya IGST vendor ke state se tay hota hai.'+(noG?'<div style="margin-top:8px;color:#fbbf24">⚠ '+noG+' bill me vendor ka GSTIN nahi hai.</div>':'');
+ return{h:h,sub:sub}}
+window.acctItcToggle=function(id){var g=G(),rows=itcIn('0000-01-01','9999-12-31').rows,r=rows.find(function(x){return x.id===id});if(!r)return;g.itc[id]=r.el?'N':'Y';saveDB();acctRenderGst()};
+
+/* ---- RCM ---- */
+function rcm(f,t){var rows=rcmIn(f,t),s=sum4(rows),h='';
+ h+='<div class="noprint"><div class="section-title">Naya RCM entry</div><div class="grid g4">'+
+  '<div><label>Date</label><input id="rcD" type="date" value="'+today()+'"></div><div><label>Supplier</label><input id="rcS" placeholder="Naam"></div><div><label>GSTIN (agar ho)</label><input id="rcG" style="text-transform:uppercase"></div><div><label>Kis cheez par</label><input id="rcN" placeholder="GTA freight, unregistered purchase..."></div>'+
+  '<div><label>Taxable amount</label><input id="rcT" type="number" step="0.01"></div><div><label>GST rate %</label><input id="rcR" type="number" step="0.01" value="18"></div><div><label>Type</label><select id="rcI"><option value="0">Intra-state (CGST+SGST)</option><option value="1">Inter-state (IGST)</option></select></div><div><label>ITC claim karna hai?</label><select id="rcC"><option value="1">Haan</option><option value="0">Nahi</option></select></div></div>'+
+  '<div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="acctRcmAdd()">+ Add</button></div></div>';
+ h+=sec('RCM register')+tbl(['Date','Supplier','GSTIN','Detail','>Taxable','Rate %','>IGST','>CGST','>SGST','ITC','Voucher / Action'],rows.length?rows.map(function(r){
+  var v=r.voucherId&&(A().vouchers||[]).find(function(x){return x.id===r.voucherId});
+  return'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.supplier||'-')+'</td><td>'+esc(r.gstin||'-')+'</td><td>'+esc(r.note||'')+'</td>'+R(r.tx)+'<td class="right">'+r.rate+'</td>'+R(r.i)+R(r.c)+R(r.s)+'<td>'+(r.itc!==false?'Haan':'Nahi')+'</td><td class="noprint">'+(v?'<span class="sub">'+esc(v.no)+'</span> ':(r.itc!==false?'<button class="btn muted" onclick="acctRcmPost(\''+esc(r.id)+'\')">Journal banao</button> ':''))+'<button class="btn danger" onclick="acctRcmDel(\''+esc(r.id)+'\')">Delete</button></td></tr>'}).join('')+'<tr style="border-top:2px solid var(--border-color)"><td colspan="4"><b>Total</b></td><td class="right"><b>'+m2(s.tx)+'</b></td><td></td><td class="right"><b>'+m2(s.i)+'</b></td><td class="right"><b>'+m2(s.c)+'</b></td><td class="right"><b>'+m2(s.s)+'</b></td><td colspan="2"></td></tr>':empty(11,'Is period me koi RCM entry nahi.'));
+ return{h:h,sub:'RCM tax ₹ '+money(s.i+s.c+s.s)+' | Ye tax aapko cash me bharna hota hai, uske baad hi ITC milta hai. 3B me ye 3.1(d) aur 4(A)(3) me jata hai. "Journal banao" Input GST Dr / Output GST Cr ki entry banata hai. Expense ki entry aap alag se karoge, aur tax ka bank payment alag Payment voucher se.'}}
+window.acctRcmAdd=function(){var tx=r2($('rcT').value),rt=+$('rcR').value||0,d=$('rcD').value;if(!d)return alert('Date daalo');if(tx<=0)return alert('Taxable amount daalo');if(rt<=0)return alert('GST rate daalo');
+ var g=($('rcG').value||'').trim().toUpperCase();if(g&&!gok(g))return alert('GSTIN ka format galat hai');
+ G().rcm.push({id:crypto.randomUUID(),date:d,supplier:$('rcS').value.trim(),gstin:g,note:$('rcN').value.trim(),taxable:tx,rate:rt,inter:$('rcI').value==='1',itc:$('rcC').value==='1',createdAt:Date.now()});saveDB();acctRenderGst();tt('RCM entry add hui')};
+window.acctRcmDel=function(id){if(!confirm('RCM entry delete karni hai? Uska Journal voucher alag se delete karna padega.'))return;var g=G();g.rcm=g.rcm.filter(function(x){return x.id!==id});saveDB();acctRenderGst()};
+function postV(type,date,narr,lines,head){var a=A();if(a.lockDate&&String(date)<=a.lockDate){alert('Period lock: '+a.lockDate+' tak voucher nahi ban sakta.');return null}
+ var m=X.nameMap(),n=(a.counters[type]||0)+1;lines.forEach(function(x){x.name=m[x.ledger]||''});
+ var v={id:crypto.randomUUID(),type:type,no:X.pfx(type)+'-'+String(n).padStart(4,'0'),date:date,narration:narr,lines:lines,head:head||'',createdAt:Date.now()};
+ a.counters[type]=n;a.vouchers.push(v);return v}
+window.acctRcmPost=function(id){var r=rcmIn('0000-01-01','9999-12-31').find(function(x){return x.id===id});if(!r)return;if(r.itc===false)return alert('ITC claim nahi hai, isliye voucher nahi banta.');
+ var L=[];function add(inp,out,a){if(a>0.004){L.push({ledger:inp,dc:'Dr',amount:a});L.push({ledger:out,dc:'Cr',amount:a})}}
+ add('lg_iigst','lg_igst',r.i);add('lg_icgst','lg_cgst',r.c);add('lg_isgst','lg_sgst',r.s);if(!L.length)return;
+ var v=postV('Journal',r.date,'RCM '+(r.supplier||'')+' '+(r.note||''),L);if(!v)return;G().rcm.find(function(x){return x.id===id}).voucherId=v.id;saveDB();acctRenderGst();tt(v.no+' ban gaya')};
+
+/* ---- 2A / 2B match ---- */
+function nz(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^0+/,'')}
+function num(x){return parseFloat(String(x==null?'':x).replace(/[₹,\s]/g,''))||0}
+function csvRows(tx){var rows=[],r=[],c='',q=false;tx=String(tx).replace(/^\uFEFF/,'');
+ for(var i=0;i<tx.length;i++){var ch=tx[i];if(q){if(ch==='"'){if(tx[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch==='"')q=true;else if(ch===','){r.push(c);c=''}
+  else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&tx[i+1]==='\n')i++;r.push(c);c='';if(r.some(function(x){return String(x).trim()!==''}))rows.push(r);r=[]}else c+=ch}
+ r.push(c);if(r.some(function(x){return String(x).trim()!==''}))rows.push(r);return rows}
+function fromCsv(tx){var rows=csvRows(tx),hi=-1;for(var i=0;i<Math.min(rows.length,15);i++){if(rows[i].some(function(c){return/gstin|ctin/i.test(c)})){hi=i;break}}
+ if(hi<0)throw new Error('Header row nahi mili. Pehli row me GSTIN, Invoice number, Taxable, IGST, CGST, SGST jaise naam chahiye.');
+ var H=rows[hi].map(function(c){return String(c).toLowerCase()}),col=function(re){for(var i=0;i<H.length;i++)if(re.test(H[i]))return i;return-1},
+ cg=col(/gstin|ctin/),ci=col(/invoice\s*(no|num)|inv\s*(no|num)|inum|bill\s*no|document\s*(no|num)/),cd=col(/date|dt/),ct=col(/taxable|txval/),cI=col(/integrated|igst/),cC=col(/central|cgst/),cS=col(/state|sgst|utgst/),cn=col(/trade|supplier|legal|party|name/);
+ if(cg<0||ci<0)throw new Error('GSTIN aur Invoice number wale column nahi mile.');
+ var out=[];for(var j=hi+1;j<rows.length;j++){var r=rows[j],g=String(r[cg]||'').trim().toUpperCase();if(!g&&!r[ci])continue;
+  out.push({gstin:g,supplier:cn>=0?String(r[cn]||'').trim():'',no:String(r[ci]||'').trim(),date:cd>=0?String(r[cd]||'').trim():'',taxable:ct>=0?r2(num(r[ct])):0,igst:cI>=0?r2(num(r[cI])):0,cgst:cC>=0?r2(num(r[cC])):0,sgst:cS>=0?r2(num(r[cS])):0})}
+ return out}
+function fromJson(j){var d=j&&j.data&&j.data.docdata?j.data.docdata:(j&&j.data?j.data:j),arr=(d&&d.b2b)||(j&&j.b2b)||[],out=[];
+ arr.forEach(function(p){(p.inv||[]).forEach(function(v){var tx=0,i=0,c=0,s=0,its=v.items||v.itms||[];
+  if(its.length)its.forEach(function(x){var z=x.itm_det||x;tx+=+z.txval||0;i+=+z.igst||0;c+=+z.cgst||0;s+=+z.sgst||0});else{tx=+v.txval||0;i=+v.igst||0;c=+v.cgst||0;s=+v.sgst||0}
+  out.push({gstin:String(p.ctin||'').toUpperCase(),supplier:p.trdnm||p.tradeName||'',no:String(v.inum||v.inv_num||''),date:String(v.dt||v.idt||''),taxable:r2(tx),igst:r2(i),cgst:r2(c),sgst:r2(s)})})});
+ if(!out.length)throw new Error('JSON me b2b invoices nahi mile.');return out}
+window.acctMatchFile=function(inp){var f=inp.files&&inp.files[0];if(!f)return;var rd=new FileReader();
+ rd.onload=function(){try{var tx=String(rd.result),rows=/^\s*[\{\[]/.test(tx)?fromJson(JSON.parse(tx)):fromCsv(tx);if(!rows.length)throw new Error('File me koi row nahi mili.');
+  G().m2b={name:f.name,at:Date.now(),rows:rows.slice(0,5000)};saveDB();acctRenderGst();tt(rows.length+' rows load hui')}catch(e){alert('File padh nahi payi: '+e.message)}};
+ rd.readAsText(f);inp.value=''};
+window.acctMatchClear=function(){if(!confirm('Upload ki hui 2A/2B file hata deni hai?'))return;delete G().m2b;saveDB();acctRenderGst()};
+window.acctMatchFilter=function(v){mf=v;acctRenderGst()};
+function matchData(f,t){var m=G().m2b,rows=m.rows,bills=[],tot=function(r){return r2(r.igst+r.cgst+r.sgst)};
+ (db.purchaseBills||[]).forEach(function(b){var v=(db.vendors||[]).find(function(x){return x.id===b.vendorId}),T=b.totals||{},gt=+T.grand||0,tax=+T.tax||0;
+  bills.push({b:b,gstin:String(v&&v.gst||'').trim().toUpperCase(),no:nz(b.vendorBillNo),vno:b.vendorBillNo||'',vendor:b.vendorName||(v&&v.name)||'',date:b.date||'',tx:r2(T.taxable!=null?+T.taxable:Math.max(0,gt-tax)),tax:r2(tax),inR:inR(b.date,f,t),used:false})});
+ var map={};bills.forEach(function(x){if(x.gstin&&x.no)map[x.gstin+'|'+x.no]=map[x.gstin+'|'+x.no]||x});
+ var res=[],un2b=[];
+ rows.forEach(function(r){var k=String(r.gstin).toUpperCase()+'|'+nz(r.no),x=map[k];
+  if(x&&!x.used){x.used=true;var dt=r2(r.taxable-x.tx),dx=r2(tot(r)-x.tax),ok=Math.abs(dt)<=1&&Math.abs(dx)<=1;res.push({s:ok?'Matched':'Mismatch',r:r,x:x,dt:dt,dx:dx})}else un2b.push(r)});
+ var unB=bills.filter(function(x){return!x.used&&x.inR}),left2b=[];
+ un2b.forEach(function(r){var p=unB.find(function(x){return!x.used&&x.gstin===String(r.gstin).toUpperCase()&&Math.abs(x.tx-r.taxable)<=1&&Math.abs(x.tax-tot(r))<=1});
+  if(p){p.used=true;res.push({s:'Possible',r:r,x:p,dt:r2(r.taxable-p.tx),dx:r2(tot(r)-p.tax)})}else left2b.push(r)});
+ left2b.forEach(function(r){res.push({s:'Only in 2B',r:r})});
+ bills.filter(function(x){return!x.used&&x.inR}).forEach(function(x){res.push({s:'Only in books',x:x})});
+ return res}
+function match(f,t){var g=G(),m=g.m2b,h='';
+ h+='<div class="noprint"><div class="section-title">GSTR-2A / 2B file</div><div class="sub" style="margin-bottom:10px">Portal se download ki hui file (CSV ya JSON) chuno. Excel ho to "Save as CSV" kar lo. CSV me pehli row me ye naam chahiye: GSTIN, Invoice number, Date, Taxable value, IGST, CGST, SGST (Trade name optional). Match GSTIN + vendor bill number se hota hai, isliye Purchase Bill me "Vendor bill no" bharna zaroori hai.</div>'+
+  '<div class="toolbar" style="gap:8px;flex-wrap:wrap"><input type="file" accept=".csv,.json,text/csv,application/json" onchange="acctMatchFile(this)">'+(m?'<button class="btn danger" onclick="acctMatchClear()">File hatao</button>':'')+'</div></div>';
+ if(!m)return{h:h,sub:'Abhi koi 2A/2B file load nahi hai.'};
+ var res=matchData(f,t),cnt={};res.forEach(function(x){cnt[x.s]=(cnt[x.s]||0)+1});
+ var fs=['','Matched','Mismatch','Possible','Only in 2B','Only in books'],
+ sel='<div class="noprint" style="margin:14px 0"><label>Dikhao</label><select onchange="acctMatchFilter(this.value)">'+fs.map(function(x){return'<option value="'+x+'"'+(x===mf?' selected':'')+'>'+(x||'Sab')+(x?' ('+(cnt[x]||0)+')':'')+'</option>'}).join('')+'</select></div>';
+ var L=res.filter(function(x){return!mf||x.s===mf}),cls={Matched:'paid',Mismatch:'unpaid',Possible:'partial','Only in 2B':'unpaid','Only in books':'partial'};
+ h+=sel+tbl(['Status','GSTIN','Supplier','Invoice (2B)','Invoice (books)','>Taxable 2B','>Tax 2B','>Taxable books','>Tax books','>Fark (tax)'],L.length?L.map(function(x){var r=x.r,b=x.x;
+  return'<tr><td><span class="badge '+cls[x.s]+'">'+esc(x.s)+'</span></td><td>'+esc(r?r.gstin:b.gstin||'-')+'</td><td>'+esc(r?(r.supplier||(b?b.vendor:'')):b.vendor)+'</td><td>'+esc(r?r.no:'-')+'</td><td>'+esc(b?(b.vno||'-')+' ('+b.b.pbNumber+')':'-')+'</td>'+
+  (r?R(r.taxable)+R(r.igst+r.cgst+r.sgst):'<td class="right">-</td><td class="right">-</td>')+(b?R(b.tx)+R(b.tax):'<td class="right">-</td><td class="right">-</td>')+(r&&b?R(x.dx):'<td class="right">-</td>')+'</tr>'}).join(''):empty(10,'Is filter me kuch nahi.'));
+ return{h:h,sub:'File: '+esc(m.name)+' ('+m.rows.length+' rows) | Matched '+(cnt.Matched||0)+' | Mismatch '+(cnt.Mismatch||0)+' | Possible '+(cnt.Possible||0)+' | Sirf 2B me '+(cnt['Only in 2B']||0)+' | Sirf books me '+(cnt['Only in books']||0)+'. Books ke bills upar ki date range ke hain, 2B ki saari rows compare hoti hain. Fark ₹ 1 tak ho to Matched maana hai. "Possible" matlab GSTIN aur amount same hai par invoice number alag likha hai.'}}
+
+/* ---- TDS / TCS ---- */
+function tdsParties(kind){var g=kind==='tdsP'||kind==='tcsR'?'sundryCred':'sundryDeb';return X.ledgers().filter(function(l){return l.group===g})}
+window.acctTdsFill=function(){var k=$('tdK').value,cur=$('tdP').value;$('tdP').innerHTML='<option value="">Select…</option>'+tdsParties(k).map(function(l){return'<option value="'+esc(l.id)+'"'+(l.id===cur?' selected':'')+'>'+esc(l.name)+'</option>'}).join('')};
+function tds(f,t){var g=G(),rows=g.tds.filter(function(r){return inR(r.date,f,t)}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))}),nm=X.nameMap(),h='',S={};
+ Object.keys(KINDS).forEach(function(k){S[k]={n:0,a:0,p:0}});rows.forEach(function(r){var s=S[r.kind];if(!s)return;s.n++;s.a+=+r.amount||0;if(r.deposited)s.p+=+r.amount||0});
+ h+='<div class="noprint"><div class="section-title">Naya TDS / TCS entry</div><div class="grid g4">'+
+  '<div><label>Type</label><select id="tdK" onchange="acctTdsFill()">'+Object.keys(KINDS).map(function(k){return'<option value="'+k+'">'+KINDS[k]+'</option>'}).join('')+'</select></div>'+
+  '<div><label>Date</label><input id="tdD" type="date" value="'+today()+'"></div><div><label>Party</label><select id="tdP"></select></div>'+
+  '<div><label>Section / detail</label><input id="tdS" list="tdSecs" placeholder="e.g. 194C"><datalist id="tdSecs"><option value="194C (1%/2%)"><option value="194J (10%)"><option value="194I (10%)"><option value="194H (2%)"><option value="194Q (0.1%)"><option value="206C(1H) (0.1%)"></datalist></div>'+
+  '<div><label>Base amount</label><input id="tdB" type="number" step="0.01"></div><div><label>Rate %</label><input id="tdR" type="number" step="0.001"></div><div><label>Amount (khaali = auto)</label><input id="tdA" type="number" step="0.01"></div><div><label>Note</label><input id="tdN"></div></div>'+
+  '<div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="acctTdsAdd()">+ Add</button></div><div class="sub" style="margin-top:8px">Section aur rate khud verify karo. Income-tax ka naya Act April 2026 se lagu hai, section numbers aur rates badal sakte hain. List me diye naam sirf purane naam ke suggestion hain.</div></div>';
+ h+=sec('Summary')+tbl(['Type','>Entries','>Total','>Jama (challan)','>Baaki'],Object.keys(KINDS).map(function(k){var s=S[k],pay=k==='tdsP'||k==='tcsP';return'<tr><td>'+KINDS[k]+'</td><td class="right">'+s.n+'</td>'+R(s.a)+(pay?R(s.p)+R(s.a-s.p):'<td class="right">-</td><td class="right">-</td>')+'</tr>'}).join(''));
+ h+=sec('Entries')+tbl(['Date','Type','Party','Section','>Base','>Rate %','>Amount','Voucher','Challan','Action'],rows.length?rows.map(function(r){
+  var v=r.voucherId&&(A().vouchers||[]).find(function(x){return x.id===r.voucherId}),pay=r.kind==='tdsP'||r.kind==='tcsP',ch=r.deposited?esc(r.challanNo||'jama')+' <span class="sub">'+esc(r.challanDate||'')+'</span>':(pay?'<span class="sub">baaki</span>':'-'),id=esc(r.id);
+  return'<tr><td>'+esc(r.date)+'</td><td>'+esc(KINDS[r.kind]||r.kind)+'</td><td>'+esc(nm[r.party]||r.partyName||'?')+'</td><td>'+esc(r.section||'-')+'</td>'+R(r.base)+'<td class="right">'+(r.rate||'-')+'</td>'+R(r.amount)+'<td>'+(v?esc(v.no):'<span class="sub">nahi</span>')+'</td><td>'+ch+'</td><td class="noprint">'+
+   (v?'':'<button class="btn muted" onclick="acctTdsPost(\''+id+'\')">Journal banao</button> ')+(pay&&!r.deposited?'<button class="btn muted" onclick="acctTdsChallan(\''+id+'\')">Challan jama</button> ':'')+'<button class="btn danger" onclick="acctTdsDel(\''+id+'\')">Delete</button></td></tr>'}).join(''):empty(10,'Is period me koi entry nahi.'));
+ return{h:h,sub:'TDS payable aam taur par agle mahine ki 7 tarikh tak jama hota hai. "Journal banao" party ledger aur TDS/TCS ledger me entry banata hai, "Challan jama" Payment voucher banata hai (TDS/TCS ledger Dr, Bank Cr).'}}
+window.acctTdsAdd=function(){var k=$('tdK').value,p=$('tdP').value,d=$('tdD').value,b=r2($('tdB').value),rt=+$('tdR').value||0,a=$('tdA').value===''?r2(b*rt/100):r2($('tdA').value);
+ if(!p)return alert('Party chuno');if(!d)return alert('Date daalo');if(a<=0)return alert('Amount (ya base aur rate) daalo');
+ G().tds.push({id:crypto.randomUUID(),kind:k,date:d,party:p,partyName:X.nameMap()[p]||'',section:$('tdS').value.trim(),base:b,rate:rt,amount:a,note:$('tdN').value.trim(),createdAt:Date.now()});saveDB();acctRenderGst();tt('Entry add hui')};
+window.acctTdsDel=function(id){if(!confirm('Entry delete karni hai? Uska voucher alag se delete karna padega.'))return;var g=G();g.tds=g.tds.filter(function(x){return x.id!==id});saveDB();acctRenderGst()};
+function tdsF(id){return G().tds.find(function(x){return x.id===id})}
+window.acctTdsPost=function(id){var r=tdsF(id);if(!r)return;var led={tdsP:'lg_tdspay',tdsR:'lg_tdsrec',tcsP:'lg_tcspay',tcsR:'lg_tcsrec'}[r.kind];
+ if(!ledOK(led))return alert('TDS/TCS ledger nahi mila. Ledgers page par check karo.');if(!ledOK(r.party))return alert('Party ledger nahi mila (delete ho gaya?)');
+ var a=r.amount,L=(r.kind==='tdsP'||r.kind==='tcsP')?[{ledger:r.party,dc:'Dr',amount:a},{ledger:led,dc:'Cr',amount:a}]:[{ledger:led,dc:'Dr',amount:a},{ledger:r.party,dc:'Cr',amount:a}];
+ var v=postV('Journal',r.date,KINDS[r.kind]+(r.section?' '+r.section:'')+(r.note?' - '+r.note:''),L);if(!v)return;r.voucherId=v.id;saveDB();acctRenderGst();tt(v.no+' ban gaya')};
+window.acctTdsChallan=function(id){var r=tdsF(id);if(!r)return;var led=r.kind==='tdsP'?'lg_tdspay':'lg_tcspay',bk=ledOK('lg_bank')?'lg_bank':(X.ledgers().filter(function(l){return l.group==='bank'})[0]||{}).id;
+ if(!bk)return alert('Bank ledger nahi mila.');if(!ledOK(led))return alert('TDS/TCS ledger nahi mila.');
+ var d=prompt('Challan kis date par jama kiya? (YYYY-MM-DD)',today());if(d===null)return;d=d.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return alert('Date YYYY-MM-DD format me daalo');
+ var no=prompt('Challan / CIN number (optional)','');if(no===null)no='';
+ var v=postV('Payment',d,'Challan '+(no||'')+' '+KINDS[r.kind],[{ledger:led,dc:'Dr',amount:r.amount},{ledger:bk,dc:'Cr',amount:r.amount}],bk);if(!v)return;
+ r.deposited=true;r.challanNo=no.trim();r.challanDate=d;r.challanVoucher=v.id;saveDB();acctRenderGst();tt(v.no+' ban gaya (Bank ledger se)')};
+
+/* ---- Page ---- */
+window.acctGstTab=function(t){tab=t;acctRenderGst()};
+window.acctGstRange=function(k){var d=new Date(),s=new Date(d.getFullYear(),d.getMonth()+k,1),y=s.getFullYear(),m=s.getMonth(),e=new Date(y,m+1,0).getDate();$('gsFrom').value=ymd(y,m,1);$('gsTo').value=ymd(y,m,e);acctRenderGst()};
+window.acctRenderGst=function(){if(!A()||!X)return;G();
+ if(!$('gsFrom').value||!$('gsTo').value){var d=new Date(),s=new Date(d.getFullYear(),d.getMonth()-1,1),y=s.getFullYear(),m=s.getMonth();$('gsFrom').value=ymd(y,m,1);$('gsTo').value=ymd(y,m,new Date(y,m+1,0).getDate())}
+ $('gsTabs').innerHTML=TABS.map(function(x){return'<button class="btn '+(tab===x[0]?'primary':'muted')+'" onclick="acctGstTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+ var f=$('gsFrom').value,t=$('gsTo').value;if(f>t){$('gsSub').textContent='';$('gsBody').innerHTML='<div class="sub">From date, To date se pehle honi chahiye.</div>';return}
+ var r=tab==='g1'?g1(f,t):tab==='g3b'?g3b(f,t):tab==='itc'?itc(f,t):tab==='rcm'?rcm(f,t):tab==='match'?match(f,t):tds(f,t);
+ $('gsSub').innerHTML=r.sub;$('gsBody').innerHTML=r.h;if(tab==='tds')acctTdsFill()};
+function title(){var x=TABS.filter(function(a){return a[0]===tab})[0][1];return x+' | '+(db.settings.company||'')+' | GSTIN '+(db.settings.gstin||'-')+' | '+$('gsFrom').value+' to '+$('gsTo').value}
+window.acctGstCSV=function(){var csv=[];document.querySelectorAll('#gsBody tr').forEach(function(tr){csv.push(Array.prototype.map.call(tr.children,function(c){return'"'+c.innerText.replace(/\s*\n\s*/g,' ').replace(/"/g,'""')+'"'}).join(','))});
+ downloadBlob(ieCreditCsv(csv,'gst report'),'IE-'+tab.toUpperCase()+'-GST.csv','text/csv')};
+window.acctGstPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}
+ var box=document.createElement('div');box.innerHTML=$('gsBody').innerHTML;box.querySelectorAll('.noprint').forEach(function(n){n.remove()});
+ w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:11px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.right{text-align:right}.sub{color:#555;font-size:10px}.section-title{font-weight:700;margin:10px 0 4px}.badge{font-weight:700}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2><div class="sub" style="margin-bottom:8px">'+$('gsSub').innerText+'</div>'+box.innerHTML+'</body></html>');w.document.close()};
 })();
 </script>
 
