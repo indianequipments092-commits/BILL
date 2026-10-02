@@ -23154,7 +23154,7 @@ function toXlsx(R){var used={},names=[],NS='xmlns="http://schemas.openxmlformats
 /* ---------- Statements: Balance Sheet / Profit & Loss (classic two-sided, one page) ---------- */
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fd(s){return String(s==null?'':s).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,function(_,y,m,d){return d+'-'+MON[+m-1]+'-'+y})}
-function enSub(s){return fd(String(s||'')).replace(/Trial Balance tally ho raha hai\.?/i,'Trial Balance is tallied: total debit equals total credit.').replace(/Fark ₹ ([\d,.]+) \((Debit|Credit) zyada\)\.?.*/,'Difference of ₹ $1 ($2 is higher).').replace(/(\S+) se (\S+) tak/,'$1 to $2').replace(/Pehle 500 dikhaye\.?.*/i,'First 500 rows shown. Narrow the date range to see more.')}
+function enSub(s){return fd(String(s||'')).replace(/Trial Balance tally ho raha hai\.?/i,'Trial Balance is tallied: total debit equals total credit.').replace(/Fark ₹ ([\d,.]+) \((Debit|Credit) zyada\)\.?.*/,'Difference of ₹ $1 ($2 is higher).').replace(/(\S+) se (\S+) tak/,'$1 to $2').replace(/Pehle 500 dikhaye\.?.*/i,'First 500 rows shown. Narrow the date range to see more.').replace(/Is period me (koi entry|kuch) (nahi|nahi hai)\.?/i,'No entries in this period.').replace(/Koi pending bill nahi\.?/i,'No pending bills.')}
 function pnum(t){var v=parseFloat(String(t).replace(/[₹,\s]/g,''));return isNaN(v)?0:v}
 function r2(x){return Math.round(x*100)/100}
 function sumA(a){return r2(a.reduce(function(x,g){return x+g.amt},0))}
@@ -23239,8 +23239,184 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
   ['xl/_rels/workbook.xml.rels',XH+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rid(1)+'worksheet" Target="worksheets/sheet1.xml"/>'+rid(2)+'worksheet" Target="worksheets/sheet2.xml"/>'+rid(3)+'styles" Target="styles.xml"/></Relationships>'],
   ['xl/styles.xml',styles],['xl/worksheets/sheet1.xml',s1],['xl/worksheets/sheet2.xml',s2]];
  downloadBlob(zip(files),'IE-'+M.title.replace(/[^a-z0-9]+/gi,'-').replace(/-$/,'')+'-'+new Date().toISOString().slice(0,10)+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+/* ---------- PREMIUM: Day Book / Cash Book / Bank Book / Trial Balance / Outstanding ---------- */
+var NV='14284B',GD='C9A227',XH2='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS2='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+var INR='[>=10000000]##\\,##\\,##\\,##0.00;[>=100000]##\\,##\\,##0.00;#,##0.00',RUP='[>=10000000]"₹ "##\\,##\\,##\\,##0.00;[>=100000]"₹ "##\\,##\\,##0.00;"₹ "#,##0.00',DT='dd\\-mmm\\-yyyy',INT='#,##0',PCT='0.0%';
+var TONE={blue:'1D4ED8',green:'15803D',red:'B91C1C',gold:'A16207',navy:NV};
+function pn(v){if(typeof v==='number')return v;var s=String(v==null?'':v).replace(/[₹,\s]|Dr$|Cr$/g,'');if(s===''||s==='-')return null;var x=parseFloat(s);return isNaN(x)?null:x}
+function dcOf(v){return/\bCr\s*$/.test(String(v))?'Cr':/\bDr\s*$/.test(String(v))?'Dr':''}
+function sgn(v){return(pn(v)||0)*(dcOf(v)==='Cr'?-1:1)}
+function tabName(){var b=document.querySelector('#arTabs .btn.primary');return b?b.textContent.trim():''}
+function cellsOf(tr){return[].map.call(tr.cells,function(c){return c.innerText.replace(/\s*\n\s*/g,' ').trim()})}
+function selTxt(){var w=$('arSelW'),s=$('arSel');return w&&!w.classList.contains('hidden')&&s&&s.options[s.selectedIndex]?s.options[s.selectedIndex].text:''}
+function tRows(t){return[].slice.call(t.tBodies.length?t.tBodies[0].rows:t.rows)}
+function isNote(tr){return tr.cells.length===1&&tr.cells[0].colSpan>1}
+function ymL(s){return MON[+s.slice(5,7)-1]+' '+s.slice(0,4)}
+function mDay(M,box,sl){var t=box.querySelector('table');if(!t)return;var rows=[],ty={},tot=0,cap=false;
+ tRows(t).forEach(function(tr){if(isNote(tr)){if(/Pehle 500/i.test(tr.innerText))cap=true;return}
+  var c=tr.cells,p=c[3],sub=p.querySelector('.sub'),dr=[].filter.call(p.childNodes,function(n){return n!==sub}).map(function(n){return n.textContent}).join('').replace(/^\s*Dr:\s*/,'').trim(),
+  q=sub?sub.textContent.replace(/^\s*Cr:\s*/,'').trim():'',i=q.indexOf(' | '),cr=i<0?q:q.slice(0,i),nr=i<0?'':q.slice(i+3),a=pn(c[4].innerText)||0,tp=c[2].innerText.trim();
+  rows.push({k:'r',c:[c[0].innerText.trim(),c[1].innerText.trim(),tp,dr,cr,nr,a]});tot+=a;var o=ty[tp]=ty[tp]||{n:0,a:0};o.n++;o.a+=a});
+ var n=rows.length,tk=Object.keys(ty).sort(function(a,b){return ty[b].a-ty[a].a});
+ M.title='Day Book';M.filt=sl&&!/^all/i.test(sl)?'Voucher type: '+sl:'';M.land=true;
+ M.cards=[{l:'Vouchers',v:String(n),n:n,int:1,tone:'blue'},{l:'Total Value',v:'₹ '+fm(tot),n:r2x(tot),tone:'navy'},{l:'Average Voucher',v:'₹ '+fm(n?tot/n:0),n:r2x(n?tot/n:0),tone:'gold'},{l:'Voucher Types',v:String(tk.length),n:tk.length,int:1,tone:'green'}];
+ if(tk.length)M.summary.push({cap:'Type-wise summary',cols:[{h:'Voucher type',k:'t'},{h:'Vouchers',k:'i'},{h:'Amount (₹)',k:'n'},{h:'Share',k:'p'}],rows:tk.map(function(k){return[k,ty[k].n,r2x(ty[k].a),tot?ty[k].a/tot:0]}).concat([['Total',n,r2x(tot),tot?1:0]]),tot:1,pdf:1});
+ M.tables.push({sheet:'Day Book',cap:'',cols:[{h:'Date',k:'d',w:13},{h:'Voucher No',k:'t',w:15},{h:'Type',k:'t',w:12},{h:'Debit (Dr) ledger',k:'t',w:30,wrap:1},{h:'Credit (Cr) ledger',k:'t',w:30,wrap:1},{h:'Narration',k:'t',w:30,wrap:1},{h:'Amount (₹)',k:'n',w:17}],
+  rows:rows.concat([{k:'t',c:['Total ('+n+' vouchers)','','','','','',tot],sum:[6]}]),af:1,none:!n});
+ if(cap)M.notes.push('Only the first 500 vouchers are shown. Narrow the date range to see more.')}
+function r2x(x){return Math.round(x*100)/100}
+function mBook(M,box,tn){var t=box.querySelector('table');if(!t)return;var open='',tot=null,rows=[];
+ tRows(t).forEach(function(tr){if(isNote(tr))return;var c=cellsOf(tr);if(tr.cells.length===2){open=c[1];return}if(tr.cells.length===4){tot=c;return}rows.push({k:'r',c:c.slice(0,6)})});
+ if(!tot)return;var rec=0,pay=0,mo={},lg=(($('arSub')||{}).innerText||'').split(' | ')[0];
+ rows.forEach(function(r){var a=pn(r.c[3])||0,b=pn(r.c[4])||0,m=String(r.c[0]).slice(0,7);rec+=a;pay+=b;var o=mo[m]=mo[m]||{r:0,p:0};o.r+=a;o.p+=b});
+ var cl=tot[3],clS=sgn(cl),opS=sgn(open),mk=Object.keys(mo).sort();
+ M.title=tn;M.filt=lg?'Ledger: '+lg:'';
+ M.cards=[{l:'Opening Balance',v:open,tone:'blue'},{l:'Total Receipts (Dr)',v:'₹ '+fm(rec),n:r2x(rec),tone:'green'},{l:'Total Payments (Cr)',v:'₹ '+fm(pay),n:r2x(pay),tone:'red'},{l:'Closing Balance',v:cl,tone:dcOf(cl)==='Cr'?'red':'navy'},{l:'Entries',v:String(rows.length),n:rows.length,int:1,tone:'gold'}];
+ if(mk.length)M.summary.push({cap:'Month-wise summary',cols:[{h:'Month',k:'t'},{h:'Receipts (₹)',k:'n'},{h:'Payments (₹)',k:'n'},{h:'Net (₹)',k:'n'}],rows:mk.map(function(k){return[ymL(k+'-01'),r2x(mo[k].r),r2x(mo[k].p),r2x(mo[k].r-mo[k].p)]}).concat([['Total',r2x(rec),r2x(pay),r2x(rec-pay)]]),tot:1,pdf:1});
+ if(Math.abs(opS+rec-pay-clS)<0.01)M.checks.push({t:'ok',x:'Reconciled: opening balance + receipts − payments = closing balance.'});
+ if(clS<-0.004)M.checks.push({t:'warn',x:(tn==='Bank Book'?'Bank account shows a credit (overdrawn) closing balance. If money was actually in the bank earlier, enter the opening balance under Ledgers.':'Cash closing balance is negative. Please check the opening balance and entries.')});
+ M.tables.push({sheet:tn,cap:'',cols:[{h:'Date',k:'d',w:13},{h:'Voucher',k:'t',w:15},{h:'Particulars',k:'t',w:42,wrap:1},{h:'Receipts (Dr)',k:'n',w:17,tone:'dr'},{h:'Payments (Cr)',k:'n',w:17,tone:'cr'},{h:'Balance',k:'b',w:18}],
+  rows:[{k:'o',c:['','','Opening balance','','',open]}].concat(rows,[{k:'t',c:['Total / Closing balance','','',rec,pay,cl],sum:[3,4]}]),af:1,none:!rows.length})}
+function mTB(M,box){var t=box.querySelector('table');if(!t)return;var rows=[],D=0,C=0,gd=0,gc=0,nl=0,gs=[];
+ tRows(t).forEach(function(tr){if(isNote(tr))return;var c=cellsOf(tr);
+  if(/border-top/.test(tr.getAttribute('style')||'')){var tx=tr.cells[4].innerText;D=pn((tx.match(/Dr\s*([\d,.]+)/)||[])[1])||0;C=pn((tx.match(/Cr\s*([\d,.]+)/)||[])[1])||0;gd=pn(c[2])||0;gc=pn(c[3])||0;return}
+  var l=/padding-left/.test(tr.cells[0].getAttribute('style')||'');rows.push(l?{k:'r',c:c.slice(0,5)}:{k:'g',c:c.slice(0,5),sum:[2,3]});if(l)nl++;else{var s=sgn(c[4]);gs.push([c[0],s>0?r2x(s):0,s<0?r2x(-s):0])}});
+ var ok=Math.abs(D-C)<0.005;M.title='Trial Balance';
+ M.cards=[{l:'Closing Debit',v:'₹ '+fm(D),n:r2x(D),tone:'blue'},{l:'Closing Credit',v:'₹ '+fm(C),n:r2x(C),tone:'red'},{l:'Difference',v:'₹ '+fm(Math.abs(D-C)),n:r2x(Math.abs(D-C)),tone:ok?'green':'red'},{l:'Ledgers',v:String(nl),n:nl,int:1,tone:'gold'}];
+ if(gs.length)M.summary.push({cap:'Group-wise closing balances',cols:[{h:'Group',k:'t'},{h:'Debit (₹)',k:'n'},{h:'Credit (₹)',k:'n'}],rows:gs.concat([['Total',r2x(D),r2x(C)]]),tot:1,pdf:0});
+ M.checks.push(ok?{t:'ok',x:'Trial Balance is tallied — total debit equals total credit.'}:{t:'bad',x:'Difference of ₹ '+fm(Math.abs(D-C))+' ('+(D>C?'Debit':'Credit')+' is higher). Please check opening balances under Ledgers.'});
+ M.tables.push({sheet:'Trial Balance',cap:'',indent:1,hasG:1,cols:[{h:'Particulars',k:'t',w:40,first:1},{h:'Opening',k:'b',w:17},{h:'Debit',k:'n',w:17},{h:'Credit',k:'n',w:17},{h:'Closing',k:'b',w:17}],
+  rows:rows.concat([{k:'t',c:['Grand Total','',gd,gc,fm(D)+' Dr'],sum:[2,3]},{k:'t',c:['Closing credit balances total','','','',fm(C)+' Cr']}]),none:!rows.length})}
+function mOS(M,box,sl,t){var ts=box.querySelectorAll('table');if(!ts.length)return;var BK=['Not due','1-30 days','31-60 days','61-90 days','90+ days'],pr=[],tt=null,br=[],mx=0;
+ tRows(ts[0]).forEach(function(tr){if(isNote(tr))return;var c=cellsOf(tr);if(/border-top/.test(tr.getAttribute('style')||'')){tt=c;return}pr.push({k:'r',c:c})});
+ if(ts[1])tRows(ts[1]).forEach(function(tr){if(isNote(tr))return;var c=cellsOf(tr);br.push({k:'r',c:c});mx=Math.max(mx,pn(c[7])||0)});
+ var tot=tt?pn(tt[6])||0:0,bk=tt?[1,2,3,4,5].map(function(i){return pn(tt[i])||0}):[0,0,0,0,0],od=bk[1]+bk[2]+bk[3]+bk[4],rec=!/payable/i.test(sl);
+ M.title='Outstanding Report — '+(sl||(rec?'Receivable (Customers)':'Payable (Vendors)'));M.land=true;M.period='As on '+fd(t)+' (ageing from due date)';
+ M.cards=[{l:'Total Outstanding',v:'₹ '+fm(tot),n:r2x(tot),tone:'navy'},{l:'Overdue Amount',v:'₹ '+fm(od),n:r2x(od),tone:od>0?'red':'green'},{l:'Overdue Share',v:(tot?od/tot*100:0).toFixed(1)+'%',n:tot?od/tot:0,pct:1,tone:od>0?'gold':'green'},{l:rec?'Customers':'Vendors',v:String(pr.length),n:pr.length,int:1,tone:'blue'},{l:'Pending Bills',v:String(br.length),n:br.length,int:1,tone:'blue'}];
+ var colr=['15803D','65A30D','D97706','EA580C','B91C1C'];M.bar=tot>0?BK.map(function(b,i){return{l:b,v:bk[i],c:colr[i]}}):null;
+ M.summary.push({cap:'Ageing summary',cols:[{h:'Bucket',k:'t'},{h:'Amount (₹)',k:'n'},{h:'Share',k:'p'}],rows:BK.map(function(b,i){return[b,r2x(bk[i]),tot?bk[i]/tot:0]}).concat([['Total',r2x(tot),tot?1:0]]),tot:1,pdf:0});
+ M.checks.push(od>0.004?{t:'warn',x:(tot?(od/tot*100).toFixed(1):'0')+'% of the outstanding is overdue; the oldest bill is '+mx+' days past its due date.'}:{t:'ok',x:'No overdue bills — everything is within the credit period.'});
+ M.notes.push('Credit/Debit Notes and advances are not adjusted bill-wise; they appear in the ledger balance.');
+ M.tables.push({sheet:'Party Ageing',cap:'Party-wise ageing',cols:[{h:'Party',k:'t',w:32,wrap:1}].concat(BK.map(function(b,i){return{h:b,k:'n',w:15,tone:i>1?'warn':''}}),[{h:'Total',k:'n',w:17},{h:'Ledger balance',k:'b',w:18}]),
+  rows:pr.concat(tt?[{k:'t',c:['Total',tt[1],tt[2],tt[3],tt[4],tt[5],tt[6],''],sum:[1,2,3,4,5,6]}]:[]),af:1,none:!pr.length});
+ M.tables.push({sheet:'Bill-wise',cap:'Bill-wise outstanding',cols:[{h:'Bill',k:'t',w:15},{h:'Party',k:'t',w:30,wrap:1},{h:'Date',k:'d',w:13},{h:'Due date',k:'d',w:13},{h:'Total (₹)',k:'n',w:16},{h:(rec?'Received':'Paid')+' (₹)',k:'n',w:16},{h:'Pending (₹)',k:'n',w:16},{h:'Overdue days',k:'n',w:12,int:1,tone:'warn'}],
+  rows:br.concat(br.length?[{k:'t',c:['Total','','','',sumC(br,4),sumC(br,5),sumC(br,6),''],sum:[4,5,6]}]:[]),af:1,none:!br.length})}
+function sumC(rs,j){var s=0;rs.forEach(function(r){s+=pn(r.c[j])||0});return r2x(s)}
+function premium(box){try{var tn=tabName(),s=ST(),f=$('arFrom').value,t=$('arTo').value,sl=selTxt();
+ var M={tab:tn,company:s.company||'',address:s.address||'',gstin:s.gstin||'',gen:new Date().toLocaleString('en-IN'),cards:[],summary:[],tables:[],checks:[],notes:[],bar:null,period:'For the period '+fd(f)+' to '+fd(t),filt:'',title:tn,land:false};
+ if(tn==='Day Book')mDay(M,box,sl);else if(tn==='Cash Book'||tn==='Bank Book')mBook(M,box,tn);else if(tn==='Trial Balance')mTB(M,box);else if(tn==='Outstanding')mOS(M,box,sl,t);else return null;
+ if(!M.tables.length)return null;var cr=credit('accounts report');if(cr)M.notes.push(cr);return M}catch(e){try{console.error(e)}catch(_){}return null}}
+/* ---- premium PDF ---- */
+function pCell(c,v){if(c.k==='d')return E(fd(v));if(c.k==='b'){if(v===''||v==null||v==='-')return'';var d=dcOf(v);return E(String(v).replace(/\s*(Dr|Cr)\s*$/,''))+(d?' <i class="'+d+'">'+d+'</i>':'')}
+ if(c.k==='n')return typeof v==='number'?(c.int?String(v):fm(v)):E(v==null?'':v);return E(v)}
+function pTable(tb){var h=(tb.cap?'<h3>'+E(tb.cap)+'</h3>':'')+'<table><thead><tr>'+tb.cols.map(function(c){return'<th'+(c.k==='n'||c.k==='b'?' class="r"':'')+'>'+E(c.h)+'</th>'}).join('')+'</tr></thead><tbody>';
+ tb.rows.forEach(function(r){h+='<tr class="k'+r.k+'">'+tb.cols.map(function(c,j){var v=r.c[j],cl=(c.k==='n'||c.k==='b'?'r ':'')+(r.k==='t'&&c.tone?'':(c.tone==='dr'?'tdr ':c.tone==='cr'?'tcr ':c.tone==='warn'&&(pn(v)||0)>0?'tcr ':''))+(c.first&&tb.indent&&r.k==='r'?'ind ':'');
+  return'<td'+(cl?' class="'+cl.trim()+'"':'')+'>'+pCell(c,v)+'</td>'}).join('')+'</tr>'});
+ if(tb.none)h+='<tr><td colspan="'+tb.cols.length+'" class="none">No entries in this period.</td></tr>';return h+'</tbody></table>'}
+function pSum(sm){return'<h3>'+E(sm.cap)+'</h3><table class="sm"><thead><tr>'+sm.cols.map(function(c,j){return'<th'+(j?' class="r"':'')+'>'+E(c.h)+'</th>'}).join('')+'</tr></thead><tbody>'+sm.rows.map(function(r,i){return'<tr class="'+(sm.tot&&i===sm.rows.length-1?'kt':'')+'">'+r.map(function(v,j){var c=sm.cols[j];return'<td'+(j?' class="r"':'')+'>'+(c.k==='n'?fm(v):c.k==='p'?(v*100).toFixed(1)+'%':E(v))+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'}
+function premPdf(M){var land=M.land,cs=function(x){return String(x).replace(/["\\\n]/g,' ')};
+ var css='@page{size:A4 '+(land?'landscape':'portrait')+';margin:10mm 10mm 15mm;@bottom-left{content:"'+cs(M.company)+'  ·  '+cs(M.title)+'";font:7pt Arial,sans-serif;color:#9ca3af}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:7.5pt Arial,sans-serif;color:#6b7280}}'+
+ '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:8.6pt/1.35 "Segoe UI","Helvetica Neue",Arial,sans-serif;color:#1f2937}'+
+ '.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;background:linear-gradient(135deg,#0c1a36,#1f3a6e);color:#fff;padding:13px 18px;border-radius:7px 7px 0 0}.co{font-size:16pt;font-weight:700;letter-spacing:.3px}.ad{font-size:7.8pt;color:#cbd5e6;margin-top:3px;line-height:1.45}'+
+ '.rt{text-align:right}.ttl{font-size:14pt;font-weight:700;color:#f0d27a;text-transform:uppercase;letter-spacing:1.2px}.per{font-size:8.2pt;color:#e5ebf5;margin-top:3px}.flt{font-size:7.6pt;color:#f0d27a;margin-top:2px}.gold{height:3px;background:linear-gradient(90deg,#c9a227,#f0d27a,#c9a227);margin-bottom:11px;border-radius:0 0 3px 3px}'+
+ '.cards{display:grid;grid-template-columns:repeat('+M.cards.length+',1fr);gap:8px;margin-bottom:11px}.cd{background:#f4f6fb;border-left:3.5px solid;border-radius:3px;padding:7px 10px}.cd span{display:block;font-size:6.6pt;letter-spacing:.8px;text-transform:uppercase;color:#6b7280;font-weight:600}.cd b{display:block;font-size:12.5pt;margin-top:2px;white-space:nowrap}'+
+ '.cd b i{font-style:normal;font-size:8pt;margin-left:3px}h3{font-size:9.5pt;color:#14284b;margin:12px 0 5px;padding-bottom:3px;border-bottom:1.5px solid #c9a227;text-transform:uppercase;letter-spacing:.8px}'+
+ 'table{width:100%;border-collapse:collapse;margin-bottom:6px}thead{display:table-header-group}tr{page-break-inside:avoid}th{background:#14284b;color:#fff;font-size:7.2pt;text-transform:uppercase;letter-spacing:.5px;padding:6px 7px;text-align:left;border-bottom:2px solid #c9a227}'+
+ 'td{padding:4.5px 7px;border-bottom:1px solid #e5e7eb;vertical-align:top;font-variant-numeric:tabular-nums}.r{text-align:right;white-space:nowrap}tbody tr:nth-child(even) td{background:#f9fafc}'+
+ '.kg td{background:#e8eefb!important;font-weight:700;color:#14284b}.ko td{background:#fff7dc!important;font-style:italic}.kt td{background:#eef2f9!important;font-weight:700;border-top:1.5px solid #14284b;border-bottom:1.5px solid #14284b}'+
+ '.tdr{color:#166534}.tcr{color:#b91c1c}.ind{padding-left:20px}i.Dr{font-style:normal;font-size:6.8pt;font-weight:700;color:#1e40af;margin-left:2px}i.Cr{font-style:normal;font-size:6.8pt;font-weight:700;color:#b91c1c;margin-left:2px}.none{text-align:center;color:#6b7280;padding:14px}'+
+ '.sm{width:60%}.bar{display:flex;height:13px;border-radius:7px;overflow:hidden;margin:4px 0 3px}.lg{display:flex;gap:14px;font-size:7.4pt;color:#4b5563;margin-bottom:8px}.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}'+
+ '.ck{margin:6px 0;padding:6px 10px;border-left:3.5px solid;font-size:8.2pt;border-radius:2px}.ck.ok{background:#ecfdf3;border-color:#16a34a;color:#166534}.ck.warn{background:#fffbeb;border-color:#d97706;color:#92400e}.ck.bad{background:#fef2f2;border-color:#dc2626;color:#991b1b}'+
+ '.nt{font-size:7.3pt;color:#6b7280;margin-top:4px}.sg{display:flex;justify-content:flex-end;margin-top:34px;page-break-inside:avoid}.sg div{width:62mm;text-align:center;font-size:8pt;color:#374151}.sg i{display:block;border-bottom:1px solid #6b7280;height:34px}.sg b{display:block;margin-top:4px;color:#14284b}';
+ var b='<div class="hero"><div><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div></div><div class="rt"><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div>'+(M.filt?'<div class="flt">'+E(M.filt)+'</div>':'')+'</div></div><div class="gold"></div>';
+ b+='<div class="cards">'+M.cards.map(function(c){var col=TONE[c.tone]||NV,v=c.v,d=dcOf(v);return'<div class="cd" style="border-color:#'+col+'"><span>'+E(c.l)+'</span><b style="color:#'+col+'">'+(d?E(String(v).replace(/\s*(Dr|Cr)\s*$/,''))+'<i>'+d+'</i>':E(v))+'</b></div>'}).join('')+'</div>';
+ if(M.bar)b+='<div class="bar">'+M.bar.map(function(s){var w=s.v/M.bar.reduce(function(a,x){return a+x.v},0)*100;return w>0?'<div style="width:'+w+'%;background:#'+s.c+'"></div>':''}).join('')+'</div><div class="lg">'+M.bar.map(function(s){return'<span><i style="background:#'+s.c+'"></i>'+E(s.l)+' · ₹ '+fm(s.v)+'</span>'}).join('')+'</div>';
+ M.summary.forEach(function(sm){if(sm.pdf)b+=pSum(sm)});
+ M.tables.forEach(function(tb){b+=pTable(tb)});
+ b+=M.checks.map(function(c){return'<div class="ck '+c.t+'">'+(c.t==='ok'?'✓&nbsp; ':'⚠&nbsp; ')+E(c.x)+'</div>'}).join('');
+ b+='<div class="nt">Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account on '+E(M.gen)+'.</div>'+M.notes.map(function(n){return'<div class="nt">'+E(n)+'</div>'}).join('')+'<div class="sg"><div>For '+E(M.company)+'<i></i><b>Authorised Signatory</b></div></div>';
+ var w=window.open('','_blank');if(!w){alert('Popup blocked — allow popups to open the PDF.');return}
+ w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+E(M.title+' - '+M.company)+'</title><style>'+css+'</style></head><body>'+b+'</body></html>');w.document.close();setTimeout(function(){try{w.focus();w.print()}catch(e){}},600)}
+/* ---- premium XLSX ---- */
+function SB(){var F=[],FL=[],B=[],NF=[],X=[],m={f:{},fl:{},b:{},n:{},x:{}};
+ function ix(a,k,v){if(m[k][v]==null){m[k][v]=a.length;a.push(v)}return m[k][v]}
+ ix(F,'f','<font><sz val="10"/><color rgb="FF1F2937"/><name val="Calibri"/></font>');ix(FL,'fl','<fill><patternFill patternType="none"/></fill>');ix(FL,'fl','<fill><patternFill patternType="gray125"/></fill>');ix(B,'b','<border><left/><right/><top/><bottom/><diagonal/></border>');
+ var bd=function(n,s){return s?'<'+n+' style="'+s[0]+'"><color rgb="FF'+s[1]+'"/></'+n+'>':'<'+n+'/>'};
+ return{s:function(o){o=o||{};var f=ix(F,'f','<font>'+(o.b?'<b/>':'')+(o.i?'<i/>':'')+'<sz val="'+(o.sz||10)+'"/><color rgb="FF'+(o.c||'1F2937')+'"/><name val="Calibri"/></font>'),
+   fl=o.bg?ix(FL,'fl','<fill><patternFill patternType="solid"><fgColor rgb="FF'+o.bg+'"/><bgColor indexed="64"/></patternFill></fill>'):0,
+   b=ix(B,'b','<border>'+bd('left',o.bl)+bd('right',o.br)+bd('top',o.bt)+bd('bottom',o.bb)+'<diagonal/></border>'),nf=0;
+   if(o.nf){if(m.n[o.nf]==null){m.n[o.nf]=164+NF.length;NF.push(o.nf)}nf=m.n[o.nf]}
+   return ix(X,'x','<xf numFmtId="'+nf+'" fontId="'+f+'" fillId="'+fl+'" borderId="'+b+'" xfId="0" applyFont="1" applyFill="1" applyBorder="1"'+(nf?' applyNumberFormat="1"':'')+' applyAlignment="1"><alignment horizontal="'+(o.al||'general')+'" vertical="'+(o.va||'center')+'"'+(o.ind?' indent="'+o.ind+'"':'')+(o.wrap?' wrapText="1"':'')+'/></xf>')},
+  xml:function(){return XH2+'<styleSheet '+NS2+'>'+(NF.length?'<numFmts count="'+NF.length+'">'+NF.map(function(n,i){return'<numFmt numFmtId="'+(164+i)+'" formatCode="'+E(n)+'"/>'}).join('')+'</numFmts>':'')+'<fonts count="'+F.length+'">'+F.join('')+'</fonts><fills count="'+FL.length+'">'+FL.join('')+'</fills><borders count="'+B.length+'">'+B.join('')+'</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="'+X.length+'">'+X.join('')+'</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'}}}
+function Sh(){var o={cells:{},ht:{},mg:[],last:0};
+ o.put=function(r,c,x){(o.cells[r]=o.cells[r]||[]).push({c:c,x:x});if(r>o.last)o.last=r};
+ o.T=function(r,c,v,s){o.put(r,c,'<c r="'+CL(c)+r+'" s="'+s+'" t="inlineStr"><is><t xml:space="preserve">'+E(v)+'</t></is></c>')};
+ o.N=function(r,c,v,s){o.put(r,c,'<c r="'+CL(c)+r+'" s="'+s+'"><v>'+v+'</v></c>')};
+ o.F=function(r,c,f,v,s){o.put(r,c,'<c r="'+CL(c)+r+'" s="'+s+'"><f>'+E(f)+'</f><v>'+v+'</v></c>')};
+ o.B=function(r,c,s){o.put(r,c,'<c r="'+CL(c)+r+'" s="'+s+'"/>')};
+ o.M=function(r,a,b){o.mg.push(CL(a)+r+':'+CL(b)+r)};
+ o.fill=function(r,a,b,s){for(var c=a;c<=b;c++)o.B(r,c,s)};
+ o.xml=function(op,M){var rows=Object.keys(o.cells).concat(Object.keys(o.ht)).filter(function(k,i,a){return a.indexOf(k)===i}).map(Number).sort(function(a,b){return a-b}).map(function(k){return'<row r="'+k+'"'+(o.ht[k]?' ht="'+o.ht[k]+'" customHeight="1"':'')+'>'+(o.cells[k]||[]).sort(function(a,b){return a.c-b.c}).map(function(z){return z.x}).join('')+'</row>'}).join('');
+  return XH2+'<worksheet '+NS2+'><sheetPr><tabColor rgb="FF'+(op.tab||NV)+'"/><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0"'+(op.sel?' tabSelected="1"':'')+'>'+(op.freeze?'<pane ySplit="'+op.freeze+'" topLeftCell="A'+(op.freeze+1)+'" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/>':'')+'</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>'+op.cols.map(function(w,i){return'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>'}).join('')+'</cols><sheetData>'+rows+'</sheetData>'+(op.af?'<autoFilter ref="'+op.af+'"/>':'')+(o.mg.length?'<mergeCells count="'+o.mg.length+'">'+o.mg.map(function(m){return'<mergeCell ref="'+m+'"/>'}).join('')+'</mergeCells>':'')+'<printOptions horizontalCentered="1"/><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="'+(op.land?'landscape':'portrait')+'" fitToWidth="1" fitToHeight="0"/><headerFooter><oddFooter>&amp;L'+E(String(M.company).replace(/&/g,'&&'))+'&amp;C'+E(M.title.replace(/&/g,'&&'))+'&amp;RPage &amp;P of &amp;N</oddFooter></headerFooter></worksheet>'};
+ return o}
+function xBand(sh,M,nc,S,line){sh.fill(1,0,nc-1,S.band);sh.T(1,0,M.company,S.bandCo);sh.M(1,0,nc-1);sh.ht[1]=28;
+ var ad=[M.address,M.gstin?'GSTIN: '+M.gstin:''].filter(Boolean).join('   |   ');sh.fill(2,0,nc-1,S.bandSub);sh.T(2,0,ad,S.bandSub);sh.M(2,0,nc-1);sh.ht[2]=ad.length>95?30:16;
+ sh.fill(3,0,nc-1,S.gold);sh.ht[3]=4;sh.T(4,0,line,S.title);sh.fill(4,1,nc-1,S.title);sh.M(4,0,nc-1);sh.ht[4]=24}
+function xData(sb,M,tb,S,first){var sh=Sh(),nc=0,xc=[],HR=5;tb.cols.forEach(function(c,j){xc[j]=nc;nc+=c.k==='b'?2:1});
+ xBand(sh,M,nc,S,tb.sheet+'  —  '+M.period+(M.filt?'   |   '+M.filt:''));
+ tb.cols.forEach(function(c,j){sh.T(HR,xc[j],c.h,S.th);if(c.k==='b')sh.T(HR,xc[j]+1,'Dr/Cr',S.th)});sh.ht[HR]=24;
+ var r=HR+1;tb.rows.forEach(function(row){row.r=r++});
+ var runs=[],cu=null;tb.rows.forEach(function(q){if(q.k==='r'){if(cu&&cu[1]===q.r-1)cu[1]=q.r;else{cu=[q.r,q.r];runs.push(cu)}}});
+ tb.rows.forEach(function(row,i){if(row.k==='r')return;if(row.k==='t'){row.rg=runs;return}var a=null,e=null;for(var q=i+1;q<tb.rows.length&&tb.rows[q].k==='r';q++){if(a==null)a=tb.rows[q].r;e=tb.rows[q].r}row.rg=a==null?[]:[[a,e]]});
+ var z=0,lastD=HR;
+ tb.rows.forEach(function(row){var R=row.r,rk=row.k;if(rk==='r')z++;if(rk!=='t')lastD=R;
+  tb.cols.forEach(function(col,j){var v=row.c[j],cx=xc[j],dcv=dcOf(v),tone=col.tone==='warn'?((pn(v)||0)>0?'warn':''):col.tone;
+   var o={bb:['thin','E5E7EB']};if(rk==='g'){o.b=1;o.bg='EAF0FB';o.c=NV}else if(rk==='o'){o.i=1;o.bg='FFF8E1'}else if(rk==='t'){o.b=1;o.bg='EEF2F9';o.bt=['medium',NV];o.bb=['medium',NV]}else if(z%2===0)o.bg='F8FAFD';
+   if(col.k==='d'){o.nf=DT;o.al='left'}else if(col.k==='n'){o.nf=col.int?INT:INR;o.al='right'}else if(col.k==='b'){o.nf=INR;o.al='right'}else{o.al='left';if(col.wrap)o.wrap=1;if(col.first&&tb.indent&&rk==='r')o.ind=2}
+   if(tone&&rk!=='t'&&rk!=='g')o.c={dr:'166534',cr:'B91C1C',warn:'B91C1C'}[tone];
+   var st=sb.s(o);
+   if(col.k==='d'){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v||'');m?sh.N(R,cx,Date.UTC(+m[1],+m[2]-1,+m[3])/864e5+25569,st):sh.B(R,cx,st)}
+   else if(col.k==='n'){var x=pn(v);if(row.sum&&row.sum.indexOf(j)>=0&&row.rg&&row.rg.length){var L=CL(cx),f=row.rg.map(function(g){return L+g[0]+':'+L+g[1]}).join(',');sh.F(R,cx,(rk==='t'&&tb.af&&!tb.hasG?'SUBTOTAL(109,'+f+')':'SUM('+f+')'),x==null?0:x,st)}else x==null?sh.B(R,cx,st):sh.N(R,cx,x,st)}
+   else if(col.k==='b'){var y=pn(v);y==null?sh.B(R,cx,st):sh.N(R,cx,y,st);var o2={bb:o.bb,bg:o.bg,bt:o.bt,al:'center',b:1,sz:9,c:dcv==='Cr'?'B91C1C':'1E40AF'};dcv?sh.T(R,cx+1,dcv,sb.s(o2)):sh.B(R,cx+1,sb.s(o2))}
+   else v===''||v==null?sh.B(R,cx,st):sh.T(R,cx,v,st)});
+  if(/Total|Opening/.test(String(row.c[0]||row.c[2]))&&rk!=='r')sh.ht[R]=19});
+ if(tb.none){sh.T(r,0,'No entries in this period.',S.sub);sh.M(r,0,nc-1)}
+ var w=[];tb.cols.forEach(function(c){w.push(c.w||14);if(c.k==='b')w.push(7)});
+ return{sh:sh,name:tb.sheet,op:{cols:w,freeze:HR,af:tb.af&&!tb.none?'A'+HR+':'+CL(nc-1)+lastD:'',land:nc>6,titles:HR,sel:false}}}
+function xSum(sb,M,S){var sh=Sh(),NC=10;xBand(sh,M,NC,S,M.title+'  —  Summary');
+ sh.T(5,0,M.period+(M.filt?'   |   '+M.filt:''),S.sub);sh.M(5,0,NC-1);sh.T(6,0,'Generated: '+M.gen,S.sub);sh.M(6,0,NC-1);sh.ht[7]=8;
+ var n=M.cards.length,sp=Math.floor(NC/n),r=8;
+ M.cards.forEach(function(c,i){var col=TONE[c.tone]||NV,a=i*sp,b=a+sp-1,bl=['thick',col],bg='F3F6FB';
+  var ls=sb.s({bg:bg,c:'6B7280',b:1,sz:8,bl:bl,al:'left',ind:1}),lo=sb.s({bg:bg}),vs=sb.s({bg:bg,c:col,b:1,sz:15,bl:bl,al:'left',ind:1,nf:c.int?INT:c.pct?PCT:RUP});
+  sh.fill(r,a,b,lo);sh.fill(r+1,a,b,lo);sh.T(r,a,c.l.toUpperCase(),ls);sh.M(r,a,b);
+  if(c.n!=null)sh.N(r+1,a,c.n,vs);else sh.T(r+1,a,c.v,sb.s({bg:bg,c:col,b:1,sz:15,bl:bl,al:'left',ind:1}));sh.M(r+1,a,b)});
+ sh.ht[r]=17;sh.ht[r+1]=30;r+=2;sh.ht[r++]=10;
+ M.summary.forEach(function(sm){sh.T(r,0,sm.cap.toUpperCase(),S.cap);sh.fill(r,1,5,S.cap);sh.ht[r++]=20;
+  sm.cols.forEach(function(c,j){var cx=j?j+2:0;sh.T(r,cx,c.h,j?S.th:S.thL);if(!j){sh.fill(r,1,2,S.thL);sh.M(r,0,2)}});sh.ht[r++]=20;
+  sm.rows.forEach(function(row,i){var t=sm.tot&&i===sm.rows.length-1,base={bb:['thin','E5E7EB']};if(t){base.b=1;base.bg='EEF2F9';base.bt=['medium',NV]}else if(i%2)base.bg='F8FAFD';
+   row.forEach(function(v,j){var c=sm.cols[j],cx=j?j+2:0,o=Object.assign({},base);if(j){o.al='right';o.nf=c.k==='p'?PCT:c.k==='i'?INT:INR}else o.al='left';var st=sb.s(o);
+    if(j)sh.N(r,cx,v,st);else{sh.T(r,0,v,st);sh.fill(r,1,2,st);sh.M(r,0,2)}});r++});sh.ht[r++]=10});
+ M.checks.forEach(function(c){var o={ok:{c:'166534',bg:'ECFDF3',bl:['thick','16A34A']},warn:{c:'92400E',bg:'FFFBEB',bl:['thick','D97706']},bad:{c:'991B1B',bg:'FEF2F2',bl:['thick','DC2626']}}[c.t],st=sb.s({c:o.c,bg:o.bg,bl:o.bl,b:1,al:'left',wrap:1,ind:1});
+  sh.fill(r,0,NC-1,st);sh.T(r,0,(c.t==='ok'?'✓  ':'⚠  ')+c.x,st);sh.M(r,0,NC-1);sh.ht[r++]=c.x.length>110?32:20});
+ r++;sh.T(r,0,'Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account.',S.sub);sh.M(r++,0,NC-1);M.notes.forEach(function(t){sh.T(r,0,t,S.sub);sh.M(r++,0,NC-1)});
+ r+=2;sh.T(r,6,'For '+M.company,S.sigR);sh.fill(r,7,NC-1,S.sigR);sh.M(r,6,NC-1);r+=3;sh.T(r,6,'Authorised Signatory',S.sigL);sh.fill(r,7,NC-1,S.sigL);sh.M(r,6,NC-1);
+ var cols=[];for(var i=0;i<NC;i++)cols.push(14.5);
+ return{sh:sh,name:'Summary',op:{cols:cols,sel:true,land:false}}}
+function premXlsx(M){var sb=SB();sb.s({});
+ var S={band:sb.s({bg:NV}),bandCo:sb.s({bg:NV,c:'FFFFFF',b:1,sz:16,al:'left',ind:1}),bandSub:sb.s({bg:NV,c:'D6DEEB',sz:9,al:'left',ind:1,wrap:1}),gold:sb.s({bg:GD}),title:sb.s({b:1,sz:13,c:NV,al:'left',ind:1}),sub:sb.s({sz:9,c:'6B7280',i:1,al:'left',ind:1}),
+  th:sb.s({b:1,c:'FFFFFF',bg:NV,al:'center',wrap:1,bb:['medium',GD]}),thL:sb.s({b:1,c:'FFFFFF',bg:NV,al:'left',ind:1,bb:['medium',GD]}),cap:sb.s({b:1,c:NV,sz:11,bb:['medium',GD],al:'left'}),
+  sigR:sb.s({al:'right',b:1,c:NV}),sigL:sb.s({al:'right',c:'374151',bt:['thin','6B7280']})};
+ var sheets=[xSum(sb,M,S)];M.tables.forEach(function(tb){sheets.push(xData(sb,M,tb,S))});
+ var used={};sheets.forEach(function(s,k){var nm=String(s.name).replace(/[\[\]*?\/\\:']/g,' ').trim().slice(0,28)||'Sheet';while(used[nm.toLowerCase()])nm=nm.slice(0,25)+' '+(k+1);used[nm.toLowerCase()]=1;s.name=nm});
+ var files=[['[Content_Types].xml',XH2+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map(function(_,k){return'<Override PartName="/xl/worksheets/sheet'+(k+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'}).join('')+'</Types>'],
+  ['_rels/.rels',XH2+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+  ['xl/workbook.xml',XH2+'<workbook '+NS2+' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>'+sheets.map(function(s,k){return'<sheet name="'+E(s.name)+'" sheetId="'+(k+1)+'" r:id="rId'+(k+1)+'"/>'}).join('')+'</sheets><definedNames>'+sheets.map(function(s,k){var d='';if(s.op.titles)d+='<definedName name="_xlnm.Print_Titles" localSheetId="'+k+'">\''+E(s.name)+'\'!$'+s.op.titles+':$'+s.op.titles+'</definedName>';if(s.op.af){var q=s.op.af.split(':');d+='<definedName name="_xlnm._FilterDatabase" localSheetId="'+k+'" hidden="1">\''+E(s.name)+'\'!'+q[0].replace(/^([A-Z]+)/,'$$$1$$')+':'+q[1].replace(/^([A-Z]+)/,'$$$1$$')+'</definedName>'}return d}).join('')+'</definedNames></workbook>'],
+  ['xl/_rels/workbook.xml.rels',XH2+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map(function(_,k){return'<Relationship Id="rId'+(k+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(k+1)+'.xml"/>'}).join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>']];
+ sheets.forEach(function(s,k){files.push(['xl/worksheets/sheet'+(k+1)+'.xml',s.sh.xml(s.op,M)])});files.push(['xl/styles.xml',sb.xml()]);
+ downloadBlob(zip(files),'IE-'+M.title.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')+'-'+new Date().toISOString().slice(0,10)+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+
 /* ---------- wire existing buttons ---------- */
-function fromDom(box,pfn,sub,label){var pf=window[pfn];return function(kind){var sm=box==='arBody'?stmtModel($(box)):null;if(sm){sm.label=label;kind==='x'?stmtXlsx(sm):stmtPdf(sm);return}var R=base(capTitle(pf),label);R.sections=scrape($(box));R.sub=sub&&$(sub)?enSub($(sub).innerText.trim()):'';R.sections.forEach(function(s){s.notes=s.notes.map(enSub)});
+function fromDom(box,pfn,sub,label){var pf=window[pfn];return function(kind){var sm=box==='arBody'?stmtModel($(box)):null;if(sm){sm.label=label;kind==='x'?stmtXlsx(sm):stmtPdf(sm);return}if(box==='arBody'){var pm=premium($(box));if(pm){pm.label=label;kind==='x'?premXlsx(pm):premPdf(pm);return}}var R=base(capTitle(pf),label);R.sections=scrape($(box));R.sub=sub&&$(sub)?enSub($(sub).innerText.trim()):'';R.sections.forEach(function(s){s.notes=s.notes.map(enSub)});
  if(!R.sections.length){if(kind==='p')return pf();return alert('There is no table to export in this view.')}kind==='x'?toXlsx(R):toPdf(R)}}
 var rep=fromDom('arBody','acctRepPrint','arSub','accounts report'),gst=fromDom('gsBody','acctGstPrint','','gst report'),inv=fromDom('ivBody','invPrint','','inventory report'),ex=fromDom('exBody','exPrint','','accounts report');
 window.acctRepCSV=function(){rep('x')};window.acctRepPrint=function(){rep('p')};window.acctGstCSV=function(){gst('x')};window.acctGstPrint=function(){gst('p')};
