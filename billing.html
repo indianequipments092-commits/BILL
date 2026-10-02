@@ -3589,6 +3589,8 @@ function coOpenForm(editId){
   document.getElementById('coGstin').value='';
   if(document.getElementById('coGstin_err')){ document.getElementById('coGstin_err').textContent=''; document.getElementById('coGstin_err').className='gst-msg'; }
   document.getElementById('coBusinessType').value='';
+  document.getElementById('coFirmType').value='';
+  document.getElementById('coOwnerName').value='';
   document.getElementById('coAddress').value='';
   document.getElementById('coState').value='';
   document.getElementById('coPhone').value='';
@@ -3613,6 +3615,8 @@ function coOpenForm(editId){
           const s=parsed.settings||{};
           document.getElementById('coName').value=s.company||quick.name||'';
           document.getElementById('coGstin').value=s.gstin||quick.gstin||'';
+          document.getElementById('coFirmType').value=s.firmType||'';
+          document.getElementById('coOwnerName').value=s.ownerName||'';
           document.getElementById('coAddress').value=s.address||'';
           document.getElementById('coState').value=s.state||'';
           document.getElementById('coPhone').value=s.phone||'';
@@ -3654,6 +3658,8 @@ function coSubmitFormGo(){
   if(!name){ document.getElementById('coFormMsg').textContent='Company name daalna zaroori hai'; document.getElementById('coFormMsg').className='auth-msg err'; return; }
   const gstin=document.getElementById('coGstin').value.trim().toUpperCase();
   const businessType=document.getElementById('coBusinessType').value;
+  const firmType=document.getElementById('coFirmType').value;
+  const ownerName=document.getElementById('coOwnerName').value.trim();
   const address=document.getElementById('coAddress').value.trim();
   const state=document.getElementById('coState').value.trim();
   const phone=document.getElementById('coPhone').value.trim();
@@ -3702,7 +3708,7 @@ function coSubmitFormGo(){
       if(snap.exists && snap.data() && snap.data().data){
         try{ parsed=normalizeDB(JSON.parse(snap.data().data)); }catch(e){}
       }
-      parsed.settings={...parsed.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId};
+      parsed.settings={...parsed.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName};
       return ref.set({data:JSON.stringify(parsed),updatedAt:Date.now()},{merge:true}).then(()=>{
         userProfile.companies=userProfile.companies||{};
         userProfile.companies[editId]={name,gstin,businessType};
@@ -3711,7 +3717,7 @@ function coSubmitFormGo(){
       });
     }).then(()=>{
       if(currentCompanyId===editId && typeof db!=='undefined' && db && db.settings){
-        db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix};
+        db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix,firmType,ownerName};
         if(typeof loadSettingsUI==='function') loadSettingsUI();
         if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile();
       }
@@ -3726,7 +3732,7 @@ function coSubmitFormGo(){
 
   const companyId=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc().id;
   const newDb=emptyDB();
-  newDb.settings={...DEFAULT_SETTINGS,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId};
+  newDb.settings={...DEFAULT_SETTINGS,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName};
   fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId)
     .set({data:JSON.stringify(newDb),updatedAt:Date.now()})
     .then(()=>{
@@ -6864,6 +6870,18 @@ fbAuth.onAuthStateChanged(user=>{
         <option value="Manufacturer">Manufacturer</option>
       </select>
     </div>
+    <div class="auth-field"><label>Company Type (Firm)</label>
+      <select id="coFirmType">
+        <option value="">— Select —</option>
+        <option value="Proprietorship">Proprietorship</option>
+        <option value="Partnership">Partnership</option>
+        <option value="Private Limited">Private Limited (Pvt Ltd)</option>
+        <option value="Public Limited">Public Limited (Ltd)</option>
+        <option value="LLP">LLP</option>
+        <option value="HUF">HUF</option>
+      </select>
+    </div>
+    <div class="auth-field"><label>Owner / Director Name <span style="font-weight:400;color:var(--text-muted)">(reports ke header me)</span></label><input id="coOwnerName" placeholder="e.g. Surendra Kumar Patel"></div>
     <div class="auth-field"><label>Address</label><input id="coAddress" placeholder="Company address"></div>
     <div class="auth-field"><label>State</label><input id="coState" placeholder="e.g. GUJARAT"></div>
     <div class="auth-field"><label>Phone</label><input id="coPhone" placeholder="+91 ..."></div>
@@ -23189,7 +23207,7 @@ function rowsOf(box){var o=[];box.querySelectorAll('tbody tr').forEach(function(
 function addIt(list,r){if(r.k==='g')list.push({name:r.label,amt:r.amt,ledgers:[],line:true});else if(r.k==='l'&&list.length){var g=list[list.length-1];g.ledgers.push({name:r.label,amt:r.amt});g.line=false}}
 function ensureG(list,rx,name){var g=list.filter(function(x){return rx.test(x.name)&&!x.line})[0];if(!g){g={name:name,amt:0,ledgers:[],line:false};var i=-1;list.forEach(function(x,k){if(i<0&&x.line)i=k});if(i<0)list.push(g);else list.splice(i,0,g)}return g}
 function stmtModel(box){if(!box||!box.querySelector('table'))return null;var tx=box.textContent||'',isPL=/TRADING ACCOUNT/i.test(tx)&&/PROFIT\s*&\s*LOSS ACCOUNT/i.test(tx),isBS=!isPL&&/LIABILITIES/.test(tx)&&/ASSETS/.test(tx)&&/Total Assets/i.test(tx);if(!isPL&&!isBS)return null;
- var s=ST(),f=$('arFrom')?$('arFrom').value:'',t=$('arTo')?$('arTo').value:'',rs=rowsOf(box),M={kind:isPL?'pl':'bs',company:s.company||'',address:s.address||'',gstin:s.gstin||'',blocks:[],notes:[],strip:[],detail:[],check:null};
+ var s=ST(),f=$('arFrom')?$('arFrom').value:'',t=$('arTo')?$('arTo').value:'',rs=rowsOf(box),M={kind:isPL?'pl':'bs',company:s.company||'',owner:s.ownerName||'',firmType:s.firmType||'',address:s.address||'',gstin:s.gstin||'',blocks:[],notes:[],strip:[],detail:[],check:null};
  if(isBS){var L=[],A=[],cur=null,rec=false,T0=window.__bsTree&&window.__bsTree.t===t?window.__bsTree:null;rs.forEach(function(r){if(r.k==='sec'){cur=/LIABIL/i.test(r.label)?L:/ASSET/i.test(r.label)?A:cur;return}if(r.k==='t'||!cur)return;addIt(cur,r)});
   var mv=function(from,to,rx,nm,suf){from.forEach(function(g){if(g.line||!g.ledgers.length)return;var keep=[];g.ledgers.forEach(function(l){if(l.amt<-0.004){var tg=ensureG(to,rx,nm);tg.ledgers.push({name:l.name+suf,amt:r2(-l.amt),note:'Reclassified from '+g.name});tg.amt=r2(tg.amt-l.amt);rec=true}else keep.push(l)});g.ledgers=keep;g.amt=r2(keep.reduce(function(a,l){return a+l.amt},0))})};
   mv(A,L,/current liabilities/i,'Current Liabilities',' (Overdrawn)');mv(L,A,/current assets/i,'Current Assets',' (Dr balance)');
@@ -23223,11 +23241,12 @@ function stGen(){var d=new Date(),p=function(x){return(x<10?'0':'')+x};return p(
 function stKpis(M){var T={green:'15803D',red:'B91C1C',blue:'1E40AF',navy:'14284B'};
  return(M.strip||[]).slice(0,4).map(function(t){var m=/^(.*?)\s*(₹.*|-?[\d.]+.*)$/.exec(t);if(!m)return null;var l=m[1].trim(),v=m[2].trim(),neg=/loss/i.test(l)||v.charAt(0)==='-'||/^₹\s*-/.test(v),pos=/profit|margin/i.test(l),tone=neg?'red':pos?'green':/ratio|capital/i.test(l)?'blue':'navy',n=v.charAt(0)==='₹'?pn(v.slice(1)):null;return{l:l,v:v,n:n,c:T[tone]}}).filter(Boolean)}
 function stLineColor(name){return /^(Net|Gross) Profit/i.test(name)?'#15803D':/^(Net|Gross) Loss/i.test(name)?'#B91C1C':'#14284B'}
+function stHdName(M){var o=String(M.owner||'').trim(),t=M.firmType||'',w={'Proprietorship':'Prop. of','Partnership':'Partner of','Private Limited':'Director of','Public Limited':'Director of','LLP':'Designated Partner of','HUF':'Karta of'}[t];return(o&&w)?o+' ('+w+' '+M.company+')':M.company}
 function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\\\n]/g,' ')},SANS='"Segoe UI","Helvetica Neue",Arial,sans-serif',asat=M.asat||(/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'');
  var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs(M.company)+'  ·  '+cs(M.title)+'";font:7pt '+SANS+';color:#6B7280}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:7.5pt '+SANS+';color:#6B7280}}'+
  '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:9pt/1.3 '+SANS+';color:#000}#pg{width:186mm;margin:0 auto}'+
  '.hd{text-align:center;margin-bottom:14px}.co{font-size:13pt;font-weight:700}.ad{font-size:9pt;line-height:1.45;margin-top:2px}.ttl{font-size:11pt;font-weight:700;margin-top:10px}.per{font-size:8.5pt;margin-top:1px}'+
- '.cap{font-size:10pt;font-weight:700;letter-spacing:1px;margin:14px 0 4px;text-align:center}'+
+ '.cap{font-size:10pt;font-weight:700;letter-spacing:1px;margin:34px 0 4px;text-align:center}.hd+.cap{margin-top:0}'+
  'table.st{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{page-break-inside:avoid}'+
  'th{padding:5px 6px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:2px;border-top:.7pt solid #000;border-bottom:.7pt solid #000}th.as{text-align:center;font-weight:400;letter-spacing:0;font-size:8.5pt}th.gp{padding:0;border-left:.7pt solid #000}'+
  'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap}'+
@@ -23247,9 +23266,9 @@ function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\
  var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cg+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
   for(var i=0;i<n;i++)h+='<tr>'+cell(L[i])+'<td class="gp"></td>'+cell(R[i])+'</tr>';
   return h+'<tr class="sp"><td colspan="3"></td><td class="gp"></td><td colspan="3"></td></tr><tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
- var b='<div id="pg"><div class="hd"><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div></div>'+M.blocks.map(blk).join('');
+ var b='<div id="pg"><div class="hd"><div class="co">'+E(stHdName(M))+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div></div>'+M.blocks.map(blk).join('');
  if(M.check&&!M.check.ok)b+='<div class="ck">Difference in opening balances: ₹ '+fm(M.check.diff)+' — please review the ledger opening balances</div>';
- b+=M.notes.map(function(n){return'<div class="nt">'+E(n)+'</div>'}).join('')+'<div class="nt it">Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account on '+E(gen)+'.</div>'+(credit(M.label)?'<div class="nt">'+E(credit(M.label))+'</div>':'')+'<div class="sg"><div>For '+E(M.company)+'<i></i><b>Authorised Signatory</b></div></div></div>';
+ b+=M.notes.map(function(n){return'<div class="nt">'+E(n)+'</div>'}).join('')+'<div class="nt it">Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account on '+E(gen)+'.</div>'+(credit(M.label)?'<div class="nt">'+E(credit(M.label))+'</div>':'')+'</div>';
  var w=window.open('','_blank');if(!w){alert('Popup blocked — allow popups to open the PDF.');return}
  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+E(M.title+' - '+M.company)+'</title><style>'+css+'</style></head><body>'+b+'</body></html>');w.document.close();setTimeout(function(){try{w.focus();w.print()}catch(e){}},600)}
 function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"',NV='FF14284B',GDc='FFC9A227',TINT='FFEAF0FB',TOT='FFEEF2F9';
@@ -23274,7 +23293,7 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var SZ=function(c){return'FF'+c};
  var S1=mk(),sn1=M.title.replace(/[\[\]*?\/\\:']/g,' ').slice(0,28).trim(),sn2='Ledger Detail',asat=M.asat||(/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):''),kp=stKpis(M);
  /* header band */
- S1.hts[1]=30;S1.band(1,6,M.company,st(['Cambria',18,1,0,'FFFFFFFF'],NV,0,0,'horizontal="left" vertical="center" indent="1"'));
+ S1.hts[1]=30;S1.band(1,6,stHdName(M),st(['Cambria',18,1,0,'FFFFFFFF'],NV,0,0,'horizontal="left" vertical="center" indent="1"'));
  S1.hts[2]=30;S1.band(2,6,(M.address||'')+(M.gstin?(M.address?'\n':'')+'GSTIN: '+M.gstin:''),st(['Calibri',9,0,0,'FFD6DEEB'],NV,0,0,'horizontal="left" vertical="center" wrapText="1" indent="1"'));
  S1.hts[3]=3;var gs=st(['Calibri',2,0,0,GDc],GDc);for(var c=0;c<7;c++)S1.B(3,c,gs);
  S1.hts[4]=22;S1.band(4,6,M.title,st(['Calibri',14,1,0,NV],0,0,0,'horizontal="left" vertical="center"'));
@@ -23301,7 +23320,7 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
    if(x.k==='g'){S1.T(rr,sd[1],x.label,GN);S1.B(rr,sd[2],GB);S1.F(rr,sd[3],'SUM('+CL(sd[2])+(rr+1)+':'+CL(sd[2])+(rr+x.span)+')',x.outer,GA)}
    else if(x.k==='line'){S1.T(rr,sd[1],x.label,lineSt(x.label,0));if(!x.blank)S1.N(rr,sd[3],x.outer,lineSt(x.label,1));if(/^Difference in opening/i.test(x.label))diffRef=CL(sd[3])+rr}
    else{S1.T(rr,sd[1],x.label,x.sub?LNS:LN);if(x.inner==null)S1.B(rr,sd[2],x.last?LAU:LA);else S1.N(rr,sd[2],x.inner,x.last?LAU:LA)}})});
-  var tr=first+n;S1.hts[tr]=22;S1.T(tr,0,'TOTAL',TL);S1.B(tr,1,TL);S1.F(tr,2,'SUM(C'+first+':C'+(tr-1)+')',b.totL,TA);S1.T(tr,4,'TOTAL',TL);S1.B(tr,5,TL);S1.F(tr,6,'SUM(G'+first+':G'+(tr-1)+')',b.totR,TA);lastData=tr;r=tr+1;S1.hts[r++]=10});
+  var tr=first+n;S1.hts[tr]=22;S1.T(tr,0,'TOTAL',TL);S1.B(tr,1,TL);S1.F(tr,2,'SUM(C'+first+':C'+(tr-1)+')',b.totL,TA);S1.T(tr,4,'TOTAL',TL);S1.B(tr,5,TL);S1.F(tr,6,'SUM(G'+first+':G'+(tr-1)+')',b.totR,TA);lastData=tr;r=tr+1;S1.hts[r++]=24});
  /* check row (driven by the Difference formula) */
  var ckRow=0;
  if(M.check){ckRow=r;var CK=st(['Calibri',10,1,0,'FF15803D'],0,0,0,'horizontal="left" vertical="center" indent="1"'),CKN=st(['Calibri',10,1,0,'FF15803D'],0,0,164,'horizontal="right" vertical="center"'),dv=M.check.ok?0:M.check.diff;
@@ -23310,8 +23329,7 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var NT=st(['Calibri',9,0,1,'FF6B7280'],0,0,0,'horizontal="left" vertical="top" wrapText="1"');
  var nts=M.notes.slice();nts.push('Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account.');if(credit(M.label))nts.push(credit(M.label));
  nts.forEach(function(n){S1.hts[r]=n.length>110?26:14;S1.band(r,6,n,NT);r++});
- r+=1;var SG=st(['Calibri',10,1,0,'FF1F2937'],0,0,0,'horizontal="right"'),SA=st(['Calibri',10,0,0,'FF1F2937'],0,{top:['thin','FF1F2937']},0,'horizontal="right"'),SAB=st(['Calibri',10,0,0,'FF1F2937'],0,{top:['thin','FF1F2937']});
- S1.T(r,4,'For '+M.company,SG);S1.B(r,5,SG);S1.B(r,6,SG);S1.M(r,4,6);r+=3;S1.T(r,4,'Authorised Signatory',SA);S1.B(r,5,SAB);S1.B(r,6,SAB);S1.M(r,4,6);
+ 
  var dN=function(i,x){return'<dxf>'+x+'</dxf>'};
  var cf='<conditionalFormatting sqref="B'+firstData+':C'+lastData+' F'+firstData+':G'+lastData+'"><cfRule type="cellIs" dxfId="0" priority="1" operator="lessThan"><formula>0</formula></cfRule></conditionalFormatting>';
  if(ckRow)cf+='<conditionalFormatting sqref="A'+ckRow+':G'+ckRow+'"><cfRule type="expression" dxfId="1" priority="2"><formula>ABS($G$'+ckRow+')&lt;0.005</formula></cfRule><cfRule type="expression" dxfId="2" priority="3"><formula>ABS($G$'+ckRow+')&gt;=0.005</formula></cfRule></conditionalFormatting>';
