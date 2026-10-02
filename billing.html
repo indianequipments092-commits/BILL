@@ -23292,49 +23292,47 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var mg=function(o){return o.merges.length?'<mergeCells count="'+o.merges.length+'">'+o.merges.map(function(m){return'<mergeCell ref="'+m+'"/>'}).join('')+'</mergeCells>':''};
  var SZ=function(c){return'FF'+c};
  var S1=mk(),sn1=M.title.replace(/[\[\]*?\/\\:']/g,' ').slice(0,28).trim(),sn2='Ledger Detail',asat=M.asat||(/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):''),kp=stKpis(M);
- /* header band */
- S1.hts[1]=30;S1.band(1,6,stHdName(M),st(['Cambria',18,1,0,'FFFFFFFF'],NV,0,0,'horizontal="left" vertical="center" indent="1"'));
- S1.hts[2]=30;S1.band(2,6,(M.address||'')+(M.gstin?(M.address?'\n':'')+'GSTIN: '+M.gstin:''),st(['Calibri',9,0,0,'FFD6DEEB'],NV,0,0,'horizontal="left" vertical="center" wrapText="1" indent="1"'));
- S1.hts[3]=3;var gs=st(['Calibri',2,0,0,GDc],GDc);for(var c=0;c<7;c++)S1.B(3,c,gs);
- S1.hts[4]=22;S1.band(4,6,M.title,st(['Calibri',14,1,0,NV],0,0,0,'horizontal="left" vertical="center"'));
- S1.band(5,6,M.period,st(['Calibri',10,0,1,'FF6B7280'],0,0,0,'horizontal="left"'));
- var r=6;S1.hts[r++]=6;
- /* KPI tiles */
- var pos={1:[[0,6]],2:[[0,2],[4,6]],3:[[0,1],[2,4],[5,6]],4:[[0,0],[1,2],[4,4],[5,6]]}[kp.length]||[];
- if(kp.length){S1.hts[r]=16;S1.hts[r+1]=24;kp.forEach(function(k,i){var p=pos[i],cc='FF'+k.c,lb={left:['thick',cc]},sl=st(['Calibri',8,1,0,'FF6B7280'],'FFF3F6FB',lb,0,'horizontal="left" vertical="center" indent="1"'),sl2=st(['Calibri',8,1,0,'FF6B7280'],'FFF3F6FB'),
-   sv=k.n!=null?st(['Calibri',15,1,0,cc],'FFF3F6FB',lb,165,'horizontal="left" vertical="center" indent="1"'):st(['Calibri',15,1,0,cc],'FFF3F6FB',lb,0,'horizontal="left" vertical="center" indent="1"'),sv2=st(['Calibri',15,1,0,cc],'FFF3F6FB');
-   S1.T(r,p[0],k.l.toUpperCase(),sl);if(k.n!=null)S1.N(r+1,p[0],k.n,sv);else S1.T(r+1,p[0],k.v,sv);
-   for(var c=p[0]+1;c<=p[1];c++){S1.B(r,c,sl2);S1.B(r+1,c,sv2)}if(p[1]>p[0]){S1.M(r,p[0],p[1]);S1.M(r+1,p[0],p[1])}});r+=2;S1.hts[r++]=8}
- /* statement blocks */
- var HD=st(['Calibri',10,1,0,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center"'),HI=st(['Calibri',9,0,1,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center"'),
-  CAP=st(['Calibri',10,1,0,NV],0,{bottom:['medium',GDc]},0,'horizontal="left"'),CAPB=st(['Calibri',10,1,0,NV],0,{bottom:['medium',GDc]}),
-  GN=st(['Calibri',10,1,0,NV],TINT,0,0,'horizontal="left" vertical="center" wrapText="1"'),GB=st(['Calibri',10,1,0,NV],TINT),GA=st(['Calibri',10,1,0,NV],TINT,0,164,'horizontal="right" vertical="center"'),
-  LN=st(['Calibri',10,0,1,'FF374151'],0,0,0,'horizontal="left" vertical="center" wrapText="1" indent="2"'),LNS=st(['Calibri',10,0,0,'FF374151'],0,0,0,'horizontal="left" vertical="center" wrapText="1" indent="2"'),LA=st(['Calibri',9,0,0,'FF374151'],0,0,164,'horizontal="right" vertical="top"'),LAU=st(['Calibri',9,0,0,'FF374151'],0,{bottom:['thin','FF6B7280']},164,'horizontal="right" vertical="top"'),
-  TL=st(['Calibri',11,1,0,NV],TOT,{top:['medium',NV],bottom:['double',NV]},0,'horizontal="left" vertical="center"'),TA=st(['Calibri',11,1,0,NV],TOT,{top:['medium',NV],bottom:['double',NV]},164,'horizontal="right" vertical="center"');
- var lineSt=function(nm,amt){var c=/^(Net|Gross) Profit/i.test(nm)?'FF15803D':/^(Net|Gross) Loss/i.test(nm)?'FFB91C1C':NV;return amt?st(['Calibri',10,1,0,c],0,0,164,'horizontal="right" vertical="center"'):st(['Calibri',10,1,0,c],0,0,0,'horizontal="left" vertical="center" wrapText="1"')};
- var firstData=0,lastData=0,diffRef=null,nbl=M.blocks.length;
- M.blocks.forEach(function(b){if(b.cap){S1.hts[r]=18;S1.band(r,6,b.cap.toUpperCase(),CAP);r++}
-  S1.hts[r]=24;S1.T(r,0,b.head[0].toUpperCase(),HD);S1.B(r,1,HD);S1.T(r,2,asat?'as at '+asat:'Amount (₹)',asat?HI:HD);S1.T(r,4,b.head[1].toUpperCase(),HD);S1.B(r,5,HD);S1.T(r,6,asat?'as at '+asat:'Amount (₹)',asat?HI:HD);r++;
+ /* PDF-identical layout: plain black & white, centered header, two-sided table, no KPI tiles */
+ var BK='FF000000',AR='Arial',thin=['thin',BK];
+ var X=function(sz,b,i,al,bo,nf,col){return st([AR,sz,b,i,col||BK],0,bo||0,nf||0,al||'')};
+ var bx=function(t,bt,dv){var o={};if(t)o.top=thin;if(bt)o.bottom=[bt,BK];if(dv)o.left=thin;return(t||bt||dv)?o:0};
+ var CEN='horizontal="center" vertical="center"',LFT='horizontal="left" vertical="bottom" wrapText="1"';
+ var ncount=function(s){var n=0;String(s).split('\n').forEach(function(p){n+=Math.max(1,Math.ceil(p.length/95))});return n};
+ var hdName=stHdName(M),adTxt=(M.address||'')+(M.gstin?(M.address?'\n':'')+'GSTIN: '+M.gstin:'');
+ var r=1;S1.hts[r]=20;S1.band(r++,6,hdName,X(13,1,0,CEN));
+ if(adTxt){S1.hts[r]=Math.max(14,13*ncount(adTxt));S1.band(r++,6,adTxt,X(9,0,0,'horizontal="center" vertical="top" wrapText="1"'))}
+ S1.hts[r]=24;S1.band(r++,6,M.title,X(11,1,0,'horizontal="center" vertical="bottom"'));
+ S1.hts[r]=14;S1.band(r++,6,M.period,X(8.5,0,0,'horizontal="center" vertical="top"'));
+ S1.hts[r++]=10;
+ var H1=X(9,1,0,'horizontal="left" vertical="center"',bx(1,'thin')),H2=X(8.5,0,0,CEN,bx(1,'thin')),HD0=X(9,0,0,CEN,bx(1,'thin',1)),
+  GN=X(9.5,1,0,LFT),GA=X(9.5,1,0,'horizontal="right" vertical="bottom"',0,164),
+  LN=X(9,0,1,'horizontal="left" vertical="top" wrapText="1" indent="1"'),LNS=X(9,0,0,'horizontal="left" vertical="top" wrapText="1" indent="1"'),
+  LA=X(8.5,0,0,'horizontal="right" vertical="top"',0,164),LAU=X(8.5,0,0,'horizontal="right" vertical="top"',bx(0,'thin'),164),
+  DV=X(9,0,0,0,bx(0,0,1)),TLs=X(9,1,0,'horizontal="left" vertical="center"',bx(1,'medium')),TAs=X(9.5,1,0,'horizontal="right" vertical="center"',bx(1,'medium'),164),TDs=X(9,1,0,0,bx(1,'medium',1));
+ var firstData=0,lastData=0,ckRow=0,nbl=0;
+ M.blocks.forEach(function(b){nbl++;
+  if(b.cap){if(nbl>1)S1.hts[r++]=22;S1.hts[r]=18;S1.band(r++,6,b.cap,X(10,1,0,CEN))}
+  S1.hts[r]=20;S1.T(r,0,b.head[0],H1);S1.T(r,1,asat?'as at '+asat:'',H2);S1.B(r,2,H2);S1.M(r,1,2);S1.B(r,3,HD0);S1.T(r,4,b.head[1],H1);S1.T(r,5,asat?'as at '+asat:'',H2);S1.B(r,6,H2);S1.M(r,5,6);r++;
   var first=r,Ls=sideRows(b.L),Rs=sideRows(b.R),n=Math.max(Ls.length,Rs.length);if(!firstData)firstData=first;
+  for(var i=0;i<n;i++)S1.B(first+i,3,DV);
   [[Ls,0,1,2],[Rs,4,5,6]].forEach(function(sd){sd[0].forEach(function(x,i){var rr=first+i;
-   if(x.k==='g'){S1.T(rr,sd[1],x.label,GN);S1.B(rr,sd[2],GB);S1.F(rr,sd[3],'SUM('+CL(sd[2])+(rr+1)+':'+CL(sd[2])+(rr+x.span)+')',x.outer,GA)}
-   else if(x.k==='line'){S1.T(rr,sd[1],x.label,lineSt(x.label,0));if(!x.blank)S1.N(rr,sd[3],x.outer,lineSt(x.label,1));if(/^Difference in opening/i.test(x.label))diffRef=CL(sd[3])+rr}
+   if(x.k==='g'){S1.hts[rr]=21;S1.T(rr,sd[1],x.label,GN);S1.F(rr,sd[3],'SUM('+CL(sd[2])+(rr+1)+':'+CL(sd[2])+(rr+x.span)+')',x.outer,GA)}
+   else if(x.k==='line'){S1.hts[rr]=21;S1.T(rr,sd[1],x.label,GN);if(!x.blank)S1.N(rr,sd[3],x.outer,GA)}
    else{S1.T(rr,sd[1],x.label,x.sub?LNS:LN);if(x.inner==null)S1.B(rr,sd[2],x.last?LAU:LA);else S1.N(rr,sd[2],x.inner,x.last?LAU:LA)}})});
-  var tr=first+n;S1.hts[tr]=22;S1.T(tr,0,'TOTAL',TL);S1.B(tr,1,TL);S1.F(tr,2,'SUM(C'+first+':C'+(tr-1)+')',b.totL,TA);S1.T(tr,4,'TOTAL',TL);S1.B(tr,5,TL);S1.F(tr,6,'SUM(G'+first+':G'+(tr-1)+')',b.totR,TA);lastData=tr;r=tr+1;S1.hts[r++]=24});
- /* check row (driven by the Difference formula) */
- var ckRow=0;
- if(M.check){ckRow=r;var CK=st(['Calibri',10,1,0,'FF15803D'],0,0,0,'horizontal="left" vertical="center" indent="1"'),CKN=st(['Calibri',10,1,0,'FF15803D'],0,0,164,'horizontal="right" vertical="center"'),dv=M.check.ok?0:M.check.diff;
-  S1.hts[r]=20;S1.FS(r,0,'IF(ABS(G'+r+')<0.005,"✓  Balanced — total liabilities equal total assets","Difference in opening balances: ₹ "&TEXT(ABS(G'+r+'),"#,##0.00")&" — please review the ledger opening balances")',M.check.ok?'✓  Balanced — total liabilities equal total assets':'Difference in opening balances: ₹ '+fm(M.check.diff)+' — please review the ledger opening balances',CK);
-  for(var c=1;c<=5;c++)S1.B(r,c,CK);S1.M(r,0,5);S1.F(r,6,diffRef?'ABS('+diffRef+')':'0',Math.abs(dv),CKN);r+=2}
- var NT=st(['Calibri',9,0,1,'FF6B7280'],0,0,0,'horizontal="left" vertical="top" wrapText="1"');
- var nts=M.notes.slice();nts.push('Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account.');if(credit(M.label))nts.push(credit(M.label));
- nts.forEach(function(n){S1.hts[r]=n.length>110?26:14;S1.band(r,6,n,NT);r++});
+  var sp=first+n;S1.hts[sp]=10;S1.B(sp,3,DV);
+  var tr=sp+1;S1.hts[tr]=22;S1.T(tr,0,'Total',TLs);S1.B(tr,1,TLs);S1.F(tr,2,'SUM(C'+first+':C'+(tr-1)+')',b.totL,TAs);S1.B(tr,3,TDs);S1.T(tr,4,'Total',TLs);S1.B(tr,5,TLs);S1.F(tr,6,'SUM(G'+first+':G'+(tr-1)+')',b.totR,TAs);lastData=tr;r=tr+1});
+ if(M.check&&!M.check.ok){S1.hts[r]=20;S1.band(r++,6,'Difference in opening balances: ₹ '+fm(M.check.diff)+' — please review the ledger opening balances',X(8.5,1,0,'horizontal="left" vertical="center"'))}
+ S1.hts[r++]=8;
+ var NT=X(7.5,0,0,'horizontal="left" vertical="top" wrapText="1"','','','FF374151'),NTI=X(7.5,0,1,'horizontal="left" vertical="top" wrapText="1"',0,0,'FF374151');
+ M.notes.forEach(function(n){S1.hts[r]=ncount(n)*11+3;S1.band(r++,6,n,NT)});
+ S1.hts[r]=14;S1.band(r++,6,'Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account on '+stGen()+'.',NTI);
+ if(credit(M.label)){S1.hts[r]=14;S1.band(r++,6,credit(M.label),NT)}
  
  var dN=function(i,x){return'<dxf>'+x+'</dxf>'};
  var cf='<conditionalFormatting sqref="B'+firstData+':C'+lastData+' F'+firstData+':G'+lastData+'"><cfRule type="cellIs" dxfId="0" priority="1" operator="lessThan"><formula>0</formula></cfRule></conditionalFormatting>';
  if(ckRow)cf+='<conditionalFormatting sqref="A'+ckRow+':G'+ckRow+'"><cfRule type="expression" dxfId="1" priority="2"><formula>ABS($G$'+ckRow+')&lt;0.005</formula></cfRule><cfRule type="expression" dxfId="2" priority="3"><formula>ABS($G$'+ckRow+')&gt;=0.005</formula></cfRule></conditionalFormatting>';
  var pr='<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.6" header="0.3" footer="0.3"/>',hf='<headerFooter><oddFooter>&amp;L'+E(M.company)+' · '+E(M.title)+'&amp;RPage &amp;P of &amp;N</oddFooter></headerFooter>';
- var s1=XH+'<worksheet '+NS+'><sheetPr><tabColor rgb="'+NV+'"/><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100" tabSelected="1"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols([38,15,17,3,38,15,17])+'<sheetData>'+rx(S1)+'</sheetData>'+mg(S1)+cf+'<printOptions horizontalCentered="1"/>'+pr+'<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
+ var s1=XH+'<worksheet '+NS+'><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100" tabSelected="1"></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols([34,13,14,2,34,13,14])+'<sheetData>'+rx(S1)+'</sheetData>'+mg(S1)+cf+'<printOptions horizontalCentered="1"/>'+pr+'<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
  /* Ledger Detail sheet */
  var S2=mk(),n2=M.detail.length,l2=6+Math.max(n2,1);
  var C2=st(['Cambria',14,1,0,NV]),T2=st(['Calibri',12,1,0,NV]),MU=st(['Calibri',9,0,1,'FF6B7280']),TH=st(['Calibri',10,1,0,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center" wrapText="1"'),
@@ -23348,13 +23346,13 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var q2=function(s){return s.replace(/"/g,'&quot;')};
  var styles=XH+'<styleSheet '+NS+'><numFmts count="3"><numFmt numFmtId="164" formatCode="'+q2(E(INR).replace(/&quot;/g,'"'))+'"/><numFmt numFmtId="165" formatCode="'+q2(E(RUP).replace(/&quot;/g,'"'))+'"/><numFmt numFmtId="166" formatCode="'+q2('"(-)"#,##0.00;"(-)"#,##0.00')+'"/></numFmts>'+
   '<fonts count="'+FN.x.length+'">'+FN.x.join('')+'</fonts><fills count="'+FL.x.length+'">'+FL.x.join('')+'</fills><borders count="'+BD.x.length+'">'+BD.x.join('')+'</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="'+XF.x.length+'">'+XF.x.join('')+'</cellXfs>'+
-  '<dxfs count="3"><dxf><font><color rgb="FFB91C1C"/></font><numFmt numFmtId="166" formatCode="'+q2('"(-)"#,##0.00;"(-)"#,##0.00')+'"/></dxf>'+
+  '<dxfs count="3"><dxf><numFmt numFmtId="166" formatCode="'+q2('"(-)"#,##0.00;"(-)"#,##0.00')+'"/></dxf>'+
   '<dxf><font><b/><color rgb="FF15803D"/></font><fill><patternFill patternType="solid"><fgColor rgb="FFECFDF3"/><bgColor rgb="FFECFDF3"/></patternFill></fill></dxf>'+
   '<dxf><font><b/><color rgb="FFB91C1C"/></font><fill><patternFill patternType="solid"><fgColor rgb="FFFEF2F2"/><bgColor rgb="FFFEF2F2"/></patternFill></fill></dxf></dxfs></styleSheet>';
  var rid=function(i){return'<Relationship Id="rId'+i+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/'};
  var files=[['[Content_Types].xml',XH+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
   ['_rels/.rels',XH+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rid(1)+'officeDocument" Target="xl/workbook.xml"/></Relationships>'],
-  ['xl/workbook.xml',XH+'<workbook '+NS+' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="'+E(sn1)+'" sheetId="1" r:id="rId1"/><sheet name="'+sn2+'" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">\''+sn2+'\'!$A$6:$F$'+l2+'</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">\''+E(sn1)+'\'!$A$1:$G$'+S1.last+'</definedName><definedName name="_xlnm.Print_Titles" localSheetId="0">\''+E(sn1)+'\'!$1:$5</definedName></definedNames><calcPr fullCalcOnLoad="1"/></workbook>'],
+  ['xl/workbook.xml',XH+'<workbook '+NS+' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="'+E(sn1)+'" sheetId="1" r:id="rId1"/><sheet name="'+sn2+'" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">\''+sn2+'\'!$A$6:$F$'+l2+'</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">\''+E(sn1)+'\'!$A$1:$G$'+S1.last+'</definedName></definedNames><calcPr fullCalcOnLoad="1"/></workbook>'],
   ['xl/_rels/workbook.xml.rels',XH+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rid(1)+'worksheet" Target="worksheets/sheet1.xml"/>'+rid(2)+'worksheet" Target="worksheets/sheet2.xml"/>'+rid(3)+'styles" Target="styles.xml"/></Relationships>'],
   ['xl/styles.xml',styles],['xl/worksheets/sheet1.xml',s1],['xl/worksheets/sheet2.xml',s2]];
  downloadBlob(zip(files),'IE-'+M.title.replace(/[^a-z0-9]+/gi,'-').replace(/-$/,'')+'-'+new Date().toISOString().slice(0,10)+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
