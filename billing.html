@@ -22244,8 +22244,34 @@ function pl(f,t){var rows=calc(f,t),st=stock(),cr=function(b){return b.cr-b.dr},
   '<tr><td><b>'+(net>=0?'Net Profit':'Net Loss')+' (C - D)</b></td><td class="right" style="color:'+(net>=0?'#34d399':'#fb7185')+';font-size:16px"><b>₹ '+m2(Math.abs(net))+'</b></td></tr></tbody>';
  $('arSub').textContent=f+' se '+t+' tak | Sales ₹ '+money(sa.tot)+' | '+(net>=0?'Net Profit':'Net Loss')+' ₹ '+money(Math.abs(net));return h}
 
+/* ---- Balance Sheet tree (Tally style: Group > sub-group > ledger) used by PDF/Excel ---- */
+function bsTree(t){var rows=calc('',t),st=stock(),G=X.groups(),f0=fy()[0];if(t<f0)f0='';
+ var pe=0,po=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
+ var P=r2(pe+st.close-st.open);
+ if(f0)calc(f0,t).forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')po-=b.o});
+ po=r2(po);var pc=r2(P-po);
+ var hasOD=G.some(function(g){return g.id==='bankOD'}),W=[];
+ rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')return;W.push({b:b,g:(hasOD&&b.l.group==='bank'&&b.c<-0.004)?'bankOD':b.l.group})});
+ var ALW={capital:1,loans:1,currLiab:1,suspense:1,fixedAssets:1,currAssets:1},L=[],R=[];
+ G.filter(function(g){return!g.parent&&(g.nature==='L'||g.nature==='A')}).forEach(function(p){
+  var left=p.nature==='L'||p.id==='suspense',sg=left?-1:1,val=function(w){return r2(sg*w.b.c)},items=[];
+  W.filter(function(w){return w.g===p.id&&Math.abs(val(w))>0.004}).sort(function(a,b){return a.b.l.name.localeCompare(b.b.l.name)}).forEach(function(w){items.push({name:w.b.l.name,amt:val(w),sub:false})});
+  G.filter(function(c){return c.parent===p.id}).forEach(function(c){var uc=X.under(c.id),ms=W.filter(function(w){return uc.indexOf(w.g)>-1&&Math.abs(val(w))>0.004}),sum=0;
+   ms.forEach(function(w){sum+=val(w)});sum=r2(sum);
+   if(ms.length&&Math.abs(sum)>0.004)items.push({name:c.name,amt:sum,sub:true,led:ms.sort(function(a,b){return a.b.l.name.localeCompare(b.b.l.name)}).map(function(w){return{name:w.b.l.name,amt:val(w)}})})});
+  if(p.id==='currAssets'&&st.close)items.unshift({name:'Closing Stock',amt:r2(st.close),sub:true});
+  var tot=0;items.forEach(function(x){tot+=x.amt});tot=r2(tot);
+  var tg=left?L:R;
+  if(!items.length){if(ALW[p.id])tg.push({name:p.name,amt:0,ledgers:[],line:true,blank:true});return}
+  tg.push({name:p.name,amt:tot,ledgers:items,line:false})});
+ var pl=[];if(Math.abs(po)>0.004)pl.push({name:'Opening Balance',amt:po,sub:true});if(Math.abs(pc)>0.004||pl.length)pl.push({name:'Current Period',amt:pc,sub:true});
+ if(pl.length){var pt=0;pl.forEach(function(x){pt+=x.amt});L.push({name:'Profit & Loss A/c',amt:r2(pt),ledgers:pl,line:false})}
+ else L.push({name:'Profit & Loss A/c',amt:0,ledgers:[],line:true,blank:true});
+ var lt=0,at=0;L.forEach(function(g){lt+=g.amt});R.forEach(function(g){at+=g.amt});var df=r2(at-lt);
+ if(df>0.004)L.push({name:'Difference in opening balances',amt:df,ledgers:[],line:true});else if(df<-0.004)R.push({name:'Difference in opening balances',amt:-df,ledgers:[],line:true});
+ window.__bsTree={L:L,R:R,t:t,start:f0}}
 /* ---- Balance Sheet (as on To date) ---- */
-function bs(f,t){var rows=calc('',t),st=stock(),pe=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
+function bs(f,t){bsTree(t);var rows=calc('',t),st=stock(),pe=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
  var P=pe+st.close-st.open,L=blk(pgs('L'),rows,function(b){return-b.c}),As=blk(pgs('A'),rows,function(b){return b.c}),
  lt=L.tot+P,at=As.tot+st.close,df=r2(at-lt),lT=lt+(df>0?df:0),aT=at+(df<0?-df:0),
  h=th(['Particulars','>Amount'])+'<tbody><tr><td colspan="2" class="sub"><b>LIABILITIES</b></td></tr>'+L.h+hrow('Profit & Loss A/c ('+(P>=0?'Profit':'Loss')+')',P)+(df>0.004?hrow('Difference in opening balances',df):'')+trow('Total Liabilities',lT)+
@@ -23155,6 +23181,7 @@ function toXlsx(R){var used={},names=[],NS='xmlns="http://schemas.openxmlformats
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fd(s){return String(s==null?'':s).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,function(_,y,m,d){return d+'-'+MON[+m-1]+'-'+y})}
 function enSub(s){return fd(String(s||'')).replace(/Trial Balance tally ho raha hai\.?/i,'Trial Balance is tallied: total debit equals total credit.').replace(/Fark ₹ ([\d,.]+) \((Debit|Credit) zyada\)\.?.*/,'Difference of ₹ $1 ($2 is higher).').replace(/(\S+) se (\S+) tak/,'$1 to $2').replace(/Pehle 500 dikhaye\.?.*/i,'First 500 rows shown. Narrow the date range to see more.').replace(/Is period me (koi entry|kuch) (nahi|nahi hai)\.?/i,'No entries in this period.').replace(/Koi pending bill nahi\.?/i,'No pending bills.')}
+function fds(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?(+m[3])+'-'+MON[+m[2]-1]+'-'+m[1].slice(2):String(s||'')}
 function pnum(t){var v=parseFloat(String(t).replace(/[₹,\s]/g,''));return isNaN(v)?0:v}
 function r2(x){return Math.round(x*100)/100}
 function sumA(a){return r2(a.reduce(function(x,g){return x+g.amt},0))}
@@ -23163,12 +23190,12 @@ function addIt(list,r){if(r.k==='g')list.push({name:r.label,amt:r.amt,ledgers:[]
 function ensureG(list,rx,name){var g=list.filter(function(x){return rx.test(x.name)&&!x.line})[0];if(!g){g={name:name,amt:0,ledgers:[],line:false};var i=-1;list.forEach(function(x,k){if(i<0&&x.line)i=k});if(i<0)list.push(g);else list.splice(i,0,g)}return g}
 function stmtModel(box){if(!box||!box.querySelector('table'))return null;var tx=box.textContent||'',isPL=/TRADING ACCOUNT/i.test(tx)&&/PROFIT\s*&\s*LOSS ACCOUNT/i.test(tx),isBS=!isPL&&/LIABILITIES/.test(tx)&&/ASSETS/.test(tx)&&/Total Assets/i.test(tx);if(!isPL&&!isBS)return null;
  var s=ST(),f=$('arFrom')?$('arFrom').value:'',t=$('arTo')?$('arTo').value:'',rs=rowsOf(box),M={kind:isPL?'pl':'bs',company:s.company||'',address:s.address||'',gstin:s.gstin||'',blocks:[],notes:[],strip:[],detail:[],check:null};
- if(isBS){var L=[],A=[],cur=null,rec=false;rs.forEach(function(r){if(r.k==='sec'){cur=/LIABIL/i.test(r.label)?L:/ASSET/i.test(r.label)?A:cur;return}if(r.k==='t'||!cur)return;addIt(cur,r)});
+ if(isBS){var L=[],A=[],cur=null,rec=false,T0=window.__bsTree&&window.__bsTree.t===t?window.__bsTree:null;rs.forEach(function(r){if(r.k==='sec'){cur=/LIABIL/i.test(r.label)?L:/ASSET/i.test(r.label)?A:cur;return}if(r.k==='t'||!cur)return;addIt(cur,r)});
   var mv=function(from,to,rx,nm,suf){from.forEach(function(g){if(g.line||!g.ledgers.length)return;var keep=[];g.ledgers.forEach(function(l){if(l.amt<-0.004){var tg=ensureG(to,rx,nm);tg.ledgers.push({name:l.name+suf,amt:r2(-l.amt),note:'Reclassified from '+g.name});tg.amt=r2(tg.amt-l.amt);rec=true}else keep.push(l)});g.ledgers=keep;g.amt=r2(keep.reduce(function(a,l){return a+l.amt},0))})};
   mv(A,L,/current liabilities/i,'Current Liabilities',' (Overdrawn)');mv(L,A,/current assets/i,'Current Assets',' (Dr balance)');
   L=L.filter(function(g){if(g.line&&/^Profit & Loss A\/c/.test(g.name)&&g.amt<-0.004){A.push({name:'Profit & Loss A/c (Loss)',amt:r2(-g.amt),ledgers:[],line:true});rec=true;return false}return true});
-  var clean=function(a){return a.filter(function(g){return g.line||g.ledgers.length})};L=clean(L);A=clean(A);
-  M.title='Balance Sheet';M.period='As at '+fd(t);M.blocks.push({cap:'',head:['Liabilities','Assets'],L:L,R:A,totL:sumA(L),totR:sumA(A)});
+  var clean=function(a){return a.filter(function(g){return g.line||g.ledgers.length})};L=clean(L);A=clean(A);if(T0){L=T0.L;A=T0.R;rec=false}
+  M.title='Balance Sheet';M.period=T0?(fds(T0.start||t)+' to '+fds(t)):'As at '+fd(t);M.asat=fds(t);M.blocks.push({cap:'',head:['Liabilities','Assets'],L:L,R:A,totL:sumA(L),totR:sumA(A)});
   var df=L.concat(A).filter(function(g){return g.line&&/^Difference in opening/i.test(g.name)})[0];M.check={ok:!df,diff:df?df.amt:0};
   var ca=sumA(A.filter(function(g){return /current assets/i.test(g.name)||(g.line&&/^closing stock/i.test(g.name))})),cl=sumA(L.filter(function(g){return /current liabilities/i.test(g.name)}));
   if(cl>0.004){M.strip.push('Current Ratio '+(ca/cl).toFixed(2)+' : 1');M.strip.push('Working Capital ₹ '+fm(ca-cl))}
@@ -23188,35 +23215,35 @@ function stmtModel(box){if(!box||!box.querySelector('table'))return null;var tx=
   var sales=sumA(R1.filter(function(g){return /^sales/i.test(g.name)}));M.strip.push((net>=0?'Net Profit ':'Net Loss ')+'₹ '+fm(Math.abs(net)));
   if(sales>0.004){M.strip.unshift('Net Sales ₹ '+fm(sales));M.strip.push((gp>=0?'Gross Profit ':'Gross Loss ')+(Math.abs(gp)/sales*100).toFixed(1)+'%');M.strip.push('Net Margin '+(net/sales*100).toFixed(1)+'%')}
  }
- M.blocks.forEach(function(b){[[b.L,b.head[0]],[b.R,b.head[1]]].forEach(function(sd){sd[0].forEach(function(g){var sec=b.cap||M.title;if(g.ledgers.length)g.ledgers.forEach(function(l){M.detail.push([sec,sd[1],g.name,l.name,l.amt,l.note||''])});else M.detail.push([sec,sd[1],'',g.name,g.amt,''])})})});
+ M.blocks.forEach(function(b){[[b.L,b.head[0]],[b.R,b.head[1]]].forEach(function(sd){sd[0].forEach(function(g){var sec=b.cap||M.title;if(g.ledgers.length)g.ledgers.forEach(function(l){if(l.led&&l.led.length){l.led.forEach(function(q){M.detail.push([sec,sd[1],g.name+' \u203a '+l.name,q.name,q.amt,''])});return}if(l.amt==null)return;M.detail.push([sec,sd[1],g.name,l.name,l.amt,l.note||''])});else if(!g.blank)M.detail.push([sec,sd[1],'',g.name,g.amt,''])})})});
  return M}
-function sideRows(items){var o=[];items.forEach(function(g){var n=g.ledgers.length;o.push({k:n?'g':'line',label:g.name,outer:g.amt,span:n});g.ledgers.forEach(function(l,i){o.push({k:'l',label:l.name,inner:l.amt,last:i===n-1})})});return o}
-function stNum(v){return v<-0.004?'(-)'+fm(-v):fm(v)}
+function sideRows(items){var o=[];items.forEach(function(g){var n=g.ledgers.length;o.push({k:n?'g':'line',label:g.name,outer:g.amt,span:n,blank:g.blank});g.ledgers.forEach(function(l,i){o.push({k:'l',label:l.name,inner:l.amt,last:i===n-1,sub:l.sub})})});return o}
+function stNum(v){return v==null?'':v<-0.004?'(-)'+fm(-v):fm(v)}
 function stGen(){var d=new Date(),p=function(x){return(x<10?'0':'')+x};return p(d.getDate())+'-'+MON[d.getMonth()]+'-'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes())}
 function stKpis(M){var T={green:'15803D',red:'B91C1C',blue:'1E40AF',navy:'14284B'};
  return(M.strip||[]).slice(0,4).map(function(t){var m=/^(.*?)\s*(₹.*|-?[\d.]+.*)$/.exec(t);if(!m)return null;var l=m[1].trim(),v=m[2].trim(),neg=/loss/i.test(l)||v.charAt(0)==='-'||/^₹\s*-/.test(v),pos=/profit|margin/i.test(l),tone=neg?'red':pos?'green':/ratio|capital/i.test(l)?'blue':'navy',n=v.charAt(0)==='₹'?pn(v.slice(1)):null;return{l:l,v:v,n:n,c:T[tone]}}).filter(Boolean)}
 function stLineColor(name){return /^(Net|Gross) Profit/i.test(name)?'#15803D':/^(Net|Gross) Loss/i.test(name)?'#B91C1C':'#14284B'}
-function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\\\n]/g,' ')},SANS='"Segoe UI","Helvetica Neue",Arial,sans-serif',asat=/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'';
+function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\\\n]/g,' ')},SANS='"Segoe UI","Helvetica Neue",Arial,sans-serif',asat=M.asat||(/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'');
  var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs(M.company)+'  ·  '+cs(M.title)+'";font:7pt '+SANS+';color:#6B7280}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:7.5pt '+SANS+';color:#6B7280}}'+
  '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:9pt/1.3 '+SANS+';color:#000}#pg{width:186mm;margin:0 auto}'+
  '.hd{text-align:center;margin-bottom:14px}.co{font-size:13pt;font-weight:700}.ad{font-size:9pt;line-height:1.45;margin-top:2px}.ttl{font-size:11pt;font-weight:700;margin-top:10px}.per{font-size:8.5pt;margin-top:1px}'+
  '.cap{font-size:10pt;font-weight:700;letter-spacing:1px;margin:14px 0 4px;text-align:center}'+
  'table.st{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{page-break-inside:avoid}'+
- 'th{padding:5px 6px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:2px;border-top:.7pt solid #000;border-bottom:.7pt solid #000}th.as{text-align:center;font-weight:400;letter-spacing:0;font-size:8.5pt}th.gp{border:0;padding:0}'+
+ 'th{padding:5px 6px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:2px;border-top:.7pt solid #000;border-bottom:.7pt solid #000}th.as{text-align:center;font-weight:400;letter-spacing:0;font-size:8.5pt}th.gp{padding:0;border-left:.7pt solid #000}'+
  'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap}'+
- 'td.gp{padding:0;background:linear-gradient(#000,#000) center/.7pt 100% no-repeat}'+
+ 'td.gp{padding:0;border-left:.7pt solid #000}'+
  'td.g,td.ln{font-size:9.5pt;font-weight:700;padding:9px 6px 2px}'+
- 'td.l{font-size:9pt;font-style:italic;font-weight:400;padding:1.5px 6px 1.5px 16px}td.la{font-size:8.5pt;font-style:normal;font-weight:400;padding:1.5px 6px}td.la.u{border-bottom:.7pt solid #000}td.e{padding:1.5px 6px}'+
+ 'td.l{font-size:9pt;font-style:italic;font-weight:400;padding:1.5px 6px 1.5px 16px}td.la{font-size:8.5pt;font-style:normal;font-weight:400;padding:1.5px 6px}td.la.u{border-bottom:.7pt solid #000}td.e{padding:1.5px 6px}td.s{font-size:9pt;font-style:normal;font-weight:400;padding:1.5px 6px 1.5px 16px}'+
  'tr.tot td{border-top:.7pt solid #000;border-bottom:1.6pt solid #000;padding:5px 6px;font-weight:700}tr.tot td.tl{letter-spacing:2px;font-size:9pt}tr.tot td.ta{font-size:9.5pt}'+
- 'tr.tot td.gp{border:0;padding:0;background:linear-gradient(#000,#000) center/.7pt 100% no-repeat}tr.sp td{height:14px;padding:0}'+
+ 'tr.tot td.gp{padding:0;border-left:.7pt solid #000}tr.sp td{height:14px;padding:0}'+
  '.ck{font-size:8.5pt;font-weight:700;margin-top:12px;color:#000}.nt{font-size:7.5pt;color:#374151;margin-top:6px;line-height:1.4}.nt.it{font-style:italic}'+
  '.sg{margin-top:26px;display:flex;justify-content:flex-end}.sg div{width:56mm;text-align:center;font-size:8.5pt}.sg i{display:block;height:30px}.sg b{display:block;border-top:.6pt solid #000;padding-top:3px;font-weight:700}@media screen{body{padding:14px}}';
  var cg='<colgroup><col style="width:27%"><col style="width:10%"><col style="width:11%"><col style="width:4%"><col style="width:27%"><col style="width:10%"><col style="width:11%"></colgroup>';
  var ncl=function(v,cl){return'<td class="n '+cl+'">'+stNum(v)+'</td>'};
  var cell=function(x){if(!x)return'<td class="e"></td><td class="e"></td><td class="e"></td>';
   if(x.k==='g')return'<td class="g">'+E(x.label)+'</td><td class="g"></td>'+ncl(x.outer,'g');
-  if(x.k==='line')return'<td class="ln">'+E(x.label)+'</td><td class="ln"></td>'+ncl(x.outer,'ln');
-  return'<td class="l">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'">'+stNum(x.inner)+'</td><td class="e"></td>'};
+  if(x.k==='line')return'<td class="ln">'+E(x.label)+'</td><td class="ln"></td>'+(x.blank?'<td class="n ln"></td>':ncl(x.outer,'ln'));
+  return'<td class="'+(x.sub?'s':'l')+'">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'">'+stNum(x.inner)+'</td><td class="e"></td>'};
  var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cg+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
   for(var i=0;i<n;i++)h+='<tr>'+cell(L[i])+'<td class="gp"></td>'+cell(R[i])+'</tr>';
   return h+'<tr class="sp"><td colspan="3"></td><td class="gp"></td><td colspan="3"></td></tr><tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
@@ -23245,7 +23272,7 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var cols=function(a){return'<cols>'+a.map(function(w,i){return'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>'}).join('')+'</cols>'};
  var mg=function(o){return o.merges.length?'<mergeCells count="'+o.merges.length+'">'+o.merges.map(function(m){return'<mergeCell ref="'+m+'"/>'}).join('')+'</mergeCells>':''};
  var SZ=function(c){return'FF'+c};
- var S1=mk(),sn1=M.title.replace(/[\[\]*?\/\\:']/g,' ').slice(0,28).trim(),sn2='Ledger Detail',asat=/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'',kp=stKpis(M);
+ var S1=mk(),sn1=M.title.replace(/[\[\]*?\/\\:']/g,' ').slice(0,28).trim(),sn2='Ledger Detail',asat=M.asat||(/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):''),kp=stKpis(M);
  /* header band */
  S1.hts[1]=30;S1.band(1,6,M.company,st(['Cambria',18,1,0,'FFFFFFFF'],NV,0,0,'horizontal="left" vertical="center" indent="1"'));
  S1.hts[2]=30;S1.band(2,6,(M.address||'')+(M.gstin?(M.address?'\n':'')+'GSTIN: '+M.gstin:''),st(['Calibri',9,0,0,'FFD6DEEB'],NV,0,0,'horizontal="left" vertical="center" wrapText="1" indent="1"'));
@@ -23263,7 +23290,7 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
  var HD=st(['Calibri',10,1,0,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center"'),HI=st(['Calibri',9,0,1,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center"'),
   CAP=st(['Calibri',10,1,0,NV],0,{bottom:['medium',GDc]},0,'horizontal="left"'),CAPB=st(['Calibri',10,1,0,NV],0,{bottom:['medium',GDc]}),
   GN=st(['Calibri',10,1,0,NV],TINT,0,0,'horizontal="left" vertical="center" wrapText="1"'),GB=st(['Calibri',10,1,0,NV],TINT),GA=st(['Calibri',10,1,0,NV],TINT,0,164,'horizontal="right" vertical="center"'),
-  LN=st(['Calibri',10,0,1,'FF374151'],0,0,0,'horizontal="left" vertical="center" wrapText="1" indent="2"'),LA=st(['Calibri',9,0,0,'FF374151'],0,0,164,'horizontal="right" vertical="top"'),LAU=st(['Calibri',9,0,0,'FF374151'],0,{bottom:['thin','FF6B7280']},164,'horizontal="right" vertical="top"'),
+  LN=st(['Calibri',10,0,1,'FF374151'],0,0,0,'horizontal="left" vertical="center" wrapText="1" indent="2"'),LNS=st(['Calibri',10,0,0,'FF374151'],0,0,0,'horizontal="left" vertical="center" wrapText="1" indent="2"'),LA=st(['Calibri',9,0,0,'FF374151'],0,0,164,'horizontal="right" vertical="top"'),LAU=st(['Calibri',9,0,0,'FF374151'],0,{bottom:['thin','FF6B7280']},164,'horizontal="right" vertical="top"'),
   TL=st(['Calibri',11,1,0,NV],TOT,{top:['medium',NV],bottom:['double',NV]},0,'horizontal="left" vertical="center"'),TA=st(['Calibri',11,1,0,NV],TOT,{top:['medium',NV],bottom:['double',NV]},164,'horizontal="right" vertical="center"');
  var lineSt=function(nm,amt){var c=/^(Net|Gross) Profit/i.test(nm)?'FF15803D':/^(Net|Gross) Loss/i.test(nm)?'FFB91C1C':NV;return amt?st(['Calibri',10,1,0,c],0,0,164,'horizontal="right" vertical="center"'):st(['Calibri',10,1,0,c],0,0,0,'horizontal="left" vertical="center" wrapText="1"')};
  var firstData=0,lastData=0,diffRef=null,nbl=M.blocks.length;
@@ -23272,8 +23299,8 @@ function stmtXlsx(M){var XH='<?xml version="1.0" encoding="UTF-8" standalone="ye
   var first=r,Ls=sideRows(b.L),Rs=sideRows(b.R),n=Math.max(Ls.length,Rs.length);if(!firstData)firstData=first;
   [[Ls,0,1,2],[Rs,4,5,6]].forEach(function(sd){sd[0].forEach(function(x,i){var rr=first+i;
    if(x.k==='g'){S1.T(rr,sd[1],x.label,GN);S1.B(rr,sd[2],GB);S1.F(rr,sd[3],'SUM('+CL(sd[2])+(rr+1)+':'+CL(sd[2])+(rr+x.span)+')',x.outer,GA)}
-   else if(x.k==='line'){S1.T(rr,sd[1],x.label,lineSt(x.label,0));S1.N(rr,sd[3],x.outer,lineSt(x.label,1));if(/^Difference in opening/i.test(x.label))diffRef=CL(sd[3])+rr}
-   else{S1.T(rr,sd[1],x.label,LN);S1.N(rr,sd[2],x.inner,x.last?LAU:LA)}})});
+   else if(x.k==='line'){S1.T(rr,sd[1],x.label,lineSt(x.label,0));if(!x.blank)S1.N(rr,sd[3],x.outer,lineSt(x.label,1));if(/^Difference in opening/i.test(x.label))diffRef=CL(sd[3])+rr}
+   else{S1.T(rr,sd[1],x.label,x.sub?LNS:LN);if(x.inner==null)S1.B(rr,sd[2],x.last?LAU:LA);else S1.N(rr,sd[2],x.inner,x.last?LAU:LA)}})});
   var tr=first+n;S1.hts[tr]=22;S1.T(tr,0,'TOTAL',TL);S1.B(tr,1,TL);S1.F(tr,2,'SUM(C'+first+':C'+(tr-1)+')',b.totL,TA);S1.T(tr,4,'TOTAL',TL);S1.B(tr,5,TL);S1.F(tr,6,'SUM(G'+first+':G'+(tr-1)+')',b.totR,TA);lastData=tr;r=tr+1;S1.hts[r++]=10});
  /* check row (driven by the Difference formula) */
  var ckRow=0;
@@ -23399,13 +23426,13 @@ function premPdf(M){var land=M.land,cs=function(x){return String(x).replace(/["\
  'td{padding:4.5px 7px;border-bottom:1px solid #e5e7eb;vertical-align:top;font-variant-numeric:tabular-nums}.r{text-align:right;white-space:nowrap}tbody tr:nth-child(even) td{background:#f9fafc}'+
  '.kg td{background:#e8eefb!important;font-weight:700;color:#14284b}.ko td{background:#fff7dc!important;font-style:italic}.kt td{background:#eef2f9!important;font-weight:700;border-top:1.5px solid #14284b;border-bottom:1.5px solid #14284b}'+
  '.tdr{color:#166534}.tcr{color:#b91c1c}.ind{padding-left:20px}i.Dr{font-style:normal;font-size:6.8pt;font-weight:700;color:#1e40af;margin-left:2px}i.Cr{font-style:normal;font-size:6.8pt;font-weight:700;color:#b91c1c;margin-left:2px}.none{text-align:center;color:#6b7280;padding:14px}'+
- '.sm{width:60%}.bar{display:flex;height:13px;border-radius:7px;overflow:hidden;margin:4px 0 3px}.lg{display:flex;gap:14px;font-size:7.4pt;color:#4b5563;margin-bottom:8px}.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}'+
+ '.sm{width:100%}.lgo{width:46px;height:46px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:3px;flex-shrink:0;box-shadow:0 0 0 2px rgba(240,210,122,.35)}.lgo img{max-width:100%;max-height:100%;object-fit:contain;display:block}.bar{display:flex;height:13px;border-radius:7px;overflow:hidden;margin:4px 0 3px}.lg{display:flex;gap:14px;font-size:7.4pt;color:#4b5563;margin-bottom:8px}.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}'+
  '.ck{margin:6px 0;padding:6px 10px;border-left:3.5px solid;font-size:8.2pt;border-radius:2px}.ck.ok{background:#ecfdf3;border-color:#16a34a;color:#166534}.ck.warn{background:#fffbeb;border-color:#d97706;color:#92400e}.ck.bad{background:#fef2f2;border-color:#dc2626;color:#991b1b}'+
  '.co{font-family:Georgia,"Times New Roman",serif}.lt{display:flex;align-items:center;gap:13px}.mono{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#f0d27a,#b8901c);color:#14284b;font:700 19pt Georgia,serif;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(240,210,122,.35)}'+
  '.meta{display:flex;justify-content:space-between;font-size:6.9pt;letter-spacing:.7px;text-transform:uppercase;color:#6b7280;margin:-4px 2px 10px}.cd{background:linear-gradient(180deg,#fff,#eef2f9);box-shadow:0 1px 2px rgba(20,40,75,.12);border-radius:4px}'+
  '.ks td{background:#1f3a6e!important;color:#fff;font-weight:700;letter-spacing:.9px;text-transform:uppercase;font-size:7.4pt;border-left:3px solid #c9a227}'+
  '.nt{font-size:7.3pt;color:#6b7280;margin-top:4px}.sg{display:flex;justify-content:flex-end;margin-top:34px;page-break-inside:avoid}.sg div{width:62mm;text-align:center;font-size:8pt;color:#374151}.sg i{display:block;border-bottom:1px solid #6b7280;height:34px}.sg b{display:block;margin-top:4px;color:#14284b}';
- var b='<div class="hero"><div class="lt"><div class="mono">'+E((M.company||'•').trim().charAt(0).toUpperCase())+'</div><div><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div></div></div><div class="rt"><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div>'+(M.filt?'<div class="flt">'+E(M.filt)+'</div>':'')+'</div></div><div class="gold"></div><div class="meta"><span>'+E(M.title)+'</span><span>Currency: INR (₹)</span><span>Generated: '+E(M.gen)+'</span></div>';
+ var b='<div class="hero"><div class="lt">'+(ST().logo?'<div class="lgo"><img src="'+E(ST().logo)+'" alt=""></div>':'<div class="mono">'+E((M.company||'•').trim().charAt(0).toUpperCase())+'</div>')+'<div><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div></div></div><div class="rt"><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div>'+(M.filt?'<div class="flt">'+E(M.filt)+'</div>':'')+'</div></div><div class="gold"></div><div class="meta"><span>'+E(M.title)+'</span><span>Currency: INR (₹)</span><span>Generated: '+E(M.gen)+'</span></div>';
  b+='<div class="cards">'+M.cards.map(function(c){var col=TONE[c.tone]||NV,v=c.v,d=dcOf(v);return'<div class="cd" style="border-color:#'+col+'"><span>'+E(c.l)+'</span><b style="color:#'+col+'">'+(d?E(String(v).replace(/\s*(Dr|Cr)\s*$/,''))+'<i>'+d+'</i>':E(v))+'</b></div>'}).join('')+'</div>';
  if(M.bar)b+='<div class="bar">'+M.bar.map(function(s){var w=s.v/M.bar.reduce(function(a,x){return a+x.v},0)*100;return w>0?'<div style="width:'+w+'%;background:#'+s.c+'"></div>':''}).join('')+'</div><div class="lg">'+M.bar.map(function(s){return'<span><i style="background:#'+s.c+'"></i>'+E(s.l)+' · ₹ '+fm(s.v)+'</span>'}).join('')+'</div>';
  M.summary.forEach(function(sm){if(sm.pdf)b+=pSum(sm)});
