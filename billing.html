@@ -23196,40 +23196,32 @@ function stGen(){var d=new Date(),p=function(x){return(x<10?'0':'')+x};return p(
 function stKpis(M){var T={green:'15803D',red:'B91C1C',blue:'1E40AF',navy:'14284B'};
  return(M.strip||[]).slice(0,4).map(function(t){var m=/^(.*?)\s*(₹.*|-?[\d.]+.*)$/.exec(t);if(!m)return null;var l=m[1].trim(),v=m[2].trim(),neg=/loss/i.test(l)||v.charAt(0)==='-'||/^₹\s*-/.test(v),pos=/profit|margin/i.test(l),tone=neg?'red':pos?'green':/ratio|capital/i.test(l)?'blue':'navy',n=v.charAt(0)==='₹'?pn(v.slice(1)):null;return{l:l,v:v,n:n,c:T[tone]}}).filter(Boolean)}
 function stLineColor(name){return /^(Net|Gross) Profit/i.test(name)?'#15803D':/^(Net|Gross) Loss/i.test(name)?'#B91C1C':'#14284B'}
-function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\\\n]/g,' ')},SANS='"Segoe UI","Helvetica Neue",Arial,sans-serif',kp=stKpis(M),asat=/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'';
- var css='@page{size:A4 portrait;margin:12mm 12mm 14mm;@bottom-left{content:"'+cs(M.company)+'  ·  '+cs(M.title)+'";font:7pt '+SANS+';color:#9CA3AF}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:7.5pt '+SANS+';color:#6B7280}}'+
- '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:9pt/1.3 '+SANS+';color:#1F2937}#pg{width:186mm;margin:0 auto}'+
- '.hd{background:#14284B;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px;border-radius:6px 6px 0 0}.co{font:700 16pt Georgia,"Times New Roman",serif;color:#fff;letter-spacing:.3px}.ad{font-size:7.8pt;font-weight:400;color:#CBD5E6;line-height:1.45;margin-top:3px}'+
- '.rt{text-align:right}.ttl{font-size:14pt;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#F0D27A;white-space:nowrap}.per{font-size:8.2pt;font-weight:400;color:#E5EBF5;margin-top:3px;white-space:nowrap}.gb{height:3px;background:#C9A227;margin-bottom:8px}'+
- '.meta{font-size:6.9pt;font-weight:400;text-transform:uppercase;letter-spacing:.7px;color:#6B7280;margin-bottom:8px}.cards{display:grid;grid-template-columns:repeat('+Math.max(kp.length,1)+',1fr);gap:8px;margin-bottom:10px}.cd{background:#F3F6FB;border-left:3.5px solid;border-radius:3px;padding:6px 10px}'+
- '.cd span{display:block;font-size:6.6pt;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#6B7280}.cd b{display:block;font-size:12.5pt;font-weight:700;margin-top:2px;white-space:nowrap}'+
- '.cap{font-size:9.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#14284B;border-bottom:1.5px solid #C9A227;padding-bottom:3px;margin:12px 0 6px}'+
+function stmtPdf(M){var gen=stGen(),cs=function(x){return String(x).replace(/["\\\n]/g,' ')},SANS='"Segoe UI","Helvetica Neue",Arial,sans-serif',asat=/^As at /i.test(M.period||'')?String(M.period).replace(/^As at /i,''):'';
+ var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs(M.company)+'  ·  '+cs(M.title)+'";font:7pt '+SANS+';color:#6B7280}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:7.5pt '+SANS+';color:#6B7280}}'+
+ '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;font:9pt/1.3 '+SANS+';color:#000}#pg{width:186mm;margin:0 auto}'+
+ '.hd{text-align:center;margin-bottom:14px}.co{font-size:13pt;font-weight:700}.ad{font-size:9pt;line-height:1.45;margin-top:2px}.ttl{font-size:11pt;font-weight:700;margin-top:10px}.per{font-size:8.5pt;margin-top:1px}'+
+ '.cap{font-size:10pt;font-weight:700;letter-spacing:1px;margin:14px 0 4px;text-align:center}'+
  'table.st{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{page-break-inside:avoid}'+
- 'th{background:#14284B;color:#fff;padding:5px 7px 2px;text-align:left;font-size:7.4pt;font-weight:700;text-transform:uppercase;letter-spacing:1.4px}tr.h2 th{padding:1px 7px 4px;border-bottom:2px solid #C9A227;font-size:6.8pt;font-weight:400;letter-spacing:0;text-transform:none}'+
- 'th.n{text-align:right}th.as{font-size:7pt;font-weight:400;font-style:italic;text-align:center;color:#E5EBF5;letter-spacing:0;text-transform:none}th.gp{background:#fff;border:0;padding:0}'+
- 'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap}td.neg{color:#B91C1C}'+
- 'td.gp{padding:0;background:linear-gradient(#C9A227,#C9A227) center/.75pt 100% no-repeat}'+
- 'td.g{background:#EAF0FB;color:#14284B;font-size:9pt;font-weight:700;padding:5px 7px}td.ln{background:#fff;font-size:9pt;font-weight:700;padding:5px 7px}'+
- 'td.l{font-size:8.4pt;font-style:italic;font-weight:400;color:#374151;padding:3.2px 7px 3.2px 14px}td.la{font-size:8pt;font-style:normal;font-weight:400;color:#374151;padding:3.2px 7px}td.la.u{border-bottom:.75pt solid #6B7280}td.z{background:#F8FAFD}td.e{padding:3.2px 7px}'+
- 'tr.tot td{background:#EEF2F9;border-top:1.5px solid #14284B;border-bottom:3px double #14284B;padding:5px 7px;color:#14284B}tr.tot td.tl{font-size:8.6pt;font-weight:700;text-transform:uppercase;letter-spacing:1.5px}tr.tot td.ta{font-size:9.5pt;font-weight:700}'+
- 'tr.tot td.gp{border:0;padding:0;background:linear-gradient(#C9A227,#C9A227) center/.75pt 100% no-repeat}'+
- '.ck{font-size:8.2pt;font-weight:700;margin-top:12px;padding:6px 10px;border-left:3.5px solid #15803D;background:#ECFDF3;color:#15803D}.ck.bad{border-color:#B91C1C;background:#FEF2F2;color:#B91C1C}'+
- '.nt{font-size:7.3pt;font-weight:400;color:#6B7280;margin-top:6px;line-height:1.4}.nt.it{font-style:italic}'+
- '.sg{margin-top:26px;display:flex;justify-content:flex-end}.sg div{width:56mm;text-align:center;font-size:8pt;font-weight:400}.sg i{display:block;height:30px}.sg b{display:block;border-top:.6pt solid #1F2937;padding-top:3px;font-weight:700;color:#14284B;font-size:8pt}@media screen{body{padding:14px}}';
+ 'th{padding:5px 6px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:2px;border-top:.7pt solid #000;border-bottom:.7pt solid #000}th.as{text-align:center;font-weight:400;letter-spacing:0;font-size:8.5pt}th.gp{border:0;padding:0}'+
+ 'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap}'+
+ 'td.gp{padding:0;background:linear-gradient(#000,#000) center/.7pt 100% no-repeat}'+
+ 'td.g,td.ln{font-size:9.5pt;font-weight:700;padding:9px 6px 2px}'+
+ 'td.l{font-size:9pt;font-style:italic;font-weight:400;padding:1.5px 6px 1.5px 16px}td.la{font-size:8.5pt;font-style:normal;font-weight:400;padding:1.5px 6px}td.la.u{border-bottom:.7pt solid #000}td.e{padding:1.5px 6px}'+
+ 'tr.tot td{border-top:.7pt solid #000;border-bottom:1.6pt solid #000;padding:5px 6px;font-weight:700}tr.tot td.tl{letter-spacing:2px;font-size:9pt}tr.tot td.ta{font-size:9.5pt}'+
+ 'tr.tot td.gp{border:0;padding:0;background:linear-gradient(#000,#000) center/.7pt 100% no-repeat}tr.sp td{height:14px;padding:0}'+
+ '.ck{font-size:8.5pt;font-weight:700;margin-top:12px;color:#000}.nt{font-size:7.5pt;color:#374151;margin-top:6px;line-height:1.4}.nt.it{font-style:italic}'+
+ '.sg{margin-top:26px;display:flex;justify-content:flex-end}.sg div{width:56mm;text-align:center;font-size:8.5pt}.sg i{display:block;height:30px}.sg b{display:block;border-top:.6pt solid #000;padding-top:3px;font-weight:700}@media screen{body{padding:14px}}';
  var cg='<colgroup><col style="width:27%"><col style="width:10%"><col style="width:11%"><col style="width:4%"><col style="width:27%"><col style="width:10%"><col style="width:11%"></colgroup>';
- var ncl=function(v,cl){return'<td class="n '+cl+(v<-0.004?' neg':'')+'">'+stNum(v)+'</td>'};
- var cell=function(x,rs,zb){if(!x)return'<td class="e'+(rs?' rs':'')+'"></td><td class="e"></td><td class="e"></td>';var z=zb?' z':'';
+ var ncl=function(v,cl){return'<td class="n '+cl+'">'+stNum(v)+'</td>'};
+ var cell=function(x){if(!x)return'<td class="e"></td><td class="e"></td><td class="e"></td>';
   if(x.k==='g')return'<td class="g">'+E(x.label)+'</td><td class="g"></td>'+ncl(x.outer,'g');
-  if(x.k==='line'){var c=stLineColor(x.label);return'<td class="ln" style="color:'+c+'">'+E(x.label)+'</td><td class="ln"></td><td class="n ln'+(x.outer<-0.004?' neg':'')+'"'+(x.outer<-0.004?'':' style="color:'+c+'"')+'>'+stNum(x.outer)+'</td>'}
-  return'<td class="l'+z+'">'+E(x.label)+'</td><td class="n la'+z+(x.last?' u':'')+(x.inner<-0.004?' neg':'')+'">'+stNum(x.inner)+'</td><td class="e'+z+'"></td>'};
- var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),zl=0,zr=0,h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cg+'<thead><tr><th colspan="3">'+E(b.head[0])+'</th><th class="gp"></th><th colspan="3">'+E(b.head[1])+'</th></tr>'+
-  '<tr class="h2"><th class="as">'+(asat?'as at '+E(asat):'')+'</th><th></th><th class="n">Amount (₹)</th><th class="gp"></th><th class="as">'+(asat?'as at '+E(asat):'')+'</th><th></th><th class="n">Amount (₹)</th></tr></thead><tbody>';
-  for(var i=0;i<n;i++){var a=L[i],c=R[i],za=0,zc=0;if(a&&a.k==='l')za=(zl++)%2;else if(a)zl=0;if(c&&c.k==='l')zc=(zr++)%2;else if(c)zr=0;h+='<tr>'+cell(a,0,za)+'<td class="gp"></td>'+cell(c,1,zc)+'</tr>'}
-  return h+'<tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
- var b='<div id="pg"><div class="hd"><div><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div></div><div class="rt"><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div></div></div><div class="gb"></div>'+
-  '<div class="meta">Report: '+E(M.title)+' &nbsp;|&nbsp; Currency: INR (₹) &nbsp;|&nbsp; Generated: '+E(gen)+'</div>'+
-  (kp.length?'<div class="cards">'+kp.map(function(k){return'<div class="cd" style="border-left-color:#'+k.c+'"><span>'+E(k.l)+'</span><b style="color:#'+k.c+'">'+E(k.v)+'</b></div>'}).join('')+'</div>':'')+M.blocks.map(blk).join('');
- if(M.check)b+=M.check.ok?'<div class="ck">✓&nbsp; Balanced — total liabilities equal total assets</div>':'<div class="ck bad">Difference in opening balances: ₹ '+fm(M.check.diff)+' — please review the ledger opening balances</div>';
+  if(x.k==='line')return'<td class="ln">'+E(x.label)+'</td><td class="ln"></td>'+ncl(x.outer,'ln');
+  return'<td class="l">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'">'+stNum(x.inner)+'</td><td class="e"></td>'};
+ var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cg+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
+  for(var i=0;i<n;i++)h+='<tr>'+cell(L[i])+'<td class="gp"></td>'+cell(R[i])+'</tr>';
+  return h+'<tr class="sp"><td colspan="3"></td><td class="gp"></td><td colspan="3"></td></tr><tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
+ var b='<div id="pg"><div class="hd"><div class="co">'+E(M.company)+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div></div>'+M.blocks.map(blk).join('');
+ if(M.check&&!M.check.ok)b+='<div class="ck">Difference in opening balances: ₹ '+fm(M.check.diff)+' — please review the ledger opening balances</div>';
  b+=M.notes.map(function(n){return'<div class="nt">'+E(n)+'</div>'}).join('')+'<div class="nt it">Figures are in Indian Rupees (₹). Unaudited — prepared from the books of account on '+E(gen)+'.</div>'+(credit(M.label)?'<div class="nt">'+E(credit(M.label))+'</div>':'')+'<div class="sg"><div>For '+E(M.company)+'<i></i><b>Authorised Signatory</b></div></div></div>';
  var w=window.open('','_blank');if(!w){alert('Popup blocked — allow popups to open the PDF.');return}
  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+E(M.title+' - '+M.company)+'</title><style>'+css+'</style></head><body>'+b+'</body></html>');w.document.close();setTimeout(function(){try{w.focus();w.print()}catch(e){}},600)}
