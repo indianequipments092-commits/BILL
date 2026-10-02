@@ -6829,6 +6829,13 @@ fbAuth.onAuthStateChanged(user=>{
       <button data-page="purchaseBills" onclick="showPage('purchaseBills',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="nl">Purchase Bills</span></button>
       </div></div>
     </div>
+    <div class="nav-group open" data-group="accounts">
+      <div class="ng-head" role="button" tabindex="0" onclick="sbToggleGroup(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sbToggleGroup(this)}"><span>Accounts</span><svg class="ng-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
+      <div class="ng-body"><div class="ng-inner">
+      <button data-page="acctVouchers" onclick="showPage('acctVouchers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg><span class="nl">Vouchers</span></button>
+      <button data-page="acctLedgers" onclick="showPage('acctLedgers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M9 9h6M9 13h6"/></svg><span class="nl">Ledgers &amp; Groups</span></button>
+      </div></div>
+    </div>
     <div class="nav-group open" data-group="tools">
       <div class="ng-head" role="button" tabindex="0" onclick="sbToggleGroup(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sbToggleGroup(this)}"><span>Tools</span><svg class="ng-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
       <div class="ng-body"><div class="ng-inner">
@@ -7206,6 +7213,54 @@ fbAuth.onAuthStateChanged(user=>{
 </div>
 
 <!-- Payment Journal -->
+<div id="acctVouchers" class="page hidden">
+  <div class="top"><h1>Vouchers</h1>
+    <div class="toolbar">
+      <button class="btn primary" onclick="acctOpenVoucher('Payment')">+ Payment</button>
+      <button class="btn success" onclick="acctOpenVoucher('Receipt')">+ Receipt</button>
+      <button class="btn muted" onclick="acctOpenVoucher('Journal')">+ Journal</button>
+      <button class="btn muted" onclick="acctOpenVoucher('Contra')">+ Contra</button>
+      <button class="btn muted" onclick="acctOpenVoucher('Payment',true)">+ Expense</button>
+      <button class="btn muted" onclick="acctOpenNote('Credit Note')">+ Credit Note</button>
+      <button class="btn muted" onclick="acctOpenNote('Debit Note')">+ Debit Note</button>
+      <button class="btn muted" onclick="acctOpenNumbering()">Numbering</button>
+    </div>
+  </div>
+  <div class="dashboard" id="avStats"></div>
+  <div class="card" style="margin-top:18px">
+    <div class="grid g4">
+      <div><label>Search</label><input id="avfQ" oninput="acctRenderVouchers()" placeholder="Voucher no / ledger / narration"></div>
+      <div><label>Type</label><select id="avfT" onchange="acctRenderVouchers()"><option value="">All types</option><option value="manual">Entered by me</option><option value="auto">Auto (bills &amp; payments)</option><option>Sales</option><option>Purchase</option><option>Receipt</option><option>Payment</option><option>Journal</option><option>Contra</option><option>Credit Note</option><option>Debit Note</option></select></div>
+      <div><label>From date</label><input id="avfFrom" type="date" onchange="acctRenderVouchers()"></div>
+      <div><label>To date</label><input id="avfTo" type="date" onchange="acctRenderVouchers()"></div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Date</th><th>Voucher No</th><th>Type</th><th>Particulars</th><th class="right">Amount</th><th>Actions</th></tr></thead><tbody id="avBody"></tbody></table></div>
+  </div>
+</div>
+<div id="acctLedgers" class="page hidden">
+  <div class="top"><h1>Ledgers &amp; Groups</h1>
+    <div class="toolbar">
+      <button class="btn muted" id="alTabL" onclick="acctTab('l')">Ledgers</button>
+      <button class="btn muted" id="alTabG" onclick="acctTab('g')">Chart of Accounts</button>
+      <button class="btn primary" onclick="acctOpenLedger()">+ Ledger</button>
+      <button class="btn muted" onclick="acctOpenGroup()">+ Group</button>
+    </div>
+  </div>
+  <div class="dashboard" id="alStats"></div>
+  <div class="card hidden" id="alWarn" style="margin-top:18px;border-color:var(--danger)"><div class="sub" style="color:#fb7185">Opening balances ka Debit aur Credit barabar nahi hai. Kisi ledger (jaise Capital Account) ki opening adjust karo.</div></div>
+  <div class="card" style="margin-top:18px">
+    <div id="alLedgerView">
+      <div class="grid g3">
+        <div><label>Search</label><input id="alfQ" oninput="acctRenderLedgers()" placeholder="Ledger name"></div>
+        <div><label>Group</label><select id="alfG" onchange="acctRenderLedgers()"><option value="">All groups</option></select></div>
+        <div><label>Zero balance</label><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;color:var(--text-main);min-height:44px"><input type="checkbox" id="alfZ" onchange="acctRenderLedgers()"> Hide ledgers with no entries</label></div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Ledger</th><th>Group</th><th class="right">Opening</th><th class="right">Debit</th><th class="right">Credit</th><th class="right">Closing</th><th>Actions</th></tr></thead><tbody id="alBody"></tbody></table></div>
+    <div style="margin-top:18px"><div class="section-title">Payment mode &rarr; ledger</div><div class="sub" style="margin-bottom:10px">Invoice aur Purchase Bill ki payments is mode ke hisaab se Cash ya Bank ledger me jati hain.</div><div class="grid g4" id="alModes"></div></div>
+    </div>
+    <div id="alGroupView" class="table-wrap hidden"><table><thead><tr><th>Group</th><th>Nature</th><th class="right">Ledgers</th><th class="right">Closing</th><th></th></tr></thead><tbody id="agBody"></tbody></table></div>
+  </div>
+</div>
 <div id="journal" class="page hidden">
   <div class="top"><h1>Payment Journal</h1>
     <div class="toolbar">
@@ -8424,6 +8479,63 @@ function pf2Update(){
 </div>
 
 <!-- Customer Modal -->
+<div class="modal" id="acctVoucherModal"><div class="modalbox" style="max-width:720px">
+ <div class="modalhead"><h2 id="avTitle">Payment Voucher</h2><button class="x" onclick="closeModal('acctVoucherModal')">✕</button></div>
+ <div class="grid g3">
+   <div><label>Voucher type</label><select id="avType" onchange="acctType(this.value)"><option>Payment</option><option>Receipt</option><option>Journal</option><option>Contra</option></select></div>
+   <div><label>Date</label><input type="date" id="avDate"></div>
+   <div><label>Voucher no.</label><input id="avNo" readonly></div>
+ </div>
+ <div id="avHeadWrap" style="margin-top:12px"><label id="avHeadLabel">Paid from</label><select id="avHead" onchange="acctHead(this.value)"></select></div>
+ <div style="margin-top:14px"><div class="section-title" id="avLinesTitle">Paid to</div><div id="avLines"></div>
+   <div class="toolbar"><button class="btn muted" id="avAdd" onclick="acctAdd()">+ Add line</button><button class="btn muted" onclick="acctOpenLedger()">+ New ledger</button></div></div>
+ <div class="card" style="margin:14px 0 0;padding:12px 16px" id="avTot"></div>
+ <div style="margin-top:12px"><label>Narration</label><textarea id="avNarr" rows="2" placeholder="Optional note"></textarea></div>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctVoucherModal')">Cancel</button><button class="btn success" onclick="acctSaveVoucher()">Save voucher</button></div>
+</div></div>
+<div class="modal" id="acctLedgerModal"><div class="modalbox">
+ <div class="modalhead"><h2 id="alTitle">Add Ledger</h2><button class="x" onclick="closeModal('acctLedgerModal')">✕</button></div>
+ <div class="grid g2">
+   <div style="grid-column:1/-1"><label>Ledger name *</label><input id="alName"></div>
+   <div style="grid-column:1/-1"><label>Group</label><select id="alGroup"></select></div>
+   <div><label>Opening balance</label><input id="alOpen" type="number" inputmode="decimal" placeholder="0"></div>
+   <div><label>Dr / Cr</label><select id="alDc"><option>Dr</option><option>Cr</option></select></div>
+ </div>
+ <div class="sub" id="alHint" style="margin-top:10px"></div>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctLedgerModal')">Cancel</button><button class="btn success" onclick="acctSaveLedger()">Save ledger</button></div>
+</div></div>
+<div class="modal" id="acctGroupModal"><div class="modalbox">
+ <div class="modalhead"><h2>Add Group</h2><button class="x" onclick="closeModal('acctGroupModal')">✕</button></div>
+ <div class="grid g2"><div><label>Group name *</label><input id="agName"></div><div><label>Under</label><select id="agParent"></select></div></div>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctGroupModal')">Cancel</button><button class="btn success" onclick="acctSaveGroup()">Save group</button></div>
+</div></div>
+<div class="modal" id="acctStatementModal"><div class="modalbox" style="max-width:760px">
+ <div class="modalhead"><h2 id="asTitle">Ledger</h2><button class="x" onclick="closeModal('acctStatementModal')">✕</button></div>
+ <div class="sub" id="asSub" style="margin-bottom:12px"></div>
+ <div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher</th><th>Particulars</th><th class="right">Debit</th><th class="right">Credit</th><th class="right">Balance</th></tr></thead><tbody id="asBody"></tbody></table></div>
+</div></div>
+<div class="modal" id="acctNoteModal"><div class="modalbox">
+ <div class="modalhead"><h2 id="anTitle">Credit Note</h2><button class="x" onclick="closeModal('acctNoteModal')">✕</button></div>
+ <div class="grid g2">
+   <div><label>Note no.</label><input id="anNo" readonly></div>
+   <div><label>Date</label><input type="date" id="anDate"></div>
+   <div style="grid-column:1/-1"><label id="anPartyLabel">Customer</label><select id="anParty" onchange="noteTot()"></select></div>
+   <div><label>Against invoice / bill no.</label><input id="anRef" placeholder="Optional"></div>
+   <div><label>Taxable amount *</label><input id="anTaxable" type="number" inputmode="decimal" oninput="noteTot()"></div>
+   <div><label>GST rate %</label><input id="anRate" type="number" inputmode="decimal" value="18" oninput="noteTot()"></div>
+   <div><label>Tax type</label><select id="anMode" onchange="noteTot()"><option value="auto">Auto (party ke state se)</option><option value="intra">CGST + SGST</option><option value="inter">IGST</option></select></div>
+   <div style="grid-column:1/-1"><label>Reason / narration</label><textarea id="anNarr" rows="2" placeholder="Maal wapas, rate difference, etc."></textarea></div>
+ </div>
+ <div class="card" style="margin:14px 0 0;padding:12px 16px" id="anTot"></div>
+ <div class="sub" style="margin-top:10px">Ye sirf accounts ki entry hai, item ka stock isse nahi badalta.</div>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctNoteModal')">Cancel</button><button class="btn success" onclick="acctSaveNote()">Save note</button></div>
+</div></div>
+<div class="modal" id="acctNumModal"><div class="modalbox">
+ <div class="modalhead"><h2>Voucher numbering</h2><button class="x" onclick="closeModal('acctNumModal')">✕</button></div>
+ <div class="sub" style="margin-bottom:12px">Naya prefix sirf aane wale vouchers par lagega. Purane numbers waise hi rahenge.</div>
+ <div class="grid g2" id="anumBody"></div>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end"><button class="btn muted" onclick="closeModal('acctNumModal')">Cancel</button><button class="btn success" onclick="acctSaveNumbering()">Save</button></div>
+</div></div>
 <div class="modal" id="customerModal"><div class="modalbox">
  <div class="modalhead"><h2 id="customerModalTitle">Add New Customer</h2><button class="x" onclick="closeModal('customerModal')">✕</button></div>
  <div class="grid g2">
@@ -10139,8 +10251,16 @@ const DEFAULT_SETTINGS={
   chequeCalib:{},
   docTheme:'2'
 };
+function acctNormalize(a){
+  a=a&&typeof a==='object'?a:{};
+  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{}};
+  function ens(k,nm,g){ if(o.ledgers.some(function(l){return l.id==='lg_'+k})) return; if(o.ledgers.some(function(l){return String(l.name).toLowerCase()===nm.toLowerCase()})) nm+=' (Auto)'; o.ledgers.push({id:'lg_'+k,name:nm,group:g,opening:{amt:0,dc:'Dr'}}); }
+  [['cash','Cash','cash'],['bank','Bank Account','bank'],['sales','Sales','salesAcc'],['salesret','Sales Return','salesAcc'],['purchase','Purchase','purchAcc'],['purchret','Purchase Return','purchAcc'],['cgst','CGST','dutiesTaxes'],['sgst','SGST','dutiesTaxes'],['igst','IGST','dutiesTaxes'],['icgst','Input CGST','dutiesTaxes'],['isgst','Input SGST','dutiesTaxes'],['iigst','Input IGST','dutiesTaxes'],['discount','Discount Allowed','indirectExp'],['discrec','Discount Received','indirectInc'],['roundoff','Round Off','indirectExp']].forEach(function(x){ens(x[0],x[1],x[2])});
+  if(!a.seeded)[['capital','Capital Account','capital'],['rent','Rent','indirectExp'],['salary','Salary & Wages','indirectExp'],['elec','Electricity','indirectExp'],['transport','Transport','indirectExp'],['office','Office Expenses','indirectExp'],['intrec','Interest Received','indirectInc']].forEach(function(x){ens(x[0],x[1],x[2])});
+  return o;
+}
 function emptyDB(){
-  return {settings:{...DEFAULT_SETTINGS},customers:[],items:[],invoices:[],deletedInvoices:[],documents:[],receiptCounter:1,duplicateInvoices:[],vendors:[],purchaseOrders:[],purchaseBills:[],importedChatInvoices:[],pendingChatInvoiceMappings:{},cheques:[]};
+  return {settings:{...DEFAULT_SETTINGS},customers:[],items:[],invoices:[],deletedInvoices:[],documents:[],receiptCounter:1,duplicateInvoices:[],vendors:[],purchaseOrders:[],purchaseBills:[],importedChatInvoices:[],pendingChatInvoiceMappings:{},cheques:[],accounts:acctNormalize(null)};
 }
 // Raw parsed JSON (localStorage ya Firestore se aaya) ko hamesha ek safe, complete db shape me convert karta hai.
 function normalizeDB(parsed){
@@ -10173,7 +10293,8 @@ function normalizeDB(parsed){
     importedChatInvoices:Array.isArray(parsed.importedChatInvoices)?parsed.importedChatInvoices:[],
     pendingChatInvoiceMappings:parsed.pendingChatInvoiceMappings&&typeof parsed.pendingChatInvoiceMappings==='object'&&!Array.isArray(parsed.pendingChatInvoiceMappings)?parsed.pendingChatInvoiceMappings:{},
     // Cheque Printing module ka record (kisko, kab, kitna cheque print hua)
-    cheques:Array.isArray(parsed.cheques)?parsed.cheques:[]
+    cheques:Array.isArray(parsed.cheques)?parsed.cheques:[],
+    accounts:acctNormalize(parsed.accounts)
   };
   // Purane items (backup se aaye ya pehle se bane) me 'stock' field nahi hota — usko
   // 0 se migrate kar dete hain taaki Purchase Bill se stock add hone par NaN na bane.
@@ -10937,6 +11058,8 @@ function showPage(id,btn){
   if(id==='profile'&&typeof loadProfileUI==='function')loadProfileUI();
   if(id==='search'&&typeof initSearchPage==='function')initSearchPage();
   if(id==='chats'&&typeof renderChatsList==='function')renderChatsList();
+  if(id==='acctVouchers'&&typeof acctRenderVouchers==='function')acctRenderVouchers();
+  if(id==='acctLedgers'&&typeof acctRenderLedgers==='function')acctRenderLedgers();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -17750,6 +17873,13 @@ function importJSON(){
         if(resolveInvoiceNumberClash(n.invoiceNumber,n.id,'Backup Restore ke time isi number ka naya invoice aaya')) dupCount++;
         db.invoices.push(n);
       });
+      if(x.accounts&&typeof x.accounts==='object'){
+        const AC=db.accounts=db.accounts||acctNormalize(null);
+        ['groups','ledgers','vouchers'].forEach(k=>(x.accounts[k]||[]).forEach(n=>{ if(!n||!n.id) return; const i=AC[k].findIndex(a=>a.id===n.id); if(i>=0) AC[k][i]=n; else AC[k].push(n); }));
+        Object.assign(AC.partyOpening,x.accounts.partyOpening||{});
+        Object.assign(AC.prefixes,x.accounts.prefixes||{}); Object.assign(AC.modeMap,x.accounts.modeMap||{});
+        Object.keys(x.accounts.counters||{}).forEach(t=>{AC.counters[t]=Math.max(AC.counters[t]||0,x.accounts.counters[t]||0)});
+      }
       migrateReceiptNumbers();
       saveDB(); loadSettingsUI(); renderDuplicates(); try{renderJournal();}catch(e){}
       const msg=id('importMsg'); if(msg) msg.textContent='Import successful.'+(dupCount?` ⚠️ ${dupCount} invoice number clash mila — purana wala "Duplicate Invoices" me move kar diya gaya hai.`:'');
@@ -20270,7 +20400,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
   var CHIPS=[['all','All'],['inv','Invoices'],['cus','Customers'],['itm','Items'],['ven','Vendors'],['po','PO'],['pb','Purchase Bills'],['doc','Docs'],['rcp','Receipts'],['set','Settings'],['page','Pages'],['act','Actions']];
   var PFX={inv:['inv'],invoice:['inv'],bill:['inv'],c:['cus'],cust:['cus'],customer:['cus'],party:['cus'],i:['itm'],item:['itm'],items:['itm'],v:['ven'],vendor:['ven'],supplier:['ven'],po:['po'],pb:['pb'],doc:['doc'],q:['doc','quotation'],qt:['doc','quotation'],quote:['doc','quotation'],quotation:['doc','quotation'],pi:['doc','proforma'],proforma:['doc','proforma'],dc:['doc','challan'],challan:['doc','challan'],r:['rcp'],rcp:['rcp'],receipt:['rcp'],p:['page'],page:['page'],s:['set'],set:['set'],setting:['set'],settings:['set'],a:['act'],act:['act']};
   var STW={paid:1,unpaid:1,partial:1,overdue:1,due:1,draft:1,finalized:1,sent:1,accepted:1,rejected:1,expired:1,dispatched:1,delivered:1,returned:1,received:1,cancelled:1};
-  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
+  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
   var IC={
     inv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     cus:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/>',
@@ -21604,6 +21734,190 @@ document.addEventListener('click',function(e){
     }catch(e){}
     return r;
   };
+})();
+</script>
+<script>
+/* ===== ACCOUNTS (Phase 1+2): ledgers, groups, vouchers, auto-posting from invoices/bills/payments, credit/debit notes ===== */
+(function(){
+var DG=[['capital','Capital Account','','L'],['reserves','Reserves & Surplus','capital','L'],['loans','Loans (Liability)','','L'],['secured','Secured Loans','loans','L'],['unsecured','Unsecured Loans','loans','L'],['bankOD','Bank OD A/c','loans','L'],['currLiab','Current Liabilities','','L'],['dutiesTaxes','Duties & Taxes','currLiab','L'],['provisions','Provisions','currLiab','L'],['sundryCred','Sundry Creditors','currLiab','L'],['fixedAssets','Fixed Assets','','A'],['investments','Investments','','A'],['currAssets','Current Assets','','A'],['bank','Bank Accounts','currAssets','A'],['cash','Cash-in-Hand','currAssets','A'],['deposits','Deposits (Asset)','currAssets','A'],['loansAdv','Loans & Advances (Asset)','currAssets','A'],['stock','Stock-in-Hand','currAssets','A'],['sundryDeb','Sundry Debtors','currAssets','A'],['salesAcc','Sales Accounts','','I'],['directInc','Direct Incomes','','I'],['indirectInc','Indirect Incomes','','I'],['purchAcc','Purchase Accounts','','E'],['directExp','Direct Expenses','','E'],['indirectExp','Indirect Expenses','','E'],['suspense','Suspense A/c','','A']];
+var PFX_DEF={Payment:'PAY',Receipt:'RCT',Journal:'JRN',Contra:'CNT','Credit Note':'CN','Debit Note':'DN'};
+var SYSL=['cash','bank','sales','salesret','purchase','purchret','cgst','sgst','igst','icgst','isgst','iigst','discount','discrec','roundoff'];
+var BADGE={Payment:'unpaid',Receipt:'paid',Journal:'partial',Contra:'archived',Sales:'final',Purchase:'partial','Credit Note':'unpaid','Debit Note':'paid'};
+var $=function(i){return document.getElementById(i)},S={},S2={},N={},tab='l';
+function A(){return db&&db.accounts}
+function pfx(t){var p=A().prefixes&&A().prefixes[t];return p||PFX_DEF[t]}
+function groups(){return DG.map(function(g){return{id:g[0],name:g[1],parent:g[2],nature:g[3],sys:1}}).concat(A().groups)}
+function gOf(i){return groups().find(function(g){return g.id===i})||{name:'?',nature:'A'}}
+function under(gid){var r=[gid];groups().forEach(function(g){if(r.indexOf(g.parent)>-1&&r.indexOf(g.id)<0)r.push(g.id)});return r}
+function sg(o){return(o&&o.dc==='Cr'?-1:1)*(+(o&&o.amt)||0)}
+function r2(n){return Math.round((+n||0)*100)/100}
+function sum(r,dc){return r.reduce(function(s,x){return s+(!dc||x.dc===dc?x.amount:0)},0)}
+function vAmt(v){return v.amount!=null?v.amount:sum(v.lines,'Dr')}
+function lg(k){return'lg_'+k}
+
+/* ---- Auto vouchers: invoices, purchase bills aur unke payments se (kabhi store nahi hote, hamesha taaza) ---- */
+function sameState(p){var cs=String(db.settings.state||'').trim().toUpperCase(),ps=String(p&&p.state||'').trim().toUpperCase();
+ if(p&&p.stateCode&&db.settings.stateCode)return String(p.stateCode)===String(db.settings.stateCode);if(!ps||!cs)return true;return ps===cs}
+function modeLedger(m){var mm=A().modeMap||{};return mm[m]||(String(m||'').trim().toLowerCase()==='cash'?lg('cash'):lg('bank'))}
+function custId(inv){var c=inv.customer||{};if(inv.customerId)return'c:'+inv.customerId;var n=String(c.name||'').trim().toLowerCase(),f=n&&db.customers.find(function(x){return String(x.name||'').trim().toLowerCase()===n});return f?'c:'+f.id:'cn:'+(n||'unknown')}
+function balance(L){var d=sum(L,'Dr'),c=sum(L,'Cr'),df=r2(d-c);if(Math.abs(df)>0.004)L.push({ledger:lg('roundoff'),dc:df>0?'Cr':'Dr',amount:Math.abs(df)});return L}
+function ln(L,l,dc,a,nm){a=r2(a);if(a>0.004){var o={ledger:l,dc:dc,amount:a};if(nm)o.name=nm;L.push(o)}}
+function autoV(){var out=[];
+ (db.invoices||[]).forEach(function(inv){if(inv.status!=='Finalized')return;var t=inv.totals||{},cg=+t.cgst||0,sgt=+t.sgst||0,ig=+t.igst||0,g=+t.grand||0,pid=custId(inv),nm=(inv.customer&&inv.customer.name)||'Customer',tx=t.taxable!=null?+t.taxable:Math.max(0,g-cg-sgt-ig),ro=+t.roundOff||0,L=[];
+  ln(L,pid,'Dr',g,nm);ln(L,lg('discount'),'Dr',+t.discount||0);ln(L,lg('roundoff'),ro<0?'Dr':'Cr',Math.abs(ro));
+  ln(L,lg('sales'),'Cr',tx);ln(L,lg('cgst'),'Cr',cg);ln(L,lg('sgst'),'Cr',sgt);ln(L,lg('igst'),'Cr',ig);
+  var ca=Date.parse(inv.createdAt)||0;
+  out.push({id:'inv:'+inv.id,type:'Sales',auto:1,src:'Invoice',goto:'history',no:inv.invoiceNumber||'',date:inv.date||'',narration:'Invoice '+(inv.invoiceNumber||''),amount:g,lines:balance(L),createdAt:ca});
+  (inv.payments||[]).forEach(function(p,i){var a=+p.amount||0;if(a<=0)return;var L2=[];ln(L2,modeLedger(p.mode),'Dr',a);ln(L2,pid,'Cr',a,nm);
+   out.push({id:'ip:'+inv.id+':'+(p.id||i),type:'Receipt',auto:1,src:'Payment Journal',goto:'journal',no:p.receiptNo||('RC-'+(inv.invoiceNumber||'')),date:p.date||inv.date||'',narration:'Against '+(inv.invoiceNumber||'invoice')+(p.mode?' ('+p.mode+')':'')+(p.note?' - '+p.note:''),amount:a,lines:L2,createdAt:ca+i+1})})});
+ (db.purchaseBills||[]).forEach(function(pb){var t=pb.totals||{},g=+t.grand||0,tax=+t.tax||0,ro=+t.roundOff||0,vid='v:'+pb.vendorId,v=db.vendors.find(function(x){return x.id===pb.vendorId}),nm=pb.vendorName||(v&&v.name)||'Vendor',inter=v?!sameState(v):false,tx=t.taxable!=null?+t.taxable:Math.max(0,g-tax),L=[];
+  ln(L,lg('purchase'),'Dr',tx,'');
+  if(inter)ln(L,lg('iigst'),'Dr',tax);else{var h=r2(tax/2);ln(L,lg('icgst'),'Dr',h);ln(L,lg('isgst'),'Dr',tax-h)}
+  ln(L,vid,'Cr',g,nm);ln(L,lg('discrec'),'Cr',+t.discount||0);ln(L,lg('roundoff'),ro>0?'Dr':'Cr',Math.abs(ro));
+  var ca=Date.parse(pb.createdAt)||0;
+  out.push({id:'pb:'+pb.id,type:'Purchase',auto:1,src:'Purchase Bill',goto:'purchaseBills',no:pb.pbNumber||'',date:pb.date||'',narration:'Vendor bill '+(pb.vendorBillNo||pb.pbNumber||''),amount:g,lines:balance(L),createdAt:ca});
+  (pb.payments||[]).forEach(function(p,i){var a=+p.amount||0;if(a<=0)return;var L2=[];ln(L2,vid,'Dr',a,nm);ln(L2,modeLedger(p.mode),'Cr',a);
+   out.push({id:'pp:'+pb.id+':'+(p.id||i),type:'Payment',auto:1,src:'Purchase Bill',goto:'purchaseBills',no:(pb.pbNumber||'PB')+'/P'+(i+1),date:p.date||pb.date||'',narration:'Against '+(pb.pbNumber||'bill')+(p.mode?' ('+p.mode+')':'')+(p.note?' - '+p.note:''),amount:a,lines:L2,createdAt:ca+i+1})})});
+ return out}
+function allV(){return A().vouchers.concat(autoV())}
+
+/* ---- Ledgers ---- */
+function ledgers(V){var a=A(),r=a.ledgers.map(function(l){return{id:l.id,name:l.name,group:l.group,o:sg(l.opening),own:1,sys:SYSL.indexOf(String(l.id).replace('lg_',''))>-1&&String(l.id).indexOf('lg_')===0}}),seen={};
+ db.customers.forEach(function(c){r.push({id:'c:'+c.id,name:c.name,group:'sundryDeb',o:sg(a.partyOpening['c:'+c.id]),party:1})});
+ db.vendors.forEach(function(c){r.push({id:'v:'+c.id,name:c.name,group:'sundryCred',o:sg(a.partyOpening['v:'+c.id]),party:1})});
+ r.forEach(function(l){seen[l.id]=1});
+ (V||allV()).forEach(function(v){v.lines.forEach(function(x){if(seen[x.ledger])return;seen[x.ledger]=1;r.push({id:x.ledger,name:x.name||'(deleted party)',group:String(x.ledger).charAt(0)==='v'?'sundryCred':'sundryDeb',o:0,party:1,orphan:1})})});return r}
+function bal(){var V=allV(),m={};ledgers(V).forEach(function(l){m[l.id]={l:l,dr:0,cr:0}});V.forEach(function(v){v.lines.forEach(function(x){var b=m[x.ledger];if(!b)return;if(x.dc==='Dr')b.dr+=x.amount;else b.cr+=x.amount})});Object.keys(m).forEach(function(k){m[k].c=m[k].l.o+m[k].dr-m[k].cr});return m}
+function fb(n){n=Math.round(n*100)/100;return n===0?'0.00':money(Math.abs(n))+(n>0?' Dr':' Cr')}
+function isCB(l){return l.group==='cash'||l.group==='bank'}
+function isExp(l){return gOf(l.group).nature==='E'}
+function nameMap(){var m={};ledgers().forEach(function(l){m[l.id]=l.name});return m}
+function opts(f,sel){var g={},h='<option value="">Select ledger…</option>';ledgers().filter(f).forEach(function(l){(g[l.group]=g[l.group]||[]).push(l)});groups().forEach(function(gr){if(g[gr.id])h+='<optgroup label="'+esc(gr.name)+'">'+g[gr.id].map(function(l){return'<option value="'+esc(l.id)+'"'+(l.id===sel?' selected':'')+'>'+esc(l.name)+'</option>'}).join('')+'</optgroup>'});return h}
+function gopts(sel){return groups().map(function(g){var d=0,p=g;while(p&&p.parent){d++;p=gOf(p.parent)}return'<option value="'+g.id+'"'+(g.id===sel?' selected':'')+'>'+'— '.repeat(d)+esc(g.name)+'</option>'}).join('')}
+function tt(m){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#10b981;color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2000)}
+function nextNo(t){return pfx(t)+'-'+String((A().counters[t]||0)+1).padStart(4,'0')}
+function snap(L){var m=nameMap();L.forEach(function(x){x.name=m[x.ledger]||x.name||''});return L}
+
+/* ---- Voucher editor (Payment / Receipt / Journal / Contra / Expense) ---- */
+window.acctOpenVoucher=function(type,exp,vid){
+ var v=vid&&A().vouchers.find(function(x){return x.id===vid});
+ if(v&&(v.type==='Credit Note'||v.type==='Debit Note'))return acctOpenNote(v.type,v.id);
+ S={id:vid||null,type:v?v.type:type,exp:v?!!v.expense:!!exp,head:v?v.head:'',lines:[]};
+ S.lines=v?v.lines.filter(function(x){return S.type==='Journal'||x.ledger!==v.head}).map(function(x){return{ledger:x.ledger,dc:x.dc,amt:x.amount}}):blank(S.type);
+ $('avDate').value=v?v.date:new Date().toISOString().slice(0,10);$('avNarr').value=v&&v.narration||'';$('avNo').value=v?v.no:nextNo(S.type);
+ draw();openModal('acctVoucherModal')};
+function blank(t){return t==='Journal'?[{ledger:'',dc:'Dr',amt:''},{ledger:'',dc:'Cr',amt:''}]:[{ledger:'',dc:'',amt:''}]}
+window.acctType=function(t){S.type=t;S.exp=false;S.lines=blank(t);$('avNo').value=nextNo(t);draw()};
+window.acctHead=function(v){S.head=v};
+window.acctLn=function(i,k,v){S.lines[i][k]=v;if(k!=='ledger')tot()};
+window.acctAdd=function(){S.lines.push({ledger:'',dc:S.type==='Journal'?'Dr':'',amt:''});draw()};
+window.acctRm=function(i){if(S.lines.length>1)S.lines.splice(i,1);draw()};
+function draw(){var t=S.type,j=t==='Journal',c=t==='Contra';
+ $('avTitle').textContent=(S.id?'Edit ':'')+(S.exp?'Expense Entry':t+' Voucher');$('avType').value=t;$('avType').disabled=!!S.id;
+ $('avHeadWrap').classList.toggle('hidden',j);
+ $('avHeadLabel').textContent=t==='Payment'?'Paid from (Cash / Bank)':t==='Receipt'?'Received in (Cash / Bank)':'From (Cash / Bank)';
+ $('avHead').innerHTML=opts(isCB,S.head);
+ $('avLinesTitle').textContent=j?'Entries':t==='Payment'?(S.exp?'Expense':'Paid to'):t==='Receipt'?'Received from':'To (Cash / Bank)';
+ var f=c?isCB:S.exp?isExp:function(l){return!isCB(l)};
+ $('avLines').innerHTML=S.lines.map(function(x,i){return'<div style="display:grid;grid-template-columns:'+(j?'84px ':'')+'minmax(0,1fr) 120px 40px;gap:8px;margin-bottom:8px">'+(j?'<select onchange="acctLn('+i+',\'dc\',this.value)"><option'+(x.dc==='Dr'?' selected':'')+'>Dr</option><option'+(x.dc==='Cr'?' selected':'')+'>Cr</option></select>':'')+'<select onchange="acctLn('+i+',\'ledger\',this.value)">'+opts(f,x.ledger)+'</select><input type="number" inputmode="decimal" placeholder="Amount" value="'+x.amt+'" oninput="acctLn('+i+',\'amt\',this.value)"><button class="btn muted" style="padding:0" onclick="acctRm('+i+')">✕</button></div>'}).join('');
+ $('avAdd').classList.toggle('hidden',c);tot()}
+function tot(){var j=S.type==='Journal',d=0,c=0;S.lines.forEach(function(x){var a=+x.amt||0;if(x.dc==='Cr')c+=a;else d+=a});
+ $('avTot').innerHTML=j?'Debit <b>₹ '+money(d)+'</b> &nbsp; Credit <b>₹ '+money(c)+'</b> &nbsp; '+(Math.abs(d-c)<0.005?'<span style="color:#34d399">Balanced</span>':'<span style="color:#fb7185">Fark ₹ '+money(Math.abs(d-c))+'</span>'):'Total <b>₹ '+money(d)+'</b>'}
+window.acctSaveVoucher=function(){var t=S.type,d=$('avDate').value,h=S.head=$('avHead').value,L;
+ if(!d)return alert('Date daalo');
+ var rows=S.lines.map(function(x){return{ledger:x.ledger,dc:x.dc,amount:r2(x.amt)}});
+ if(rows.some(function(x){return!x.ledger||x.amount<=0}))return alert('Har line me ledger aur amount (0 se zyada) chahiye');
+ if(t==='Journal'){if(rows.length<2)return alert('Journal me kam se kam 2 lines chahiye');var df=Math.abs(sum(rows,'Dr')-sum(rows,'Cr'));if(df>0.005)return alert('Debit aur Credit barabar nahi hain (fark ₹'+money(df)+')');L=rows}
+ else{if(!h)return alert('Cash / Bank ledger chuno');if(rows.some(function(x){return x.ledger===h}))return alert('Dono side me same ledger nahi ho sakta');
+  var dc=t==='Receipt'?'Cr':'Dr';L=rows.map(function(x){return{ledger:x.ledger,dc:dc,amount:x.amount}});L.push({ledger:h,dc:dc==='Dr'?'Cr':'Dr',amount:r2(sum(rows))})}
+ snap(L);
+ var a=A(),v=S.id&&a.vouchers.find(function(x){return x.id===S.id}),nr=$('avNarr').value.trim();
+ if(v){v.date=d;v.lines=L;v.head=t==='Journal'?'':h;v.narration=nr;v.updatedAt=Date.now()}
+ else{var n=(a.counters[t]||0)+1;a.counters[t]=n;a.vouchers.push({id:crypto.randomUUID(),type:t,no:pfx(t)+'-'+String(n).padStart(4,'0'),date:d,narration:nr,lines:L,head:t==='Journal'?'':h,expense:S.exp||undefined,createdAt:Date.now()})}
+ saveDB();closeModal('acctVoucherModal');acctRenderVouchers();tt('Voucher saved')};
+window.acctDelVoucher=function(i){var a=A(),v=a.vouchers.find(function(x){return x.id===i});if(!v||!confirm(v.no+' delete karna hai?'))return;a.vouchers=a.vouchers.filter(function(x){return x.id!==i});saveDB();acctRenderVouchers()};
+
+/* ---- Credit Note (sales return) / Debit Note (purchase return) ---- */
+function partyList(t){var cn=t==='Credit Note';return ledgers().filter(function(l){return cn?(l.group==='sundryDeb'):(l.group==='sundryCred')})}
+function partyRec(id){return id.charAt(0)==='c'?db.customers.find(function(x){return'c:'+x.id===id}):db.vendors.find(function(x){return'v:'+x.id===id})}
+function noteLines(t,party,pname,taxable,rate,inter){var tax=r2(taxable*rate/100),h=r2(tax/2),total=r2(taxable+tax),L=[];
+ if(t==='Credit Note'){ln(L,lg('salesret'),'Dr',taxable);if(inter)ln(L,lg('igst'),'Dr',tax);else{ln(L,lg('cgst'),'Dr',h);ln(L,lg('sgst'),'Dr',tax-h)}ln(L,party,'Cr',total,pname)}
+ else{ln(L,party,'Dr',total,pname);ln(L,lg('purchret'),'Cr',taxable);if(inter)ln(L,lg('iigst'),'Cr',tax);else{ln(L,lg('icgst'),'Cr',h);ln(L,lg('isgst'),'Cr',tax-h)}}
+ return{lines:L,tax:tax,total:total}}
+window.acctOpenNote=function(type,vid){var v=vid&&A().vouchers.find(function(x){return x.id===vid});
+ N={id:vid||null,type:v?v.type:type};
+ $('anTitle').textContent=(v?'Edit ':'')+(N.type==='Credit Note'?'Credit Note (Sales Return)':'Debit Note (Purchase Return)');
+ $('anNo').value=v?v.no:nextNo(N.type);$('anDate').value=v?v.date:new Date().toISOString().slice(0,10);
+ $('anPartyLabel').textContent=N.type==='Credit Note'?'Customer':'Vendor';
+ $('anParty').innerHTML='<option value="">Select…</option>'+partyList(N.type).map(function(l){return'<option value="'+esc(l.id)+'"'+(v&&v.party===l.id?' selected':'')+'>'+esc(l.name)+'</option>'}).join('');
+ $('anRef').value=v?v.ref||'':'';$('anTaxable').value=v?v.taxable:'';$('anRate').value=v?v.rate:'18';$('anMode').value=v?(v.inter?'inter':'intra'):'auto';$('anNarr').value=v?v.narration||'':'';
+ noteTot();openModal('acctNoteModal')};
+function noteCalc(){var p=$('anParty').value,tx=r2($('anTaxable').value),rate=+$('anRate').value||0,m=$('anMode').value,inter=m==='inter'||(m==='auto'&&p&&!sameState(partyRec(p)));return{p:p,tx:tx,rate:rate,inter:inter}}
+window.noteTot=function(){var c=noteCalc(),r=noteLines(N.type,c.p||'x','',c.tx,c.rate,c.inter);$('anTot').innerHTML='Taxable <b>₹ '+money(c.tx)+'</b> &nbsp; '+(c.inter?'IGST':'CGST + SGST')+' <b>₹ '+money(r.tax)+'</b> &nbsp; Total <b>₹ '+money(r.total)+'</b>'};
+window.acctSaveNote=function(){var c=noteCalc(),nm=nameMap();if(!c.p)return alert('Party chuno');if(c.tx<=0)return alert('Taxable amount daalo');if(!$('anDate').value)return alert('Date daalo');
+ var r=noteLines(N.type,c.p,nm[c.p]||'',c.tx,c.rate,c.inter),a=A(),v=N.id&&a.vouchers.find(function(x){return x.id===N.id}),f={date:$('anDate').value,party:c.p,ref:$('anRef').value.trim(),taxable:c.tx,rate:c.rate,inter:c.inter,narration:$('anNarr').value.trim(),lines:snap(r.lines),amount:r.total,head:''};
+ if(v)Object.assign(v,f,{updatedAt:Date.now()});else{var t=N.type,n=(a.counters[t]||0)+1;a.counters[t]=n;a.vouchers.push(Object.assign({id:crypto.randomUUID(),type:t,no:pfx(t)+'-'+String(n).padStart(4,'0'),createdAt:Date.now()},f))}
+ saveDB();closeModal('acctNoteModal');acctRenderVouchers();tt(N.type+' saved')};
+
+/* ---- Numbering + payment-mode mapping ---- */
+window.acctOpenNumbering=function(){$('anumBody').innerHTML=Object.keys(PFX_DEF).map(function(t){return'<div><label>'+esc(t)+'</label><input data-t="'+esc(t)+'" value="'+esc(pfx(t))+'" maxlength="8" style="text-transform:uppercase"><div class="sub" style="margin-top:4px">Agla: '+esc(nextNo(t))+'</div></div>'}).join('');openModal('acctNumModal')};
+window.acctSaveNumbering=function(){var p={},bad=0;document.querySelectorAll('#anumBody input').forEach(function(i){var v=i.value.trim().toUpperCase();if(!/^[A-Z0-9]{1,8}$/.test(v))bad=1;p[i.dataset.t]=v});if(bad)return alert('Prefix me sirf letters/numbers (1 se 8) allowed hain');A().prefixes=p;saveDB();closeModal('acctNumModal');tt('Numbering saved')};
+window.acctSetMode=function(m,l){var a=A();a.modeMap=a.modeMap||{};a.modeMap[m]=l;saveDB();acctRenderLedgers()};
+function modesUsed(){var s={Cash:1,Bank:1,UPI:1,Cheque:1};(db.invoices||[]).forEach(function(i){(i.payments||[]).forEach(function(p){if(p.mode)s[p.mode]=1})});(db.purchaseBills||[]).forEach(function(i){(i.payments||[]).forEach(function(p){if(p.mode)s[p.mode]=1})});return Object.keys(s)}
+
+/* ---- Vouchers page ---- */
+window.acctGo=function(p){showPage(p)};
+window.acctRenderVouchers=function(){var a=A();if(!a)return;var q=($('avfQ').value||'').toLowerCase(),ty=$('avfT').value,f=$('avfFrom').value,to=$('avfTo').value,V=allV(),m={};ledgers(V).forEach(function(l){m[l.id]=l.name});
+ var L=V.filter(function(v){return(!ty||v.type===ty||(ty==='auto'&&v.auto)||(ty==='manual'&&!v.auto))&&(!f||v.date>=f)&&(!to||v.date<=to)&&(!q||(v.no+' '+(v.narration||'')+' '+v.lines.map(function(x){return m[x.ledger]||''}).join(' ')).toLowerCase().indexOf(q)>-1)}).sort(function(x,y){return String(y.date).localeCompare(String(x.date))||y.createdAt-x.createdAt});
+ var T={Sales:0,Receipt:0,Payment:0};L.forEach(function(v){if(T[v.type]!=null)T[v.type]+=vAmt(v)});
+ $('avStats').innerHTML=[['VOUCHERS',L.length],['SALES','₹ '+money(T.Sales)],['RECEIPTS','₹ '+money(T.Receipt)],['PAYMENTS','₹ '+money(T.Payment)]].map(function(s){return'<div class="stat-card"><div class="sub">'+s[0]+'</div><div class="stat" style="font-size:22px">'+s[1]+'</div></div>'}).join('');
+ var cap=L.length>300;
+ $('avBody').innerHTML=L.length?L.slice(0,300).map(function(v){var nm=function(dc){return v.lines.filter(function(x){return x.dc===dc}).map(function(x){return esc(m[x.ledger]||x.name||'(deleted party)')}).join(', ')};
+  var act=v.auto?'<button class="btn muted" onclick="acctGo(\''+v.goto+'\')">Open '+esc(v.src)+'</button>':'<button class="btn muted" onclick="acctOpenVoucher(\'\',false,\''+v.id+'\')">Edit</button><button class="btn danger" onclick="acctDelVoucher(\''+v.id+'\')">Delete</button>';
+  return'<tr><td>'+esc(v.date)+'</td><td><b>'+esc(v.no)+'</b>'+(v.auto?'<div class="sub">Auto: '+esc(v.src)+'</div>':'')+'</td><td><span class="badge '+(BADGE[v.type]||'draft')+'">'+(v.expense?'Expense':v.type)+'</span></td><td>Dr: '+nm('Dr')+'<div class="sub">Cr: '+nm('Cr')+(v.narration?' | '+esc(v.narration):'')+'</div></td><td class="right"><b>₹ '+money(vAmt(v))+'</b></td><td>'+act+'</td></tr>'}).join('')+(cap?'<tr><td colspan="6" class="center sub" style="padding:14px">Pehle 300 dikh rahe hain ('+L.length+' me se). Date ya search se filter karo.</td></tr>':''):'<tr><td colspan="6" class="center sub" style="padding:24px">Koi voucher nahi mila. Upar se Payment, Receipt, Journal, Contra, Expense, Credit Note ya Debit Note banao.</td></tr>'};
+
+/* ---- Ledgers & groups ---- */
+window.acctTab=function(t){tab=t;acctRenderLedgers()};
+window.acctRenderLedgers=function(){var a=A();if(!a)return;var b=bal(),q=($('alfQ').value||'').toLowerCase(),gf=$('alfG').value,hz=$('alfZ').checked;
+ var gs=$('alfG');if(!gs.dataset.n||gs.dataset.n!=groups().length){gs.innerHTML='<option value="">All groups</option>'+gopts('');gs.value=gf;gs.dataset.n=groups().length}
+ $('alTabL').className='btn '+(tab==='l'?'primary':'muted');$('alTabG').className='btn '+(tab==='g'?'primary':'muted');
+ $('alLedgerView').classList.toggle('hidden',tab!=='l');$('alGroupView').classList.toggle('hidden',tab!=='g');
+ var all=Object.keys(b).map(function(k){return b[k]}),dr=0,cr=0,od=0;all.forEach(function(x){if(x.c>0)dr+=x.c;else cr-=x.c;od+=x.l.o});
+ $('alStats').innerHTML=[['LEDGERS',all.length],['DEBIT BALANCES','₹ '+money(dr)],['CREDIT BALANCES','₹ '+money(cr)],['OPENING DIFFERENCE',Math.abs(od)<0.005?'None':'₹ '+money(Math.abs(od))+(od>0?' Dr':' Cr')]].map(function(s){return'<div class="stat-card"><div class="sub">'+s[0]+'</div><div class="stat" style="font-size:22px">'+s[1]+'</div></div>'}).join('');
+ $('alWarn').classList.toggle('hidden',Math.abs(od)<0.005);
+ var rows=all.filter(function(x){return(!gf||x.l.group===gf)&&(!q||x.l.name.toLowerCase().indexOf(q)>-1)&&(!hz||Math.abs(x.c)>0.004||x.dr||x.cr)}).sort(function(x,y){return gOf(x.l.group).name.localeCompare(gOf(y.l.group).name)||x.l.name.localeCompare(y.l.name)});
+ $('alBody').innerHTML=rows.map(function(x){var l=x.l;return'<tr><td><a href="#" style="color:#a5b4fc;font-weight:700" onclick="acctStatement(\''+esc(l.id)+'\');return false">'+esc(l.name)+'</a>'+(l.orphan?' <span class="badge archived">deleted party</span>':'')+'</td><td>'+esc(gOf(l.group).name)+'</td><td class="right">'+fb(l.o)+'</td><td class="right">'+money(x.dr)+'</td><td class="right">'+money(x.cr)+'</td><td class="right"><b>'+fb(x.c)+'</b></td><td>'+(l.orphan?'':'<button class="btn muted" onclick="acctOpenLedger(\''+esc(l.id)+'\')">Edit</button>')+(l.own&&!l.sys?'<button class="btn danger" onclick="acctDelLedger(\''+esc(l.id)+'\')">Delete</button>':'')+'</td></tr>'}).join('')||'<tr><td colspan="7" class="center sub" style="padding:24px">Koi ledger nahi mila</td></tr>';
+ $('agBody').innerHTML=groups().map(function(g){var d=0,p=g;while(p.parent){d++;p=gOf(p.parent)}var u=under(g.id),n=0,s=0;all.forEach(function(x){if(u.indexOf(x.l.group)>-1){n++;s+=x.c}});
+  return'<tr><td style="padding-left:'+(10+d*18)+'px">'+(d?'':'<b>')+esc(g.name)+(d?'':'</b>')+'</td><td>'+({A:'Asset',L:'Liability',I:'Income',E:'Expense'})[g.nature]+'</td><td class="right">'+n+'</td><td class="right"><b>'+fb(s)+'</b></td><td>'+(g.sys?'':'<button class="btn danger" onclick="acctDelGroup(\''+g.id+'\')">Delete</button>')+'</td></tr>'}).join('');
+ var cbo=function(sel){return opts(isCB,sel)};$('alModes').innerHTML=modesUsed().map(function(md){return'<div><label>'+esc(md)+' payment</label><select data-m="'+esc(md)+'" onchange="acctSetMode(this.dataset.m,this.value)">'+cbo(modeLedger(md))+'</select></div>'}).join('')};
+window.acctOpenLedger=function(lid){var l=lid&&ledgers().find(function(x){return x.id===lid});S2={id:lid||null,party:!!(l&&l.party)};
+ $('alTitle').textContent=l?'Edit Ledger':'Add Ledger';$('alName').value=l?l.name:'';$('alName').disabled=S2.party;
+ $('alGroup').innerHTML=gopts(l?l.group:'indirectExp');$('alGroup').disabled=S2.party;
+ var o=l?l.o:0;$('alOpen').value=o?Math.abs(o):'';$('alDc').value=o<0?'Cr':'Dr';
+ $('alHint').textContent=S2.party?'Naam Customers / Vendors page se badalta hai. Yaha sirf opening balance set hota hai.':'';openModal('acctLedgerModal')};
+window.acctSaveLedger=function(){var a=A(),nm=$('alName').value.trim(),op={amt:r2($('alOpen').value),dc:$('alDc').value};
+ if(S2.party){a.partyOpening[S2.id]=op}else{
+  if(!nm)return alert('Ledger ka naam daalo');
+  if(a.ledgers.some(function(x){return x.id!==S2.id&&x.name.toLowerCase()===nm.toLowerCase()}))return alert('Is naam ka ledger pehle se hai');
+  var l=S2.id&&a.ledgers.find(function(x){return x.id===S2.id});
+  if(l){l.name=nm;l.group=$('alGroup').value;l.opening=op}else a.ledgers.push({id:crypto.randomUUID(),name:nm,group:$('alGroup').value,opening:op})}
+ saveDB();closeModal('acctLedgerModal');acctRenderLedgers();if($('acctVoucherModal').classList.contains('show'))draw();tt('Ledger saved')};
+window.acctDelLedger=function(i){var a=A();if(allV().some(function(v){return v.lines.some(function(x){return x.ledger===i})}))return alert('Is ledger me entries hain, isliye delete nahi ho sakta.');
+ if(!confirm('Ye ledger delete karna hai?'))return;a.ledgers=a.ledgers.filter(function(x){return x.id!==i});saveDB();acctRenderLedgers()};
+window.acctOpenGroup=function(){$('agName').value='';$('agParent').innerHTML=gopts('currAssets');openModal('acctGroupModal')};
+window.acctSaveGroup=function(){var nm=$('agName').value.trim(),p=$('agParent').value;if(!nm)return alert('Group ka naam daalo');
+ if(groups().some(function(g){return g.name.toLowerCase()===nm.toLowerCase()}))return alert('Is naam ka group pehle se hai');
+ A().groups.push({id:'g_'+crypto.randomUUID(),name:nm,parent:p,nature:gOf(p).nature});saveDB();closeModal('acctGroupModal');tab='g';acctRenderLedgers()};
+window.acctDelGroup=function(i){var a=A();if(groups().some(function(g){return g.parent===i})||a.ledgers.some(function(l){return l.group===i}))return alert('Is group ke andar ledger ya sub-group hai. Pehle unhe hatao.');
+ if(!confirm('Group delete karna hai?'))return;a.groups=a.groups.filter(function(g){return g.id!==i});saveDB();acctRenderLedgers()};
+window.acctStatement=function(lid){var V=allV(),b=bal()[lid];if(!b)return;var m={},rows=[];ledgers(V).forEach(function(l){m[l.id]=l.name});
+ V.forEach(function(v){v.lines.forEach(function(x){if(x.ledger===lid)rows.push({v:v,x:x})})});
+ rows.sort(function(p,q){return String(p.v.date).localeCompare(String(q.v.date))||p.v.createdAt-q.v.createdAt});
+ var run=b.l.o,h='<tr><td colspan="5"><b>Opening balance</b></td><td class="right"><b>'+fb(run)+'</b></td></tr>';
+ rows.forEach(function(r){run+=r.x.dc==='Dr'?r.x.amount:-r.x.amount;h+='<tr><td>'+esc(r.v.date)+'</td><td>'+esc(r.v.no)+'</td><td>'+(r.v.lines.filter(function(y){return y.dc!==r.x.dc}).map(function(y){return esc(m[y.ledger]||y.name||'?')}).join(', ')||'-')+'</td><td class="right">'+(r.x.dc==='Dr'?money(r.x.amount):'')+'</td><td class="right">'+(r.x.dc==='Cr'?money(r.x.amount):'')+'</td><td class="right">'+fb(run)+'</td></tr>'});
+ h+='<tr><td colspan="5"><b>Closing balance</b></td><td class="right"><b>'+fb(run)+'</b></td></tr>';
+ $('asTitle').textContent=b.l.name;$('asSub').textContent=gOf(b.l.group).name+(b.l.orphan?' | Ye party ab delete ho chuki hai, par uski entries safe hain.':'');$('asBody').innerHTML=h;openModal('acctStatementModal')};
+window.__acct={bal:bal,allV:allV,ledgers:ledgers};
 })();
 </script>
 
