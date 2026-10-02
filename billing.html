@@ -6827,6 +6827,7 @@ fbAuth.onAuthStateChanged(user=>{
       <button data-page="vendors" onclick="showPage('vendors',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/></svg><span class="nl">Vendors</span></button>
       <button data-page="purchaseOrders" onclick="showPage('purchaseOrders',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11h6M9 15h4"/></svg><span class="nl">Purchase Orders</span></button>
       <button data-page="purchaseBills" onclick="showPage('purchaseBills',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><span class="nl">Purchase Bills</span></button>
+      <button data-page="invAdv" onclick="showPage('invAdv',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V9l9-5 9 5v12"/><path d="M8 21v-7h8v7M3 21h18"/></svg><span class="nl">Godown &amp; Mfg</span><span id="ivBadge" title="Low stock items" style="display:none;margin-left:auto;background:#f43f5e;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px"></span></button>
       </div></div>
     </div>
     <div class="nav-group open" data-group="accounts">
@@ -7342,6 +7343,17 @@ fbAuth.onAuthStateChanged(user=>{
     </div>
   </div>
   <div class="card" style="margin-top:18px"><div id="gsSub" class="sub" style="margin-bottom:12px"></div><div id="gsBody" class="table-wrap"></div></div>
+</div>
+<div id="invAdv" class="page hidden">
+  <div class="top"><h1>Godown &amp; Manufacturing</h1></div>
+  <div class="card" style="margin-top:18px">
+    <div id="ivTabs" class="toolbar" style="flex-wrap:wrap;gap:8px"></div>
+    <div class="grid g4" style="margin-top:14px">
+      <div><label>Item / customer search</label><input id="ivQ" placeholder="Naam se dhundo" oninput="invRender(1)"></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn muted" onclick="invCSV()">CSV</button><button class="btn muted" onclick="invPrint()">Print</button></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px"><div id="ivSub" class="sub" style="margin-bottom:12px"></div><div id="ivBody" class="table-wrap"></div></div>
 </div>
 <div id="acctControl" class="page hidden">
   <div class="top"><h1>Audit &amp; Security</h1></div>
@@ -10340,7 +10352,7 @@ const DEFAULT_SETTINGS={
 };
 function acctNormalize(a){
   a=a&&typeof a==='object'?a:{};
-  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:'',gst:a.gst&&typeof a.gst==='object'?a.gst:{}};
+  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:'',gst:a.gst&&typeof a.gst==='object'?a.gst:{},inv:a.inv&&typeof a.inv==='object'?a.inv:{}};
   function ens(k,nm,g){ if(o.ledgers.some(function(l){return l.id==='lg_'+k})) return; if(o.ledgers.some(function(l){return String(l.name).toLowerCase()===nm.toLowerCase()})) nm+=' (Auto)'; o.ledgers.push({id:'lg_'+k,name:nm,group:g,opening:{amt:0,dc:'Dr'}}); }
   [['cash','Cash','cash'],['bank','Bank Account','bank'],['sales','Sales','salesAcc'],['salesret','Sales Return','salesAcc'],['purchase','Purchase','purchAcc'],['purchret','Purchase Return','purchAcc'],['cgst','CGST','dutiesTaxes'],['sgst','SGST','dutiesTaxes'],['igst','IGST','dutiesTaxes'],['icgst','Input CGST','dutiesTaxes'],['isgst','Input SGST','dutiesTaxes'],['iigst','Input IGST','dutiesTaxes'],['discount','Discount Allowed','indirectExp'],['discrec','Discount Received','indirectInc'],['roundoff','Round Off','indirectExp']].forEach(function(x){ens(x[0],x[1],x[2])});
   [['tdspay','TDS Payable','dutiesTaxes'],['tcspay','TCS Payable','dutiesTaxes'],['tdsrec','TDS Receivable','loansAdv'],['tcsrec','TCS Receivable','loansAdv']].forEach(function(x){ens(x[0],x[1],x[2])});
@@ -11153,6 +11165,7 @@ function showPage(id,btn){
   if(id==='acctPdc'&&typeof acctRenderPdc==='function')acctRenderPdc();
   if(id==='acctControl'&&typeof acctRenderControl==='function')acctRenderControl();
   if(id==='acctGst'&&typeof acctRenderGst==='function')acctRenderGst();
+  if(id==='invAdv'&&typeof invRender==='function')invRender();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -17971,6 +17984,11 @@ function importJSON(){
         ['groups','ledgers','vouchers'].forEach(k=>(x.accounts[k]||[]).forEach(n=>{ if(!n||!n.id) return; const i=AC[k].findIndex(a=>a.id===n.id); if(i>=0) AC[k][i]=n; else AC[k].push(n); }));
         Object.assign(AC.partyOpening,x.accounts.partyOpening||{});
         Object.assign(AC.prefixes,x.accounts.prefixes||{}); Object.assign(AC.modeMap,x.accounts.modeMap||{});
+        if(x.accounts.inv&&typeof x.accounts.inv==='object'){
+          const IV=AC.inv=AC.inv&&typeof AC.inv==='object'?AC.inv:{};
+          ['godowns','transfers','lists','boms','prod','sj'].forEach(k=>{IV[k]=Array.isArray(IV[k])?IV[k]:[]; (x.accounts.inv[k]||[]).forEach(n=>{ if(!n||!n.id) return; const i=IV[k].findIndex(a=>a.id===n.id); if(i>=0) IV[k][i]=n; else IV[k].push(n); });});
+          ['partyList','alt','reorder'].forEach(k=>{IV[k]=IV[k]&&typeof IV[k]==='object'?IV[k]:{}; Object.assign(IV[k],x.accounts.inv[k]||{});});
+        }
         Object.keys(x.accounts.counters||{}).forEach(t=>{AC.counters[t]=Math.max(AC.counters[t]||0,x.accounts.counters[t]||0)});
       }
       migrateReceiptNumbers();
@@ -20493,7 +20511,7 @@ html[data-theme="light"] #ieSpot mark{background:rgba(250,204,21,.5)}
   var CHIPS=[['all','All'],['inv','Invoices'],['cus','Customers'],['itm','Items'],['ven','Vendors'],['po','PO'],['pb','Purchase Bills'],['doc','Docs'],['rcp','Receipts'],['set','Settings'],['page','Pages'],['act','Actions']];
   var PFX={inv:['inv'],invoice:['inv'],bill:['inv'],c:['cus'],cust:['cus'],customer:['cus'],party:['cus'],i:['itm'],item:['itm'],items:['itm'],v:['ven'],vendor:['ven'],supplier:['ven'],po:['po'],pb:['pb'],doc:['doc'],q:['doc','quotation'],qt:['doc','quotation'],quote:['doc','quotation'],quotation:['doc','quotation'],pi:['doc','proforma'],proforma:['doc','proforma'],dc:['doc','challan'],challan:['doc','challan'],r:['rcp'],rcp:['rcp'],receipt:['rcp'],p:['page'],page:['page'],s:['set'],set:['set'],setting:['set'],settings:['set'],a:['act'],act:['act']};
   var STW={paid:1,unpaid:1,partial:1,overdue:1,due:1,draft:1,finalized:1,sent:1,accepted:1,rejected:1,expired:1,dispatched:1,delivered:1,returned:1,received:1,cancelled:1};
-  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',acctGst:'gst gstr gstr1 gstr3b itc rcm tds tcs 2a 2b tax return',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
+  var PGKW={dashboard:'home overview',invoice:'new bill create sale',history:'bill history invoices list',journal:'payment receipt collection',customers:'party clients',inventory:'stock items products',vendors:'supplier',purchaseOrders:'po order',purchaseBills:'pb purchase bill expense',acctVouchers:'voucher payment receipt journal contra expense kharcha accounts',acctLedgers:'ledger group chart of accounts balance',invAdv:'godown warehouse transfer price list rate reorder low stock bom manufacturing production stock journal alternate unit',acctGst:'gst gstr gstr1 gstr3b itc rcm tds tcs 2a 2b tax return',documents:'quotation proforma challan estimate',analytics:'report chart gst sales',chequePrint:'cheque check bank',chats:'message chat',search:'people find network',settings:'company config profile prefix upi gemini theme',backup:'restore export import data'};
   var IC={
     inv:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
     cus:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 5a3.2 3.2 0 0 1 0 6M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/>',
@@ -22149,7 +22167,7 @@ function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=f
 
 /* ---- Roles ---- */
 var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)'},
-DENY={owner:[],accountant:['settings','backup'],salesman:['acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
+DENY={owner:[],accountant:['settings','backup'],salesman:['invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
 function role(){try{var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
 function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
 function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
@@ -22552,6 +22570,199 @@ window.acctGstCSV=function(){var csv=[];document.querySelectorAll('#gsBody tr').
 window.acctGstPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}
  var box=document.createElement('div');box.innerHTML=$('gsBody').innerHTML;box.querySelectorAll('.noprint').forEach(function(n){n.remove()});
  w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:11px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.right{text-align:right}.sub{color:#555;font-size:10px}.section-title{font-weight:700;margin:10px 0 4px}.badge{font-weight:700}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2><div class="sub" style="margin-bottom:8px">'+$('gsSub').innerText+'</div>'+box.innerHTML+'</body></html>');w.document.close()};
+})();
+/* ===== INVENTORY (Phase 6): Godown & stock transfer, price lists, alternate units, reorder level, Manufacturing (BOM), Stock Journal ===== */
+(function(){
+var $=function(i){return document.getElementById(i)},tab='gd',plSel='',bomEdit='',bomDraft=[{itemId:'',qty:''}],
+TABS=[['gd','Godown Stock'],['tr','Stock Transfer'],['pl','Price Lists'],['ur','Units & Reorder'],['mf','Manufacturing'],['sj','Stock Journal']],
+REASONS=['Damage / kharab','Found / extra mila','Sample / gift','Count correction','Other'];
+function A(){return db&&db.accounts}
+function I(){var a=A();if(!a)return null;var v=a.inv=a.inv&&typeof a.inv==='object'?a.inv:{};
+ ['godowns','transfers','lists','boms','prod','sj'].forEach(function(k){v[k]=Array.isArray(v[k])?v[k]:[]});
+ ['partyList','alt','reorder'].forEach(function(k){v[k]=v[k]&&typeof v[k]==='object'&&!Array.isArray(v[k])?v[k]:{}});return v}
+function r2(n){return Math.round((+n||0)*100)/100}
+function r3(n){return Math.round((+n||0)*1000)/1000}
+function q3(n){n=r3(n);return(n<0?'<span style="color:#f43f5e">':'<span>')+n.toLocaleString('en-IN',{maximumFractionDigits:3})+'</span>'}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function today(){return ymd(new Date())}
+function tt(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
+function role(){try{return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
+function ro(){if(role()==='viewer'){tt('View-only role: changes allowed nahi','#f43f5e');return true}return false}
+function lk(d){var l=A().lockDate;if(l&&d&&String(d)<=l){alert('Period lock: '+l+' tak ki entries add / edit / delete nahi ho sakti. Owner Audit & Security page se lock hata sakta hai.');return true}return false}
+function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
+function empty(c,t){return'<tr><td colspan="'+c+'" class="sub" style="text-align:center;padding:18px">'+esc(t||'Abhi kuch nahi.')+'</td></tr>'}
+function tbl(head,body){return'<table>'+th(head)+'<tbody>'+body+'</tbody></table>'}
+function sec(t,sub){return'<div class="section-title" style="margin:22px 0 4px">'+esc(t)+'</div>'+(sub?'<div class="sub" style="margin-bottom:8px">'+sub+'</div>':'')}
+function opt(v,l,s){return'<option value="'+esc(v)+'"'+(String(v)===String(s)?' selected':'')+'>'+esc(l)+'</option>'}
+function qf(){var e=$('ivQ');return e?e.value.trim().toLowerCase():''}
+function items(){return(db.items||[]).filter(function(x){return x.active!==false&&!(x.isPremium&&x.premiumInactive)}).sort(function(a,b){return String(a.name).localeCompare(String(b.name))})}
+function itemById(i){return(db.items||[]).find(function(x){return x.id===i})}
+function iname(i){var x=itemById(i);return x?x.name:'(deleted item)'}
+function iopts(sel){return'<option value="">— Item chuno —</option>'+items().map(function(i){return opt(i.id,i.name+(i.unit?' ('+i.unit+')':''),sel)}).join('')}
+function sold(){return typeof buildSoldQtyMap==='function'?buildSoldQtyMap():new Map()}
+function tot(it,sm){return typeof trueStock==='function'?trueStock(it,sm):(+it.stock||0)}
+function bump(itemId,d){var it=itemById(itemId);if(it)it.stock=r3((+it.stock||0)+d)}
+function GN(id){if(id==='main')return'Main Godown';var g=I().godowns.find(function(x){return x.id===id});return g?g.name:'(deleted godown)'}
+function gall(){var out={};I().transfers.forEach(function(t){var o=out[t.itemId]=out[t.itemId]||{};if(t.from!=='main')o[t.from]=(o[t.from]||0)-t.qty;if(t.to!=='main')o[t.to]=(o[t.to]||0)+t.qty});return out}
+function gq(it,sm,ga){var o=(ga||gall())[it.id]||{},s=0,res={};I().godowns.forEach(function(g){var v=r3(o[g.id]||0);res[g.id]=v;s+=v});res.main=r3(tot(it,sm)-s);return res}
+function altStr(it,n){var a=I().alt[it.id];n=r3(n);if(!a||!(+a.factor>1)||!a.unit)return'';var f=+a.factor,b=Math.trunc(n/f),rem=r3(n-b*f);return b+' '+a.unit+(rem?' + '+rem+' '+(it.unit||'Nos'):'')}
+function fq(){var s=qf();return function(x){return!s||String(x).toLowerCase().indexOf(s)>-1}}
+function low(sm){var v=I(),out=[];(items()).forEach(function(it){var r=v.reorder[it.id];if(!r||!(+r.level>0))return;var t=tot(it,sm);if(t<=+r.level)out.push({it:it,t:t,level:+r.level,qty:+r.qty||0})});return out}
+
+/* ---- Tab 1: Godown Stock ---- */
+function gdTab(){var v=I(),sm=sold(),ga=gall(),f=fq(),gs=[{id:'main',name:'Main Godown'}].concat(v.godowns),h='';
+ h+='<div class="grid g4"><div><label>Naya godown / location</label><input id="ivGn" placeholder="Jaise: Shop, Warehouse 2"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="invGdAdd()">+ Add Godown</button></div></div>';
+ if(v.godowns.length)h+='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">'+v.godowns.map(function(g){return'<span class="badge" style="display:inline-flex;gap:8px;align-items:center;padding:6px 10px">'+esc(g.name)+' <a href="#" onclick="invGdRen(\''+g.id+'\');return false">Rename</a> <a href="#" onclick="invGdDel(\''+g.id+'\');return false" style="color:#f43f5e">Delete</a></span>'}).join('')+'</div>';
+ else h+='<div class="sub" style="margin-top:10px">Abhi sirf Main Godown hai. Doosra godown add karo, phir Stock Transfer tab se maal ek se doosre me bhejo.</div>';
+ var rows='',T=0,cols={};
+ items().filter(function(i){return f(i.name)}).forEach(function(it){var t=tot(it,sm),g=gq(it,sm,ga);T+=t;gs.forEach(function(x){cols[x.id]=(cols[x.id]||0)+g[x.id]});
+  rows+='<tr><td>'+esc(it.name)+'</td><td>'+esc(it.unit||'Nos')+'</td><td class="right"><b>'+q3(t)+'</b></td>'+gs.map(function(x){return'<td class="right">'+q3(g[x.id])+'</td>'}).join('')+'</tr>'});
+ if(!rows)rows=empty(3+gs.length,'Koi item nahi mila.');
+ else rows+='<tr style="border-top:2px solid var(--border-color)"><td colspan="2"><b>Total</b></td><td class="right"><b>'+q3(T)+'</b></td>'+gs.map(function(x){return'<td class="right"><b>'+q3(cols[x.id])+'</b></td>'}).join('')+'</tr>';
+ h+=sec('Godown-wise stock','Total = Items page ka stock. Main Godown me wo bacha maal aata hai jo doosre godowns me transfer nahi hua.')+tbl(['Item','Unit','>Total'].concat(gs.map(function(x){return'>'+x.name})),rows);
+ return{sub:'Godown aur stock transfer sirf maal ki location batate hain. Total stock aur invoice/bill ke stock par koi asar nahi padta.',h:h}}
+window.invGdAdd=function(){if(ro())return;var n=$('ivGn').value.trim();if(!n)return alert('Godown ka naam likho');
+ if(n.toLowerCase()==='main godown'||I().godowns.some(function(g){return g.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ka godown pehle se hai');
+ I().godowns.push({id:'gd_'+crypto.randomUUID(),name:n});saveDB();invRender();tt('Godown add hua')};
+window.invGdRen=function(id){if(ro())return;var g=I().godowns.find(function(x){return x.id===id});if(!g)return;var n=prompt('Naya naam',g.name);if(n===null)return;n=n.trim();if(!n)return;
+ if(n.toLowerCase()==='main godown'||I().godowns.some(function(x){return x.id!==id&&x.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ka godown pehle se hai');g.name=n;saveDB();invRender()};
+window.invGdDel=function(id){if(ro())return;if(I().transfers.some(function(t){return t.from===id||t.to===id}))return alert('Is godown me transfer ki entries hain. Pehle woh transfers delete karo.');
+ if(!confirm('Godown delete karna hai?'))return;I().godowns=I().godowns.filter(function(g){return g.id!==id});saveDB();invRender()};
+
+/* ---- Tab 2: Stock Transfer ---- */
+function gopts(sel){return[{id:'main',name:'Main Godown'}].concat(I().godowns).map(function(g){return opt(g.id,g.name,sel)}).join('')}
+function trTab(){var v=I(),h='';
+ if(!v.godowns.length)h+='<div class="sub" style="margin-bottom:10px">Transfer ke liye pehle Godown Stock tab me ek aur godown add karo.</div>';
+ h+='<div class="grid g4"><div><label>Date</label><input id="ivTd" type="date" value="'+today()+'"></div><div style="grid-column:span 2"><label>Item</label><select id="ivTi">'+iopts('')+'</select></div>'+
+ '<div><label>Qty</label><input id="ivTq" type="number" step="0.001" min="0"></div><div><label>Kahan se</label><select id="ivTf">'+gopts('main')+'</select></div><div><label>Kahan tak</label><select id="ivTt">'+gopts(v.godowns[0]?v.godowns[0].id:'main')+'</select></div>'+
+ '<div style="grid-column:span 2"><label>Note</label><input id="ivTn" placeholder="Optional"></div></div><div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="invTrAdd()">+ Transfer</button></div>';
+ var rows=v.transfers.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date))||(b.createdAt||0)-(a.createdAt||0)}).slice(0,300).map(function(t){var it=itemById(t.itemId);
+  return'<tr><td>'+esc(t.date)+'</td><td>'+esc(iname(t.itemId))+'</td><td>'+esc(GN(t.from))+' &rarr; '+esc(GN(t.to))+'</td><td class="right">'+q3(t.qty)+' '+esc(it&&it.unit||'')+'</td><td>'+esc(t.note||'')+'</td><td class="noprint"><button class="btn muted" onclick="invTrDel(\''+t.id+'\')">Delete</button></td></tr>'}).join('');
+ h+=sec('Transfers')+tbl(['Date','Item','Transfer','>Qty','Note',''],rows||empty(6,'Abhi koi transfer nahi.'));
+ return{sub:'Pichle 300 transfers dikhte hain.',h:h}}
+window.invTrAdd=function(){if(ro())return;var d=$('ivTd').value,iid=$('ivTi').value,f=$('ivTf').value,t=$('ivTt').value,q=r3($('ivTq').value);
+ if(!d)return alert('Date chuno');if(!iid)return alert('Item chuno');if(!(q>0))return alert('Qty 0 se zyada honi chahiye');if(f===t)return alert('Kahan se aur kahan tak alag-alag chuno');
+ if(lk(d))return;var it=itemById(iid);if(!it)return;var g=gq(it,sold()),av=g[f]||0;
+ if(av<q&&!confirm(GN(f)+' me abhi sirf '+av+' hai, transfer '+q+' ka hai. Phir bhi karna hai?'))return;
+ I().transfers.push({id:'tr_'+crypto.randomUUID(),date:d,itemId:iid,from:f,to:t,qty:q,note:$('ivTn').value.trim(),createdAt:Date.now()});saveDB();invRender();tt('Transfer ho gaya')};
+window.invTrDel=function(id){if(ro())return;var t=I().transfers.find(function(x){return x.id===id});if(!t||lk(t.date))return;if(!confirm('Transfer delete karna hai?'))return;I().transfers=I().transfers.filter(function(x){return x.id!==id});saveDB();invRender()};
+
+/* ---- Tab 3: Price Lists ---- */
+function plTab(){var v=I(),f=fq(),h='';
+ if(plSel&&!v.lists.some(function(l){return l.id===plSel}))plSel='';if(!plSel&&v.lists[0])plSel=v.lists[0].id;
+ h+='<div class="grid g4"><div><label>Naya price list</label><input id="ivPn" placeholder="Jaise: Wholesale, Dealer, Retail"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="invPlAdd()">+ Add List</button></div></div>';
+ if(!v.lists.length)return{sub:'Price list se alag-alag customers ko alag rate lagta hai.',h:h+'<div class="sub" style="margin-top:10px">Abhi koi price list nahi.</div>'};
+ h+='<div class="grid g4" style="margin-top:16px"><div><label>List chuno</label><select id="ivPs" onchange="invPlSel(this.value)">'+v.lists.map(function(l){return opt(l.id,l.name,plSel)}).join('')+'</select></div>'+
+ '<div><label>Normal rate se %</label><input id="ivPp" type="number" step="0.01" placeholder="-10 = 10% kam, 5 = 5% zyada"></div><div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap"><button class="btn muted" onclick="invPlFill()">% se bharo</button><button class="btn muted" onclick="invPlRen()">Rename</button><button class="btn muted" onclick="invPlDel()" style="color:#f43f5e">Delete list</button></div></div>';
+ var L=v.lists.find(function(l){return l.id===plSel}),rows=items().filter(function(i){return f(i.name)}).map(function(it){var p=L.prices&&L.prices[it.id];
+  return'<tr><td>'+esc(it.name)+'</td><td class="right">'+(+it.rate||0).toFixed(2)+'</td><td class="right"><input class="ivPr" data-id="'+it.id+'" data-n="'+(+it.rate||0)+'" type="number" step="0.01" min="0" value="'+(p==null||p===''?'':p)+'" placeholder="Normal" style="width:110px;text-align:right"></td></tr>'}).join('');
+ h+=sec('Rates: '+L.name,'Khaali chhodoge to us item par normal rate lagega.')+tbl(['Item','>Normal rate','>List rate'],rows||empty(3,'Koi item nahi mila.'))+'<div class="toolbar" style="margin-top:12px"><button class="btn success" onclick="invPlSave()">Save rates</button></div>';
+ var cs=(db.customers||[]).filter(function(c){return f(c.name)}).map(function(c){return'<tr><td>'+esc(c.name)+'</td><td><select onchange="invPlAssign(\''+c.id+'\',this.value)"><option value="">Normal rate</option>'+v.lists.map(function(l){return opt(l.id,l.name,v.partyList[c.id])}).join('')+'</select></td></tr>'}).join('');
+ h+=sec('Customer ko list do','Invoice me item chunte hi us customer ki list ka rate aa jata hai. Invoice me rate baad me haath se badal sakte ho.')+tbl(['Customer','Price list'],cs||empty(2,'Koi customer nahi mila.'));
+ return{sub:'Price list sirf naye invoice rows ka default rate badalti hai. Purane invoices nahi badalte.',h:h}}
+window.invPlSel=function(v){plSel=v;invRender()};
+window.invPlAdd=function(){if(ro())return;var n=$('ivPn').value.trim();if(!n)return alert('List ka naam likho');if(I().lists.some(function(l){return l.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ki list pehle se hai');
+ var l={id:'pl_'+crypto.randomUUID(),name:n,prices:{}};I().lists.push(l);plSel=l.id;saveDB();invRender();tt('List ban gayi')};
+window.invPlRen=function(){if(ro())return;var l=I().lists.find(function(x){return x.id===plSel});if(!l)return;var n=prompt('Naya naam',l.name);if(n===null)return;n=n.trim();if(!n)return;l.name=n;saveDB();invRender()};
+window.invPlDel=function(){if(ro())return;var l=I().lists.find(function(x){return x.id===plSel});if(!l||!confirm('"'+l.name+'" list delete karni hai? Jin customers ko ye list di thi, wo normal rate par aa jayenge.'))return;
+ var v=I();v.lists=v.lists.filter(function(x){return x.id!==plSel});Object.keys(v.partyList).forEach(function(k){if(v.partyList[k]===plSel)delete v.partyList[k]});plSel='';saveDB();invRender()};
+window.invPlFill=function(){var p=parseFloat($('ivPp').value);if(isNaN(p))return alert('Pehle % likho');document.querySelectorAll('.ivPr').forEach(function(e){var n=+e.dataset.n;e.value=n>0?r2(n*(1+p/100)):''});tt('Bhar diya, ab Save rates dabao','#0ea5e9')};
+window.invPlSave=function(){if(ro())return;var l=I().lists.find(function(x){return x.id===plSel});if(!l)return;l.prices=l.prices||{};
+ document.querySelectorAll('.ivPr').forEach(function(e){if(e.value==='')delete l.prices[e.dataset.id];else if(+e.value>=0)l.prices[e.dataset.id]=r2(e.value)});saveDB();tt('Rates save hue')};
+window.invPlAssign=function(cid,lid){if(ro())return;var v=I();if(lid)v.partyList[cid]=lid;else delete v.partyList[cid];saveDB()};
+
+/* ---- Tab 4: Units & Reorder ---- */
+function urTab(){var v=I(),sm=sold(),f=fq(),h='',lw=low(sm);
+ h+=sec('Low stock ('+lw.length+')','Wo items jinka stock reorder level par ya usse neeche hai.');
+ h+=tbl(['Item','>Stock','>Reorder level','>Kami','>Order qty'],lw.map(function(x){return'<tr><td>'+esc(x.it.name)+'</td><td class="right">'+q3(x.t)+' '+esc(x.it.unit||'')+'</td><td class="right">'+q3(x.level)+'</td><td class="right">'+q3(Math.max(0,x.level-x.t))+'</td><td class="right">'+(x.qty?q3(x.qty):'-')+'</td></tr>'}).join('')||empty(5,'Sab items ka stock theek hai.'));
+ var rows=items().filter(function(i){return f(i.name)}).map(function(it){var a=v.alt[it.id]||{},r=v.reorder[it.id]||{},t=tot(it,sm);
+  return'<tr data-id="'+it.id+'"><td>'+esc(it.name)+'</td><td>'+esc(it.unit||'Nos')+'</td><td class="right">'+q3(t)+'<div class="sub">'+esc(altStr(it,t))+'</div></td>'+
+  '<td><input class="ivAu" placeholder="Box / Dozen" value="'+esc(a.unit||'')+'" style="width:90px"></td><td><input class="ivAf" type="number" step="0.001" min="0" placeholder="12" value="'+(a.factor||'')+'" style="width:80px"></td>'+
+  '<td><input class="ivRl" type="number" step="0.001" min="0" value="'+(r.level||'')+'" style="width:90px"></td><td><input class="ivRq" type="number" step="0.001" min="0" value="'+(r.qty||'')+'" style="width:90px"></td></tr>'}).join('');
+ h+=sec('Alternate unit aur reorder level','Alternate unit: jaise 1 Box = 12 Nos. Wo sirf stock dikhane me kaam aata hai. Reorder level: itne ya kam stock par item Low stock me aa jata hai.')+
+ tbl(['Item','Base unit','>Stock','Alt unit','1 alt = ? base','Reorder level','Reorder qty'],rows||empty(7,'Koi item nahi mila.'))+'<div class="toolbar" style="margin-top:12px"><button class="btn success" onclick="invUrSave()">Save</button></div>';
+ return{sub:'Invoice aur purchase bill abhi base unit me hi chalte hain.',h:h}}
+window.invUrSave=function(){if(ro())return;var v=I();document.querySelectorAll('#ivBody tr[data-id]').forEach(function(tr){var id=tr.dataset.id,u=tr.querySelector('.ivAu').value.trim(),fa=+tr.querySelector('.ivAf').value,l=+tr.querySelector('.ivRl').value,q=+tr.querySelector('.ivRq').value;
+  if(u&&fa>1)v.alt[id]={unit:u,factor:fa};else delete v.alt[id];if(l>0||q>0)v.reorder[id]={level:l>0?l:0,qty:q>0?q:0};else delete v.reorder[id]});saveDB();invRender();tt('Save ho gaya')};
+
+/* ---- Tab 5: Manufacturing ---- */
+function bomCost(b){var c=0;(b.inputs||[]).forEach(function(r){var it=itemById(r.itemId);c+=(+r.qty||0)*(it?+it.purchaseRate||0:0)});return b.outQty>0?c/b.outQty:0}
+function bomRowsHtml(){return bomDraft.map(function(r,i){return'<div class="grid g4" style="margin-bottom:6px"><div style="grid-column:span 2"><select onchange="invBomIn('+i+',\'itemId\',this.value)">'+iopts(r.itemId)+'</select></div><div><input type="number" step="0.001" min="0" placeholder="Qty" value="'+(r.qty||'')+'" onchange="invBomIn('+i+',\'qty\',this.value)"></div><div><button class="btn muted" onclick="invBomRm('+i+')">&times;</button></div></div>'}).join('')}
+function mfTab(){var v=I(),h='',eb=v.boms.find(function(b){return b.id===bomEdit});
+ h+=sec(eb?'BOM edit: '+eb.name:'Naya BOM (Bill of Materials)','Ek batch banane me kaun sa kaccha maal kitna lagta hai.');
+ h+='<div class="grid g4"><div><label>BOM / recipe naam</label><input id="ivBn" value="'+esc(eb?eb.name:'')+'" placeholder="Jaise: Masala 1kg pack"></div><div style="grid-column:span 2"><label>Finished item (jo banega)</label><select id="ivBo">'+iopts(eb?eb.outItemId:'')+'</select></div><div><label>Ek batch me kitna banega</label><input id="ivBq" type="number" step="0.001" min="0" value="'+(eb?eb.outQty:'')+'"></div></div>';
+ h+='<div class="sub" style="margin:12px 0 6px">Kaccha maal (ek batch ke liye)</div><div id="ivBomRows">'+bomRowsHtml()+'</div><div class="toolbar" style="margin-top:8px"><button class="btn muted" onclick="invBomAddRow()">+ Kaccha maal</button><button class="btn primary" onclick="invBomSave()">'+(eb?'Update BOM':'Save BOM')+'</button>'+(eb?'<button class="btn muted" onclick="invBomCancel()">Cancel</button>':'')+'</div>';
+ var rows=v.boms.map(function(b){return'<tr><td>'+esc(b.name)+'</td><td>'+esc(iname(b.outItemId))+' &times; '+q3(b.outQty)+'</td><td>'+(b.inputs||[]).map(function(r){return esc(iname(r.itemId))+' '+r3(r.qty)}).join(', ')+'</td><td class="right">'+(bomCost(b)?q3(bomCost(b)):'-')+'</td><td class="noprint"><button class="btn muted" onclick="invBomEdit(\''+b.id+'\')">Edit</button> <button class="btn muted" onclick="invBomDel(\''+b.id+'\')">Delete</button></td></tr>'}).join('');
+ h+=sec('Saved BOMs','Cost/unit Items page ke purchase rate se nikalta hai.')+tbl(['BOM','Banega','Kaccha maal','>Cost / unit',''],rows||empty(5,'Abhi koi BOM nahi.'));
+ h+=sec('Production karo','Production karte hi kaccha maal ka stock ghatega aur finished item ka stock badhega.');
+ h+='<div class="grid g4"><div><label>Date</label><input id="ivMd" type="date" value="'+today()+'"></div><div style="grid-column:span 2"><label>BOM</label><select id="ivMb"><option value="">— BOM chuno —</option>'+v.boms.map(function(b){return opt(b.id,b.name,'')}).join('')+'</select></div><div><label>Kitne batch</label><input id="ivMm" type="number" step="0.001" min="0" value="1"></div><div style="grid-column:span 3"><label>Note</label><input id="ivMn" placeholder="Optional"></div></div><div class="toolbar" style="margin-top:12px"><button class="btn success" onclick="invProduce()">Produce</button></div>';
+ var pr=v.prod.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date))||(b.createdAt||0)-(a.createdAt||0)}).slice(0,200).map(function(p){return'<tr><td>'+esc(p.date)+'</td><td>'+esc(p.bomName)+'</td><td>'+esc(iname(p.outItemId))+' &times; '+q3(p.outQty)+'</td><td class="right">'+(p.unitCost?q3(p.unitCost):'-')+'</td><td>'+esc(p.note||'')+'</td><td class="noprint"><button class="btn muted" onclick="invProdDel(\''+p.id+'\')">Delete</button></td></tr>'}).join('');
+ h+=sec('Production history')+tbl(['Date','BOM','Bana','>Cost / unit','Note',''],pr||empty(6,'Abhi koi production nahi.'));
+ return{sub:'Production delete karne par stock wapas pehle jaisa ho jata hai.',h:h}}
+window.invBomIn=function(i,k,v){if(bomDraft[i])bomDraft[i][k]=v};
+window.invBomAddRow=function(){bomDraft.push({itemId:'',qty:''});$('ivBomRows').innerHTML=bomRowsHtml()};
+window.invBomRm=function(i){bomDraft.splice(i,1);if(!bomDraft.length)bomDraft.push({itemId:'',qty:''});$('ivBomRows').innerHTML=bomRowsHtml()};
+window.invBomCancel=function(){bomEdit='';bomDraft=[{itemId:'',qty:''}];invRender()};
+window.invBomEdit=function(id){var b=I().boms.find(function(x){return x.id===id});if(!b)return;bomEdit=id;bomDraft=b.inputs.map(function(r){return{itemId:r.itemId,qty:r.qty}});invRender()};
+window.invBomSave=function(){if(ro())return;var n=$('ivBn').value.trim(),o=$('ivBo').value,q=r3($('ivBq').value);
+ if(!n)return alert('BOM ka naam likho');if(!o)return alert('Finished item chuno');if(!(q>0))return alert('Ek batch me kitna banega, wo likho');
+ var ins=bomDraft.filter(function(r){return r.itemId&&+r.qty>0}).map(function(r){return{itemId:r.itemId,qty:r3(r.qty)}});
+ if(!ins.length)return alert('Kam se kam ek kaccha maal daalo');if(ins.some(function(r){return r.itemId===o}))return alert('Finished item khud kaccha maal nahi ho sakta');
+ var v=I();if(v.boms.some(function(b){return b.id!==bomEdit&&b.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ka BOM pehle se hai');
+ var eb=v.boms.find(function(b){return b.id===bomEdit});if(eb){eb.name=n;eb.outItemId=o;eb.outQty=q;eb.inputs=ins}else v.boms.push({id:'bom_'+crypto.randomUUID(),name:n,outItemId:o,outQty:q,inputs:ins});
+ bomEdit='';bomDraft=[{itemId:'',qty:''}];saveDB();invRender();tt('BOM save hua')};
+window.invBomDel=function(id){if(ro())return;if(!confirm('BOM delete karna hai? Purani production history waise hi rahegi.'))return;I().boms=I().boms.filter(function(b){return b.id!==id});if(bomEdit===id){bomEdit='';bomDraft=[{itemId:'',qty:''}]}saveDB();invRender()};
+window.invProduce=function(){if(ro())return;var d=$('ivMd').value,b=I().boms.find(function(x){return x.id===$('ivMb').value}),m=r3($('ivMm').value);
+ if(!d)return alert('Date chuno');if(!b)return alert('BOM chuno');if(!(m>0))return alert('Batch 0 se zyada hone chahiye');if(lk(d))return;
+ var out=itemById(b.outItemId);if(!out)return alert('Finished item delete ho chuka hai');
+ var ins=[],miss=[],short=[],sm=sold();b.inputs.forEach(function(r){var it=itemById(r.itemId);if(!it){miss.push(iname(r.itemId));return}var need=r3(r.qty*m);ins.push({itemId:r.itemId,qty:need});if(tot(it,sm)<need)short.push(it.name+' (chahiye '+need+', hai '+tot(it,sm)+')')});
+ if(miss.length)return alert('Ye kaccha maal delete ho chuka hai: '+miss.join(', '));
+ if(short.length&&!confirm('Stock kam hai:\n'+short.join('\n')+'\n\nPhir bhi production karna hai? Stock minus me chala jayega.'))return;
+ var oq=r3(b.outQty*m),cost=0;ins.forEach(function(r){var it=itemById(r.itemId);cost+=r.qty*(+it.purchaseRate||0);bump(r.itemId,-r.qty)});bump(b.outItemId,oq);
+ I().prod.push({id:'pr_'+crypto.randomUUID(),date:d,bomId:b.id,bomName:b.name,mult:m,outItemId:b.outItemId,outQty:oq,inputs:ins,unitCost:r2(oq>0?cost/oq:0),note:$('ivMn').value.trim(),createdAt:Date.now()});saveDB();invRender();tt('Production ho gaya')};
+window.invProdDel=function(id){if(ro())return;var p=I().prod.find(function(x){return x.id===id});if(!p||lk(p.date))return;if(!confirm('Production delete karni hai? Kaccha maal wapas aa jayega aur finished item ka stock ghatega.'))return;
+ p.inputs.forEach(function(r){bump(r.itemId,r.qty)});bump(p.outItemId,-p.outQty);I().prod=I().prod.filter(function(x){return x.id!==id});saveDB();invRender()};
+
+/* ---- Tab 6: Stock Journal ---- */
+function sjTab(){var v=I(),h='';
+ h+='<div class="grid g4"><div><label>Date</label><input id="ivJd" type="date" value="'+today()+'"></div><div style="grid-column:span 2"><label>Item</label><select id="ivJi">'+iopts('')+'</select></div><div><label>Type</label><select id="ivJt"><option value="out">Stock kam (-)</option><option value="in">Stock zyada (+)</option></select></div>'+
+ '<div><label>Qty</label><input id="ivJq" type="number" step="0.001" min="0"></div><div><label>Wajah</label><select id="ivJr">'+REASONS.map(function(r){return opt(r,r,'')}).join('')+'</select></div><div style="grid-column:span 2"><label>Note</label><input id="ivJn" placeholder="Optional"></div></div><div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="invSjAdd()">+ Save</button></div>';
+ var rows=v.sj.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date))||(b.createdAt||0)-(a.createdAt||0)}).slice(0,300).map(function(s){var it=itemById(s.itemId);
+  return'<tr><td>'+esc(s.date)+'</td><td>'+esc(iname(s.itemId))+'</td><td>'+esc(s.reason||'')+'</td><td class="right">'+(s.delta<0?'-':'+')+q3(Math.abs(s.delta))+' '+esc(it&&it.unit||'')+'</td><td>'+esc(s.note||'')+'</td><td class="noprint"><button class="btn muted" onclick="invSjDel(\''+s.id+'\')">Delete</button></td></tr>'}).join('');
+ h+=sec('Stock journal entries','Ye stock ko seedha badalta hai (kharab maal, gift, ginti ki galti). Accounts me koi voucher nahi banta.')+tbl(['Date','Item','Wajah','>Qty','Note',''],rows||empty(6,'Abhi koi entry nahi.'));
+ return{sub:'Pichle 300 entries dikhte hain.',h:h}}
+window.invSjAdd=function(){if(ro())return;var d=$('ivJd').value,iid=$('ivJi').value,q=r3($('ivJq').value),out=$('ivJt').value==='out';
+ if(!d)return alert('Date chuno');if(!iid)return alert('Item chuno');if(!(q>0))return alert('Qty 0 se zyada honi chahiye');if(lk(d))return;var it=itemById(iid);if(!it)return;
+ if(out&&tot(it,sold())<q&&!confirm('Stock sirf '+tot(it,sold())+' hai. Phir bhi '+q+' kam karna hai?'))return;
+ var dl=out?-q:q;bump(iid,dl);I().sj.push({id:'sj_'+crypto.randomUUID(),date:d,itemId:iid,delta:dl,reason:$('ivJr').value,note:$('ivJn').value.trim(),createdAt:Date.now()});saveDB();invRender();tt('Stock journal save hua')};
+window.invSjDel=function(id){if(ro())return;var s=I().sj.find(function(x){return x.id===id});if(!s||lk(s.date))return;if(!confirm('Entry delete karni hai? Stock wapas pehle jaisa ho jayega.'))return;bump(s.itemId,-s.delta);I().sj=I().sj.filter(function(x){return x.id!==id});saveDB();invRender()};
+
+/* ---- Page ---- */
+window.invTab=function(t){tab=t;invRender()};
+window.invRender=function(filterOnly){if(!A()||!I())return;
+ if(filterOnly&&['gd','pl','ur'].indexOf(tab)<0)return;
+ $('ivTabs').innerHTML=TABS.map(function(x){return'<button class="btn '+(tab===x[0]?'primary':'muted')+'" onclick="invTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+ var qb=$('ivQ');if(qb&&qb.parentNode)qb.parentNode.style.display=['gd','pl','ur'].indexOf(tab)>-1?'':'none';
+ var r=tab==='gd'?gdTab():tab==='tr'?trTab():tab==='pl'?plTab():tab==='ur'?urTab():tab==='mf'?mfTab():sjTab();
+ $('ivSub').innerHTML=r.sub;$('ivBody').innerHTML=r.h;badge()};
+function title(){return TABS.filter(function(a){return a[0]===tab})[0][1]+' | '+(db.settings.company||'')+' | '+today()}
+window.invCSV=function(){var csv=[];document.querySelectorAll('#ivBody tr').forEach(function(tr){csv.push(Array.prototype.map.call(tr.children,function(c){var e=c.querySelector('select,input');var t=e?(e.tagName==='SELECT'?e.options[e.selectedIndex].text:e.value):c.innerText;return'"'+String(t).replace(/\s*\n\s*/g,' ').replace(/"/g,'""')+'"'}).join(','))});
+ downloadBlob(ieCreditCsv(csv,'inventory report'),'IE-'+tab.toUpperCase()+'-Inventory.csv','text/csv')};
+window.invPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}
+ var box=document.createElement('div');box.innerHTML=$('ivBody').innerHTML;box.querySelectorAll('.noprint,button,.toolbar,.grid').forEach(function(n){n.remove()});box.querySelectorAll('input,select').forEach(function(n){var s=document.createElement('span');s.textContent=n.tagName==='SELECT'?n.options[n.selectedIndex].text:n.value;n.replaceWith(s)});
+ w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:11px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.right{text-align:right}.sub{color:#555;font-size:10px}.section-title{font-weight:700;margin:10px 0 4px}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2>'+box.innerHTML+'</body></html>');w.document.close()};
+
+/* ---- Low stock badge (sidebar) ---- */
+function badge(){try{var b=$('ivBadge');if(!b||!A())return;var n=low(sold()).length;b.textContent=n;b.style.display=n?'':'none'}catch(e){}}
+var bt=0,_sv=window.saveDB;window.saveDB=function(){var r=_sv.apply(this,arguments);clearTimeout(bt);bt=setTimeout(badge,1500);return r};
+
+/* ---- Invoice me price list ---- */
+function listRate(cid,itemId){var v=I(),lid=cid&&v&&v.partyList[cid],L=lid&&v.lists.find(function(x){return x.id===lid}),p=L&&L.prices&&L.prices[itemId];return p!=null&&p!==''&&+p>=0?+p:null}
+var _ri=window.rowItem;
+if(typeof _ri==='function')window.rowItem=function(i){var o=_ri.apply(this,arguments);try{var r=current&&current.items[i];if(r&&r.itemId){var p=listRate(current.customerId,r.itemId);if(p!==null&&+r.rate!==p){r.rate=p;renderRows();recalc()}}}catch(e){}return o};
+var _lc=window.loadCustomer;
+if(typeof _lc==='function')window.loadCustomer=function(){var o=_lc.apply(this,arguments);try{if(current&&current.customerId){var ch=false;(current.items||[]).forEach(function(r){if(!r.itemId)return;var it=itemById(r.itemId),p=listRate(current.customerId,r.itemId);if(p!==null&&it&&+r.rate===(+it.rate||0)&&+r.rate!==p){r.rate=p;ch=true}});if(ch){renderRows();recalc()}}}catch(e){}return o};
+setTimeout(badge,2500);
 })();
 </script>
 
