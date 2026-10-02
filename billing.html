@@ -6834,6 +6834,7 @@ fbAuth.onAuthStateChanged(user=>{
       <div class="ng-body"><div class="ng-inner">
       <button data-page="acctVouchers" onclick="showPage('acctVouchers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg><span class="nl">Vouchers</span></button>
       <button data-page="acctLedgers" onclick="showPage('acctLedgers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M9 9h6M9 13h6"/></svg><span class="nl">Ledgers &amp; Groups</span></button>
+      <button data-page="acctReports" onclick="showPage('acctReports',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span class="nl">Reports</span></button>
       </div></div>
     </div>
     <div class="nav-group open" data-group="tools">
@@ -7260,6 +7261,29 @@ fbAuth.onAuthStateChanged(user=>{
     </div>
     <div id="alGroupView" class="table-wrap hidden"><table><thead><tr><th>Group</th><th>Nature</th><th class="right">Ledgers</th><th class="right">Closing</th><th></th></tr></thead><tbody id="agBody"></tbody></table></div>
   </div>
+</div>
+<div id="acctReports" class="page hidden">
+  <div class="top"><h1>Reports</h1>
+    <div class="toolbar">
+      <button class="btn muted" onclick="acctRepPrint()">Print</button>
+      <button class="btn muted" onclick="acctRepCSV()">Export CSV</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div id="arTabs" class="toolbar" style="flex-wrap:wrap;gap:8px"></div>
+    <div class="grid g3" style="margin-top:14px">
+      <div><label>From date</label><input id="arFrom" type="date" onchange="acctRenderReports()"></div>
+      <div><label>To date</label><input id="arTo" type="date" onchange="acctRenderReports()"></div>
+      <div id="arSelW"><label id="arSelL">Filter</label><select id="arSel" onchange="acctRenderReports()"></select></div>
+    </div>
+    <div id="arStock" class="grid g3 hidden" style="margin-top:12px">
+      <div><label>Opening Stock value (₹)</label><input id="arSO" type="number" step="0.01" onchange="acctRepStock()"></div>
+      <div><label>Closing Stock value (₹)</label><input id="arSC" type="number" step="0.01" onchange="acctRepStock()"></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn muted" onclick="acctRepStockItems()">Items se closing stock nikalo</button></div>
+      <div class="sub" style="grid-column:1/-1">Stock ka value yahin daalo. Stock-in-Hand ke naam se alag ledger mat banao, warna stock do baar ginega.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px"><div id="arSub" class="sub" style="margin-bottom:12px"></div><div id="arBody" class="table-wrap"></div></div>
 </div>
 <div id="journal" class="page hidden">
   <div class="top"><h1>Payment Journal</h1>
@@ -11060,6 +11084,7 @@ function showPage(id,btn){
   if(id==='chats'&&typeof renderChatsList==='function')renderChatsList();
   if(id==='acctVouchers'&&typeof acctRenderVouchers==='function')acctRenderVouchers();
   if(id==='acctLedgers'&&typeof acctRenderLedgers==='function')acctRenderLedgers();
+  if(id==='acctReports'&&typeof acctRenderReports==='function')acctRenderReports();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -21917,7 +21942,128 @@ window.acctStatement=function(lid){var V=allV(),b=bal()[lid];if(!b)return;var m=
  rows.forEach(function(r){run+=r.x.dc==='Dr'?r.x.amount:-r.x.amount;h+='<tr><td>'+esc(r.v.date)+'</td><td>'+esc(r.v.no)+'</td><td>'+(r.v.lines.filter(function(y){return y.dc!==r.x.dc}).map(function(y){return esc(m[y.ledger]||y.name||'?')}).join(', ')||'-')+'</td><td class="right">'+(r.x.dc==='Dr'?money(r.x.amount):'')+'</td><td class="right">'+(r.x.dc==='Cr'?money(r.x.amount):'')+'</td><td class="right">'+fb(run)+'</td></tr>'});
  h+='<tr><td colspan="5"><b>Closing balance</b></td><td class="right"><b>'+fb(run)+'</b></td></tr>';
  $('asTitle').textContent=b.l.name;$('asSub').textContent=gOf(b.l.group).name+(b.l.orphan?' | Ye party ab delete ho chuki hai, par uski entries safe hain.':'');$('asBody').innerHTML=h;openModal('acctStatementModal')};
-window.__acct={bal:bal,allV:allV,ledgers:ledgers};
+window.__acct={bal:bal,allV:allV,ledgers:ledgers,groups:groups,gOf:gOf,under:under,nameMap:nameMap,fb:fb,vAmt:vAmt,custId:custId};
+})();
+</script>
+
+<script>
+/* ===== ACCOUNTS (Phase 3): Day Book, Cash/Bank Book, Trial Balance, P&L, Balance Sheet, Outstanding & Ageing ===== */
+(function(){
+var X=window.__acct,$=function(i){return document.getElementById(i)},tab='day',
+TABS=[['day','Day Book'],['cash','Cash Book'],['bank','Bank Book'],['tb','Trial Balance'],['pl','Profit & Loss'],['bs','Balance Sheet'],['os','Outstanding']];
+function A(){return db.accounts}
+function r2(n){return Math.round((+n||0)*100)/100}
+function m2(n){n=r2(n);return(n<0?'-':'')+money(Math.abs(n))}
+function iso(d){return d.toISOString().slice(0,10)}
+function fy(){var m=String(db.settings.fy||'').match(/(\d{4})/),d=new Date(),y=m?+m[1]:(d.getMonth()>2?d.getFullYear():d.getFullYear()-1);return[y+'-04-01',(y+1)+'-03-31']}
+function prim(id){var g=X.gOf(id);while(g.parent)g=X.gOf(g.parent);return g}
+function lk(b){return'<a href="#" style="color:#a5b4fc;font-weight:600" onclick="acctStatement(\''+esc(b.l.id)+'\');return false">'+esc(b.l.name)+'</a>'}
+function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
+function empty(c,t){return'<tr><td colspan="'+c+'" class="sub" style="text-align:center;padding:18px">'+esc(t||'Is period me koi entry nahi.')+'</td></tr>'}
+function hrow(n,v,b){return'<tr><td><b>'+esc(n)+'</b></td><td class="right"><b>'+m2(v)+'</b></td></tr>'}
+function lrow(l,v){return'<tr><td style="padding-left:26px">'+l+'</td><td class="right">'+m2(v)+'</td></tr>'}
+function trow(n,v){return'<tr style="border-top:2px solid var(--border-color)"><td><b>'+esc(n)+'</b></td><td class="right"><b>₹ '+m2(v)+'</b></td></tr>'}
+function nz(b){return Math.abs(b.o)>0.004||b.dr||b.cr}
+
+/* ledger balances for a period: o = opening (incl. entries before f), dr/cr in [f,t], c = closing */
+function calc(f,t){var V=X.allV(),m={};X.ledgers(V).forEach(function(l){m[l.id]={l:l,o:l.o,dr:0,cr:0}});
+ V.forEach(function(v){var d=String(v.date||'');v.lines.forEach(function(x){var b=m[x.ledger];if(!b)return;if(d<f)b.o+=x.dc==='Dr'?x.amount:-x.amount;else if(d<=t){if(x.dc==='Dr')b.dr+=x.amount;else b.cr+=x.amount}})});
+ return Object.keys(m).map(function(k){var b=m[k];b.c=b.o+b.dr-b.cr;return b})}
+function byName(a,b){return a.l.name.localeCompare(b.l.name)}
+/* group blocks: gs = primary groups, val(b) = amount for a ledger */
+function blk(gs,rows,val){var h='',tot=0;gs.forEach(function(g){var u=X.under(g.id),rs=rows.filter(function(b){return u.indexOf(b.l.group)>-1&&Math.abs(val(b))>0.004}).sort(byName);if(!rs.length)return;var s=0;rs.forEach(function(b){s+=val(b)});tot+=s;h+=hrow(g.name,s)+rs.map(function(b){return lrow(lk(b),val(b))}).join('')});return{h:h,tot:tot}}
+function pgs(nat){return X.groups().filter(function(g){return!g.parent&&g.nature===nat})}
+function pg(id){return[X.gOf(id)]}
+
+/* ---- Day Book ---- */
+function day(f,t){var ty=$('arSel').value,nm=X.nameMap(),V=X.allV().filter(function(v){var d=String(v.date||'');return d>=f&&d<=t&&(!ty||v.type===ty)}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))||a.createdAt-b.createdAt});
+ var cap=V.length>500,tot=0;V.forEach(function(v){tot+=X.vAmt(v)});
+ $('arSub').textContent=V.length+' vouchers | Total ₹ '+money(tot);
+ return th(['Date','Voucher No','Type','Particulars','>Amount'])+'<tbody>'+(V.length?V.slice(0,500).map(function(v){var n=function(dc){return v.lines.filter(function(x){return x.dc===dc}).map(function(x){return esc(nm[x.ledger]||x.name||'(deleted party)')}).join(', ')},
+  go=v.auto?'acctGo(\''+v.goto+'\')':'acctOpenVoucher(\'\',false,\''+v.id+'\')';
+  return'<tr><td>'+esc(v.date)+'</td><td><a href="#" style="color:#a5b4fc;font-weight:700" onclick="'+go+';return false">'+esc(v.no)+'</a></td><td>'+(v.expense?'Expense':esc(v.type))+'</td><td>Dr: '+n('Dr')+'<div class="sub">Cr: '+n('Cr')+(v.narration?' | '+esc(v.narration):'')+'</div></td><td class="right"><b>'+money(X.vAmt(v))+'</b></td></tr>'}).join('')+(cap?'<tr><td colspan="5" class="sub">Pehle 500 dikhaye. Date range chhota karo.</td></tr>':''):empty(5))+'</tbody>'}
+
+/* ---- Cash Book / Bank Book ---- */
+function book(f,t,kind){var all=X.ledgers().filter(function(l){return l.group===kind}),sel=$('arSel').value,ls=sel?all.filter(function(l){return l.id===sel}):all,ids=ls.map(function(l){return l.id}),nm=X.nameMap(),open=0,rows=[];
+ ls.forEach(function(l){open+=l.o});
+ X.allV().forEach(function(v){var d=String(v.date||'');v.lines.forEach(function(x){if(ids.indexOf(x.ledger)<0)return;var s=x.dc==='Dr'?x.amount:-x.amount;if(d<f)open+=s;else if(d<=t)rows.push({v:v,x:x})})});
+ rows.sort(function(a,b){return String(a.v.date).localeCompare(String(b.v.date))||a.v.createdAt-b.v.createdAt});
+ var run=open,dr=0,cr=0,h=th(['Date','Voucher','Particulars','>Receipts (Dr)','>Payments (Cr)','>Balance'])+'<tbody><tr><td colspan="5"><b>Opening balance</b></td><td class="right"><b>'+X.fb(open)+'</b></td></tr>';
+ rows.forEach(function(r){var isDr=r.x.dc==='Dr';run+=isDr?r.x.amount:-r.x.amount;if(isDr)dr+=r.x.amount;else cr+=r.x.amount;
+  h+='<tr><td>'+esc(r.v.date)+'</td><td>'+esc(r.v.no)+'</td><td>'+(r.v.lines.filter(function(y){return ids.indexOf(y.ledger)<0}).map(function(y){return esc(nm[y.ledger]||y.name||'?')}).join(', ')||'Transfer')+'</td><td class="right">'+(isDr?money(r.x.amount):'')+'</td><td class="right">'+(isDr?'':money(r.x.amount))+'</td><td class="right">'+X.fb(run)+'</td></tr>'});
+ if(!rows.length)h+=empty(6);
+ h+='<tr style="border-top:2px solid var(--border-color)"><td colspan="3"><b>Total / Closing balance</b></td><td class="right"><b>'+money(dr)+'</b></td><td class="right"><b>'+money(cr)+'</b></td><td class="right"><b>'+X.fb(run)+'</b></td></tr></tbody>';
+ $('arSub').textContent=(ls.length?ls.map(function(l){return l.name}).join(', '):'Is group me koi ledger nahi')+' | '+rows.length+' entries';return h}
+
+/* ---- Trial Balance ---- */
+function tb(f,t){var rows=calc(f,t).filter(nz),h=th(['Particulars','>Opening','>Debit','>Credit','>Closing'])+'<tbody>',D=0,C=0,pd=0,pc=0;
+ X.groups().filter(function(g){return!g.parent}).forEach(function(g){var u=X.under(g.id),rs=rows.filter(function(b){return u.indexOf(b.l.group)>-1}).sort(byName);if(!rs.length)return;var s={o:0,dr:0,cr:0,c:0};
+  rs.forEach(function(b){s.o+=b.o;s.dr+=b.dr;s.cr+=b.cr;s.c+=b.c;if(b.c>0)D+=b.c;else C-=b.c});pd+=s.dr;pc+=s.cr;
+  h+='<tr style="background:rgba(99,102,241,.08)"><td><b>'+esc(g.name)+'</b></td><td class="right"><b>'+X.fb(s.o)+'</b></td><td class="right"><b>'+money(s.dr)+'</b></td><td class="right"><b>'+money(s.cr)+'</b></td><td class="right"><b>'+X.fb(s.c)+'</b></td></tr>'+
+  rs.map(function(b){return'<tr><td style="padding-left:26px">'+lk(b)+'</td><td class="right">'+X.fb(b.o)+'</td><td class="right">'+money(b.dr)+'</td><td class="right">'+money(b.cr)+'</td><td class="right">'+X.fb(b.c)+'</td></tr>'}).join('')});
+ if(!rows.length)h+=empty(5);
+ var ok=Math.abs(D-C)<0.005;
+ h+='<tr style="border-top:2px solid var(--border-color)"><td><b>Grand Total</b></td><td></td><td class="right"><b>'+money(pd)+'</b></td><td class="right"><b>'+money(pc)+'</b></td><td class="right"><b>Dr '+money(D)+'<br>Cr '+money(C)+'</b></td></tr></tbody>';
+ $('arSub').innerHTML=ok?'<span style="color:#34d399">Trial Balance tally ho raha hai.</span>':'<span style="color:#fb7185">Fark ₹ '+money(Math.abs(D-C))+' ('+(D>C?'Debit':'Credit')+' zyada). Ledgers page par opening balances check karo.</span>';return h}
+
+/* ---- Profit & Loss (Trading + P&L) ---- */
+function stock(){var s=A().stock;return{open:+(s&&s.open)||0,close:+(s&&s.close)||0}}
+function pl(f,t){var rows=calc(f,t),st=stock(),cr=function(b){return b.cr-b.dr},dr=function(b){return b.dr-b.cr},
+ sa=blk(pg('salesAcc'),rows,cr),di=blk(pg('directInc'),rows,cr),pu=blk(pg('purchAcc'),rows,dr),de=blk(pg('directExp'),rows,dr),ii=blk(pg('indirectInc'),rows,cr),ie=blk(pg('indirectExp'),rows,dr),
+ inc=sa.tot+di.tot+st.close,cost=st.open+pu.tot+de.tot,gp=inc-cost,net=gp+ii.tot-ie.tot,h=th(['Particulars','>Amount'])+'<tbody>';
+ h+='<tr><td colspan="2" class="sub"><b>TRADING ACCOUNT</b></td></tr>'+sa.h+di.h+(st.close?hrow('Closing Stock',st.close):'')+trow('Total Income (A)',inc)+
+  (st.open?hrow('Opening Stock',st.open):'')+pu.h+de.h+trow('Total Cost (B)',cost)+
+  '<tr><td><b>'+(gp>=0?'Gross Profit':'Gross Loss')+' (A - B)</b></td><td class="right" style="color:'+(gp>=0?'#34d399':'#fb7185')+'"><b>₹ '+m2(Math.abs(gp))+'</b></td></tr>'+
+  '<tr><td colspan="2" class="sub" style="padding-top:18px"><b>PROFIT &amp; LOSS ACCOUNT</b></td></tr>'+hrow(gp>=0?'Gross Profit b/d':'Gross Loss b/d',gp)+ii.h+trow('Total (C)',gp+ii.tot)+ie.h+trow('Indirect Expenses (D)',ie.tot)+
+  '<tr><td><b>'+(net>=0?'Net Profit':'Net Loss')+' (C - D)</b></td><td class="right" style="color:'+(net>=0?'#34d399':'#fb7185')+';font-size:16px"><b>₹ '+m2(Math.abs(net))+'</b></td></tr></tbody>';
+ $('arSub').textContent=f+' se '+t+' tak | Sales ₹ '+money(sa.tot)+' | '+(net>=0?'Net Profit':'Net Loss')+' ₹ '+money(Math.abs(net));return h}
+
+/* ---- Balance Sheet (as on To date) ---- */
+function bs(f,t){var rows=calc('',t),st=stock(),pe=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
+ var P=pe+st.close-st.open,L=blk(pgs('L'),rows,function(b){return-b.c}),As=blk(pgs('A'),rows,function(b){return b.c}),
+ lt=L.tot+P,at=As.tot+st.close,df=r2(at-lt),lT=lt+(df>0?df:0),aT=at+(df<0?-df:0),
+ h=th(['Particulars','>Amount'])+'<tbody><tr><td colspan="2" class="sub"><b>LIABILITIES</b></td></tr>'+L.h+hrow('Profit & Loss A/c ('+(P>=0?'Profit':'Loss')+')',P)+(df>0.004?hrow('Difference in opening balances',df):'')+trow('Total Liabilities',lT)+
+ '<tr><td colspan="2" class="sub" style="padding-top:18px"><b>ASSETS</b></td></tr>'+As.h+(st.close?hrow('Closing Stock',st.close):'')+(df<-0.004?hrow('Difference in opening balances',-df):'')+trow('Total Assets',aT)+'</tbody>';
+ $('arSub').innerHTML='As on '+esc(t)+(Math.abs(df)>0.004?' | <span style="color:#fb7185">Opening difference ₹ '+money(Math.abs(df))+' dikh raha hai. Ledgers page par opening balances barabar karo.</span>':' | <span style="color:#34d399">Balance Sheet tally ho rahi hai.</span>');return h}
+
+/* ---- Outstanding & Ageing ---- */
+function os(f,t){var rec=$('arSel').value!=='pay',bills=[],today=Date.parse(t),B=X.bal(),BK=['Not due','1-30','31-60','61-90','90+'];
+ var paid=function(a){var s=0;(a||[]).forEach(function(p){if(!p.date||p.date<=t)s+=+p.amount||0});return s};
+ if(rec)(db.invoices||[]).forEach(function(i){if(i.status!=='Finalized'||String(i.date||'')>t)return;var g=+(i.totals&&i.totals.grand)||0,pd=paid(i.payments),o=r2(g-pd);if(o>0.5)bills.push({no:i.invoiceNumber||'',party:(i.customer&&i.customer.name)||'Customer',pid:X.custId(i),date:i.date||'',due:i.dueDate||i.date||'',tot:g,paid:pd,out:o})});
+ else(db.purchaseBills||[]).forEach(function(b){if(String(b.date||'')>t)return;var g=+(b.totals&&b.totals.grand)||0,pd=paid(b.payments),o=r2(g-pd);if(o>0.5)bills.push({no:b.pbNumber||'',party:b.vendorName||'Vendor',pid:'v:'+b.vendorId,date:b.date||'',due:b.dueDate||b.date||'',tot:g,paid:pd,out:o})});
+ bills.forEach(function(b){var d=Math.floor((today-Date.parse(b.due))/864e5);b.days=isNaN(d)?0:d;b.k=b.days<=0?0:b.days<=30?1:b.days<=60?2:b.days<=90?3:4});
+ var P={},T=[0,0,0,0,0];bills.forEach(function(b){var k=b.pid||b.party,p=P[k]=P[k]||{n:b.party,pid:b.pid,a:[0,0,0,0,0],t:0};p.a[b.k]+=b.out;p.t+=b.out;T[b.k]+=b.out});
+ var ps=Object.keys(P).map(function(k){return P[k]}).sort(function(a,b){return b.t-a.t}),all=T.reduce(function(a,b){return a+b},0);
+ $('arSub').textContent=(rec?'Receivable (customers)':'Payable (vendors)')+' | '+bills.length+' pending bills | Total ₹ '+money(all)+' | Credit/Debit Note aur advance bill-wise me nahi ghatte, wo Ledger balance me dikhte hain.';
+ var h='<div class="section-title" style="margin-bottom:8px">Party-wise ageing (due date se, as on '+esc(t)+')</div><table>'+th(['Party'].concat(BK.map(function(x){return'>'+x}),['>Total','>Ledger balance']))+'<tbody>'+
+ (ps.length?ps.map(function(p){var lb=p.pid&&B[p.pid];return'<tr><td>'+(lb?'<a href="#" style="color:#a5b4fc;font-weight:600" onclick="acctStatement(\''+esc(p.pid)+'\');return false">'+esc(p.n)+'</a>':esc(p.n))+'</td>'+p.a.map(function(x){return'<td class="right">'+(x?money(x):'-')+'</td>'}).join('')+'<td class="right"><b>'+money(p.t)+'</b></td><td class="right">'+(lb?X.fb(lb.c):'-')+'</td></tr>'}).join('')+'<tr style="border-top:2px solid var(--border-color)"><td><b>Total</b></td>'+T.map(function(x){return'<td class="right"><b>'+money(x)+'</b></td>'}).join('')+'<td class="right"><b>'+money(all)+'</b></td><td></td></tr>':empty(8,'Koi pending bill nahi.'))+'</tbody></table>';
+ bills.sort(function(a,b){return b.days-a.days});
+ h+='<div class="section-title" style="margin:22px 0 8px">Bill-wise outstanding</div><table>'+th(['Bill','Party','Date','Due','>Total','>Received/Paid','>Pending','>Overdue days'])+'<tbody>'+
+ (bills.length?bills.slice(0,300).map(function(b){return'<tr><td><b>'+esc(b.no)+'</b></td><td>'+esc(b.party)+'</td><td>'+esc(b.date)+'</td><td>'+esc(b.due)+'</td><td class="right">'+money(b.tot)+'</td><td class="right">'+money(b.paid)+'</td><td class="right"><b>'+money(b.out)+'</b></td><td class="right" style="color:'+(b.days>0?'#fb7185':'inherit')+'">'+(b.days>0?b.days:'-')+'</td></tr>'}).join(''):empty(8,'Koi pending bill nahi.'))+'</tbody></table>';
+ return h}
+
+/* ---- Page ---- */
+function setSel(){var s=$('arSel'),w=$('arSelW'),L=$('arSelL'),cur=s.value;w.classList.toggle('hidden',['day','cash','bank','os'].indexOf(tab)<0);
+ if(tab==='day'){L.textContent='Voucher type';s.innerHTML='<option value="">All types</option>'+['Sales','Purchase','Receipt','Payment','Journal','Contra','Credit Note','Debit Note'].map(function(x){return'<option>'+x+'</option>'}).join('')}
+ else if(tab==='cash'||tab==='bank'){L.textContent=tab==='cash'?'Cash ledger':'Bank ledger';s.innerHTML='<option value="">All</option>'+X.ledgers().filter(function(l){return l.group===tab}).map(function(l){return'<option value="'+esc(l.id)+'">'+esc(l.name)+'</option>'}).join('')}
+ else if(tab==='os'){L.textContent='Type';s.innerHTML='<option value="rec">Receivable (Customers)</option><option value="pay">Payable (Vendors)</option>'}
+ if(Array.prototype.some.call(s.options,function(o){return o.value===cur}))s.value=cur;
+ var st=stock();$('arStock').classList.toggle('hidden',tab!=='pl'&&tab!=='bs');$('arSO').value=st.open||'';$('arSC').value=st.close||''}
+window.acctRepTab=function(t){tab=t;$('arSel').value='';setSel();acctRenderReports()};
+window.acctRepStock=function(){var s=A().stock={open:r2($('arSO').value),close:r2($('arSC').value)};saveDB();acctRenderReports()};
+window.acctRepStockItems=function(){var v=0;(db.items||[]).forEach(function(i){v+=(+i.stock||0)*(+i.purchaseRate||0)});$('arSC').value=r2(v)||'';acctRepStock()};
+window.acctRenderReports=function(){if(!A()||!X)return;var r=fy(),td=iso(new Date());
+ if(!$('arFrom').value)$('arFrom').value=r[0];if(!$('arTo').value)$('arTo').value=td>=r[0]&&td<=r[1]?td:r[1];
+ $('arTabs').innerHTML=TABS.map(function(x){return'<button class="btn '+(tab===x[0]?'primary':'muted')+'" onclick="acctRepTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+ if(!$('arSel').dataset.t||$('arSel').dataset.t!==tab){$('arSel').dataset.t=tab;setSel()}
+ var f=$('arFrom').value,t=$('arTo').value;if(!f||!t)return;if(f>t){$('arBody').innerHTML='<div class="sub">From date, To date se pehle honi chahiye.</div>';return}
+ var h=tab==='day'?day(f,t):tab==='cash'||tab==='bank'?book(f,t,tab):tab==='tb'?tb(f,t):tab==='pl'?pl(f,t):tab==='bs'?bs(f,t):os(f,t);
+ $('arBody').innerHTML=tab==='os'?h:'<table>'+h+'</table>'};
+function title(){var x=TABS.filter(function(a){return a[0]===tab})[0][1];return x+' | '+(db.settings.company||'')+' | '+$('arFrom').value+' to '+$('arTo').value}
+window.acctRepCSV=function(){var csv=[];document.querySelectorAll('#arBody tr').forEach(function(tr){csv.push(Array.prototype.map.call(tr.children,function(c){return'"'+c.innerText.replace(/\s*\n\s*/g,' ').replace(/"/g,'""')+'"'}).join(','))});
+ downloadBlob(ieCreditCsv(csv,'accounts report'),'IE-'+tab.toUpperCase()+'-REPORT.csv','text/csv')};
+window.acctRepPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}
+ w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:12px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}.right{text-align:right}a{color:#000;text-decoration:none}.sub{color:#555;font-size:11px}.section-title{font-weight:700;margin:10px 0 4px}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2><div class="sub" style="margin-bottom:8px">'+$('arSub').innerText+'</div>'+$('arBody').innerHTML+'</body></html>');w.document.close()};
 })();
 </script>
 
