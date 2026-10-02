@@ -22381,14 +22381,42 @@ var COLS=[['invoices','Invoice',function(r){return r.invoiceNumber}],['purchaseB
 snap=null,snapDb=null,snapCo=null;
 function coll(k){return k==='vouchers'||k==='ledgers'||k==='pdc'?(A()[k]||[]):(db[k]||[])}
 function hs(o){var s=JSON.stringify(o),h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h}
-function take(){var m={};COLS.forEach(function(c){var mm=m[c[0]]={};coll(c[0]).forEach(function(r){if(r&&r.id)mm[r.id]={h:hs(r),n:String(c[2](r)||'')}})});return m}
+function take(){var m={};COLS.forEach(function(c){var mm=m[c[0]]={};coll(c[0]).forEach(function(r){if(r&&r.id)var js=JSON.stringify(r);mm[r.id]={h:hs(r),n:String(c[2](r)||''),s:js}})});return m}
 var _save=window.saveDB;
+var SK={id:1,updatedAt:1,createdAt:1,ts:1,syncedAt:1,sync:1,cgst:1,sgst:1,igst:1,taxable:1,itemId:1,partyId:1,customerId:1,vendorId:1,balance:1,lastEditedBy:1,lastEditedAt:1},
+LB={invoiceNumber:'Invoice No',pbNumber:'Bill No',poNumber:'PO No',docNumber:'Doc No',date:'Date',dueDate:'Due Date',invoiceDate:'Date',customer:'Party',vendor:'Party',name:'Naam',qty:'Qty',rate:'Rate',gst:'GST%',amount:'Amount',unit:'Unit',description:'Detail',hsn:'HSN',grand:'Total',sub:'Subtotal',status:'Status',phone:'Phone',mobile:'Mobile',address:'Address',discount:'Discount',stock:'Stock',salesRate:'Sales Rate',purchaseRate:'Purchase Rate',manualRate:'Manual Rate',opening:'Opening',narration:'Narration',amountPaid:'Paid',payments:'Payments',notes:'Notes',size:'Size',reference:'Reference',itemName:'Item'};
+function lb(k){return LB[k]||k}
+function vs(v){if(v===undefined||v===null||v==='')return'(khali)';if(typeof v==='object')return'(badla)';v=String(v);return v.length>40?v.slice(0,40)+'…':v}
+function rowLbl(r,i){return r&&typeof r==='object'?String(r.itemName||r.name||r.description||r.particulars||('#'+(i+1))):String(r)}
+function rowKey(r,i){return r&&typeof r==='object'&&(r.itemId||r.id)?String(r.itemId||r.id)+'|'+i:'i'+i}
+function cmp(a,b,pre,out,skip){
+ if(Array.isArray(a)||Array.isArray(b)){a=Array.isArray(a)?a:[];b=Array.isArray(b)?b:[];
+  var obj=[].concat(a,b).some(function(x){return x&&typeof x==='object'});
+  if(!obj){var x1=a.join(', '),x2=b.join(', ');if(x1!==x2)out.push(pre+': '+vs(x1)+' → '+vs(x2));return}
+  var ma={},mb={};a.forEach(function(r,i){ma[rowKey(r,i)]=[r,i]});b.forEach(function(r,i){mb[rowKey(r,i)]=[r,i]});
+  /* same itemId pe key index se judi hai; agar order badla to naam se match karo */
+  var la={},lbm={};a.forEach(function(r,i){(la[rowLbl(r,i)]=la[rowLbl(r,i)]||[]).push(i)});b.forEach(function(r,i){(lbm[rowLbl(r,i)]=lbm[rowLbl(r,i)]||[]).push(i)});
+  var usedA={},usedB={},pairs=[];
+  Object.keys(lbm).forEach(function(n){var A_=la[n]||[],B_=lbm[n];for(var j=0;j<B_.length&&j<A_.length;j++){pairs.push([A_[j],B_[j]]);usedA[A_[j]]=1;usedB[B_[j]]=1}});
+  a.forEach(function(r,i){if(!usedA[i]){var q=r&&r.qty!==undefined?' (qty '+r.qty+')':'';out.push(pre+' "'+rowLbl(r,i)+'" hata'+q)}});
+  b.forEach(function(r,i){if(!usedB[i]){var q=r&&r.qty!==undefined?' (qty '+r.qty+(r.rate!==undefined?', rate '+r.rate:'')+')':'';out.push(pre+' "'+rowLbl(r,i)+'" add hua'+q)}});
+  pairs.forEach(function(pr){cmp(a[pr[0]],b[pr[1]],pre+' "'+rowLbl(b[pr[1]],pr[1])+'"',out,skip)});return}
+ if((a&&typeof a==='object')||(b&&typeof b==='object')){a=a&&typeof a==='object'?a:{};b=b&&typeof b==='object'?b:{};
+  var ks={};Object.keys(a).forEach(function(k){ks[k]=1});Object.keys(b).forEach(function(k){ks[k]=1});
+  Object.keys(ks).forEach(function(k){if(SK[k]||k.charAt(0)==='_'||(skip&&skip[k]))return;cmp(a[k],b[k],pre?pre+' '+lb(k):lb(k),out,skip)});return}
+ if(String(a===undefined||a===null?'':a)!==String(b===undefined||b===null?'':b)){
+  var big=(typeof a==='string'&&a.length>120)||(typeof b==='string'&&b.length>120);
+  out.push(big?pre+': badla':pre+': '+vs(a)+' → '+vs(b))}}
+function changes(os,ns,skip){var out=[];try{cmp(JSON.parse(os),JSON.parse(ns),'',out,skip)}catch(e){}return out.map(function(x){return x.replace(/^\s+/,'').replace(/^items /,'Item ').replace(/^totals /,'')})}
+function summ(js){try{var o=JSON.parse(js),p=[];var g=o.totals&&o.totals.grand!==undefined?o.totals.grand:(o.total!==undefined?o.total:o.amount);if(g!==undefined&&g!=='')p.push('Total '+g);if(Array.isArray(o.items))p.push(o.items.length+' items');var pt=o.customer&&o.customer.name||o.vendor&&o.vendor.name||o.customerName||o.vendorName||o.partyName;if(pt)p.push(String(pt));if(o.date)p.push(String(o.date));return p.join(' · ')}catch(e){return''}}
+var TRANS={invoices:1,purchaseBills:1,purchaseOrders:1,documents:1,vouchers:1};
 function diff(){if(!snap||snapDb!==db||snapCo!==cid()){snap=take();snapDb=db;snapCo=cid();return}
- var cur=take(),ev=[],now=Date.now();
- COLS.forEach(function(c){var o=snap[c[0]],n=cur[c[0]];Object.keys(n).forEach(function(i){if(!o[i])ev.push(['Created',c[1],n[i].n]);else if(o[i].h!==n[i].h)ev.push(['Edited',c[1],n[i].n])});Object.keys(o).forEach(function(i){if(!n[i])ev.push(['Deleted',c[1],o[i].n])})});
+ var cur=take(),ev=[],now=Date.now(),trans=false;
+ COLS.forEach(function(c){if(!TRANS[c[0]])return;var o=snap[c[0]],n=cur[c[0]];Object.keys(n).forEach(function(i){if(!o[i]||o[i].h!==n[i].h)trans=true});Object.keys(o).forEach(function(i){if(!n[i])trans=true})});
+ COLS.forEach(function(c){var o=snap[c[0]],n=cur[c[0]];Object.keys(n).forEach(function(i){if(!o[i])ev.push(['Created',c[1],n[i].n,[summ(n[i].s)]]);else if(o[i].h!==n[i].h){var sk=(c[0]==='items'&&trans)?{stock:1}:null;var ch=changes(o[i].s,n[i].s,sk);if(!ch.length&&sk)return;ev.push(['Edited',c[1],n[i].n,ch.length?ch:['(chhota / andar ka badlav)']])}});Object.keys(o).forEach(function(i){if(!n[i])ev.push(['Deleted',c[1],o[i].n,[summ(o[i].s)]])})});
  snap=cur;if(!ev.length)return;var a=A();a.audit=a.audit||[];
  if(ev.length>40)a.audit.push({t:now,u:who(),a:'Bulk',k:'Data',n:ev.length+' records badle (sync / restore / import)'});
- else ev.forEach(function(e){a.audit.push({t:now,u:who(),a:e[0],k:e[1],n:e[2]||'-'})});
+ else ev.forEach(function(e){var en={t:now,u:who(),a:e[0],k:e[1],n:e[2]||'-'};var d=(e[3]||[]).filter(Boolean);if(d.length>14){var m=d.length-14;d=d.slice(0,14);d.push('+'+m+' aur badlav')}if(d.length)en.d=d;a.audit.push(en)});
  if(a.audit.length>1500)a.audit=a.audit.slice(-1000);
  _save.call(window)}
 window.saveDB=function(){if(role()==='viewer'){toast('View-only role: changes save nahi honge','#f43f5e');return}var r=_save.apply(this,arguments);clearTimeout(dt);dt=setTimeout(function(){try{diff()}catch(e){}},700);return r};
@@ -22403,10 +22431,10 @@ window.acctRenderControl=function(){if(!A())return;var r=role(),own=r==='owner',
  $('ctTabs').innerHTML=tabs.map(function(x){return'<button class="btn '+(ct===x[0]?'primary':'muted')+'" onclick="acctCtTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
  $('ctRole').textContent='Is device ka role: '+ROLES[r]+(A().lockDate?' | Period lock: '+A().lockDate+' tak':'');
  var h='';
- if(ct==='audit'){var q=(window._ctQ||''),ac=window._ctA||'',ty=window._ctT||'',L=(A().audit||[]).slice().reverse().filter(function(e){return(!ac||e.a===ac)&&(!ty||e.k===ty)&&(!q||(e.n+' '+e.u).toLowerCase().indexOf(q.toLowerCase())>-1)});
+ if(ct==='audit'){var q=(window._ctQ||''),ac=window._ctA||'',ty=window._ctT||'',L=(A().audit||[]).slice().reverse().filter(function(e){return(!ac||e.a===ac)&&(!ty||e.k===ty)&&(!q||(e.n+' '+e.u+' '+(e.d||[]).join(' ')).toLowerCase().indexOf(q.toLowerCase())>-1)});
   h='<div class="grid g3"><div><label>Search</label><input value="'+esc(q)+'" oninput="window._ctQ=this.value;acctRenderControl()" placeholder="Record / user"></div><div><label>Action</label><select onchange="window._ctA=this.value;acctRenderControl()">'+['','Created','Edited','Deleted','Bulk'].map(function(x){return opt(x,x||'All',ac)}).join('')+'</select></div><div><label>Type</label><select onchange="window._ctT=this.value;acctRenderControl()">'+opt('','All',ty)+COLS.map(function(c){return opt(c[1],c[1],ty)}).join('')+'</select></div></div>'+
-  '<div class="sub" style="margin:12px 0">'+L.length+' entries (latest pehle, 300 tak dikhte hain). Sirf Create / Edit / Delete record hota hai, kaun si field badli ye nahi.</div><div class="table-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Type</th><th>Record</th></tr></thead><tbody>'+
-  (L.length?L.slice(0,300).map(function(e){return'<tr><td>'+esc(new Date(e.t).toLocaleString('en-IN'))+'</td><td>'+esc(e.u)+'</td><td><span class="badge '+(e.a==='Deleted'?'unpaid':e.a==='Created'?'paid':'partial')+'">'+esc(e.a)+'</span></td><td>'+esc(e.k)+'</td><td>'+esc(e.n)+'</td></tr>'}).join(''):'<tr><td colspan="5" class="sub" style="text-align:center;padding:18px">Abhi koi entry nahi.</td></tr>')+'</tbody></table></div>'+(own&&L.length?'<div class="toolbar" style="margin-top:12px"><button class="btn danger" onclick="acctAuditClear()">Audit log saaf karo</button></div>':'')}
+  '<div class="sub" style="margin:12px 0">'+L.length+' entries (latest pehle, 300 tak dikhte hain). Record ke saath kya badla (purana → naya) bhi dikhta hai.</div><div class="table-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Type</th><th>Record</th><th>Changes</th></tr></thead><tbody>'+
+  (L.length?L.slice(0,300).map(function(e){return'<tr><td>'+esc(new Date(e.t).toLocaleString('en-IN'))+'</td><td>'+esc(e.u)+'</td><td><span class="badge '+(e.a==='Deleted'?'unpaid':e.a==='Created'?'paid':'partial')+'">'+esc(e.a)+'</span></td><td>'+esc(e.k)+'</td><td>'+esc(e.n)+'</td><td style="min-width:260px;white-space:normal;line-height:1.5">'+((e.d&&e.d.length)?e.d.map(function(x){return'<div>'+esc(x)+'</div>'}).join(''):'<span class="sub">-</span>')+'</td></tr>'}).join(''):'<tr><td colspan="5" class="sub" style="text-align:center;padding:18px">Abhi koi entry nahi.</td></tr>')+'</tbody></table></div>'+(own&&L.length?'<div class="toolbar" style="margin-top:12px"><button class="btn danger" onclick="acctAuditClear()">Audit log saaf karo</button></div>':'')}
  else if(ct==='lock'){h='<div class="section-title">Period Lock</div><div class="sub" style="margin-bottom:12px">Is date tak (is date samet) ki invoice, purchase bill, payment aur voucher entries add, edit ya delete nahi ho sakengi. Owner par bhi lagta hai. Hatane ke liye khaali karke save karo.</div><div class="grid g3"><div><label>Lock date</label><input id="ctLock" type="date" value="'+esc(A().lockDate||'')+'"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveLock()">Save</button></div></div>'}
  else if(ct==='roles'){var nme='';try{nme=localStorage.getItem('IE_UNAME')||''}catch(e){}
   h='<div class="section-title">Is device ka role</div><div class="grid g3"><div><label>Naam (audit me dikhega)</label><input id="ctName" value="'+esc(nme)+'"></div><div><label>Role</label><select id="ctRoleSel">'+Object.keys(ROLES).map(function(k){return opt(k,ROLES[k],r)}).join('')+'</select></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveRole()">Save</button></div></div>'+
