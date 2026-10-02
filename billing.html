@@ -6835,6 +6835,9 @@ fbAuth.onAuthStateChanged(user=>{
       <button data-page="acctVouchers" onclick="showPage('acctVouchers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg><span class="nl">Vouchers</span></button>
       <button data-page="acctLedgers" onclick="showPage('acctLedgers',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M9 9h6M9 13h6"/></svg><span class="nl">Ledgers &amp; Groups</span></button>
       <button data-page="acctReports" onclick="showPage('acctReports',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span class="nl">Reports</span></button>
+      <button data-page="acctRecon" onclick="showPage('acctRecon',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></svg><span class="nl">Bank Reconciliation</span></button>
+      <button data-page="acctPdc" onclick="showPage('acctPdc',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4zM4 10h16M8 15h4"/></svg><span class="nl">Post-dated Cheques</span></button>
+      <button data-page="acctControl" onclick="showPage('acctControl',this)"><svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span class="nl">Audit &amp; Security</span></button>
       </div></div>
     </div>
     <div class="nav-group open" data-group="tools">
@@ -7284,6 +7287,52 @@ fbAuth.onAuthStateChanged(user=>{
     </div>
   </div>
   <div class="card" style="margin-top:18px"><div id="arSub" class="sub" style="margin-bottom:12px"></div><div id="arBody" class="table-wrap"></div></div>
+</div>
+<div id="acctRecon" class="page hidden">
+  <div class="top"><h1>Bank Reconciliation</h1></div>
+  <div class="card" style="margin-top:18px">
+    <div class="grid g4">
+      <div><label>Bank ledger</label><select id="brLed" onchange="acctRenderRecon()"></select></div>
+      <div><label>As on date</label><input id="brDate" type="date" onchange="acctRenderRecon()"></div>
+      <div><label>Show</label><select id="brShow" onchange="acctRenderRecon()"><option value="p">Pending entries</option><option value="a">All entries</option></select></div>
+      <div><label>Balance as per bank statement</label><input id="brStmt" type="number" step="0.01" onchange="acctReconStmt()" placeholder="Passbook ka balance"></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px;flex-wrap:wrap;gap:8px">
+      <button class="btn muted" onclick="acctReconAll(true)">Shown entries clear karo (entry date par)</button>
+      <button class="btn muted" onclick="acctReconAll(false)">Shown entries uncleared karo</button>
+    </div>
+    <div class="sub" style="margin-top:10px">Har entry ke saamne bank ki date daalo (passbook me jis din paisa aaya ya gaya). Date khaali = abhi clear nahi hui.</div>
+  </div>
+  <div class="dashboard" id="brStats" style="margin-top:18px"></div>
+  <div class="card" style="margin-top:18px"><div class="table-wrap"><table><thead><tr><th>Date</th><th>Voucher</th><th>Particulars</th><th class="right">Deposit (Dr)</th><th class="right">Withdrawal (Cr)</th><th>Bank date</th></tr></thead><tbody id="brBody"></tbody></table></div></div>
+</div>
+<div id="acctPdc" class="page hidden">
+  <div class="top"><h1>Post-dated Cheques</h1></div>
+  <div class="dashboard" id="pdStats"></div>
+  <div class="card" style="margin-top:18px">
+    <div class="section-title">Naya cheque</div>
+    <div class="grid g4">
+      <div><label>Type</label><select id="pdType" onchange="acctPdcFill()"><option value="Received">Received (customer se)</option><option value="Issued">Issued (vendor ko)</option></select></div>
+      <div><label>Party</label><select id="pdParty"></select></div>
+      <div><label>Bank ledger</label><select id="pdBank"></select></div>
+      <div><label>Cheque no</label><input id="pdNo" placeholder="Cheque number"></div>
+      <div><label>Cheque date</label><input id="pdDate" type="date"></div>
+      <div><label>Amount</label><input id="pdAmt" type="number" step="0.01"></div>
+      <div style="grid-column:span 2"><label>Note</label><input id="pdNote" placeholder="Optional"></div>
+    </div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="acctPdcAdd()">+ Add Cheque</button></div>
+    <div class="sub" style="margin-top:8px">Cheque clear hone par hi accounts me Receipt/Payment voucher banta hai. Tab tak ledger me kuch nahi aata.</div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="grid g3"><div><label>Search</label><input id="pdQ" oninput="acctRenderPdc()" placeholder="Party / cheque no"></div>
+      <div><label>Status</label><select id="pdFS" onchange="acctRenderPdc()"><option value="">All</option><option selected>Pending</option><option>Cleared</option><option>Bounced</option><option>Cancelled</option></select></div></div>
+    <div class="table-wrap" style="margin-top:16px"><table><thead><tr><th>Cheque date</th><th>Type</th><th>Party</th><th>Bank</th><th>Cheque no</th><th class="right">Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody id="pdBody"></tbody></table></div>
+  </div>
+</div>
+<div id="acctControl" class="page hidden">
+  <div class="top"><h1>Audit &amp; Security</h1></div>
+  <div class="card" style="margin-top:18px"><div id="ctTabs" class="toolbar" style="flex-wrap:wrap;gap:8px"></div><div class="sub" id="ctRole" style="margin-top:10px"></div></div>
+  <div class="card" style="margin-top:18px"><div id="ctBody"></div></div>
 </div>
 <div id="journal" class="page hidden">
   <div class="top"><h1>Payment Journal</h1>
@@ -10277,7 +10326,7 @@ const DEFAULT_SETTINGS={
 };
 function acctNormalize(a){
   a=a&&typeof a==='object'?a:{};
-  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{}};
+  var o={seeded:true,groups:Array.isArray(a.groups)?a.groups:[],ledgers:Array.isArray(a.ledgers)?a.ledgers:[],vouchers:Array.isArray(a.vouchers)?a.vouchers:[],counters:a.counters&&typeof a.counters==='object'?a.counters:{},partyOpening:a.partyOpening&&typeof a.partyOpening==='object'?a.partyOpening:{},prefixes:a.prefixes&&typeof a.prefixes==='object'?a.prefixes:{},modeMap:a.modeMap&&typeof a.modeMap==='object'?a.modeMap:{},stock:a.stock&&typeof a.stock==='object'?a.stock:{open:0,close:0},pdc:Array.isArray(a.pdc)?a.pdc:[],recon:a.recon&&typeof a.recon==='object'?a.recon:{},reconStmt:a.reconStmt&&typeof a.reconStmt==='object'?a.reconStmt:{},audit:Array.isArray(a.audit)?a.audit:[],lockDate:typeof a.lockDate==='string'?a.lockDate:'',rolePin:typeof a.rolePin==='string'?a.rolePin:''};
   function ens(k,nm,g){ if(o.ledgers.some(function(l){return l.id==='lg_'+k})) return; if(o.ledgers.some(function(l){return String(l.name).toLowerCase()===nm.toLowerCase()})) nm+=' (Auto)'; o.ledgers.push({id:'lg_'+k,name:nm,group:g,opening:{amt:0,dc:'Dr'}}); }
   [['cash','Cash','cash'],['bank','Bank Account','bank'],['sales','Sales','salesAcc'],['salesret','Sales Return','salesAcc'],['purchase','Purchase','purchAcc'],['purchret','Purchase Return','purchAcc'],['cgst','CGST','dutiesTaxes'],['sgst','SGST','dutiesTaxes'],['igst','IGST','dutiesTaxes'],['icgst','Input CGST','dutiesTaxes'],['isgst','Input SGST','dutiesTaxes'],['iigst','Input IGST','dutiesTaxes'],['discount','Discount Allowed','indirectExp'],['discrec','Discount Received','indirectInc'],['roundoff','Round Off','indirectExp']].forEach(function(x){ens(x[0],x[1],x[2])});
   if(!a.seeded)[['capital','Capital Account','capital'],['rent','Rent','indirectExp'],['salary','Salary & Wages','indirectExp'],['elec','Electricity','indirectExp'],['transport','Transport','indirectExp'],['office','Office Expenses','indirectExp'],['intrec','Interest Received','indirectInc']].forEach(function(x){ens(x[0],x[1],x[2])});
@@ -11085,6 +11134,9 @@ function showPage(id,btn){
   if(id==='acctVouchers'&&typeof acctRenderVouchers==='function')acctRenderVouchers();
   if(id==='acctLedgers'&&typeof acctRenderLedgers==='function')acctRenderLedgers();
   if(id==='acctReports'&&typeof acctRenderReports==='function')acctRenderReports();
+  if(id==='acctRecon'&&typeof acctRenderRecon==='function')acctRenderRecon();
+  if(id==='acctPdc'&&typeof acctRenderPdc==='function')acctRenderPdc();
+  if(id==='acctControl'&&typeof acctRenderControl==='function')acctRenderControl();
 }
 
 function newInvoice(btn){current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
@@ -21942,7 +21994,7 @@ window.acctStatement=function(lid){var V=allV(),b=bal()[lid];if(!b)return;var m=
  rows.forEach(function(r){run+=r.x.dc==='Dr'?r.x.amount:-r.x.amount;h+='<tr><td>'+esc(r.v.date)+'</td><td>'+esc(r.v.no)+'</td><td>'+(r.v.lines.filter(function(y){return y.dc!==r.x.dc}).map(function(y){return esc(m[y.ledger]||y.name||'?')}).join(', ')||'-')+'</td><td class="right">'+(r.x.dc==='Dr'?money(r.x.amount):'')+'</td><td class="right">'+(r.x.dc==='Cr'?money(r.x.amount):'')+'</td><td class="right">'+fb(run)+'</td></tr>'});
  h+='<tr><td colspan="5"><b>Closing balance</b></td><td class="right"><b>'+fb(run)+'</b></td></tr>';
  $('asTitle').textContent=b.l.name;$('asSub').textContent=gOf(b.l.group).name+(b.l.orphan?' | Ye party ab delete ho chuki hai, par uski entries safe hain.':'');$('asBody').innerHTML=h;openModal('acctStatementModal')};
-window.__acct={bal:bal,allV:allV,ledgers:ledgers,groups:groups,gOf:gOf,under:under,nameMap:nameMap,fb:fb,vAmt:vAmt,custId:custId};
+window.__acct={bal:bal,allV:allV,ledgers:ledgers,groups:groups,gOf:gOf,under:under,nameMap:nameMap,fb:fb,vAmt:vAmt,custId:custId,pfx:pfx};
 })();
 </script>
 
@@ -22064,6 +22116,142 @@ window.acctRepCSV=function(){var csv=[];document.querySelectorAll('#arBody tr').
  downloadBlob(ieCreditCsv(csv,'accounts report'),'IE-'+tab.toUpperCase()+'-REPORT.csv','text/csv')};
 window.acctRepPrint=function(){var w=window.open('','_blank');if(!w){alert('Popup blocked — print ke liye popups allow karo.');return}
  w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:12px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}.right{text-align:right}a{color:#000;text-decoration:none}.sub{color:#555;font-size:11px}.section-title{font-weight:700;margin:10px 0 4px}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2><div class="sub" style="margin-bottom:8px">'+$('arSub').innerText+'</div>'+$('arBody').innerHTML+'</body></html>');w.document.close()};
+})();
+</script>
+
+<script>
+/* ===== ACCOUNTS (Phase 4): Bank Reconciliation, Post-dated Cheques, Audit Trail, Roles, Period Lock ===== */
+(function(){
+var X=window.__acct,$=function(i){return document.getElementById(i)},dt=null;
+function A(){return db.accounts}
+function r2(n){return Math.round((+n||0)*100)/100}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
+function cid(){try{return currentCompanyId||''}catch(e){return''}}
+function hash(s){var h=5381;s='ie|'+s;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)}
+function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=function(){var x;try{x=pre.apply(this,arguments)}catch(e){x=undefined}if(x===false)return;return o.apply(this,arguments)}}
+
+/* ---- Roles ---- */
+var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)'},
+DENY={owner:[],accountant:['settings','backup'],salesman:['acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
+function role(){try{var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
+function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
+function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
+ document.querySelectorAll('.sidebar .nav-group').forEach(function(g){var v=g.querySelectorAll('button[data-page]'),any=false;v.forEach(function(b){if(b.style.display!=='none')any=true});if(v.length)g.style.display=any?'':'none'})}
+var _sp=window.showPage;window.showPage=function(i){if(DENY[role()].indexOf(i)>-1){toast('Is role ko ye page allowed nahi hai','#f43f5e');return}return _sp.apply(this,arguments)};
+['deleteInvoice','deletePayment','deletePB','deletePBPayment','acctDelVoucher','acctDelLedger','acctDelGroup','acctPdcDel'].forEach(function(n){wrap(n,function(){var r=role();if(r==='salesman'||r==='viewer'){toast('Is role ko delete allowed nahi hai','#f43f5e');return false}})});
+
+/* ---- Period lock ---- */
+function chk(d){var l=A().lockDate;if(l&&d&&String(d)<=l){alert('Period lock: '+l+' tak ki entries add / edit / delete nahi ho sakti. Owner Audit & Security page se lock hata sakta hai.');return false}}
+function vByNo(no){return(A().vouchers||[]).find(function(x){return x.no===no})}
+function invPay(pid){var inv=(db.invoices||[]).find(function(x){return x.id===paymentModalInvoiceId}),p=inv&&(inv.payments||[]).find(function(x){return x.id===pid});return p&&p.date||inv&&inv.date}
+wrap('finalizeInvoice',function(){return chk(current&&current.date)});
+wrap('deleteInvoice',function(i){var x=(db.invoices||[]).find(function(v){return v.id===i});return chk(x&&x.date)});
+wrap('addPayment',function(){return chk(($('payDate')||{}).value||today())});
+wrap('editPayment',function(p){return chk(invPay(p))});wrap('deletePayment',function(p){return chk(invPay(p))});
+wrap('savePB',function(){return chk($('pbDate')&&$('pbDate').value)});
+wrap('deletePB',function(i){var x=(db.purchaseBills||[]).find(function(v){return v.id===i});return chk(x&&x.date)});
+wrap('savePBPayment',function(){return chk(($('pbPayDate')||{}).value||today())});
+wrap('deletePBPayment',function(pid){var r=null;(db.purchaseBills||[]).forEach(function(b){(b.payments||[]).forEach(function(p){if(p.id===pid)r=p.date||b.date})});return chk(r)});
+wrap('acctSaveVoucher',function(){var o=vByNo($('avNo').value);if(chk(o&&o.date)===false)return false;return chk($('avDate').value)});
+wrap('acctSaveNote',function(){var o=vByNo($('anNo').value);if(chk(o&&o.date)===false)return false;return chk($('anDate').value)});
+wrap('acctDelVoucher',function(i){var v=(A().vouchers||[]).find(function(x){return x.id===i});return chk(v&&v.date)});
+
+/* ---- Audit trail (har save ke baad records ka fark nikalta hai) ---- */
+function nm(r){return r.name}
+var COLS=[['invoices','Invoice',function(r){return r.invoiceNumber}],['purchaseBills','Purchase Bill',function(r){return r.pbNumber}],['purchaseOrders','Purchase Order',function(r){return r.poNumber||r.number}],['customers','Customer',nm],['vendors','Vendor',nm],['items','Item',nm],['documents','Document',function(r){return r.docNumber||r.number||r.docNo}],['cheques','Cheque Print',function(r){return r.chequeNo||r.number||r.payee}],['vouchers','Voucher',function(r){return r.no}],['ledgers','Ledger',nm],['pdc','Post-dated Cheque',function(r){return r.chequeNo}]],
+snap=null,snapDb=null,snapCo=null;
+function coll(k){return k==='vouchers'||k==='ledgers'||k==='pdc'?(A()[k]||[]):(db[k]||[])}
+function hs(o){var s=JSON.stringify(o),h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h}
+function take(){var m={};COLS.forEach(function(c){var mm=m[c[0]]={};coll(c[0]).forEach(function(r){if(r&&r.id)mm[r.id]={h:hs(r),n:String(c[2](r)||'')}})});return m}
+var _save=window.saveDB;
+function diff(){if(!snap||snapDb!==db||snapCo!==cid()){snap=take();snapDb=db;snapCo=cid();return}
+ var cur=take(),ev=[],now=Date.now();
+ COLS.forEach(function(c){var o=snap[c[0]],n=cur[c[0]];Object.keys(n).forEach(function(i){if(!o[i])ev.push(['Created',c[1],n[i].n]);else if(o[i].h!==n[i].h)ev.push(['Edited',c[1],n[i].n])});Object.keys(o).forEach(function(i){if(!n[i])ev.push(['Deleted',c[1],o[i].n])})});
+ snap=cur;if(!ev.length)return;var a=A();a.audit=a.audit||[];
+ if(ev.length>40)a.audit.push({t:now,u:who(),a:'Bulk',k:'Data',n:ev.length+' records badle (sync / restore / import)'});
+ else ev.forEach(function(e){a.audit.push({t:now,u:who(),a:e[0],k:e[1],n:e[2]||'-'})});
+ if(a.audit.length>1500)a.audit=a.audit.slice(-1000);
+ _save.call(window)}
+window.saveDB=function(){if(role()==='viewer'){toast('View-only role: changes save nahi honge','#f43f5e');return}var r=_save.apply(this,arguments);clearTimeout(dt);dt=setTimeout(function(){try{diff()}catch(e){}},700);return r};
+
+/* ---- Audit & Security page ---- */
+var ct='audit';
+window.acctCtTab=function(t){ct=t;acctRenderControl()};
+function opt(v,l,s){return'<option value="'+esc(v)+'"'+(v===s?' selected':'')+'>'+esc(l)+'</option>'}
+window.acctRenderControl=function(){if(!A())return;var r=role(),own=r==='owner',tabs=[];
+ if(r!=='salesman')tabs.push(['audit','Audit Trail']);if(own)tabs.push(['lock','Period Lock'],['roles','Roles & PIN']);else tabs.push(['switch','Role']);
+ if(!tabs.some(function(x){return x[0]===ct}))ct=tabs[0][0];
+ $('ctTabs').innerHTML=tabs.map(function(x){return'<button class="btn '+(ct===x[0]?'primary':'muted')+'" onclick="acctCtTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+ $('ctRole').textContent='Is device ka role: '+ROLES[r]+(A().lockDate?' | Period lock: '+A().lockDate+' tak':'');
+ var h='';
+ if(ct==='audit'){var q=(window._ctQ||''),ac=window._ctA||'',ty=window._ctT||'',L=(A().audit||[]).slice().reverse().filter(function(e){return(!ac||e.a===ac)&&(!ty||e.k===ty)&&(!q||(e.n+' '+e.u).toLowerCase().indexOf(q.toLowerCase())>-1)});
+  h='<div class="grid g3"><div><label>Search</label><input value="'+esc(q)+'" oninput="window._ctQ=this.value;acctRenderControl()" placeholder="Record / user"></div><div><label>Action</label><select onchange="window._ctA=this.value;acctRenderControl()">'+['','Created','Edited','Deleted','Bulk'].map(function(x){return opt(x,x||'All',ac)}).join('')+'</select></div><div><label>Type</label><select onchange="window._ctT=this.value;acctRenderControl()">'+opt('','All',ty)+COLS.map(function(c){return opt(c[1],c[1],ty)}).join('')+'</select></div></div>'+
+  '<div class="sub" style="margin:12px 0">'+L.length+' entries (latest pehle, 300 tak dikhte hain). Sirf Create / Edit / Delete record hota hai, kaun si field badli ye nahi.</div><div class="table-wrap"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Type</th><th>Record</th></tr></thead><tbody>'+
+  (L.length?L.slice(0,300).map(function(e){return'<tr><td>'+esc(new Date(e.t).toLocaleString('en-IN'))+'</td><td>'+esc(e.u)+'</td><td><span class="badge '+(e.a==='Deleted'?'unpaid':e.a==='Created'?'paid':'partial')+'">'+esc(e.a)+'</span></td><td>'+esc(e.k)+'</td><td>'+esc(e.n)+'</td></tr>'}).join(''):'<tr><td colspan="5" class="sub" style="text-align:center;padding:18px">Abhi koi entry nahi.</td></tr>')+'</tbody></table></div>'+(own&&L.length?'<div class="toolbar" style="margin-top:12px"><button class="btn danger" onclick="acctAuditClear()">Audit log saaf karo</button></div>':'')}
+ else if(ct==='lock'){h='<div class="section-title">Period Lock</div><div class="sub" style="margin-bottom:12px">Is date tak (is date samet) ki invoice, purchase bill, payment aur voucher entries add, edit ya delete nahi ho sakengi. Owner par bhi lagta hai. Hatane ke liye khaali karke save karo.</div><div class="grid g3"><div><label>Lock date</label><input id="ctLock" type="date" value="'+esc(A().lockDate||'')+'"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveLock()">Save</button></div></div>'}
+ else if(ct==='roles'){var nme='';try{nme=localStorage.getItem('IE_UNAME')||''}catch(e){}
+  h='<div class="section-title">Is device ka role</div><div class="grid g3"><div><label>Naam (audit me dikhega)</label><input id="ctName" value="'+esc(nme)+'"></div><div><label>Role</label><select id="ctRoleSel">'+Object.keys(ROLES).map(function(k){return opt(k,ROLES[k],r)}).join('')+'</select></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveRole()">Save</button></div></div>'+
+  '<div class="sub" style="margin:12px 0"><b>Owner:</b> sab kuch. <b>Accountant:</b> Settings aur Backup chhodkar sab. <b>Salesman:</b> sirf sales side (accounts, purchase, analytics, settings band), delete band. <b>Viewer:</b> sirf dekh sakta hai, kuch save nahi hota.</div>'+
+  '<div class="section-title" style="margin-top:18px">Owner PIN</div><div class="grid g3"><div><label>Naya PIN (4 se 8 digit, khaali = PIN hatao)</label><input id="ctPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSavePin()">PIN save</button></div></div>'+
+  '<div class="sub" style="margin-top:12px">'+(A().rolePin?'PIN laga hua hai.':'PIN abhi nahi hai, to koi bhi device par Owner ban sakta hai. Pehle PIN set karo.')+' Dhyan: role har device par alag chunna padta hai aur ye app ke andar ki rok hai, bank jaisi security nahi.</div>'}
+ else{h='<div class="section-title">Owner ban jao</div><div class="grid g3"><div><label>Owner PIN</label><input id="ctOwnPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctToOwner()">Owner mode</button></div></div>'}
+ $('ctBody').innerHTML=h};
+window.acctSaveLock=function(){A().lockDate=$('ctLock').value||'';saveDB();acctRenderControl();toast(A().lockDate?'Lock: '+A().lockDate:'Lock hata diya')};
+window.acctSaveRole=function(){var r=$('ctRoleSel').value;try{localStorage.setItem('IE_ROLE',r);localStorage.setItem('IE_UNAME',$('ctName').value.trim())}catch(e){}if(r!=='owner'&&!A().rolePin)alert('Dhyan: PIN set nahi hai, isliye koi bhi ye role hata kar Owner ban sakta hai.');applyRole();acctRenderControl();toast('Role: '+ROLES[r])};
+window.acctSavePin=function(){var p=$('ctPin').value.trim();if(p&&!/^\d{4,8}$/.test(p))return alert('PIN 4 se 8 digit ka hona chahiye');A().rolePin=p?hash(p):'';saveDB();acctRenderControl();toast(p?'PIN save ho gaya':'PIN hata diya')};
+window.acctToOwner=function(){var p=$('ctOwnPin').value;if(A().rolePin&&hash(p)!==A().rolePin)return alert('Galat PIN');try{localStorage.setItem('IE_ROLE','owner')}catch(e){}applyRole();acctRenderControl();toast('Owner mode')};
+window.acctAuditClear=function(){if(!confirm('Poora audit log delete karna hai?'))return;A().audit=[];saveDB();acctRenderControl()};
+
+/* ---- Bank Reconciliation ---- */
+var BR={rows:[],on:'',lid:''};
+function banks(){return X.ledgers().filter(function(l){return l.group==='bank'})}
+window.acctRenderRecon=function(){if(!A())return;var bl=banks(),sel=$('brLed'),cur=sel.value;
+ sel.innerHTML=bl.length?bl.map(function(l){return opt(l.id,l.name,cur)}).join(''):'<option value="">Koi bank ledger nahi</option>';if(!sel.value&&bl.length)sel.value=bl[0].id;
+ if(!$('brDate').value)$('brDate').value=today();
+ var lid=sel.value,on=$('brDate').value,l=bl.find(function(x){return x.id===lid}),nmap=X.nameMap();BR.lid=lid;BR.on=on;if(!l||!on){$('brBody').innerHTML='';$('brStats').innerHTML='';return}
+ var R=A().recon||(A().recon={}),S=A().reconStmt||(A().reconStmt={}),all=[];
+ X.allV().forEach(function(v){v.lines.forEach(function(x,i){if(x.ledger===lid&&String(v.date||'')<=on)all.push({v:v,x:x,k:v.id+'|'+i,bd:R[v.id+'|'+i]||''})})});
+ all.sort(function(a,b){return String(a.v.date).localeCompare(String(b.v.date))||a.v.createdAt-b.v.createdAt});
+ var books=l.o,pd=0,pc=0;all.forEach(function(r){var dr=r.x.dc==='Dr';books+=dr?r.x.amount:-r.x.amount;r.cl=!!(r.bd&&r.bd<=on);if(!r.cl){if(dr)pd+=r.x.amount;else pc+=r.x.amount}});
+ var bank=r2(books-pd+pc),st=S[lid],hasSt=st!==undefined&&st!=='';$('brStmt').value=hasSt?st:'';
+ var rows=$('brShow').value==='p'?all.filter(function(r){return!r.cl}):all;BR.rows=rows;
+ $('brStats').innerHTML=[['BOOKS BALANCE',X.fb(books)],['DEPOSITS NOT CLEARED','₹ '+money(pd)],['PAYMENTS NOT CLEARED','₹ '+money(pc)],['BALANCE AS PER BANK',X.fb(bank)],['STATEMENT FARK',hasSt?(Math.abs(r2(st-bank))<0.005?'Match ✓':'₹ '+money(Math.abs(r2(st-bank)))):'-']].map(function(s){return'<div class="stat-card"><div class="sub">'+s[0]+'</div><div class="stat" style="font-size:20px">'+s[1]+'</div></div>'}).join('');
+ $('brBody').innerHTML=rows.length?rows.map(function(r){var dr=r.x.dc==='Dr';return'<tr><td>'+esc(r.v.date)+'</td><td>'+esc(r.v.no)+'</td><td>'+(r.v.lines.filter(function(y){return y.ledger!==lid}).map(function(y){return esc(nmap[y.ledger]||y.name||'?')}).join(', ')||'Transfer')+'</td><td class="right">'+(dr?money(r.x.amount):'')+'</td><td class="right">'+(dr?'':money(r.x.amount))+'</td><td><input type="date" value="'+esc(r.bd)+'" data-k="'+esc(r.k)+'" onchange="acctReconSet(this.dataset.k,this.value)" style="min-width:140px"></td></tr>'}).join(''):'<tr><td colspan="6" class="sub" style="text-align:center;padding:18px">Koi entry nahi.</td></tr>'};
+window.acctReconSet=function(k,v){var R=A().recon;if(v)R[k]=v;else delete R[k];saveDB();acctRenderRecon()};
+window.acctReconAll=function(f){var R=A().recon;BR.rows.forEach(function(r){if(f){if(!r.cl)R[r.k]=String(r.v.date||BR.on)}else delete R[r.k]});saveDB();acctRenderRecon()};
+window.acctReconStmt=function(){A().reconStmt[BR.lid]=$('brStmt').value===''?'':r2($('brStmt').value);saveDB();acctRenderRecon()};
+
+/* ---- Post-dated cheques ---- */
+window.acctPdcFill=function(){var t=$('pdType').value,g=t==='Received'?'sundryDeb':'sundryCred',p=$('pdParty').value,b=$('pdBank').value;
+ $('pdParty').innerHTML='<option value="">Select…</option>'+X.ledgers().filter(function(l){return l.group===g}).map(function(l){return opt(l.id,l.name,p)}).join('');
+ $('pdBank').innerHTML=banks().map(function(l){return opt(l.id,l.name,b)}).join('')};
+window.acctRenderPdc=function(){if(!A())return;var P=A().pdc||(A().pdc=[]),td=today(),w=new Date(Date.now()+7*864e5).toISOString().slice(0,10),nmap=X.nameMap(),q=($('pdQ').value||'').toLowerCase(),fs=$('pdFS').value;
+ if(!$('pdParty').options.length)acctPdcFill();
+ var pend=P.filter(function(p){return p.status==='Pending'}),sum=function(t){return pend.filter(function(p){return p.type===t}).reduce(function(s,p){return s+p.amount},0)};
+ $('pdStats').innerHTML=[['PENDING RECEIVED','₹ '+money(sum('Received'))],['PENDING ISSUED','₹ '+money(sum('Issued'))],['DUE IN 7 DAYS',pend.filter(function(p){return p.date>=td&&p.date<=w}).length],['OVERDUE',pend.filter(function(p){return p.date<td}).length]].map(function(s){return'<div class="stat-card"><div class="sub">'+s[0]+'</div><div class="stat" style="font-size:22px">'+s[1]+'</div></div>'}).join('');
+ var L=P.filter(function(p){return(!fs||p.status===fs)&&(!q||((nmap[p.party]||p.partyName||'')+' '+p.chequeNo).toLowerCase().indexOf(q)>-1)}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))});
+ $('pdBody').innerHTML=L.length?L.map(function(p){var v=p.voucherId&&(A().vouchers||[]).find(function(x){return x.id===p.voucherId}),due=p.status==='Pending'?(p.date<td?'<div class="sub" style="color:#fb7185">Overdue</div>':p.date<=w?'<div class="sub" style="color:#f59e0b">Jaldi due</div>':''):'',b=function(f,l,c){return'<button class="btn '+(c||'muted')+'" onclick="'+f+'(\''+p.id+'\')">'+l+'</button>'},act='';
+  if(p.status==='Pending')act=b('acctPdcClear','Clear','success')+b('acctPdcSet','Bounce')+b('acctPdcSet2','Cancel')+b('acctPdcDel','Delete','danger');
+  else if(p.status==='Cleared')act=v?'<span class="sub">'+esc(v.no)+'</span>':b('acctPdcReopen','Reopen')+'<span class="sub">Voucher delete ho chuka</span>';
+  else act=b('acctPdcReopen','Reopen')+b('acctPdcDel','Delete','danger');
+  return'<tr><td>'+esc(p.date)+due+'</td><td>'+esc(p.type)+'</td><td>'+esc(nmap[p.party]||p.partyName||'?')+'</td><td>'+esc(nmap[p.bank]||'?')+'</td><td>'+esc(p.chequeNo)+(p.note?'<div class="sub">'+esc(p.note)+'</div>':'')+'</td><td class="right"><b>'+money(p.amount)+'</b></td><td>'+esc(p.status)+(p.clearDate?'<div class="sub">'+esc(p.clearDate)+'</div>':'')+'</td><td>'+act+'</td></tr>'}).join(''):'<tr><td colspan="8" class="sub" style="text-align:center;padding:18px">Koi cheque nahi.</td></tr>'};
+window.acctPdcAdd=function(){var t=$('pdType').value,p=$('pdParty').value,b=$('pdBank').value,no=$('pdNo').value.trim(),d=$('pdDate').value,a=r2($('pdAmt').value);
+ if(!p)return alert('Party chuno');if(!b)return alert('Bank ledger chuno (Ledgers page par bank ledger banao)');if(!no)return alert('Cheque number daalo');if(!d)return alert('Cheque date daalo');if(a<=0)return alert('Amount daalo');
+ A().pdc.push({id:crypto.randomUUID(),type:t,party:p,partyName:X.nameMap()[p]||'',bank:b,chequeNo:no,date:d,amount:a,note:$('pdNote').value.trim(),status:'Pending',createdAt:Date.now()});
+ saveDB();['pdNo','pdDate','pdAmt','pdNote'].forEach(function(i){$(i).value=''});acctRenderPdc();toast('Cheque add hua')};
+function pf(i){return A().pdc.find(function(x){return x.id===i})}
+window.acctPdcClear=function(i){var p=pf(i);if(!p)return;var d=prompt('Cheque kis date par clear hua? (YYYY-MM-DD)',today());if(d===null)return;d=d.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return alert('Date YYYY-MM-DD format me daalo');if(chk(d)===false)return;
+ var a=A(),t=p.type==='Received'?'Receipt':'Payment',n=(a.counters[t]||0)+1,m=X.nameMap(),rec=p.type==='Received',
+ L=rec?[{ledger:p.bank,dc:'Dr',amount:p.amount,name:m[p.bank]||''},{ledger:p.party,dc:'Cr',amount:p.amount,name:m[p.party]||''}]:[{ledger:p.party,dc:'Dr',amount:p.amount,name:m[p.party]||''},{ledger:p.bank,dc:'Cr',amount:p.amount,name:m[p.bank]||''}],
+ v={id:crypto.randomUUID(),type:t,no:X.pfx(t)+'-'+String(n).padStart(4,'0'),date:d,narration:'PDC cheque '+p.chequeNo,lines:L,head:p.bank,createdAt:Date.now()};
+ a.counters[t]=n;a.vouchers.push(v);p.status='Cleared';p.voucherId=v.id;p.clearDate=d;saveDB();acctRenderPdc();toast(v.no+' ban gaya')};
+window.acctPdcSet=function(i){var p=pf(i);if(!p||!confirm('Cheque bounce mark karna hai?'))return;p.status='Bounced';saveDB();acctRenderPdc()};
+window.acctPdcSet2=function(i){var p=pf(i);if(!p||!confirm('Cheque cancel karna hai?'))return;p.status='Cancelled';saveDB();acctRenderPdc()};
+window.acctPdcReopen=function(i){var p=pf(i);if(!p)return;p.status='Pending';delete p.voucherId;delete p.clearDate;saveDB();acctRenderPdc()};
+window.acctPdcDel=function(i){var p=pf(i);if(!p||!confirm('Cheque entry delete karni hai?'))return;A().pdc=A().pdc.filter(function(x){return x.id!==i});saveDB();acctRenderPdc()};
+
+applyRole();diff();
 })();
 </script>
 
