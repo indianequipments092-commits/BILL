@@ -2048,8 +2048,9 @@ function fetchMyPlan(){
         fbDb.collection('subscriptions').doc(email)
           .set({email,plan:'free',setAt:Date.now(),setBy:'self-downgrade'}).catch(()=>{});
       }
+      try{ iePlanCacheSave(email); }catch(e){}
     })
-    .catch(()=>{ currentPlan='free'; currentPlanExpiry=null; });
+    .catch(()=>{ if(!iePlanCacheLoad(email)){ currentPlan='free'; currentPlanExpiry=null; } });
 }
 /* Trial expire hote hi ek baar modal dikhao — same plan real price pe continue karo ya doosra plan chuno.
    Caller (app init) fetchMyPlan().then(maybeShowTrialExpiredModal) ki tarah use kare. */
@@ -3400,17 +3401,79 @@ function saveHealthRender(){
   el.querySelector('.shb-msg').textContent=msg;
 }
 
+/* ===== OFFLINE SUPPORT (additive) =====
+   - Har company ka "cloud pe save pending hai" flag device pe rehta hai
+   - Net na ho / cloud fail ho to local copy se company khulti hai (khaali DB se kabhi nahi)
+   - Pending hone par local copy jeette (cloud ka purana data overwrite nahi karega) */
+function iePendKey(id){ return 'ie_pending_'+id; }
+function iePendSet(id,on){ try{ if(!id) return; if(on) localStorage.setItem(iePendKey(id),String(Date.now())); else localStorage.removeItem(iePendKey(id)); }catch(e){} }
+function iePendGet(id){ try{ return !!localStorage.getItem(iePendKey(id)); }catch(e){ return false; } }
+function ieLocalDb(id){ try{ const raw=localStorage.getItem(KEY+'_'+id); if(!raw) return null; return normalizeDB(JSON.parse(raw)); }catch(e){ return null; } }
+function ieOfflineUserSave(){
+  try{
+    if(!currentUser||!currentUser.uid||!userProfile) return;
+    localStorage.setItem('ie_offline_user',JSON.stringify({uid:currentUser.uid,email:currentUser.email||'',displayName:currentUser.displayName||null,photoURL:currentUser.photoURL||null,profile:userProfile,savedAt:Date.now()}));
+  }catch(e){}
+}
+function ieOfflineUserGet(){ try{ const r=localStorage.getItem('ie_offline_user'); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function ieOfflineUserClear(){ try{ localStorage.removeItem('ie_offline_user'); }catch(e){} }
+function iePlanCacheSave(email){
+  try{ localStorage.setItem('ie_plan_cache',JSON.stringify({email:email,plan:currentPlan,exp:currentPlanExpiry,trial:isTrialActive,trialEnds:trialEndsAt,trialPlan:trialPlanId,trialUsed:trialUsedEver})); }catch(e){}
+}
+function iePlanCacheLoad(email){
+  try{
+    const c=JSON.parse(localStorage.getItem('ie_plan_cache')||'null');
+    if(!c||c.email!==email) return false;
+    let plan=c.plan||'free';
+    if(plan!=='free'&&c.exp&&c.exp<Date.now()) plan='free';
+    if(c.trial&&c.trialEnds&&c.trialEnds<Date.now()) plan='free';
+    currentPlan=plan; currentPlanExpiry=c.exp||null; isTrialActive=!!c.trial; trialEndsAt=c.trialEnds||null; trialPlanId=c.trialPlan||null; trialUsedEver=!!c.trialUsed;
+    return true;
+  }catch(e){ return false; }
+}
+/* Offline pill + online aate hi pending sync */
+(function(){
+  function pill(){
+    try{
+      let el=document.getElementById('ieOffPill');
+      if(navigator.onLine){ if(el) el.remove(); return; }
+      if(!document.body) return;
+      if(!el){
+        el=document.createElement('div'); el.id='ieOffPill';
+        el.style.cssText='position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99998;background:#b45309;color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none';
+        document.body.appendChild(el);
+      }
+      el.textContent='📴 Offline — net aate hi data sync hoga';
+    }catch(e){}
+  }
+  function kick(){
+    try{
+      pill();
+      if(!navigator.onLine) return;
+      try{ supabaseClient.auth.getSession(); }catch(e){}
+      if(currentUser&&currentCompanyId&&iePendGet(currentCompanyId)){ __saveHealth.cloudFails=0; fsScheduleSave(); }
+    }catch(e){}
+  }
+  window.addEventListener('online',function(){ setTimeout(kick,800); });
+  window.addEventListener('offline',pill);
+  document.addEventListener('DOMContentLoaded',pill);
+  setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} },30000);
+})();
+
 /* ---- Firestore <-> local db sync (per active company) ---- */
 let fsRetryTimer=null;
 let fsSaveTimer=null;
+let __fsVer=0;
 function fsScheduleSave(){
   if(!currentUser||!currentCompanyId) return;
+  const __cid=currentCompanyId, __ver=++__fsVer;
+  iePendSet(__cid,true);
   clearTimeout(fsSaveTimer);
   fsSaveTimer=setTimeout(()=>{
     geminiKeyMigrate();
     fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(currentCompanyId)
       .set({data:JSON.stringify(db),updatedAt:Date.now()},{merge:true})
-      .then(()=>saveHealthSet('cloud',true))
+      .then(()=>{ saveHealthSet('cloud',true); if(__ver===__fsVer) iePendSet(__cid,false); })
       .catch(e=>{
         console.warn('Firestore save failed',e);
         saveHealthSet('cloud',false);
@@ -3480,6 +3543,7 @@ function showAppRoot(){
 function renderCompanyGrid(){
   const grid=document.getElementById('coGrid');
   if(!grid) return;
+  try{ ieOfflineUserSave(); }catch(e){}
   const companies=userProfile&&userProfile.companies?userProfile.companies:{};
   const ids=Object.keys(companies);
   let html='';
@@ -3709,42 +3773,50 @@ function coDeleteCompany(id){
 }
 
 function coOpenCompany(companyId,preloadedDb){
-  fbDb.doc('adminIndex/companies/list/'+companyId).get().then(chk=>{
-  if(chk.exists && chk.data().blocked){
-    alert('Ye company admin ne block kar di hai. Contact support.');
-    return;
-  }
-  currentCompanyId=companyId;
-  const proceed=(loadedDb)=>{
-    db=loadedDb;
-    showAppRoot();
-    renderUserChipAndProfile();
-    runSafeBoot();
-    setTimeout(runPostCompanyBanners,700);
-  };
-  if(preloadedDb){ proceed(preloadedDb); return; }
-  fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get().then(snap=>{
-    let loaded=emptyDB();
-    if(snap.exists && snap.data() && snap.data().data){
-      try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
-    }
-    proceed(loaded);
-  }).catch(e=>{
-    console.warn('company load failed, using empty db',e);
-    proceed(emptyDB());
-  });
-  }).catch(e=>{
-    console.warn('admin block-check failed, opening anyway',e);
+  /* Cloud se load: sahi ho to cloud, lekin pending local changes ho to local jeete.
+     Load fail (offline) ho to local copy; local bhi na ho to khaali DB kabhi nahi kholte. */
+  const openIt=(blockedMsgCheck)=>{
     currentCompanyId=companyId;
-    const proceed=(loadedDb)=>{ db=loadedDb; showAppRoot(); renderUserChipAndProfile(); runSafeBoot(); setTimeout(runPostCompanyBanners,700); };
+    const proceed=(loadedDb)=>{
+      db=loadedDb;
+      showAppRoot();
+      renderUserChipAndProfile();
+      runSafeBoot();
+      setTimeout(runPostCompanyBanners,700);
+    };
     if(preloadedDb){ proceed(preloadedDb); return; }
     fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get().then(snap=>{
-      let loaded=emptyDB();
+      let loaded=null;
       if(snap.exists && snap.data() && snap.data().data){
-        try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e2){}
+        try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
       }
+      if(iePendGet(companyId)){
+        const loc=ieLocalDb(companyId);
+        if(loc){ loaded=loc; setTimeout(()=>{ try{ fsScheduleSave(); }catch(e){} },1500); }
+      }
+      if(!loaded) loaded=emptyDB();
       proceed(loaded);
+    }).catch(e=>{
+      console.warn('company load failed (offline?)',e);
+      const loc=ieLocalDb(companyId);
+      if(loc){
+        try{ toast('📴 Offline — device ka saved data khola. Net aate hi sync hoga.','#b45309'); }catch(_){}
+        proceed(loc);
+      } else {
+        currentCompanyId=null;
+        alert('Internet nahi hai aur is device par is company ka saved data nahi mila.\n\nPehli baar net on karke company kholo.');
+      }
     });
+  };
+  fbDb.doc('adminIndex/companies/list/'+companyId).get().then(chk=>{
+    if(chk.exists && chk.data().blocked){
+      alert('Ye company admin ne block kar di hai. Contact support.');
+      return;
+    }
+    openIt();
+  }).catch(e=>{
+    console.warn('admin block-check failed, opening anyway',e);
+    openIt();
   });
 }
 
@@ -6275,12 +6347,33 @@ function toggleTheme(){
 })();
 
 let _authBootedUid=null; // same user ka SIGNED_IN/TOKEN_REFRESHED event (app resume par) — dobara Company screen na dikhe
+/* Offline: net nahi + pehle login ho chuka ho to saved user se app kholo (session expire hone par bhi) */
+function ieTryOfflineLogin(){
+  try{
+    if(navigator.onLine!==false) return false;
+    const c=ieOfflineUserGet();
+    if(!c||!c.uid||!c.profile) return false;
+    _authBootedUid=c.uid;
+    currentUser={uid:c.uid,id:c.uid,email:c.email,displayName:c.displayName,photoURL:c.photoURL,_offline:true,getIdToken(){ return Promise.resolve(null); }};
+    userProfile=c.profile;
+    iePlanCacheLoad((c.email||'').toLowerCase());
+    showCompanyOverlay();
+    try{ renderTrialBanner(); }catch(e){}
+    return true;
+  }catch(e){ console.warn('offline login failed',e); return false; }
+}
+(function(){ /* logout par offline cache hatao */
+  const _so=fbAuth.signOut;
+  fbAuth.signOut=function(){ ieOfflineUserClear(); return _so.apply(fbAuth,arguments); };
+})();
 fbAuth.onAuthStateChanged(user=>{
+  if(!user && ieTryOfflineLogin()) return;
   if(user){
     if(_authBootedUid===user.uid){ currentUser=user; return; }
     _authBootedUid=user.uid;
     currentUser=user;
     fetchMyPlan().then(()=>ensureUserProfile(user)).then(()=>{
+      try{ ieOfflineUserSave(); }catch(e){}
       const proceed=()=>{
         showCompanyOverlay();
         renderTrialBanner();
@@ -6299,9 +6392,11 @@ fbAuth.onAuthStateChanged(user=>{
       if(lastProfileWasNew){ rfCaptureOnSignup(); showPlanOverlay(proceed); } else { proceed(); }
     }).catch(e=>{
       console.warn('profile load failed',e);
+      try{ if(!userProfile){ const c=ieOfflineUserGet(); if(c&&c.uid===user.uid&&c.profile) userProfile=c.profile; } }catch(_){}
       showCompanyOverlay();
     });
   } else {
+    if(navigator.onLine!==false) ieOfflineUserClear();
     _authBootedUid=null;
     currentUser=null;
     userProfile=null;
