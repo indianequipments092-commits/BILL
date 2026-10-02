@@ -1,7 +1,7 @@
 /* IE Billing — Service Worker (offline support)
    Online: hamesha network se taaza file (cache bhi update hota hai).
    Offline: cache se khulta hai. Supabase/API calls kabhi cache nahi hoti. */
-var VER = 'ie-v1';
+var VER = 'ie-v3';
 var CORE = ['loader.html', 'billing.html'];
 var LIBS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',

@@ -3443,7 +3443,7 @@ function iePlanCacheLoad(email){
         el.style.cssText='position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99998;background:#b45309;color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none';
         document.body.appendChild(el);
       }
-      el.textContent='📴 Offline — net aate hi data sync hoga';
+      el.textContent='📴 Offline — net aate hi data sync hoga (v3)';
     }catch(e){}
   }
   function kick(){
@@ -3470,6 +3470,7 @@ function fsScheduleSave(){
   iePendSet(__cid,true);
   clearTimeout(fsSaveTimer);
   fsSaveTimer=setTimeout(()=>{
+    if(navigator.onLine===false) return; /* offline: pending flag set hai, online aate hi sync */
     geminiKeyMigrate();
     fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(currentCompanyId)
       .set({data:JSON.stringify(db),updatedAt:Date.now()},{merge:true})
@@ -3774,18 +3775,36 @@ function coDeleteCompany(id){
 
 function coOpenCompany(companyId,preloadedDb){
   /* Cloud se load: sahi ho to cloud, lekin pending local changes ho to local jeete.
-     Load fail (offline) ho to local copy; local bhi na ho to khaali DB kabhi nahi kholte. */
-  const openIt=(blockedMsgCheck)=>{
+     Offline ho to cloud ka intezaar kiye bina seedha local copy se khulta hai.
+     Load fail ho to local copy; local bhi na ho to khaali DB kabhi nahi kholte. */
+  let opened=false;
+  const proceed=(loadedDb)=>{
+    if(opened) return; opened=true;
     currentCompanyId=companyId;
-    const proceed=(loadedDb)=>{
-      db=loadedDb;
-      showAppRoot();
-      renderUserChipAndProfile();
-      runSafeBoot();
-      setTimeout(runPostCompanyBanners,700);
-    };
+    db=loadedDb;
+    showAppRoot();
+    renderUserChipAndProfile();
+    runSafeBoot();
+    setTimeout(runPostCompanyBanners,700);
+  };
+  const hasLocal=()=>{ try{ return !!localStorage.getItem(KEY+'_'+companyId); }catch(e){ return false; } };
+  const withTimeout=(pr,ms)=>new Promise((res,rej)=>{ const t=setTimeout(()=>rej(new Error('timeout')),ms); pr.then(v=>{clearTimeout(t);res(v);},e=>{clearTimeout(t);rej(e);}); });
+  const useLocal=()=>{
+    const loc=ieLocalDb(companyId);
+    if(!loc) return false;
+    try{ toast('📴 Offline — device ka saved data khola. Net aate hi sync hoga.','#b45309'); }catch(_){}
+    proceed(loc);
+    return true;
+  };
+  if(!preloadedDb && navigator.onLine===false && useLocal()) return;
+  currentCompanyId=companyId;
+  const openIt=()=>{
+    if(opened) return;
+    currentCompanyId=companyId;
     if(preloadedDb){ proceed(preloadedDb); return; }
-    fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get().then(snap=>{
+    const get=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
+    (hasLocal()?withTimeout(get,4000):get).then(snap=>{
+      if(opened) return;
       let loaded=null;
       if(snap.exists && snap.data() && snap.data().data){
         try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
@@ -3797,19 +3816,17 @@ function coOpenCompany(companyId,preloadedDb){
       if(!loaded) loaded=emptyDB();
       proceed(loaded);
     }).catch(e=>{
-      console.warn('company load failed (offline?)',e);
-      const loc=ieLocalDb(companyId);
-      if(loc){
-        try{ toast('📴 Offline — device ka saved data khola. Net aate hi sync hoga.','#b45309'); }catch(_){}
-        proceed(loc);
-      } else {
+      if(opened) return;
+      console.warn('company load failed (offline/slow?)',e);
+      if(!useLocal()){
         currentCompanyId=null;
         alert('Internet nahi hai aur is device par is company ka saved data nahi mila.\n\nPehli baar net on karke company kholo.');
       }
     });
   };
-  fbDb.doc('adminIndex/companies/list/'+companyId).get().then(chk=>{
-    if(chk.exists && chk.data().blocked){
+  const chk=fbDb.doc('adminIndex/companies/list/'+companyId).get();
+  (hasLocal()?withTimeout(chk,2500):chk).then(c=>{
+    if(c.exists && c.data().blocked){
       alert('Ye company admin ne block kar di hai. Contact support.');
       return;
     }
@@ -6348,9 +6365,9 @@ function toggleTheme(){
 
 let _authBootedUid=null; // same user ka SIGNED_IN/TOKEN_REFRESHED event (app resume par) — dobara Company screen na dikhe
 /* Offline: net nahi + pehle login ho chuka ho to saved user se app kholo (session expire hone par bhi) */
-function ieTryOfflineLogin(){
+function ieTryOfflineLogin(force){
   try{
-    if(navigator.onLine!==false) return false;
+    if(!force && navigator.onLine!==false) return false;
     const c=ieOfflineUserGet();
     if(!c||!c.uid||!c.profile) return false;
     _authBootedUid=c.uid;
@@ -6366,10 +6383,17 @@ function ieTryOfflineLogin(){
   const _so=fbAuth.signOut;
   fbAuth.signOut=function(){ ieOfflineUserClear(); return _so.apply(fbAuth,arguments); };
 })();
+(function(){ /* offline start: login screen dikhaye bina seedha company list */
+  function go(){ try{ if(navigator.onLine===false) ieTryOfflineLogin(); }catch(e){} }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',go); else go();
+  /* net 'on' dikh raha par asal me chal nahi raha (slow/no data): 4s me session na aaye to saved user se kholo */
+  setTimeout(function(){ try{ if(!currentUser && navigator.onLine!==false) ieTryOfflineLogin(true); }catch(e){} },4000);
+})();
 fbAuth.onAuthStateChanged(user=>{
+  if(!user && currentUser && currentUser._offline) return; /* offline login ho chuka — late null session se logout nahi */
   if(!user && ieTryOfflineLogin()) return;
   if(user){
-    if(_authBootedUid===user.uid){ currentUser=user; return; }
+    if(_authBootedUid===user.uid && !(currentUser&&currentUser._offline&&!currentCompanyId)){ currentUser=user; return; }
     _authBootedUid=user.uid;
     currentUser=user;
     fetchMyPlan().then(()=>ensureUserProfile(user)).then(()=>{
