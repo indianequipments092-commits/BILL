@@ -21977,7 +21977,7 @@ var cu=fakeCu.length?fakeCu[k%fakeCu.length]:null;if(cu){v.customerId=cu.id;v.cu
 var base=[db.invoices.length,db.customers.length,db.items.length];
 Array.prototype.push.apply(db.invoices,fakeInv);Array.prototype.push.apply(db.customers,fakeCu);Array.prototype.push.apply(db.items,fakeIt);
 var t0=performance.now(),js=JSON.stringify(db),t1=performance.now();
-rowsOut.push(['Data ka size',(js.length/1048576).toFixed(1)+' MB',js.length>8*1048576?9e9:0]);
+rowsOut.push(['Data ka size',(js.length/1048576).toFixed(1)+' MB',js.length>8*1048576?9e9:0]);try{var __ks=Object.keys(tpl).map(function(k){return[k,JSON.stringify(tpl[k]===undefined?'':tpl[k]).length]}).sort(function(x,y){return y[1]-x[1]}).slice(0,3);rowsOut.push(['Ek invoice ka size',(JSON.stringify(tpl).length/1024).toFixed(1)+' KB',0]);__ks.forEach(function(x){rowsOut.push(['  sabse bhaari: '+x[0],(x[1]/1024).toFixed(1)+' KB',0])})}catch(e){}
 rowsOut.push(['Data ko text banane me (har save)',(t1-t0).toFixed(0)+' ms',t1-t0]);
 var ta=performance.now();db.invoices.forEach(function(x){JSON.stringify(x)});var tb=performance.now();rowsOut.push(['Audit compare (andaza)',(tb-ta).toFixed(0)+' ms',tb-ta]);
 var key='IE_BILLING_DB_V1__speedtest__',tw=performance.now();try{localStorage.setItem(key,js);rowsOut.push(['Phone me likhne me',(performance.now()-tw).toFixed(0)+' ms',performance.now()-tw])}catch(e){rowsOut.push(['Phone me likhna','fail: jagah kam (limit ~5 MB)',9e9]);note='Is size pe phone me save fail ho sakta hai (browser ki limit).'}finally{try{localStorage.removeItem(key)}catch(e){}}
