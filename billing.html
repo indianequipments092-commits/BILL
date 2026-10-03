@@ -9621,6 +9621,36 @@ module.exports = QRCode;
 };
 window.__QRCodeEncoder=__req("index");
 })();</script>
+<!-- IDB-STORAGE-START (IndexedDB storage; 5MB limit hataane ke liye) -->
+<script>(function(){
+var P='IE_BILLING_DB_V1',ls=window.localStorage,on=true,R=null,M=Object.create(null),W={};
+var g=Storage.prototype.getItem,s=Storage.prototype.setItem,r=Storage.prototype.removeItem;
+function mine(o,k){return o===ls&&typeof k==='string'&&k.indexOf(P)===0}
+function fail(e){try{console.warn('IDB',e);if(typeof saveHealthSet==='function')saveHealthSet('local',false)}catch(_){}}
+function flush(){
+if(!R)return;var ks=Object.keys(W);if(!ks.length)return;
+var b={};ks.forEach(function(k){b[k]=W[k];delete W[k]});
+try{var t=R.transaction('kv','readwrite'),o=t.objectStore('kv');
+ks.forEach(function(k){if(b[k]===null)o.delete(k);else o.put(b[k],k)});
+t.oncomplete=function(){ks.forEach(function(k){if(b[k]!==null&&M[k]===b[k]){try{r.call(ls,k)}catch(_){}}})};
+t.onerror=t.onabort=function(){fail(t.error);ks.forEach(function(k){if(b[k]!==null){try{s.call(ls,k,b[k])}catch(_){}}})};
+}catch(e){fail(e)}
+}
+Storage.prototype.getItem=function(k){if(on&&mine(this,k)&&(k in M))return M[k];return g.apply(this,arguments)};
+Storage.prototype.setItem=function(k,v){if(on&&mine(this,k)){v=String(v);M[k]=v;W[k]=v;flush();return}return s.apply(this,arguments)};
+Storage.prototype.removeItem=function(k){if(on&&mine(this,k)){delete M[k];W[k]=null;flush()}return r.apply(this,arguments)};
+try{
+var q=indexedDB.open('ie_store',1);
+q.onupgradeneeded=function(){q.result.createObjectStore('kv')};
+q.onsuccess=function(){R=q.result;
+var c=R.transaction('kv','readonly').objectStore('kv').openCursor();
+c.onsuccess=function(){var x=c.result;if(x){if(!(x.key in M))M[x.key]=x.value;x.continue()}else flush()};
+c.onerror=function(){on=false}};
+q.onerror=function(){on=false};
+}catch(e){on=false}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+})();</script>
+<!-- IDB-STORAGE-END -->
 <script>const KEY='IE_BILLING_DB_V1';
 const DEFAULT_SETTINGS={
 company:'ABC ENTERPRISES',
@@ -11340,7 +11370,7 @@ current.updatedAt=new Date().toISOString();
 let old=db.invoices.find(x=>x.id===current.id);
 if(old && JSON.stringify(old)!==JSON.stringify(current)){
 current.versions=Array.isArray(old.versions)?old.versions:[];
-current.versions.push({savedAt:new Date().toISOString(),snapshot:JSON.parse(JSON.stringify(old))});
+{const __sn=JSON.parse(JSON.stringify(old));delete __sn.versions;current.versions.push({savedAt:new Date().toISOString(),snapshot:__sn});}current.versions.forEach(function(v){if(v&&v.snapshot)delete v.snapshot.versions});
 if(current.versions.length>10) current.versions=current.versions.slice(-10);
 }
 let ix=db.invoices.findIndex(x=>x.id===current.id);
@@ -21909,7 +21939,7 @@ h+='<div style="margin:12px 0 4px;color:#93c5fd">Data kitna hai</div>';
 try{['invoices','items','customers','vendors','purchaseBills','purchaseOrders','documents','deletedInvoices'].forEach(function(k){h+=add(k,(db[k]||[]).length)});
 var t0=performance.now(),js=JSON.stringify(db),t1=performance.now();
 h+=add('Poora data size',(js.length/1048576).toFixed(2)+' MB',js.length>4*1048576);h+=add('Data ko text banane me',ms(t1-t0),(t1-t0)>200);
-var k='__speedtest__',t2=performance.now();try{localStorage.setItem(k,js);var t3=performance.now();localStorage.removeItem(k);h+=add('Phone me likhne me',ms(t3-t2),(t3-t2)>300)}catch(e){h+=add('Phone me likhna','fail (jagah kam?)',true)}
+var k='IE_BILLING_DB_V1__speedtest__',t2=performance.now();try{localStorage.setItem(k,js);var t3=performance.now();localStorage.removeItem(k);h+=add('Phone me likhne me',ms(t3-t2),(t3-t2)>300)}catch(e){h+=add('Phone me likhna','fail (jagah kam?)',true)}
 }catch(e){h+=add('Data','padh nahi paya',true)}
 h+='<div style="margin:12px 0 4px;color:#93c5fd">Har page banne me kitna time</div>';
 [['history','renderHistory','Invoice History'],['customers','renderCustomers','Customers'],['inventory','renderInventory','Inventory'],['vendors','renderVendors','Vendors'],['purchaseOrders','renderPurchaseOrders','Purchase Orders'],['purchaseBills','renderPurchaseBills','Purchase Bills'],['documents','renderDocList','Documents'],['journal','renderJournal','Payment Journal'],['analytics','renderAnalytics','Analytics'],['dashboard','refreshAll','Dashboard']].forEach(function(a){
@@ -21950,7 +21980,7 @@ var t0=performance.now(),js=JSON.stringify(db),t1=performance.now();
 rowsOut.push(['Data ka size',(js.length/1048576).toFixed(1)+' MB',js.length>8*1048576?9e9:0]);
 rowsOut.push(['Data ko text banane me (har save)',(t1-t0).toFixed(0)+' ms',t1-t0]);
 var ta=performance.now();db.invoices.forEach(function(x){JSON.stringify(x)});var tb=performance.now();rowsOut.push(['Audit compare (andaza)',(tb-ta).toFixed(0)+' ms',tb-ta]);
-var key='__speedtest__',tw=performance.now();try{localStorage.setItem(key,js);rowsOut.push(['Phone me likhne me',(performance.now()-tw).toFixed(0)+' ms',performance.now()-tw])}catch(e){rowsOut.push(['Phone me likhna','fail: jagah kam (limit ~5 MB)',9e9]);note='Is size pe phone me save fail ho sakta hai (browser ki limit).'}finally{try{localStorage.removeItem(key)}catch(e){}}
+var key='IE_BILLING_DB_V1__speedtest__',tw=performance.now();try{localStorage.setItem(key,js);rowsOut.push(['Phone me likhne me',(performance.now()-tw).toFixed(0)+' ms',performance.now()-tw])}catch(e){rowsOut.push(['Phone me likhna','fail: jagah kam (limit ~5 MB)',9e9]);note='Is size pe phone me save fail ho sakta hai (browser ki limit).'}finally{try{localStorage.removeItem(key)}catch(e){}}
 runPages(true);
 }catch(e){note='Test me error: '+(e&&e.message||e)}
 finally{
