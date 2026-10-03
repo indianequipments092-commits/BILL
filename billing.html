@@ -12223,7 +12223,7 @@ all.forEach(x=>(x.payments||[]).forEach(p=>{if(modeTotals[p.mode]!==undefined)mo
 id('journalModeBreakdown').innerHTML=modes.map(m=>`<div class="stat-card"><div class="sub">${m.toUpperCase()}</div><div class="stat" style="font-size:18px">₹ ${money(modeTotals[m])}</div></div>`).join('');
 const arr=journalFilteredInvoices();
 const ib=id('journalInvoiceBody');
-ib.innerHTML=arr.length?arr.map(x=>{
+const __L=window.__jrnLimit||150;ib.innerHTML=arr.length?arr.slice(0,__L).map(x=>{
 const cust=x.customer||{};
 const paid=paidAmount(x), bal=balanceDue(x);
 const pstatus=paymentStatusOf(x);
@@ -12243,10 +12243,10 @@ return `<tr>
         <button class="btn primary" style="padding:6px 8px;min-height:34px" onclick="openPaymentModal('${x.id}')">Add Payment</button>
       </td>
     </tr>`;
-}).join(''):'<tr><td colspan="9" class="center">No finalized invoices match the current filters.</td></tr>';
+}).join('')+(arr.length>__L?'<tr><td colspan="9" class="center"><button class="btn muted" onclick="window.__jrnLimit=(window.__jrnLimit||150)+150;renderJournal()">Aur dikhao ('+(arr.length-__L)+' baaki) — ya filter/search use karo</button></td></tr>':''):'<tr><td colspan="9" class="center">No finalized invoices match the current filters.</td></tr>';
 const logRows=journalFilteredLogRows();
 const lb=id('journalLogBody');
-lb.innerHTML=logRows.length?logRows.map(p=>`<tr>
+lb.innerHTML=logRows.length?logRows.slice(0,__L).map(p=>`<tr>
     <td>${esc(p.date)}</td>
     <td><b>${esc(p.invoiceNumber)}</b></td>
     <td>${esc(p.customer)}</td>
@@ -12256,7 +12256,7 @@ lb.innerHTML=logRows.length?logRows.map(p=>`<tr>
     <td style="white-space:nowrap">
       <button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="openPaymentModal('${p.invoiceId}')">Manage</button>
     </td>
-  </tr>`).join(''):'<tr><td colspan="7" class="center">No payments recorded yet.</td></tr>';
+  </tr>`).join('')+(logRows.length>__L?'<tr><td colspan="7" class="center"><button class="btn muted" onclick="window.__jrnLimit=(window.__jrnLimit||150)+150;renderJournal()">Aur dikhao ('+(logRows.length-__L)+' baaki) — ya filter/search use karo</button></td></tr>':''):'<tr><td colspan="7" class="center">No payments recorded yet.</td></tr>';
 const filteredTotal=logRows.reduce((s,p)=>s+Number(p.amount||0),0);
 id('jrnlFilteredTotal').textContent='₹ '+money(filteredTotal);
 id('jrnlFilteredCount').textContent=logRows.length;
