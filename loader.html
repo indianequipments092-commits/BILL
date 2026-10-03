@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IE Billing</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif}
+  .l{color:#94a3b8;font-size:13px}
+</style>
+</head>
+<body>
+<div class="l">Loading...</div>
+<script>
+  // Online: hamesha fresh billing.html. Offline: Service Worker cache se kholega.
+  function go() { window.location.replace('billing.html?v=' + Date.now()); }
+  var gone = false;
+  function once() { if (!gone) { gone = true; go(); } }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+    // SW ready hone ka thoda intezaar (max 2s), phir billing par jao
+    navigator.serviceWorker.ready.then(once).catch(once);
+    setTimeout(once, 2000);
+  } else {
+    once();
+  }
+</script>
+</body>
+</html>
