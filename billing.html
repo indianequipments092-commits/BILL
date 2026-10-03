@@ -21919,8 +21919,53 @@ try{var t=performance.now();f();void el.offsetHeight;var d=performance.now()-t;h
 if(was)el.classList.add('hidden')});
 h+='<div style="margin-top:14px;display:flex;gap:10px"><button id="spCopy" style="padding:10px 16px;border-radius:10px;border:0;background:#6366f1;color:#fff">Copy</button><button id="spRun" style="padding:10px 16px;border-radius:10px;border:0;background:#334155;color:#fff">Phir se chalao</button><button id="spX" style="padding:10px 16px;border-radius:10px;border:0;background:#334155;color:#fff">Band</button></div><div style="margin-top:8px;color:#9ca3af;font-size:12px">Lal = dheema. Is poore screen ka screenshot bhej do.</div>';
 pn.innerHTML=h;
+var sx=document.createElement('div');sx.style.cssText='margin-top:16px;padding-top:12px;border-top:1px solid #1f2937';sx.innerHTML='<div style="color:#93c5fd;margin-bottom:6px">Stress Test (nakli data, kuch save nahi hota)</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="spS" data-n="1000" style="padding:10px 14px;border-radius:10px;border:0;background:#0f766e;color:#fff">1000 invoice</button><button class="spS" data-n="2000" style="padding:10px 14px;border-radius:10px;border:0;background:#0f766e;color:#fff">2000 invoice</button><button class="spS" data-n="5000" style="padding:10px 14px;border-radius:10px;border:0;background:#0f766e;color:#fff">5000 invoice</button></div>';pn.appendChild(sx);
+Array.prototype.forEach.call(sx.querySelectorAll('.spS'),function(bt){bt.onclick=function(){var n=+bt.getAttribute('data-n');pn.innerHTML='<p>'+n+' nakli invoice ka test chal raha hai... (kuch second, app ruk sakti hai)</p>';setTimeout(function(){stress(n)},80)}});
 document.getElementById('spX').onclick=function(){pn.style.display='none'};
 document.getElementById('spRun').onclick=function(){pn.innerHTML='<p>Chal raha hai...</p>';setTimeout(run,60)};
+document.getElementById('spCopy').onclick=function(){try{navigator.clipboard.writeText(txt)}catch(e){}};
+}
+function stress(N){
+var out='<h3 style="margin:0 0 8px">Stress Test: '+N+' invoice</h3>';txt='Stress Test '+N+' invoice\n';
+var rowsOut=[],fakeInv=[],fakeCu=[],fakeIt=[];
+var PG=[['history','renderHistory','Invoice History'],['customers','renderCustomers','Customers'],['inventory','renderInventory','Inventory'],['purchaseBills','renderPurchaseBills','Purchase Bills'],['journal','renderJournal','Payment Journal'],['analytics','renderAnalytics','Analytics'],['dashboard','refreshAll','Dashboard']];
+var oSave=window.saveDB,oFs=window.fsScheduleSave,oLs=window.lsFlushNow,worst=0,note='';
+function runPages(rec){PG.forEach(function(a){var el=document.getElementById(a[0]),f=window[a[1]];if(!el||typeof f!=='function'){if(rec)rowsOut.push([a[2],'nahi mila',0]);return}
+var was=el.classList.contains('hidden');el.classList.remove('hidden');
+try{var t=performance.now();f();void el.offsetHeight;var d=performance.now()-t;if(rec){rowsOut.push([a[2],d.toFixed(0)+' ms',d]);if(d>worst)worst=d}}catch(e){if(rec)rowsOut.push([a[2],'error',9e9])}
+if(was)el.classList.add('hidden')})}
+try{
+if(!db.invoices.length){pn.innerHTML='<p>Pehle kam se kam 1 invoice banao (naqal usi se banti hai).</p><button id="spX2" style="padding:10px 16px;border-radius:10px;border:0;background:#334155;color:#fff">Wapas</button>';document.getElementById('spX2').onclick=run;return}
+window.saveDB=function(){};window.fsScheduleSave=function(){};window.lsFlushNow=function(){};
+var tpl=JSON.parse(JSON.stringify(db.invoices[0])),ctpl=db.customers[0]?JSON.parse(JSON.stringify(db.customers[0])):null,itpl=db.items[0]?JSON.parse(JSON.stringify(db.items[0])):null;
+var nc=Math.min(400,Math.max(50,Math.round(N/5))),ni=Math.min(1000,Math.max(50,Math.round(N/3)));
+for(var c=0;c<nc&&ctpl;c++){var cc=JSON.parse(JSON.stringify(ctpl));cc.id='__fake_c'+c;cc.name='Test Customer '+(c+1);fakeCu.push(cc)}
+for(var q=0;q<ni&&itpl;q++){var ii=JSON.parse(JSON.stringify(itpl));ii.id='__fake_i'+q;ii.name='Test Item '+(q+1);fakeIt.push(ii)}
+var now=Date.now();
+for(var k=0;k<N;k++){var v=JSON.parse(JSON.stringify(tpl));v.id='__fake_v'+k;v.invoiceNumber='TEST/'+(100000+k);var dd=new Date(now-Math.floor(k*700*86400000/N)).toISOString().slice(0,10);v.date=dd;if(v.dueDate)v.dueDate=dd;v.status='Finalized';
+var cu=fakeCu.length?fakeCu[k%fakeCu.length]:null;if(cu){v.customerId=cu.id;v.customer=v.customer||{};v.customer.name=cu.name}fakeInv.push(v)}
+var base=[db.invoices.length,db.customers.length,db.items.length];
+Array.prototype.push.apply(db.invoices,fakeInv);Array.prototype.push.apply(db.customers,fakeCu);Array.prototype.push.apply(db.items,fakeIt);
+var t0=performance.now(),js=JSON.stringify(db),t1=performance.now();
+rowsOut.push(['Data ka size',(js.length/1048576).toFixed(1)+' MB',js.length>8*1048576?9e9:0]);
+rowsOut.push(['Data ko text banane me (har save)',(t1-t0).toFixed(0)+' ms',t1-t0]);
+var ta=performance.now();db.invoices.forEach(function(x){JSON.stringify(x)});var tb=performance.now();rowsOut.push(['Audit compare (andaza)',(tb-ta).toFixed(0)+' ms',tb-ta]);
+var key='__speedtest__',tw=performance.now();try{localStorage.setItem(key,js);rowsOut.push(['Phone me likhne me',(performance.now()-tw).toFixed(0)+' ms',performance.now()-tw])}catch(e){rowsOut.push(['Phone me likhna','fail: jagah kam (limit ~5 MB)',9e9]);note='Is size pe phone me save fail ho sakta hai (browser ki limit).'}finally{try{localStorage.removeItem(key)}catch(e){}}
+runPages(true);
+}catch(e){note='Test me error: '+(e&&e.message||e)}
+finally{
+try{var fi=db.invoices.filter(function(x){return String(x.id).indexOf('__fake_v')!==0});db.invoices.length=0;Array.prototype.push.apply(db.invoices,fi);
+var fc=db.customers.filter(function(x){return String(x.id).indexOf('__fake_c')!==0});db.customers.length=0;Array.prototype.push.apply(db.customers,fc);
+var fit=db.items.filter(function(x){return String(x.id).indexOf('__fake_i')!==0});db.items.length=0;Array.prototype.push.apply(db.items,fit)}catch(e){}
+window.saveDB=oSave;window.fsScheduleSave=oFs;window.lsFlushNow=oLs;
+try{runPages(false)}catch(e){}
+}
+rowsOut.forEach(function(r){out+=add(r[0],r[1],r[2]>600)});
+var verdict=worst>1500?'Bahut dheema: purane phone pe hang aayega.':worst>600?'Thoda dheema: kuch page atak sakte hain.':'Theek hai: is size pe app chalegi.';
+out+='<div style="margin:12px 0;padding:10px;border-radius:10px;background:#111827;color:#fde68a"><b>'+verdict+'</b>'+(note?'<br>'+note:'')+'</div>';txt+=verdict+(note?' '+note:'')+'\n';
+out+='<div style="color:#9ca3af;font-size:12px">Nakli invoice hata diye gaye, asli data waisa hi hai ('+db.invoices.length+' invoice).</div><div style="margin-top:14px;display:flex;gap:10px"><button id="spCopy" style="padding:10px 16px;border-radius:10px;border:0;background:#6366f1;color:#fff">Copy</button><button id="spBack" style="padding:10px 16px;border-radius:10px;border:0;background:#334155;color:#fff">Wapas</button></div>';
+pn.innerHTML=out;
+document.getElementById('spBack').onclick=function(){pn.innerHTML='<p>...</p>';setTimeout(run,60)};
 document.getElementById('spCopy').onclick=function(){try{navigator.clipboard.writeText(txt)}catch(e){}};
 }
 b.onclick=function(){pn.style.display='block';pn.innerHTML='<p>Chal raha hai... (kuch second)</p>';setTimeout(run,60)};
