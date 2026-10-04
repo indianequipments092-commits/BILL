@@ -2660,13 +2660,16 @@ if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
 const period=(offer&&offer.durationMonths===12)?'yearly':'monthly';
 try{
 await loadRazorpayScript();
+const seen=window.__plxQuoted; window.__plxQuoted=null;
+if(!seen){
 const q=await rzFn('razorpay-create-order',{plan:planId,period,quote:true});
 let ask='';
 if(q.kind==='upgrade') ask=PLAN_LABEL[planId]+' upgrade\n\nPlan price: ₹'+q.full+'\nPurane plan ki bachi kimat kat gayi: −₹'+q.credit+'\n\nAapko dena hai: ₹'+q.pay+'\n\nNaya plan aaj se pura '+(period==='yearly'?'saal':'mahina')+' chalega.';
 else if(q.kind==='renew') ask=PLAN_LABEL[planId]+' renew: ₹'+q.pay+'\n\nNayi validity purani end date ke upar judegi.';
-const seen=window.__plxQuoted; window.__plxQuoted=false;
-if(ask && !seen && !confirm(ask)){ reset(); return; }
+if(ask && !confirm(ask)){ reset(); return; }
+}
 const order=await rzFn('razorpay-create-order',{plan:planId,period});
+if(seen && order.amount!==seen*100 && !confirm('Amount badal gaya hai: ab ₹'+(order.amount/100)+' dena hoga. Aage badhein?')){ reset(); return; }
 const rzp=new Razorpay({
 key:order.keyId||RAZORPAY_KEY_ID,amount:order.amount,currency:'INR',order_id:order.orderId,
 name:'IE Billing',description:PLAN_LABEL[planId]+' · '+(period==='yearly'?'Yearly':'Monthly'),
@@ -22207,7 +22210,7 @@ function dock(id){var c=cur(),free=id==='free',isCur=id===c,trial=!free&&!isCur&
  var lbl=free?(isCur?'Current plan':'Free par rahein'):(isCur?'Renew '+inr(price(id)):'Pay '+inr(price(id)));
  return (trial?'<button type="button" class="plx-try" onclick="chooseTrialPlan(\''+id+'\')">🎁 ₹1 me '+TRIAL_DAYS+' din try karo</button>':'')+
  '<div class="plx-bar"><div><b>'+PLAN_LABEL[id]+(free?'':' · '+(st.yr?'Yearly':'Monthly'))+'</b>'+(free?'Hamesha free':inr(price(id))+(st.yr?' /saal':' /mahina'))+'</div><button type="button" class="plx-go" onclick="plxAsk()"'+(free&&isCur?' disabled':'')+'>'+lbl+'</button></div>'}
-window.plxPick=function(id){if(id==='free'&&cur()!=='free')return;st.sel=id;var g=document.getElementById('planGrid');if(!g)return;
+window.plxPick=function(id){if(id==='free'&&cur()!=='free')return;st.sel=id;if(id!=='free')qget(id);var g=document.getElementById('planGrid');if(!g)return;
  [].forEach.call(g.querySelectorAll('.plx-card'),function(c){c.classList.toggle('sel',c.dataset.p===id)});
  [].forEach.call(g.querySelectorAll('[data-c]'),function(c){c.classList.toggle('hl',c.dataset.c===id)});
  var d=g.querySelector('.plx-dock');if(d)d.innerHTML=dock(id)};
@@ -22216,23 +22219,28 @@ window.plxYr=function(v){st.yr=v;window.renderPlanCards()};
 window.plxUp=function(){var r=document.querySelector('#planGrid .plx-tog');if(r)r.scrollIntoView({behavior:'smooth',block:'start'})};
 window.plxRenew=function(){plxPick(cur());plxAsk()};
 window.plxClose=function(){sheet().classList.remove('on')};
+var QC={};
+function qget(id){var per=st.yr?'yearly':'monthly',k=id+'|'+per+'|'+cur()+'|'+currentPlanExpiry,c=QC[k];
+ if(c&&Date.now()-c.t<90000)return c;
+ c=QC[k]={t:Date.now(),v:null,e:null};
+ c.p=rzFn('razorpay-create-order',{plan:id,period:per,quote:true}).then(function(v){c.v=v;return v},function(e){c.e=e;throw e});
+ c.p.catch(function(){});return c}
 window.plxAsk=function(){var id=st.sel;if(id==='free'&&cur()!=='free')return;if(id==='free')return plxGo();
- var s=sheet(),per=st.yr?'yearly':'monthly';
+ var s=sheet();
  var head='<h3><span class="plx-ic s t-'+id+'">'+ico(id)+'</span>'+PLAN_LABEL[id]+' · '+(st.yr?'Yearly':'Monthly')+'</h3>';
- var box=function(x){s.innerHTML='<div class="plx-sp">'+head+x+'</div>'};
- box('<div class="plx-r"><span>Hisaab lag raha hai…</span><b></b></div>');s.classList.add('on');
- rzFn('razorpay-create-order',{plan:id,period:per,quote:true}).then(function(q){
-  var t=q.pay,b=Math.round(t/(1+GST/100));
+ var box=function(x){s.innerHTML='<div class="plx-sp">'+head+x+'</div>';s.classList.add('on')};
+ var ok=function(q){var t=q.pay,b=Math.round(t/(1+GST/100));
+  window.__plxPay=t;
   box('<div class="plx-r"><span>Plan price</span><b>'+inr(q.full)+'</b></div>'+
    (q.credit>0?'<div class="plx-r"><span>Purane plan ki bachi kimat</span><b>−'+inr(q.credit)+'</b></div>':'')+
    '<div class="plx-r"><span>GST ('+GST+'%) included</span><b>'+inr(t-b)+'</b></div>'+
    '<div class="plx-r"><span>Validity</span><b>'+(st.yr?'12 mahine':'1 mahina')+'</b></div><div class="plx-r t"><span>Aapko dena hai</span><b>'+inr(t)+'</b></div>'+
    '<button type="button" class="plx-ok" onclick="plxGo()">Confirm &amp; Pay '+inr(t)+'</button><button type="button" class="plx-no" onclick="plxClose()">Cancel</button>'+
-   '<div class="plx-lk">🔒 Razorpay se secure · UPI, Cards, Netbanking</div>');
- }).catch(function(e){
-  if(e&&e.code==='rule'){box('<p style="margin:6px 0 16px;line-height:1.5">'+esc(e.message)+'</p><button type="button" class="plx-no" onclick="plxClose()">Theek hai</button>');}
-  else{plxAskBasic();}
- });
+   '<div class="plx-lk">🔒 Razorpay se secure · UPI, Cards, Netbanking</div>')};
+ var bad=function(e){if(e&&e.code==='rule'){box('<p style="margin:6px 0 16px;line-height:1.5">'+esc(e.message)+'</p><button type="button" class="plx-no" onclick="plxClose()">Theek hai</button>')}else{window.__plxPay=null;plxAskBasic()}};
+ var c=qget(id);
+ if(c.v)ok(c.v);else if(c.e)bad(c.e);
+ else{box('<div class="plx-r"><span>Price check ho raha hai…</span><b></b></div>');c.p.then(ok,bad)}
 };
 window.plxAskBasic=function(){var id=st.sel;if(id==='free'&&cur()!=='free')return;if(id==='free')return plxGo();
  var t=price(id),b=Math.round(t/(1+GST/100)),s=sheet();
@@ -22241,7 +22249,7 @@ window.plxAskBasic=function(){var id=st.sel;if(id==='free'&&cur()!=='free')retur
  '<div class="plx-r"><span>Validity</span><b>'+(st.yr?'12 mahine':'1 mahina')+'</b></div><div class="plx-r t"><span>Total</span><b>'+inr(t)+'</b></div>'+
  '<button type="button" class="plx-ok" onclick="plxGo()">Confirm &amp; Pay '+inr(t)+'</button><button type="button" class="plx-no" onclick="plxClose()">Cancel</button>'+
  '<div class="plx-lk">🔒 Razorpay se secure · UPI, Cards, Netbanking</div></div>';s.classList.add('on')};
-window.plxGo=function(){plxClose();var id=st.sel;if(id==='free')return choosePlanFree();window.__plxQuoted=true;
+window.plxGo=function(){plxClose();var id=st.sel;if(id==='free')return choosePlanFree();window.__plxQuoted=window.__plxPay||null;
  var o=st.yr?{id:null,name:PLAN_LABEL[id]+' yearly',price:YR[id],mrp:mo(id)*12,durationMonths:12}:null;choosePlanPaid(id,o)};
 window.renderPlanCards=function(){
  var g=document.getElementById('planGrid');if(!g)return;fx();
