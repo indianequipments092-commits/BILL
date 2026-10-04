@@ -2635,14 +2635,14 @@ const d=await res.json().catch(()=>({}));
 if(!res.ok){ const er=new Error(d.error||'Server error'); er.code=d.code; throw er; }
 return d;
 }
-function rzWaitForPlan(planId,btn,label){
+function rzWaitForPlan(planId,btn,label,trial){
 if(btn){btn.disabled=true;btn.textContent='Plan activate ho raha hai…';}
 let n=0;
 const tick=async()=>{
 try{ await fetchMyPlan(); }catch(e){}
-if(currentPlan===planId){
+if(currentPlan===planId&&(!trial||isTrialActive)){
 closePlanOverlay();
-if(typeof appToast==='function') appToast('🎉 '+PLAN_LABEL[planId]+' plan activate ho gaya!','ok'); else alert('🎉 '+PLAN_LABEL[planId]+' plan activate ho gaya!');
+{ const okMsg=trial?('🎁 '+PLAN_LABEL[planId]+' ka '+TRIAL_DAYS+' din ka trial chalu ho gaya!'):('🎉 '+PLAN_LABEL[planId]+' plan activate ho gaya!'); if(typeof appToast==='function') appToast(okMsg,'ok'); else alert(okMsg); }
 return;
 }
 if(++n<30) return setTimeout(tick,2000);
@@ -2690,7 +2690,29 @@ let manualPayLock=null;
 function chooseTrialPlan(planId){
 if(trialUsedEver){ alert('⚠️ Aap pehle hi ₹1 Trial Offer use kar chuke hain — ye sirf ek baar milta hai. Ab aap real price par plan purchase kar sakte hain.'); return; }
 if(currentPlan && currentPlan!=='free'){ alert('Trial sirf Free plan wale naye users ke liye hai.'); return; }
-showManualPaymentModal(planId,null,true);
+choosePlanTrial(planId);
+}
+async function choosePlanTrial(planId){
+if(window.__plxBusy) return;
+window.__plxBusy=true;
+const reset=()=>{ window.__plxBusy=false; try{ plxClose(); }catch(e){} };
+try{
+await loadRazorpayScript();
+const order=await rzFn('razorpay-create-order',{plan:planId,period:'monthly',trial:true});
+const rzp=new Razorpay({
+key:order.keyId||RAZORPAY_KEY_ID,amount:order.amount,currency:'INR',order_id:order.orderId,
+name:'IE Billing',description:PLAN_LABEL[planId]+' — '+TRIAL_DAYS+' din trial',
+prefill:{email:currentUser.email,name:(userProfile&&userProfile.name)||''},
+theme:{color:'#c9923a'},
+handler:function(){ window.__plxBusy=false; if(typeof appToast==='function') appToast('Payment mil gaya — trial chalu ho raha hai…','ok'); rzWaitForPlan(planId,null,'',true); },
+modal:{ondismiss:reset}
+});
+rzp.on('payment.failed',function(r){ reset(); alert('❌ Payment fail: '+((r.error&&r.error.description)||'Unknown error')+'\nDobara try karo.'); });
+rzp.open(); setTimeout(function(){ try{ plxClose(); }catch(e){} },350);
+}catch(e){
+reset();
+alert(e.code==='rule'?e.message:'Trial payment abhi shuru nahi ho paya: '+e.message+'\nDobara try karo.');
+}
 }
 function showManualPaymentModal(planId,offer,isTrial){
 const pp=isTrial?{rupees:TRIAL_PRICE,active:false,label:TRIAL_DAYS+' Din Trial',baseRs:PLAN_PRICES[planId].mrp}
@@ -22705,6 +22727,11 @@ if(typeof ra==='function')window.refreshAll=function(){var d=document.getElement
 .plx-go::after,.plx-ok::after{content:"";position:absolute;top:0;bottom:0;left:-50%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);animation:plxSw 3.2s ease-in-out infinite}
 .plx-go:disabled{opacity:.5}.plx-go:disabled::after{display:none}
 .plx-try{display:block;margin:0 auto 8px;border:0;background:none;color:#f6d27a;font-weight:700;font-size:13px;padding:6px}
+.plx-trial{position:relative;display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:14px 16px;border:0;border-radius:22px;text-align:left;color:#1b1204;background:linear-gradient(135deg,#fde7a6,#f6d27a 45%,#c9923a);box-shadow:0 14px 36px -12px rgba(246,210,122,.7);font-family:inherit;cursor:pointer}
+.plx-trial .plx-tg1{font-size:26px}.plx-trial .plx-tt{flex:1;display:flex;flex-direction:column}.plx-trial b{font-size:16px;font-weight:800}.plx-trial small{font-size:11.5px;font-weight:600;opacity:.75;margin-top:2px}.plx-trial .plx-ta{font-size:20px;font-weight:800}
+.plx-tp{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border-radius:16px;border:1px solid rgba(246,210,122,.28);background:rgba(255,255,255,.04);color:#f5f6fa;text-align:left;font-family:inherit}
+.plx-tp .plx-ic.s{margin-right:0}.plx-tp .plx-tn{flex:1;display:flex;flex-direction:column}.plx-tp b{font-size:15px}.plx-tp small{font-size:12px;color:#aab3c5}.plx-tp .plx-tg{color:#f6d27a;font-size:22px}
+.plx-tx{margin:4px 0 6px;font-size:13px;color:#aab3c5;line-height:1.5}
 #plxSheet{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
 #plxSheet.on{display:flex}
 .plx-sp{width:100%;max-width:560px;padding:22px 20px calc(20px + env(safe-area-inset-bottom,0px));border-radius:28px 28px 0 0;background:#0d1220;border-top:1.5px solid rgba(246,210,122,.5);box-shadow:0 -20px 60px -20px rgba(246,210,122,.35);animation:plxIn .3s cubic-bezier(.2,.9,.3,1);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#f5f6fa}
@@ -22739,8 +22766,8 @@ function expiry(){var tr=typeof isTrialActive!=='undefined'&&isTrialActive;retur
 function fx(){var o=document.getElementById('planOverlay');if(!o||document.getElementById('plxFx'))return;var f=document.createElement('div');f.id='plxFx';var h='';for(var i=0;i<12;i++){h+='<i style="--x:'+(Math.random()*96+2).toFixed(1)+'%;--s:'+(2+Math.random()*3).toFixed(1)+'px;--d:'+(9+Math.random()*9).toFixed(1)+'s;--w:-'+(Math.random()*14).toFixed(1)+'s;--dx:'+((Math.random()*80-40)|0)+'px"></i>'}f.innerHTML=h+SPR;o.insertBefore(f,o.firstChild);var t=document.createElement('div');t.id='plxTop';o.insertBefore(t,f.nextSibling);var b=document.createElement('button');b.type='button';b.id='plxBack';b.setAttribute('aria-label','Wapas dashboard');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Wapas';b.onclick=function(){closePlanOverlay()};o.insertBefore(b,t.nextSibling)}
 function sheet(){var s=document.getElementById('plxSheet');if(!s){s=document.createElement('div');s.id='plxSheet';s.onclick=function(e){if(e.target===s)plxClose()};document.getElementById('planOverlay').appendChild(s)}return s}
 function dock(id){var c=cur(),free=id==='free',isCur=id===c,trial=!free&&!isCur&&!trialUsedEver&&c==='free';
- var lbl=free?(isCur?'Current plan':'Free par rahein'):(isCur?'Renew '+inr(price(id)):'Pay '+inr(price(id)));
- return (trial?'<button type="button" class="plx-try" onclick="chooseTrialPlan(\''+id+'\')">🎁 ₹1 me '+TRIAL_DAYS+' din try karo</button>':'')+
+ var lbl=free?(isCur?'Current plan':'Free par rahein'):((isCur&&!expiry().tr?'Renew ':'Pay ')+inr(price(id)));
+ return ''+
  '<div class="plx-bar"><div><b>'+PLAN_LABEL[id]+(free?'':' · '+(st.yr?'Yearly':'Monthly'))+'</b>'+(free?'Hamesha free':inr(price(id))+(st.yr?' /saal':' /mahina'))+'</div><button type="button" class="plx-go" onclick="plxAsk()"'+(free&&isCur?' disabled':'')+'>'+lbl+'</button></div>'}
 window.plxPick=function(id){if(id==='free'&&cur()!=='free')return;st.sel=id;if(id!=='free')qget(id);var g=document.getElementById('planGrid');if(!g)return;
  [].forEach.call(g.querySelectorAll('.plx-card'),function(c){c.classList.toggle('sel',c.dataset.p===id)});
@@ -22788,17 +22815,31 @@ window.plxGo=function(){var id=st.sel;if(id==='free'){plxClose();return choosePl
  else plxClose();
  window.__plxQuoted=window.__plxPay||null;
  var o=st.yr?{id:null,name:PLAN_LABEL[id]+' yearly',price:YR[id],mrp:mo(id)*12,durationMonths:12}:null;choosePlanPaid(id,o)};
+window.plxTrial=function(){
+  if(trialUsedEver||cur()!=='free')return;
+  var rows=['lite','silver','golden','platinum'].map(function(p){return '<button type="button" class="plx-tp t-'+p+'" onclick="plxTrialPick(\''+p+'\')"><span class="plx-ic s">'+ico(p)+'</span><span class="plx-tn"><b>'+PLAN_LABEL[p]+'</b><small>'+TAG[p]+'</small></span><span class="plx-tg">›</span></button>'}).join('');
+  var s=sheet();s.innerHTML='<div class="plx-sp"><h3>Kaunsa plan try karna hai?</h3><p class="plx-tx">Sirf ₹1 me 7 din. Jo plan chunoge, uske saare features chalenge.</p>'+rows+'<button type="button" class="plx-no" onclick="plxClose()">Cancel</button></div>';s.classList.add('on')};
+window.plxTrialPick=function(p){
+  var s=sheet();
+  s.innerHTML='<div class="plx-sp"><h3><span class="plx-ic s t-'+p+'">'+ico(p)+'</span>'+PLAN_LABEL[p]+' — 7 din Trial</h3>'+
+  '<div class="plx-r"><span>Trial ke 7 din</span><b>'+PLAN_LABEL[p]+' ke saare features</b></div>'+
+  '<div class="plx-r"><span>7 din baad</span><b>Free (data safe)</b></div>'+
+  '<div class="plx-r t"><span>Aaj dena hai</span><b>₹1</b></div>'+
+  '<button type="button" class="plx-ok" onclick="plxTrialGo(\''+p+'\')">Confirm &amp; Pay ₹1</button><button type="button" class="plx-no" onclick="plxTrial()">← Doosra plan chuno</button>'+
+  '<div class="plx-lk">🔒 Razorpay se secure · UPI, Cards, Netbanking</div></div>';s.classList.add('on')};
+window.plxTrialGo=function(p){chooseTrialPlan(p)};
 window.renderPlanCards=function(){
  var g=document.getElementById('planGrid');if(!g)return;fx();
  var ov=document.getElementById('planOverlay'),top=ov?ov.scrollTop:0;var sk=document.getElementById('planSkipBtn'),bk=document.getElementById('plxBack');if(bk)bk.style.display=(sk&&sk.style.display==='none')?'none':'flex';
  if(!st.sel||(st.sel==='free'&&cur()!=='free'))st.sel=cur()!=='free'?cur():'golden';
  var id=st.sel,c=cur(),x=expiry(),d=x.e?Math.max(0,Math.ceil((x.e-Date.now())/864e5)):null;
  var curH='';
- if(c!=='free'){var C=163.4,p=d===null?1:Math.min(1,d/(d>31?365:30));
+ if(c!=='free'){var C=163.4,p=d===null?1:Math.min(1,d/(x.tr?TRIAL_DAYS:(d>31?365:30)));
   curH='<div class="plx-cur"><div class="plx-ring"><svg viewBox="0 0 68 68"><defs><linearGradient id="plxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde7a6"/><stop offset="1" stop-color="#c9923a"/></linearGradient></defs><circle cx="34" cy="34" r="26" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/><circle cx="34" cy="34" r="26" fill="none" stroke="url(#plxg)" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+C+'" stroke-dashoffset="'+(C*(1-p)).toFixed(1)+'"/></svg><b>'+(d===null?'👑':d+'<small>din</small>')+'</b></div>'+
   '<div class="plx-ci"><b>'+PLAN_LABEL[c]+(x.tr?' trial':' plan')+' chalu hai</b>'+(x.e?'<span>'+new Date(x.e).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' tak</span>':'')+
-  '<div class="plx-ca"><button type="button" class="rn" onclick="plxRenew()">Renew</button><button type="button" class="up" onclick="plxUp()">Upgrade</button></div></div></div>'}
- var cards=ORDER.map(function(p){var f=p==='free',t=price(p),sv=f?0:mo(p)*12-YR[p],lbl=f?(p===c?'Current plan':'Free par rahein'):(p===c?'Renew ':'Pay ')+(f?'':inr(t));
+  '<div class="plx-ca"><button type="button" class="rn" onclick="plxRenew()">'+(x.tr?'Pay now':'Renew')+'</button><button type="button" class="up" onclick="plxUp()">Upgrade</button></div></div></div>'}
+ var tb=(c==='free'&&!trialUsedEver)?'<button type="button" class="plx-trial" onclick="plxTrial()"><span class="plx-tg1">🎁</span><span class="plx-tt"><b>Sirf ₹1 me 7 din ka trial</b><small>Koi bhi plan chuno • poore features • naye users ke liye</small></span><span class="plx-ta">→</span></button>':'';
+ var cards=ORDER.map(function(p){var f=p==='free',t=price(p),sv=f?0:mo(p)*12-YR[p],lbl=f?(p===c?'Current plan':'Free par rahein'):(p===c&&!x.tr?'Renew ':'Pay ')+(f?'':inr(t));
   return '<div class="plx-card t-'+p+(p===id?' sel':'')+'" data-p="'+p+'" role="button" tabindex="0" onclick="plxPick(\''+p+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();plxPick(\''+p+'\')}"><i class="plx-sh"></i>'+(p==='golden'?'<span class="plx-rib">👑 Best Value</span>':'')+
   '<div class="plx-h"><span class="plx-ic">'+ico(p)+'</span><div class="plx-hn"><b>'+PLAN_LABEL[p]+(p===c?' · Aapka':'')+'</b><small>'+TAG[p]+'</small></div><span class="plx-rd"></span></div>'+
   '<div class="plx-pr">'+(f?'₹0':inr(t))+'<small>/'+(f?'forever':st.yr?'saal':'mahina')+'</small>'+(!f&&st.yr?'<span class="plx-chip">'+inr(Math.round(YR[p]/12))+'/mahina</span><span class="plx-sv">'+inr(sv)+' bachao</span>':'')+'</div>'+
@@ -22807,7 +22848,7 @@ window.renderPlanCards=function(){
  var tbl='<div class="plx-tin"><table>'+cg+'<tr><th>Features</th>'+ORDER.map(function(p){return '<th class="t-'+p+'" data-c="'+p+'">'+PLAN_LABEL[p]+'</th>'}).join('')+'</tr>'+ROWS.slice(0,7).map(rowH).join('')+'</table><div class="plx-xp"><div><table>'+cg+ROWS.slice(7).map(rowH).join('')+'</table></div></div></div>';
  g.innerHTML='<div class="plx"><h1>Manage Subscription</h1><p class="plx-sub">Jab chaho plan badlo. Data hamesha safe rehta hai.</p>'+curH+
  '<div class="plx-tog'+(st.yr?' yr':'')+'"><span class="pill"></span><button type="button" class="'+(st.yr?'':'on')+'" onclick="plxYr(false)">Monthly</button><button type="button" class="'+(st.yr?'on':'')+'" onclick="plxYr(true)">Yearly<small>2 mahine free</small></button></div>'+
- cards+'<h2 class="plx-h2">Plans compare karo</h2><div class="plx-cmp'+(st.all?' open':'')+'"><div class="plx-tw">'+tbl+'</div></div><button type="button" class="plx-more" onclick="plxMore()">'+(st.all?'Kam features dikhao ▲':'Sab features dekho ▼')+'</button><div class="plx-note">🔒 Razorpay se secure · UPI, Cards, Netbanking</div>'+
+ tb+cards+'<h2 class="plx-h2">Plans compare karo</h2><div class="plx-cmp'+(st.all?' open':'')+'"><div class="plx-tw">'+tbl+'</div></div><button type="button" class="plx-more" onclick="plxMore()">'+(st.all?'Kam features dikhao ▲':'Sab features dekho ▼')+'</button><div class="plx-note">🔒 Razorpay se secure · UPI, Cards, Netbanking</div>'+
  '<div class="plx-dock">'+dock(id)+'</div></div>';
  if(c!=='free'){var fc=g.querySelector('.plx-card[data-p="free"]');if(fc){['role','tabindex','onclick','onkeydown'].forEach(function(a){fc.removeAttribute(a)});fc.classList.remove('sel');fc.classList.add('inc');
   var rd=fc.querySelector('.plx-rd');if(rd)rd.textContent='✓';
@@ -22824,7 +22865,7 @@ var MENU={'Dashboard':'Dashboard','Create Invoice':'Bill banao','Bill History':'
 var GROUPS={daily:['Daily work','Roz ka kaam'],stock:['Stock & Purchase','Maal aur kharid'],accounts:['Accounts','Hisaab-kitab'],tools:['Tools','Tools'],social:['Social','Baat-cheet'],account:['Account','Mera account']};
 var EXACT={'din':'days'};
 var RX=[[/^(.*\d{4}) tak$/,'Valid till $1'],[/₹1 me (\d+) din try karo/,'Try for ₹1 · $1 days']];
-var SUB=[['Jab chaho plan badlo. Data hamesha safe rehta hai.','Change your plan anytime. Your data always stays safe.'],
+var SUB=[['Sirf ₹1 me 7 din ka trial','Try any plan for just ₹1 — 7 days'],['Koi bhi plan chuno • poore features • naye users ke liye','Pick any plan • full features • for new users'],['Kaunsa plan try karna hai?','Which plan do you want to try?'],['Sirf ₹1 me 7 din. Jo plan chunoge, uske saare features chalenge.','Just ₹1 for 7 days. You get all features of the plan you pick.'],['7 din Trial','7-day Trial'],['Trial ke 7 din','Trial period (7 days)'],[' ke saare features',' — all features'],['7 din baad','After 7 days'],['Free (data safe)','Free (data stays safe)'],['Aaj dena hai','Pay today'],['Doosra plan chuno','Choose another plan'],['Jab chaho plan badlo. Data hamesha safe rehta hai.','Change your plan anytime. Your data always stays safe.'],
 ['Unlimited bill, invoice aur purchase','Unlimited bills, invoices & purchases'],['Sab customers ko ek saath message','Broadcast message to all customers'],['Dhandhe ka analysis aur report','Business analytics & reports'],
 ['Razorpay se secure · UPI, Cards, Netbanking','Secured by Razorpay · UPI, Cards, Netbanking'],['Kam features dikhao ▲','Show fewer features ▲'],['Sab features dekho ▼','See all features ▼'],
 ['GST apne aap calculate','Automatic GST calculation'],['HSN code apne aap (AI)','AI HSN code suggestion'],['Chhoti dukaan ke liye','For small shops'],['Customer ka statement','Customer statement'],
