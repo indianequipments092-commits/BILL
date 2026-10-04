@@ -1098,6 +1098,7 @@ function createFirestoreAdapter(supabase) {
     }
     orderBy(field, dir = 'asc') { this._orderBy = { field, dir }; return this; }
     limit(n) { this._limitN = n; return this; }
+    startAfter(snap) { this._startAfterId = snap && snap.id ? snap.id : snap; return this; }
     async add(obj) { const id = crypto.randomUUID(); await this.doc(id).set(obj); return { id }; }
     _buildQuery() {
       let q = supabase.from('fs_documents').select('*').eq('collection_path', this.path);
@@ -1108,18 +1109,28 @@ function createFirestoreAdapter(supabase) {
         else if (w.op === 'array-contains') q = q.contains(`data->${w.field}`, [w.value]);
         else console.warn('Adapter: operator not fully supported yet ->', w.op);
       });
-      if (this._orderBy) {
-        const col = this._orderBy.field === '__name__' ? 'doc_id' : `data->>${this._orderBy.field}`;
-        q = q.order(col, { ascending: this._orderBy.dir !== 'desc' });
+      const byName = !this._orderBy || this._orderBy.field === '__name__';
+      const asc = !this._orderBy || this._orderBy.dir !== 'desc';
+      if (this._startAfterId != null) {
+        if (byName) q = asc ? q.gt('doc_id', this._startAfterId) : q.lt('doc_id', this._startAfterId);
+        else console.warn('Adapter: startAfter sirf orderBy(__name__) ke saath chalta hai');
       }
-      if (this._limitN && this._postFilters.length === 0) q = q.limit(this._limitN);
-      else if (this._postFilters.length > 0) q = q.limit(2000);
+      if (!byName) q = q.order(`data->>${this._orderBy.field}`, { ascending: asc });
+      q = q.order('doc_id', { ascending: asc }); // stable order -> paging me rows miss/repeat nahi hote
       return q;
     }
     async get() {
-      const { data, error } = await this._buildQuery();
-      if (error) throw error;
-      let rows = data;
+      // Supabase ek request me max 1000 rows deta hai -> 1000-1000 ke page me saari rows layein
+      const PAGE = 1000;
+      const cap = (this._limitN && this._postFilters.length === 0) ? this._limitN : Infinity;
+      let rows = [];
+      while (rows.length < cap) {
+        const from = rows.length, to = Math.min(from + PAGE, cap) - 1;
+        const { data, error } = await this._buildQuery().range(from, to);
+        if (error) throw error;
+        rows = rows.concat(data || []);
+        if (!data || data.length < (to - from + 1)) break;
+      }
       if (this._postFilters.length > 0) {
         rows = rows.filter(row => this._postFilters.every(pf => {
           const fieldVal = row.data ? row.data[pf.field] : undefined;
@@ -1133,6 +1144,7 @@ function createFirestoreAdapter(supabase) {
       const path = this.path;
       return {
         empty: rows.length === 0,
+        size: rows.length,
         docs: rows.map(row => ({ id: row.doc_id, exists: true, data: () => row.data, ref: new DocRef(path, row.doc_id) })),
         forEach(cb){ this.docs.forEach(cb); }
       };
@@ -1166,6 +1178,19 @@ function createFirestoreAdapter(supabase) {
     collection: (name) => new CollectionRef(name),
     doc: (path) => { const parts = path.split('/'); const id = parts.pop(); return new DocRef(parts.join('/'), id); },
     batch: () => new WriteBatch(),
+    // Firestore runTransaction jaisa: reads turant, writes fn khatam hone par ek-ek karke (single admin ke liye safe)
+    runTransaction: async (fn) => {
+      const ops = [];
+      const tx = {
+        get: (ref) => ref.get(),
+        set: (ref, data, opts) => { ops.push(() => ref.set(data, opts || {})); return tx; },
+        update: (ref, data) => { ops.push(() => ref.update(data)); return tx; },
+        delete: (ref) => { ops.push(() => ref.delete()); return tx; }
+      };
+      const result = await fn(tx);
+      for (const run of ops) await run();
+      return result;
+    },
     FieldValue
   };
 }
@@ -2540,7 +2565,8 @@ async function ipBackupAll(){
 // Category tree turant load karo taaki Single-Add/Bulk dropdown ready rahein.
 loadData_ipHook();
 function loadData_ipHook(){
-  auth.onAuthStateChanged(u=>{ if(u && ADMIN_EMAILS.includes(u.email)){ ipLoadTree(); ofInit(); cpInit(); rfInit(); sptInit(); mbInit(); } });
+  let done=false;
+  auth.onAuthStateChanged(u=>{ if(!done && u && ADMIN_EMAILS.includes((u.email||'').toLowerCase())){ done=true; ipLoadTree(); ofInit(); cpInit(); rfInit(); sptInit(); mbInit(); } });
 }
 
 /* ===================== COUPON MANAGER =====================
