@@ -977,6 +977,21 @@ Hardware & Tools,Hand Tools,Spanners,Combination Spanner 8mm,Chrome vanadium,820
     <div id="svBox" style="font-size:14px">Loading...</div>
   </div>
 
+  <div class="card admin-section hidden" id="sec-useract" data-role-only="superadmin">
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <span id="uaTitle">📈 User Activity</span>
+      <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="uaBack" style="display:none;padding:6px 12px" onclick="userActivityLoad()">← Back</button>
+        <select id="uaRange" onchange="userActivityLoad()" style="padding:6px 8px;border-radius:10px;border:1px solid var(--bd);background:rgba(255,255,255,.06);color:var(--tx);font:inherit;font-size:12px">
+          <option value="1">Aaj</option><option value="7">7 din</option><option value="30" selected>30 din</option><option value="90">90 din</option>
+        </select>
+        <button class="btn" style="padding:6px 12px" onclick="userActivityLoad()">🔄</button>
+        <button class="btn" style="padding:6px 12px" onclick="userActivityCsv()">⬇ CSV</button>
+      </span>
+    </div>
+    <div id="uaBox" style="font-size:14px">Loading...</div>
+  </div>
+
   <div class="card admin-section" id="sec-audit" data-role-only="superadmin">
     <div class="section-title">🕵️ Audit Log — Admin Activity</div>
     <div class="overflow"><table>
@@ -1239,6 +1254,7 @@ const ADMIN_SECTIONS=[
   {key:'legal',      label:'📄 Terms & Privacy Policy'},
   {key:'faq',        label:'❓ Quick FAQ Manager'},
   {key:'visitors',   label:'👥 Site Visitor Details', roleOnly:true},
+  {key:'useract',    label:'📈 User Activity — Kaun zyada active', roleOnly:true},
   {key:'audit',      label:'🕵️ Audit Log — Admin Activity', roleOnly:true},
   {key:'support',    label:'❓ Help & Support — User Questions'},
   {key:'manual',     label:'📖 IE Billing Manual Book'}
@@ -1274,6 +1290,7 @@ function adminNav(key){
     el.classList.toggle('hidden', el.id!=='sec-'+key);
   });
   if(key==='visitors' && typeof siteVisitorsLoad==='function') siteVisitorsLoad();
+  if(key==='useract' && typeof userActivityLoad==='function') userActivityLoad();
   adminMenuBuild();
   document.getElementById('adminMenuList').classList.add('hidden');
   try{ localStorage.setItem('adminLastSection',key); }catch(e){}
@@ -3044,5 +3061,136 @@ window.siteVisitorDetail=async function(sid){
 };
 })();
 </script>
+<script>
+/* ===== USER ACTIVITY (⋮ menu) — data: Supabase user_activity + RPC admin_activity_summary ===== */
+(function(){
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+var BD="border:1px solid rgba(255,255,255,.12)";
+var PG={dashboard:"Dashboard",invoice:"Invoice",history:"History",customers:"Customers",vendors:"Vendors",inventory:"Inventory",invAdv:"Inventory Adv",purchaseBills:"Purchase Bill",purchaseOrders:"Purchase Order",documents:"Quotation/Challan",chats:"Chat",analytics:"Analytics",journal:"Journal",settings:"Settings",backup:"Backup",profile:"Profile",search:"Search",chequePrint:"Cheque Print",acctVouchers:"Vouchers",acctLedgers:"Ledgers",acctReports:"Acct Reports",acctGst:"GST",acctRecon:"Recon",acctPdc:"PDC",acctControl:"Acct Control",acctExt:"Acct Ext"};
+var S=null, FILTER="all", SORT="score", Q="";
+function fmtT(sec){sec=Math.round(sec||0);if(sec<60)return sec+" sec";var m=Math.round(sec/60);if(m<60)return m+" min";return Math.floor(m/60)+"h "+(m%60)+"m";}
+function ago(d){if(d==null)return "-";if(d<=0)return "aaj";if(d===1)return "kal";return d+" din pehle";}
+function status(u){
+ if(u.days_since>=7) return {k:"churn",t:"🔴 Churn risk",c:"#fca5a5"};
+ if(u.active_days>=10||u.score>=60) return {k:"power",t:"🔥 Power user",c:"#fcd34d"};
+ if(u.active_days>=3||u.score>=15) return {k:"active",t:"🟢 Active",c:"#6ee7b7"};
+ return {k:"low",t:"🟡 Kam",c:"#fde68a"};
+}
+function upReady(u){return u.plan==="free"&&!u.is_trial&&(u.active_days>=4||u.score>=40)&&u.days_since<=3;}
+function card(label,val,sub){return '<div style="flex:1 1 130px;padding:12px;'+BD+';border-radius:12px;background:rgba(255,255,255,.04)"><div style="font-size:11px;opacity:.65">'+label+'</div><div style="font-size:24px;font-weight:800;margin-top:2px">'+val+'</div>'+(sub?'<div style="font-size:11px;opacity:.55;margin-top:2px">'+sub+'</div>':'')+'</div>';}
+function bars(arr,w,h,color){
+ var mx=Math.max.apply(null,arr.map(function(x){return x.v;}).concat([1]));
+ var bw=100/arr.length;
+ return '<svg viewBox="0 0 100 '+h+'" preserveAspectRatio="none" style="width:100%;height:'+w+'px;display:block">'+arr.map(function(x,i){
+  var hh=Math.max(x.v>0?1.5:0,x.v/mx*(h-2));
+  return '<rect x="'+(i*bw+bw*0.12).toFixed(2)+'" y="'+(h-hh).toFixed(2)+'" width="'+(bw*0.76).toFixed(2)+'" height="'+hh.toFixed(2)+'" rx="0.6" fill="'+(x.c||color)+'"><title>'+esc(x.l)+': '+x.v+'</title></rect>';
+ }).join("")+'</svg>';
+}
+function hbar(rows,color){
+ var mx=Math.max.apply(null,rows.map(function(r){return r.v;}).concat([1]));
+ return rows.map(function(r){return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px"><span style="width:104px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(r.l)+'</span><span style="flex:1;background:rgba(255,255,255,.07);border-radius:6px;height:10px;overflow:hidden"><span style="display:block;height:100%;width:'+Math.max(2,r.v/mx*100)+'%;background:'+color+'"></span></span><b style="width:42px;text-align:right">'+r.n+'</b></div>';}).join("");
+}
+function pct(a,b){return b>0?Math.round(a/b*100)+"%":"–";}
+function usersFiltered(){
+ var us=S.users.slice();
+ if(Q){var q=Q.toLowerCase();us=us.filter(function(u){return u.email.toLowerCase().indexOf(q)>=0;});}
+ if(FILTER==="power"||FILTER==="active"||FILTER==="low"||FILTER==="churn") us=us.filter(function(u){return status(u).k===FILTER;});
+ if(FILTER==="ready") us=us.filter(upReady);
+ us.sort(function(a,b){
+  if(SORT==="recent") return a.days_since-b.days_since||b.score-a.score;
+  if(SORT==="bills") return b.bills-a.bills||b.score-a.score;
+  if(SORT==="time") return b.secs-a.secs||b.score-a.score;
+  return b.score-a.score||a.days_since-b.days_since;
+ });
+ return us;
+}
+function chip(k,t,n){var on=FILTER===k;return '<button type="button" data-f="'+k+'" style="padding:6px 10px;border-radius:99px;border:1px solid '+(on?'var(--pri)':'rgba(255,255,255,.14)')+';background:'+(on?'rgba(129,140,248,.22)':'transparent')+';color:var(--tx);font:inherit;font-size:12px;cursor:pointer">'+t+' <b>'+n+'</b></button>';}
+function render(){
+ var c=document.getElementById("uaBox");if(!c||!S)return;
+ var us=S.users, cnt={all:us.length,power:0,active:0,low:0,churn:0,ready:0};
+ us.forEach(function(u){cnt[status(u).k]++;if(upReady(u))cnt.ready++;});
+ var list=usersFiltered();
+ var daily=S.daily.map(function(d){return {l:d.day,v:d.n};});
+ var hrsArr=[];for(var h=0;h<24;h++){var k=(h<10?"0":"")+h;hrsArr.push({l:k+":00",v:Math.round((S.hours[k]||0)/60)});}
+ var pgRows=Object.keys(S.pages).map(function(k){return {l:PG[k]||k,v:S.pages[k],n:S.pages[k]};}).sort(function(a,b){return b.v-a.v;}).slice(0,8);
+ var R=S.retention;
+ var html='<div style="font-size:12px;opacity:.6;margin-bottom:10px">Tracking shuru: '+esc(S.tracking_since||"abhi nahi")+' · sirf login kiye hue users · score = bills×3 + purchase×3 + docs×2 + items + chat + din×2 + (time/5 min)</div>'
+ +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
+ +card("Aaj active",S.dau,"7 din: "+S.wau+" · 30 din: "+S.mau)
+ +card("Naye users",S.new_users,"aaj: "+S.new_today)
+ +card("Total tracked",S.total_users,"")
+ +card("Wapas nahi aaye",S.churn,"7+ din se gayab")
+ +'</div>'
+ +'<div style="padding:12px;'+BD+';border-radius:12px;margin-bottom:12px"><div style="font-size:12px;opacity:.7;margin-bottom:6px">Roz kitne users active the</div>'+bars(daily.map(function(x){return {l:x.l,v:x.v};}),70,40,"#818cf8")+'</div>'
+ +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'
+ +'<div style="flex:1 1 260px;padding:12px;'+BD+';border-radius:12px"><div style="font-size:12px;opacity:.7;margin-bottom:6px">Kis ghante log zyada aate hain (IST, active min)</div>'+bars(hrsArr,60,40,"#fbbf24")+'<div style="display:flex;justify-content:space-between;font-size:10px;opacity:.5;margin-top:3px"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span></div></div>'
+ +'<div style="flex:1 1 260px;padding:12px;'+BD+';border-radius:12px"><div style="font-size:12px;opacity:.7;margin-bottom:4px">Sabse zyada use hone wale modules</div>'+(pgRows.length?hbar(pgRows,"#34d399"):'<div style="opacity:.5;font-size:12px">Abhi data nahi</div>')+'</div></div>'
+ +'<div style="padding:12px;'+BD+';border-radius:12px;margin-bottom:12px"><div style="font-size:12px;opacity:.7;margin-bottom:6px">Retention (naya user dobara aaya?)</div>'
+ +'<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px"><span>Next day: <b>'+pct(R.d1_back,R.d1_total)+'</b> <span style="opacity:.5">('+R.d1_back+'/'+R.d1_total+')</span></span><span>7 din me: <b>'+pct(R.d7_back,R.d7_total)+'</b> <span style="opacity:.5">('+R.d7_back+'/'+R.d7_total+')</span></span><span>30 din me: <b>'+pct(R.d30_back,R.d30_total)+'</b> <span style="opacity:.5">('+R.d30_back+'/'+R.d30_total+')</span></span></div>'
+ +'<div style="font-size:11px;opacity:.5;margin-top:6px">Purane users ka "pehla din" tracking shuru hone wala din ginta hai, isliye asli retention kuch hafte baad sahi dikhega.</div></div>'
+ +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+chip("all","Sab",cnt.all)+chip("power","🔥 Power",cnt.power)+chip("active","🟢 Active",cnt.active)+chip("low","🟡 Kam",cnt.low)+chip("churn","🔴 Churn",cnt.churn)+chip("ready","⭐ Upgrade ready",cnt.ready)+'</div>'
+ +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><input id="uaSearch" placeholder="Email search" value="'+esc(Q)+'" style="flex:1 1 160px;margin:0;padding:8px 12px;border-radius:10px;border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);font:inherit;font-size:13px">'
+ +'<select id="uaSort" style="padding:8px;border-radius:10px;border:1px solid var(--bd);background:rgba(255,255,255,.06);color:var(--tx);font:inherit;font-size:12px"><option value="score"'+(SORT==="score"?" selected":"")+'>Score</option><option value="bills"'+(SORT==="bills"?" selected":"")+'>Bills</option><option value="time"'+(SORT==="time"?" selected":"")+'>Time</option><option value="recent"'+(SORT==="recent"?" selected":"")+'>Last active</option></select></div>';
+ if(!list.length){html+='<div style="opacity:.6;padding:14px 0">Is filter me koi user nahi.</div>';}
+ else html+=list.slice(0,200).map(function(u,i){
+  var st=status(u);
+  var wa=(u.days_since>=7)?'':'';
+  return '<div data-e="'+esc(u.email)+'" style="padding:10px;margin-bottom:8px;'+BD+';border-radius:12px;cursor:pointer">'
+   +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="word-break:break-all">'+(i+1)+'. '+esc(u.email)+'</b><span style="font-size:12px;color:'+st.c+';white-space:nowrap">'+st.t+'</span></div>'
+   +'<div style="font-size:12px;opacity:.8;margin-top:4px">Score <b>'+u.score+'</b> · '+u.active_days+' din · ⏱ '+fmtT(u.secs)+' · 🧾 '+u.bills+' bills · 🛒 '+u.purchases+' purchase · 📦 '+u.items+' items</div>'
+   +'<div style="font-size:11px;opacity:.6;margin-top:3px">Plan: '+esc(u.plan)+(u.is_trial?' (trial)':'')+' · last: '+ago(u.days_since)+(upReady(u)?' · <span style="color:#fcd34d">⭐ upgrade ready</span>':'')+'</div></div>';
+ }).join("");
+ c.innerHTML=html;
+ c.querySelectorAll("[data-f]").forEach(function(b){b.onclick=function(){FILTER=b.getAttribute("data-f");render();};});
+ c.querySelectorAll("[data-e]").forEach(function(d){d.onclick=function(){userActivityDetail(d.getAttribute("data-e"));};});
+ var se=document.getElementById("uaSearch");if(se){se.oninput=function(){Q=se.value.trim();var p=se.selectionStart;render();var n=document.getElementById("uaSearch");if(n){n.focus();try{n.setSelectionRange(p,p);}catch(e){}}};}
+ var so=document.getElementById("uaSort");if(so){so.onchange=function(){SORT=so.value;render();};}
+}
+window.userActivityLoad=async function(){
+ var c=document.getElementById("uaBox");if(!c)return;
+ document.getElementById("uaBack").style.display="none";
+ document.getElementById("uaTitle").textContent="📈 User Activity";
+ c.textContent="Loading...";
+ var days=parseInt(document.getElementById("uaRange").value,10)||30;
+ var r=await supabaseClient.rpc("admin_activity_summary",{p_days:days});
+ if(r.error){c.textContent="Error: "+r.error.message;return;}
+ S=r.data;
+ if(!S||!S.users||!S.users.length){c.innerHTML='<div style="opacity:.7;line-height:1.7">Abhi koi activity data nahi.<br>Naya <b>billing.html</b> deploy karo, phir users jab app use karenge to yahan aana shuru ho jayega.</div>';return;}
+ render();
+};
+window.userActivityDetail=async function(email){
+ var c=document.getElementById("uaBox");c.textContent="Loading...";
+ document.getElementById("uaBack").style.display="";
+ document.getElementById("uaTitle").textContent="User timeline";
+ var r=await supabaseClient.from("user_activity").select("*").eq("email",email).order("day",{ascending:false}).limit(90);
+ if(r.error){c.textContent="Error: "+r.error.message;return;}
+ var u=(S&&S.users||[]).filter(function(x){return x.email===email;})[0]||{email:email,plan:"-",score:0,days_since:0,active_days:0,secs:0,bills:0,purchases:0,items:0,docs:0,chats:0,parties:0};
+ var rows=r.data, tot={opens:0,secs:0,bills:0,purchases:0,items:0,docs:0,chats:0}, pg={}, hr={};
+ rows.forEach(function(x){tot.opens+=x.opens;tot.secs+=x.active_secs;tot.bills+=x.bills;tot.purchases+=x.purchases;tot.items+=x.items;tot.docs+=x.docs;tot.chats+=x.chats;
+  Object.keys(x.pages||{}).forEach(function(k){pg[k]=(pg[k]||0)+x.pages[k];});Object.keys(x.hours||{}).forEach(function(k){hr[k]=(hr[k]||0)+x.hours[k];});});
+ var st=status(u);
+ var pgRows=Object.keys(pg).map(function(k){return {l:PG[k]||k,v:pg[k],n:pg[k]};}).sort(function(a,b){return b.v-a.v;}).slice(0,8);
+ var bestH=Object.keys(hr).sort(function(a,b){return hr[b]-hr[a];})[0];
+ var byDay={};rows.forEach(function(x){byDay[x.day]=x.active_secs;});
+ var series=[];for(var i=29;i>=0;i--){var d=new Date(Date.now()+19800000+new Date().getTimezoneOffset()*60000-i*86400000);var k=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);series.push({l:k,v:Math.round((byDay[k]||0)/60)});}
+ var first=rows.length?rows[rows.length-1].day:"-";
+ c.innerHTML='<div style="padding:10px;background:rgba(255,255,255,.06);border-radius:12px;margin-bottom:10px;line-height:1.8">'
+  +'<b style="word-break:break-all">'+esc(email)+'</b> <span style="color:'+st.c+'">'+st.t+'</span><br>'
+  +'Plan: <b>'+esc(u.plan)+'</b>'+(u.is_trial?' (trial)':'')+' · pehli baar tracked: '+esc(first)+' · last: '+ago(u.days_since)+'<br>'
+  +'Total (90 din tak): '+rows.length+' din · ⏱ '+fmtT(tot.secs)+' · 🧾 '+tot.bills+' bills · 🛒 '+tot.purchases+' purchase · 📦 '+tot.items+' items · 📄 '+tot.docs+' docs · 💬 '+tot.chats+' chat'
+  +(bestH?'<br>Sabse zyada active: <b>'+bestH+':00 ke aas-paas</b>':'')+'</div>'
+  +'<div style="padding:12px;'+BD+';border-radius:12px;margin-bottom:10px"><div style="font-size:12px;opacity:.7;margin-bottom:6px">Pichle 30 din (active min/din)</div>'+bars(series,60,40,"#818cf8")+'</div>'
+  +'<div style="padding:12px;'+BD+';border-radius:12px;margin-bottom:10px"><div style="font-size:12px;opacity:.7;margin-bottom:4px">Kaunse modules use karta hai</div>'+(pgRows.length?hbar(pgRows,"#34d399"):'<div style="opacity:.5;font-size:12px">Data nahi</div>')+'</div>'
+  +rows.slice(0,30).map(function(x){return '<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px"><b>'+esc(x.day)+'</b> · ⏱ '+fmtT(x.active_secs)+' · '+x.opens+' open · 🧾 '+x.bills+' · 🛒 '+x.purchases+' · 📦 '+x.items+' · 💬 '+x.chats+'</div>';}).join("");
+};
+window.userActivityCsv=function(){
+ if(!S||!S.users||!S.users.length){alert("Pehle data load hone do.");return;}
+ var cols=["email","plan","score","active_days","secs","bills","purchases","items","docs","chats","parties","first_day","last_day","days_since"];
+ var out=[cols.join(",")].concat(S.users.map(function(u){return cols.map(function(k){var v=u[k];v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",");})).join("\n");
+ var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"text/csv"}));a.download="user-activity-"+(S.today||"")+".csv";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+};
+})();
+</script>
+
 </body>
 </html>

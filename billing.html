@@ -22889,5 +22889,73 @@ if(body&&!document.getElementById('st-lang')){var c=document.createElement('div'
 applyMenu();paint();walk();
 })();
 </script>
+<script>
+/* ===== USER ACTIVITY TRACKER — admin panel ⋮ → User Activity =====
+   Sirf counts aur time jama karta hai (bill kitne bane, kaunsa page, kitni der). Koi customer/invoice data nahi bhejta.
+   Server: Supabase RPC log_activity (email JWT se aata hai). Fail ho to app par koi asar nahi. */
+(function(){
+try{
+if(window.__ieAct) return; window.__ieAct=1;
+var Q_KEY='ie_act_q', TICK=5000, FLUSH=60000, IDLE=60000;
+var acc=blank(), tok=null, tokAt=0, lastInput=Date.now(), lastTick=Date.now(), lastFlush=Date.now();
+var base=null, saveFlag=false, opened=false, qEmail='', fails=0;
+function blank(){return {opens:0,bills:0,purchases:0,items:0,docs:0,chats:0,parties:0,pages:{},hours:{}};}
+function email(){try{return (typeof currentUser!=='undefined'&&currentUser&&currentUser.email&&!currentUser._offline)?String(currentUser.email).toLowerCase():'';}catch(e){return '';}}
+function hourKey(){var d=new Date(Date.now()+19800000+new Date().getTimezoneOffset()*60000);var h=d.getHours();return (h<10?'0':'')+h;}
+function hasData(a){if(a.opens||a.bills||a.purchases||a.items||a.docs||a.chats||a.parties)return true;for(var k in a.pages)return true;for(var h in a.hours)return true;return false;}
+function merge(a,b){['opens','bills','purchases','items','docs','chats','parties'].forEach(function(k){a[k]=(a[k]||0)+(b[k]||0);});['pages','hours'].forEach(function(m){var s=b[m]||{};for(var k in s)a[m][k]=(a[m][k]||0)+s[k];});}
+function persist(){try{if(hasData(acc)&&qEmail)localStorage.setItem(Q_KEY,JSON.stringify({e:qEmail,acc:acc}));else localStorage.removeItem(Q_KEY);}catch(e){}}
+function loadQ(em){try{var q=JSON.parse(localStorage.getItem(Q_KEY)||'null');if(q&&q.e===em&&q.acc)merge(acc,q.acc);localStorage.removeItem(Q_KEY);}catch(e){}}
+function counts(){var d=db;function n(a){return Array.isArray(a)?a.length:0;}
+ return {co:currentCompanyId||'',
+  bills:Array.isArray(d.invoices)?d.invoices.filter(function(x){return x&&x.status==='Finalized';}).length:0,
+  purchases:n(d.purchaseBills),items:n(d.items),docs:n(d.documents)+n(d.purchaseOrders),parties:n(d.customers)+n(d.vendors)};}
+function check(){try{
+ if(!email()||!currentCompanyId||typeof db==='undefined'||!db)return;
+ var c=counts();
+ if(!base||base.co!==c.co){base=c;return;}
+ if(Date.now()-lastInput<30000){['bills','purchases','items','docs','parties'].forEach(function(k){var dl=c[k]-base[k];if(dl>0&&dl<=20)acc[k]+=dl;});}
+ base=c;
+}catch(e){}}
+function flush(unload){
+ if(!hasData(acc))return;
+ var em=email();if(!em||!tok||navigator.onLine===false||fails>=5)return;
+ var snap=acc;acc=blank();
+ try{
+  fetch(SUPABASE_URL+'/rest/v1/rpc/log_activity',{method:'POST',keepalive:!!unload,
+   headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+tok},
+   body:JSON.stringify({p:snap})
+  }).then(function(r){if(!r.ok){fails++;merge(acc,snap);}else{fails=0;}}).catch(function(){fails++;merge(acc,snap);});
+ }catch(e){merge(acc,snap);}
+}
+function tick(){try{
+ var now=Date.now(),dt=Math.min(now-lastTick,10000);lastTick=now;
+ var em=email();if(!em)return;
+ if(qEmail!==em){qEmail=em;loadQ(em);}
+ if(!opened){opened=true;acc.opens+=1;}
+ if(!document.hidden&&now-lastInput<IDLE){var sc=Math.round(dt/1000);if(sc>0){var h=hourKey();acc.hours[h]=(acc.hours[h]||0)+sc;}}
+ if(!saveFlag){try{if(currentCompanyId&&typeof db!=='undefined'&&db)base=counts();}catch(e){}}
+ saveFlag=false;
+ if(now-tokAt>300000||!tok){tokAt=now;try{currentUser.getIdToken().then(function(t){if(t)tok=t;}).catch(function(){});}catch(e){}}
+ if(now-lastFlush>=FLUSH){lastFlush=now;flush(false);}
+}catch(e){}}
+function wrap(name,fn,pre){try{
+ var o=window[name];if(typeof o!=='function'||o.__act)return;
+ var w=function(){var ctx;try{if(pre)ctx=pre.apply(this,arguments);}catch(e){}
+  var r=o.apply(this,arguments);try{fn.call(this,arguments,ctx);}catch(e){}return r;};
+ w.__act=1;window[name]=w;
+}catch(e){}}
+['click','keydown','touchstart','scroll','mousemove'].forEach(function(ev){document.addEventListener(ev,function(){lastInput=Date.now();},{capture:true,passive:true});});
+document.addEventListener('visibilitychange',function(){if(document.hidden){flush(true);persist();}});
+window.addEventListener('pagehide',function(){flush(true);persist();});
+wrap('showPage',function(a){var id=a[0],el=document.getElementById(id);if(el&&!el.classList.contains('hidden')){var k=String(id).slice(0,24);acc.pages[k]=(acc.pages[k]||0)+1;}});
+wrap('saveDB',function(){saveFlag=true;check();});
+wrap('chatSendText',function(a,had){if(had)acc.chats+=1;},function(){var t=document.getElementById('chatTextInput');return !!(t&&t.value&&t.value.trim());});
+['chatSendInvoice','chatSendProforma','chatSendGenDoc','chatSendFile','chatSendPhoto'].forEach(function(n){wrap(n,function(){acc.chats+=1;});});
+setInterval(tick,TICK);
+}catch(e){}
+})();
+</script>
+
 </body>
 </html>
