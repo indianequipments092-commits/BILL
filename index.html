@@ -303,6 +303,7 @@ html:not(.paid-mode) .live-grid{grid-template-columns:repeat(2,1fr);max-width:52
  .tg,.burger{width:34px;height:34px}
  nav.open .nav-login-m{display:block;color:var(--text);font-weight:700}
 }
+:root[data-theme=light] .plan-card.platinum-card .plan-name{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#0284c7);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-price{background:linear-gradient(135deg,#3730a3,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-mrp{color:#475569}
 </style>
 <script>
 /* Pichli baar ki value turant lagao taaki page flash na kare (fresh value neeche load hoti hai) */
@@ -485,7 +486,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="plan-card">
       <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg></div><div class="plan-name">Free</div>
       <div class="plan-price">₹0<small> /forever</small></div>
-      <div class="plan-mrp">1 Company</div>
+      <div class="plan-mrp" style="text-decoration:none">1 Company</div>
       <ul class="plan-feats">
         <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>1 Company free mein manage karein</li>
         <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Unlimited Invoice / PO / Purchase Bill</li>
@@ -502,7 +503,6 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
 
     <div class="plan-card">
       <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-medals"/></svg></div><div class="plan-name">Silver</div>
-      <div class="plan-mrp">&nbsp;</div>
       <div class="plan-price">₹249<small> /mo</small></div>
       <div class="plan-mrp" style="text-decoration:none">3 Companies</div>
       <ul class="plan-feats">
@@ -522,7 +522,6 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="plan-card featured">
       <div class="plan-ribbon gold">MOST POPULAR</div>
       <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-medalg"/></svg></div><div class="plan-name">Golden</div>
-      <div class="plan-mrp">&nbsp;</div>
       <div class="plan-price">₹499<small> /mo</small></div>
       <div class="plan-mrp" style="text-decoration:none">6 Companies</div>
       <ul class="plan-feats">
@@ -542,7 +541,6 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="plan-card platinum-card">
       <div class="plan-ribbon plat"><svg class="i" aria-hidden="true"><use href="#i-gem"/></svg> BEST VALUE</div>
       <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-gem"/></svg></div><div class="plan-name">Platinum</div>
-      <div class="plan-mrp">&nbsp;</div>
       <div class="plan-price">₹899<small> /mo</small></div>
       <div class="plan-mrp" style="text-decoration:none">Unlimited Companies</div>
       <ul class="plan-feats">
