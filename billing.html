@@ -7288,13 +7288,12 @@ showAuthOverlay();
   <div class="top"><h1>Payment Journal</h1>
     <div class="toolbar">
       <button class="btn muted" id="jrnlTabInvBtn" onclick="setJournalTab('invoice')">By Invoice</button>
-      <button class="btn muted" id="jrnlTabLogBtn" onclick="setJournalTab('log')">Payment Log</button>
-      <button class="btn muted" id="jrnlTabRcptBtn" onclick="setJournalTab('receipt')">Receipt Log</button>
+      <button class="btn muted" id="jrnlTabRcptBtn" onclick="setJournalTab('receipt')">Receipts</button>
       <div style="position:relative">
         <button class="btn muted" onclick="toggleJrnlMore(event)" title="More actions">⋮ More</button>
         <div id="jrnlMoreMenu" class="hidden" style="position:fixed;z-index:9999;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:12px;padding:6px;min-width:220px;max-width:calc(100vw - 24px);max-height:70vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,0.4)">
-          <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="exportJournalCSV();toggleJrnlMore()">Export CSV (filtered)</button>
-          <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="printJournalReport();toggleJrnlMore()">Print Filtered Report</button>
+          <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="(journalTab==='receipt'?exportReceiptLogCSV():exportJournalCSV());toggleJrnlMore()">Export CSV (filtered)</button>
+          <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="(journalTab==='receipt'?printReceiptLogReport():printJournalReport());toggleJrnlMore()">Print Filtered Report</button>
           <button class="btn muted" style="width:100%;justify-content:flex-start" onclick="printJournalCustomerStatement();toggleJrnlMore()">Print Customer Statement</button>
         </div>
       </div>
@@ -7302,14 +7301,14 @@ showAuthOverlay();
   </div>
 
   <div class="dashboard" id="journalStats"></div>
-  <div class="card" style="margin-top:18px">
-    <div class="section-title">Payment Mode Breakdown</div>
+  <div class="card" id="jrnlModeCard" style="margin-top:18px">
+    <div class="section-title">Payment Mode Breakdown (filtered invoices)</div>
     <div class="grid g4" id="journalModeBreakdown"></div>
   </div>
 
-  <div class="card" style="margin-top:18px">
+  <div class="card" id="jrnlMainCard" style="margin-top:18px">
     <div class="grid g4">
-      <div><label>Search</label><input id="jrnlSearch" oninput="renderJournal()" placeholder="Invoice / Customer..."></div>
+      <div><label>Search</label><input id="jrnlSearch" oninput="jrnlDebounce()" placeholder="Invoice / Customer..."></div>
       <div><label>Customer</label><select id="jrnlCustomer" onchange="renderJournal()"><option value="">All Customers</option></select></div>
       <div><label>Payment Status</label><select id="jrnlStatus" onchange="renderJournal()"><option value="">All Statuses</option><option>Unpaid</option><option>Partial</option><option>Paid</option></select></div>
       <div><label>Payment Mode</label><select id="jrnlMode" onchange="renderJournal()"><option value="">All Modes</option><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select></div>
@@ -7317,7 +7316,7 @@ showAuthOverlay();
     <div class="grid g4" style="margin-top:12px">
       <div><label>Financial Year</label><select id="jrnlFY" onchange="renderJournal()"><option value="">All Years</option></select></div>
       <div><label>Quarter</label><select id="jrnlQuarter" onchange="renderJournal()"><option value="">All Quarters</option><option value="1">Q1 (Apr-Jun)</option><option value="2">Q2 (Jul-Sep)</option><option value="3">Q3 (Oct-Dec)</option><option value="4">Q4 (Jan-Mar)</option></select></div>
-      <div><label>Month</label><select id="jrnlMonth" onchange="renderJournal()"><option value="">All Months</option><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
+      <div><label>Month</label><select id="jrnlMonth" onchange="renderJournal()"><option value="">All Months</option></select></div>
       <div><label>Sort By</label><select id="jrnlSort" onchange="renderJournal()"><option value="date_desc">Date: Newest first</option><option value="date_asc">Date: Oldest first</option><option value="amt_desc">Amount: High to Low</option><option value="amt_asc">Amount: Low to High</option></select></div>
     </div>
     <div class="grid g4" style="margin-top:12px">
@@ -7327,27 +7326,25 @@ showAuthOverlay();
       <div><label>Max Amount</label><input id="jrnlMaxAmt" type="number" inputmode="decimal" placeholder="No limit" onchange="renderJournal()"></div>
     </div>
     <label style="margin-top:12px;display:flex;align-items:center;gap:8px;text-transform:none;font-size:13px;color:var(--text-main)"><input type="checkbox" id="jrnlOverdueOnly" onchange="renderJournal()" style="width:18px;height:18px"> Show overdue only</label>
+    <div class="sub" id="jrnlHint" style="margin-top:8px"></div>
 
     <div class="card" style="margin-top:16px;background:rgba(99,102,241,0.08);border-color:var(--primary)">
       <div class="grid g3">
-        <div><div class="sub">FILTERED TOTAL COLLECTED</div><div class="stat" style="font-size:20px;color:#34d399" id="jrnlFilteredTotal">₹ 0.00</div></div>
-        <div><div class="sub">FILTERED PAYMENTS COUNT</div><div class="stat" style="font-size:20px" id="jrnlFilteredCount">0</div></div>
-        <div><div class="sub">FILTERED INVOICES COUNT</div><div class="stat" style="font-size:20px" id="jrnlFilteredInvCount">0</div></div>
+        <div><div class="sub" id="jrnlLblA">RECEIVED</div><div class="stat" style="font-size:20px;color:#34d399" id="jrnlFilteredTotal">₹ 0.00</div></div>
+        <div><div class="sub" id="jrnlLblB">BALANCE</div><div class="stat" style="font-size:20px" id="jrnlFilteredCount">0</div></div>
+        <div><div class="sub" id="jrnlLblC">INVOICES</div><div class="stat" style="font-size:20px" id="jrnlFilteredInvCount">0</div></div>
       </div>
     </div>
 
     <div id="journalInvoiceView" class="table-wrap" style="margin-top:16px">
       <table><thead><tr><th>Invoice No</th><th>Customer</th><th>Date</th><th>Due Date</th><th class="right">Grand Total</th><th class="right">Paid</th><th class="right">Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="journalInvoiceBody"></tbody></table>
     </div>
-    <div id="journalLogView" class="table-wrap hidden" style="margin-top:16px">
-      <table><thead><tr><th>Date</th><th>Invoice No</th><th>Customer</th><th class="right">Amount</th><th>Mode</th><th>Note</th><th>Actions</th></tr></thead><tbody id="journalLogBody"></tbody></table>
-    </div>
   </div>
 
   <div class="card hidden" id="receiptLogCard" style="margin-top:18px">
-    <div class="section-title">Receipt Log</div>
+    <div class="section-title">All Payments &amp; Receipts</div>
     <div class="grid g4" style="margin-top:10px">
-      <div><label>Search</label><input id="rcptSearch" oninput="renderReceiptLog()" placeholder="Receipt No / Invoice / Customer..."></div>
+      <div><label>Search</label><input id="rcptSearch" oninput="rcptDebounce()" placeholder="Receipt No / Invoice / Customer..."></div>
       <div><label>Customer</label><select id="rcptCustomer" onchange="renderReceiptLog()"><option value="">All Customers</option></select></div>
       <div><label>Payment Mode</label><select id="rcptMode" onchange="renderReceiptLog()"><option value="">All Modes</option><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select></div>
       <div><label>Sort By</label><select id="rcptSort" onchange="renderReceiptLog()"><option value="date_desc">Date: Newest first</option><option value="date_asc">Date: Oldest first</option><option value="amt_desc">Amount: High to Low</option><option value="amt_asc">Amount: Low to High</option><option value="rcpt_desc">Receipt No: Newest first</option><option value="rcpt_asc">Receipt No: Oldest first</option></select></div>
@@ -7376,13 +7373,13 @@ showAuthOverlay();
     </div>
   </div>
 
-  <div class="card" style="margin-top:18px">
-    <div class="section-title">Customer-wise Totals (current filters)</div>
+  <div class="card" id="jrnlCustTotCard" style="margin-top:18px">
+    <div class="section-title">Customer-wise Totals (filtered invoices ke payments)</div>
     <div class="table-wrap"><table><thead><tr><th>Customer</th><th class="right">Payments</th><th class="right">Total Collected</th></tr></thead><tbody id="journalCustomerTotals"></tbody></table></div>
   </div>
 
-  <div class="card" style="margin-top:18px">
-    <div class="section-title">Month-wise Collection Trend (current filters)</div>
+  <div class="card" id="jrnlTrendCard" style="margin-top:18px">
+    <div class="section-title">Month-wise Collection Trend (filtered invoices ke payments)</div>
     <div id="journalMonthTrend" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
@@ -7402,7 +7399,7 @@ showAuthOverlay();
     <div><label>Mode</label><select id="payMode"><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select></div>
     <div><label>Note</label><input id="payNote" placeholder="Optional"></div>
   </div>
-  <button class="btn success" style="margin-top:12px" onclick="addPayment()">+ Add Payment</button>
+  <button class="btn success" id="payAddBtn" style="margin-top:12px" onclick="addPayment()">+ Add Payment</button> <button class="btn muted hidden" id="payEditCancel" style="margin-top:12px" onclick="resetPayEdit()">Cancel Edit</button>
 
   <div class="section-title" style="margin-top:20px">Payment History</div>
   <div class="table-wrap"><table><thead><tr><th>Date</th><th class="right">Amount</th><th>Mode</th><th>Note</th><th>Actions</th></tr></thead><tbody id="paymentListBody"></tbody></table></div>
@@ -12356,18 +12353,18 @@ let x=db.invoices.find(i=>i.id===idv); if(!x) return;
 x.status='Archived'; saveDB(); renderHistory();
 }
 let journalTab='invoice';
+let __jt,__rt;
+function jrnlDebounce(){clearTimeout(__jt);__jt=setTimeout(renderJournal,250)}
+function rcptDebounce(){clearTimeout(__rt);__rt=setTimeout(renderReceiptLog,250)}
 function setJournalTab(tab){
+if(tab!=='receipt') tab='invoice';
 journalTab=tab;
-id('jrnlTabInvBtn').classList.toggle('primary',tab==='invoice');
-id('jrnlTabInvBtn').classList.toggle('muted',tab!=='invoice');
-id('jrnlTabLogBtn').classList.toggle('primary',tab==='log');
-id('jrnlTabLogBtn').classList.toggle('muted',tab!=='log');
-id('jrnlTabRcptBtn').classList.toggle('primary',tab==='receipt');
-id('jrnlTabRcptBtn').classList.toggle('muted',tab!=='receipt');
-id('journalInvoiceView').classList.toggle('hidden',tab!=='invoice');
-id('journalLogView').classList.toggle('hidden',tab!=='log');
-id('receiptLogCard').classList.toggle('hidden',tab!=='receipt');
-if(tab==='receipt') renderReceiptLog();
+const r=tab==='receipt';
+id('jrnlTabInvBtn').classList.toggle('primary',!r);id('jrnlTabInvBtn').classList.toggle('muted',r);
+id('jrnlTabRcptBtn').classList.toggle('primary',r);id('jrnlTabRcptBtn').classList.toggle('muted',!r);
+['jrnlMainCard','jrnlModeCard','jrnlCustTotCard','jrnlTrendCard'].forEach(k=>{const e=id(k);if(e)e.classList.toggle('hidden',r)});
+id('receiptLogCard').classList.toggle('hidden',!r);
+if(r) renderReceiptLog();
 }
 function toggleJrnlMore(ev){
 if(ev) ev.stopPropagation();
@@ -12406,6 +12403,17 @@ fySel.innerHTML='<option value="">All Years</option>'+fys.map(f=>`<option value=
 fySel.value=prev; fySel.dataset.filled='1';
 }
 }
+function jrnlPopulateMonths(){
+const sel=id('jrnlMonth'); if(!sel) return;
+const set=new Set();
+db.invoices.forEach(x=>{if(x.date)set.add(String(x.date).slice(0,7));(x.payments||[]).forEach(p=>{if(p.date)set.add(String(p.date).slice(0,7))})});
+const keys=[...set].filter(k=>/^\d{4}-\d{2}$/.test(k)).sort().reverse();
+const sig=keys.join(',');
+if(sel.dataset.sig===sig) return;
+const prev=sel.value;
+sel.innerHTML='<option value="">All Months</option>'+keys.map(k=>{const [y,m]=k.split('-');return `<option value="${k}">${new Date(y,Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'})}</option>`}).join('');
+sel.value=prev;sel.dataset.sig=sig;
+}
 function jrnlQuarterOf(dateStr){
 const m=new Date(dateStr).getMonth()+1;
 if(m>=4&&m<=6) return 1; if(m>=7&&m<=9) return 2; if(m>=10&&m<=12) return 3; return 4;
@@ -12433,7 +12441,7 @@ const matchT=!to||(x.date||'')<=to;
 const matchOD=!overdueOnly||isOverdue(x);
 const matchCust=!custId||x.customerId===custId;
 const matchFY=!fy||fyForDate(x.date)===fy;
-const matchMonth=!month||(x.date&&(new Date(x.date).getMonth()+1)===Number(month));
+const matchMonth=!month||String(x.date||'').slice(0,7)===month;
 const matchQtr=!quarter||(x.date&&jrnlQuarterOf(x.date)===Number(quarter));
 const matchMode=!mode||(x.payments||[]).some(p=>p.mode===mode);
 const grand=Number(x.totals?.grand||0);
@@ -12463,7 +12471,7 @@ const pd=p.date||'';
 if(from&&pd<from) return;
 if(to&&pd>to) return;
 if(fy&&fyForDate(pd)!==fy) return;
-if(month&&(!pd||(new Date(pd).getMonth()+1)!==Number(month))) return;
+if(month&&String(pd).slice(0,7)!==month) return;
 if(quarter&&(!pd||jrnlQuarterOf(pd)!==Number(quarter))) return;
 if(mode&&p.mode!==mode) return;
 const amt=Number(p.amount||0);
@@ -12480,7 +12488,7 @@ return rows;
 }
 function renderJournal(){
 if(!id('journalInvoiceBody')) return;
-jrnlPopulateDropdowns();
+jrnlPopulateDropdowns();jrnlPopulateMonths();
 setJournalTab(journalTab);
 const all=db.invoices.filter(x=>x.status==='Finalized');
 const outstanding=all.reduce((s,x)=>s+balanceDue(x),0);
@@ -12493,11 +12501,12 @@ id('journalStats').innerHTML=`
     <div class="stat-card"><div class="sub">COLLECTED THIS MONTH</div><div class="stat" style="font-size:20px;color:#34d399">₹ ${money(collectedThisMonth)}</div></div>
     <div class="stat-card"><div class="sub">OVERDUE INVOICES</div><div class="stat" style="font-size:20px">${overdueCount}</div></div>
     <div class="stat-card"><div class="sub">FULLY PAID</div><div class="stat" style="font-size:20px">${paidCount} / ${all.length}</div></div>`;
-const modes=['Cash','Bank','UPI','Cheque'];
+const __arr0=journalFilteredInvoices();
+const modes=[...new Set(['Cash','Bank','UPI','Cheque',...__arr0.flatMap(x=>(x.payments||[]).map(p=>p.mode).filter(Boolean))])];
 const modeTotals={};modes.forEach(m=>modeTotals[m]=0);
-all.forEach(x=>(x.payments||[]).forEach(p=>{if(modeTotals[p.mode]!==undefined)modeTotals[p.mode]+=Number(p.amount||0);}));
+__arr0.forEach(x=>(x.payments||[]).forEach(p=>{if(p.mode)modeTotals[p.mode]+=Number(p.amount||0);}));
 id('journalModeBreakdown').innerHTML=modes.map(m=>`<div class="stat-card"><div class="sub">${m.toUpperCase()}</div><div class="stat" style="font-size:18px">₹ ${money(modeTotals[m])}</div></div>`).join('');
-const arr=journalFilteredInvoices();
+const arr=__arr0;
 const ib=id('journalInvoiceBody');
 const __L=window.__jrnLimit||150;ib.innerHTML=arr.length?arr.slice(0,__L).map(x=>{
 const cust=x.customer||{};
@@ -12520,29 +12529,18 @@ return `<tr>
       </td>
     </tr>`;
 }).join('')+(arr.length>__L?'<tr><td colspan="9" class="center"><button class="btn muted" onclick="window.__jrnLimit=(window.__jrnLimit||150)+150;renderJournal()">Aur dikhao ('+(arr.length-__L)+' baaki) — ya filter/search use karo</button></td></tr>':''):'<tr><td colspan="9" class="center">No finalized invoices match the current filters.</td></tr>';
-const logRows=journalFilteredLogRows();
-const lb=id('journalLogBody');
-lb.innerHTML=logRows.length?logRows.slice(0,__L).map(p=>`<tr>
-    <td>${esc(p.date)}</td>
-    <td><b>${esc(p.invoiceNumber)}</b></td>
-    <td>${esc(p.customer)}</td>
-    <td class="right">₹ ${money(p.amount)}</td>
-    <td>${esc(p.mode)}</td>
-    <td>${esc(p.note)}</td>
-    <td style="white-space:nowrap">
-      <button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="openPaymentModal('${p.invoiceId}')">Manage</button>
-    </td>
-  </tr>`).join('')+(logRows.length>__L?'<tr><td colspan="7" class="center"><button class="btn muted" onclick="window.__jrnLimit=(window.__jrnLimit||150)+150;renderJournal()">Aur dikhao ('+(logRows.length-__L)+' baaki) — ya filter/search use karo</button></td></tr>':''):'<tr><td colspan="7" class="center">No payments recorded yet.</td></tr>';
-const filteredTotal=logRows.reduce((s,p)=>s+Number(p.amount||0),0);
-id('jrnlFilteredTotal').textContent='₹ '+money(filteredTotal);
-id('jrnlFilteredCount').textContent=logRows.length;
-id('jrnlFilteredInvCount').textContent=arr.length;
+const invPayRows=[];arr.forEach(x=>(x.payments||[]).forEach(p=>invPayRows.push({...p,customer:(x.customer||{}).name||''})));
+const __billed=arr.reduce((t,x)=>t+Number(x.totals?.grand||0),0), __recv=arr.reduce((t,x)=>t+paidAmount(x),0), __bal=arr.reduce((t,x)=>t+balanceDue(x),0);
+id('jrnlFilteredTotal').textContent='₹ '+money(__recv);
+id('jrnlFilteredCount').textContent='₹ '+money(__bal);
+id('jrnlFilteredInvCount').textContent=arr.length+' (Billed ₹ '+money(__billed)+')';
+id('jrnlHint').textContent='Date / Month / FY / Quarter filter invoice ki date par lagte hain. Upar ke totals, mode cards, customer totals aur trend sab inhi filtered invoices ke hain.';
 const byCust={};
-logRows.forEach(p=>{const k=p.customer||'—'; if(!byCust[k]) byCust[k]={count:0,total:0}; byCust[k].count++; byCust[k].total+=Number(p.amount||0);});
+invPayRows.forEach(p=>{const k=p.customer||'—'; if(!byCust[k]) byCust[k]={count:0,total:0}; byCust[k].count++; byCust[k].total+=Number(p.amount||0);});
 const custRows=Object.entries(byCust).sort((a,b)=>b[1].total-a[1].total);
 id('journalCustomerTotals').innerHTML=custRows.length?custRows.map(([name,v])=>`<tr><td>${esc(name)}</td><td class="right">${v.count}</td><td class="right">₹ ${money(v.total)}</td></tr>`).join(''):'<tr><td colspan="3" class="center">No payments match the current filters.</td></tr>';
 const byMonth={};
-logRows.forEach(p=>{const k=String(p.date||'').slice(0,7); if(!k) return; byMonth[k]=(byMonth[k]||0)+Number(p.amount||0);});
+invPayRows.forEach(p=>{const k=String(p.date||'').slice(0,7); if(!k) return; byMonth[k]=(byMonth[k]||0)+Number(p.amount||0);});
 const monthKeys=Object.keys(byMonth).sort();
 const maxMonth=Math.max(1,...monthKeys.map(k=>byMonth[k]));
 const mt=id('journalMonthTrend');
@@ -12581,7 +12579,6 @@ db.invoices.filter(x=>x.status==='Finalized').forEach(x=>{
 if(custId&&x.customerId!==custId) return;
 const custName=x.customer?.name||'';
 (x.payments||[]).forEach(p=>{
-if(!p.receiptNo) return;
 const pd=p.date||'';
 if(from&&pd<from) return;
 if(to&&pd>to) return;
@@ -12606,14 +12603,14 @@ if(!id('receiptLogBody')) return;
 rcptPopulateDropdowns();
 const rows=journalFilteredReceiptRows();
 id('receiptLogBody').innerHTML=rows.length?rows.map(p=>`<tr>
-    <td><b>${esc(p.receiptNo)}</b></td>
+    <td><b>${esc(p.receiptNo||'—')}</b></td>
     <td>${esc(p.date)}</td>
     <td>${esc(p.invoiceNumber)}</td>
     <td>${esc(p.customer)}</td>
     <td class="right">₹ ${money(p.amount)}</td>
     <td>${esc(p.mode)}</td>
     <td>${esc(p.note)}</td>
-    <td style="white-space:nowrap"><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="printReceiptByIds('${p.invoiceId}','${p.id}')">View / Print</button> <button class="btn muted" style="padding:6px 8px;min-height:34px;margin-left:4px" onclick="openReceiptEmail('${p.invoiceId}','${p.id}')">✉ Email</button></td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap;min-width:230px"><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="printReceiptByIds('${p.invoiceId}','${p.id}')">View / Print</button><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="openReceiptEmail('${p.invoiceId}','${p.id}')">✉ Email</button><button class="btn primary" style="padding:6px 8px;min-height:34px" onclick="chatSendReceiptForPayment('${p.invoiceId}','${p.id}')">📤 Send</button><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="rcptEdit('${p.invoiceId}','${p.id}')">Edit</button><button class="btn danger" style="padding:6px 8px;min-height:34px" onclick="rcptDelete('${p.invoiceId}','${p.id}')">Del</button></td>
   </tr>`).join(''):'<tr><td colspan="8" class="center">No receipts match the current filters.</td></tr>';
 const total=rows.reduce((s,p)=>s+Number(p.amount||0),0);
 id('rcptFilteredTotal').textContent='₹ '+money(total);
@@ -12713,6 +12710,7 @@ id('payAmount').value='';
 id('payDate').value=new Date().toISOString().slice(0,10);
 id('payMode').value='Cash';
 id('payNote').value='';
+resetPayEdit();
 renderPaymentModal();
 id('paymentModal').classList.add('show');
 }
@@ -12800,37 +12798,54 @@ saveDB();
 renderPaymentModal(); renderJournal();
 alert('✅ Payment Received Successfully!\n₹ '+money(bal)+' — '+inv.invoiceNumber+' ab fully paid hai.');
 }
+let payEditId=null;
+function resetPayEdit(){payEditId=null;const b=id('payAddBtn');if(b)b.textContent='+ Add Payment';const c=id('payEditCancel');if(c)c.classList.add('hidden');id('payAmount').value='';id('payNote').value='';}
 function addPayment(){
 const inv=db.invoices.find(x=>x.id===paymentModalInvoiceId); if(!inv) return;
 const amount=Number(id('payAmount')?.value||0);
 if(!amount||amount<=0){alert('Valid amount daalo.');return;}
-const bal=balanceDue(inv);
-if(amount>bal+0.01 && !confirm(`Balance due sirf ₹ ${money(bal)} hai. ₹ ${money(amount)} record karna hai (advance/overpayment)?`)) return;
-if(!inv.payments) inv.payments=[];
 const _pdate=id('payDate')?.value||new Date().toISOString().slice(0,10);
-inv.payments.push({id:crypto.randomUUID(),amount,date:_pdate,mode:id('payMode')?.value||'Cash',note:id('payNote')?.value||'',receiptNo:nextReceiptNumber(_pdate)});
+if(!/^\d{4}-\d{2}-\d{2}$/.test(_pdate)||isNaN(new Date(_pdate).getTime())){alert('Valid date daalo.');return;}
+if(!inv.payments) inv.payments=[];
+const ed=payEditId?inv.payments.find(x=>x.id===payEditId):null;
+const bal=balanceDue(inv)+(ed?Number(ed.amount||0):0);
+if(amount>bal+0.01 && !confirm(`Balance due sirf ₹ ${money(bal)} hai. ₹ ${money(amount)} record karna hai (advance/overpayment)?`)) return;
+const mode=id('payMode')?.value||'Cash', note=id('payNote')?.value||'';
+if(ed){
+const dateChanged=_pdate!==ed.date;
+ed.amount=amount; ed.date=_pdate; ed.mode=mode; ed.note=note;
+if(dateChanged&&ed.receiptNo) ed.receiptNo=formatReceiptNo(ed.date,receiptSeqOf(ed));
+} else {
+inv.payments.push({id:crypto.randomUUID(),amount,date:_pdate,mode,note,receiptNo:nextReceiptNumber(_pdate)});
+}
 saveDB();
-id('payAmount').value='';id('payNote').value='';
+resetPayEdit();
 renderPaymentModal(); renderJournal();
 }
 function editPayment(pid){
 const inv=db.invoices.find(x=>x.id===paymentModalInvoiceId); if(!inv) return;
 const p=(inv.payments||[]).find(x=>x.id===pid); if(!p) return;
-const newAmt=prompt('Amount:',p.amount); if(newAmt===null) return;
-const newDate=prompt('Date (YYYY-MM-DD):',p.date); if(newDate===null) return;
-const newMode=prompt('Mode (Cash/Bank/UPI/Cheque):',p.mode); if(newMode===null) return;
-const newNote=prompt('Note:',p.note||''); if(newNote===null) return;
-const dateChanged=newDate&&newDate!==p.date;
-p.amount=Number(newAmt||0); p.date=newDate||p.date; p.mode=newMode||p.mode; p.note=newNote;
-if(dateChanged&&p.receiptNo) p.receiptNo=formatReceiptNo(p.date,receiptSeqOf(p));
-saveDB(); renderPaymentModal(); renderJournal();
+payEditId=pid;
+id('payAmount').value=p.amount;
+id('payDate').value=p.date||new Date().toISOString().slice(0,10);
+const sel=id('payMode');
+if(p.mode&&![...sel.options].some(o=>o.value===p.mode)){const o=document.createElement('option');o.textContent=p.mode;sel.appendChild(o);}
+sel.value=p.mode||'Cash';
+id('payNote').value=p.note||'';
+id('payAddBtn').textContent='✔ Update Payment';
+id('payEditCancel').classList.remove('hidden');
+id('payAmount').focus();
 }
 function deletePayment(pid){
 const inv=db.invoices.find(x=>x.id===paymentModalInvoiceId); if(!inv) return;
-if(!confirm('Yeh payment entry delete karni hai?')) return;
+const p=(inv.payments||[]).find(x=>x.id===pid); if(!p) return;
+if(!confirm('Payment ₹ '+money(p.amount)+' ('+(p.date||'')+') delete karni hai?'+(p.receiptNo?'\n\nReceipt No '+p.receiptNo+' bhi hat jaayegi aur number me gap banega. Agar ye receipt chat/email se bheji ja chuki hai to samne wale ke paas rehegi.':''))) return;
 inv.payments=(inv.payments||[]).filter(x=>x.id!==pid);
+if(payEditId===pid) resetPayEdit();
 saveDB(); renderPaymentModal(); renderJournal();
 }
+function rcptEdit(invId,pid){openPaymentModal(invId);editPayment(pid);}
+function rcptDelete(invId,pid){paymentModalInvoiceId=invId;deletePayment(pid);}
 function printReceiptByIds(invId,pid){
 const inv=db.invoices.find(x=>x.id===invId); if(!inv) return;
 const p=(inv.payments||[]).find(x=>x.id===pid); if(!p) return;
