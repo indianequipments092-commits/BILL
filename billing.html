@@ -2655,7 +2655,7 @@ async function choosePlanPaid(planId,offer){
 if(PAYMENT_MODE==='manual') return showManualPaymentModal(planId,offer);
 const btn=document.getElementById('planBtn_'+planId)||document.querySelector('.plx-go');
 const label=btn?btn.textContent:'';
-const reset=()=>{ if(btn){ btn.disabled=false; btn.textContent=label; } };
+const reset=()=>{ window.__plxBusy=false; try{ plxClose(); }catch(e){} if(btn){ btn.disabled=false; btn.textContent=label; } };
 if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
 const period=(offer&&offer.durationMonths===12)?'yearly':'monthly';
 try{
@@ -2675,11 +2675,11 @@ key:order.keyId||RAZORPAY_KEY_ID,amount:order.amount,currency:'INR',order_id:ord
 name:'IE Billing',description:PLAN_LABEL[planId]+' · '+(period==='yearly'?'Yearly':'Monthly'),
 prefill:{email:currentUser.email,name:(userProfile&&userProfile.name)||''},
 theme:{color:'#c9923a'},
-handler:function(){ rzWaitForPlan(planId,btn,label); },
+handler:function(){ window.__plxBusy=false; rzWaitForPlan(planId,btn,label); },
 modal:{ondismiss:reset}
 });
 rzp.on('payment.failed',function(r){ reset(); alert('❌ Payment fail: '+((r.error&&r.error.description)||'Unknown error')+'\nDobara try karo.'); });
-rzp.open();
+rzp.open(); setTimeout(function(){ try{ plxClose(); }catch(e){} },350);
 }catch(e){
 reset();
 if(e.code==='rule'){ alert(e.message); return; }
@@ -22173,7 +22173,7 @@ if(typeof ra==='function')window.refreshAll=function(){var d=document.getElement
 .plx-go::after,.plx-ok::after{content:"";position:absolute;top:0;bottom:0;left:-50%;width:35%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);animation:plxSw 3.2s ease-in-out infinite}
 .plx-go:disabled{opacity:.5}.plx-go:disabled::after{display:none}
 .plx-try{display:block;margin:0 auto 8px;border:0;background:none;color:#f6d27a;font-weight:700;font-size:13px;padding:6px}
-#plxSheet{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65);backdrop-filter:blur(5px)}
+#plxSheet{position:fixed;inset:0;z-index:10000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
 #plxSheet.on{display:flex}
 .plx-sp{width:100%;max-width:560px;padding:22px 20px calc(20px + env(safe-area-inset-bottom,0px));border-radius:28px 28px 0 0;background:#0d1220;border-top:1.5px solid rgba(246,210,122,.5);box-shadow:0 -20px 60px -20px rgba(246,210,122,.35);animation:plxIn .3s cubic-bezier(.2,.9,.3,1);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#f5f6fa}
 @keyframes plxIn{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
@@ -22220,9 +22220,10 @@ window.plxUp=function(){var r=document.querySelector('#planGrid .plx-tog');if(r)
 window.plxRenew=function(){plxPick(cur());plxAsk()};
 window.plxClose=function(){sheet().classList.remove('on')};
 var QC={};
+function rzPre(){if(window.__rzPre)return;window.__rzPre=1;try{loadRazorpayScript().catch(function(){window.__rzPre=0})}catch(e){window.__rzPre=0}}
 function qget(id){var per=st.yr?'yearly':'monthly',k=id+'|'+per+'|'+cur()+'|'+currentPlanExpiry,c=QC[k];
  if(c&&Date.now()-c.t<90000)return c;
- c=QC[k]={t:Date.now(),v:null,e:null};
+ rzPre(); c=QC[k]={t:Date.now(),v:null,e:null};
  c.p=rzFn('razorpay-create-order',{plan:id,period:per,quote:true}).then(function(v){c.v=v;return v},function(e){c.e=e;throw e});
  c.p.catch(function(){});return c}
 window.plxAsk=function(){var id=st.sel;if(id==='free'&&cur()!=='free')return;if(id==='free')return plxGo();
@@ -22249,7 +22250,11 @@ window.plxAskBasic=function(){var id=st.sel;if(id==='free'&&cur()!=='free')retur
  '<div class="plx-r"><span>Validity</span><b>'+(st.yr?'12 mahine':'1 mahina')+'</b></div><div class="plx-r t"><span>Total</span><b>'+inr(t)+'</b></div>'+
  '<button type="button" class="plx-ok" onclick="plxGo()">Confirm &amp; Pay '+inr(t)+'</button><button type="button" class="plx-no" onclick="plxClose()">Cancel</button>'+
  '<div class="plx-lk">🔒 Razorpay se secure · UPI, Cards, Netbanking</div></div>';s.classList.add('on')};
-window.plxGo=function(){plxClose();var id=st.sel;if(id==='free')return choosePlanFree();window.__plxQuoted=window.__plxPay||null;
+window.plxGo=function(){var id=st.sel;if(id==='free'){plxClose();return choosePlanFree()}
+ if(window.__plxBusy)return;
+ if(PAYMENT_MODE==='razorpay'){window.__plxBusy=true;var sp=sheet().querySelector('.plx-sp'),h=sp&&sp.querySelector('h3');if(sp&&h)sp.innerHTML=h.outerHTML+'<div class="plx-r"><span>Razorpay khul raha hai…</span><b></b></div>';else plxClose()}
+ else plxClose();
+ window.__plxQuoted=window.__plxPay||null;
  var o=st.yr?{id:null,name:PLAN_LABEL[id]+' yearly',price:YR[id],mrp:mo(id)*12,durationMonths:12}:null;choosePlanPaid(id,o)};
 window.renderPlanCards=function(){
  var g=document.getElementById('planGrid');if(!g)return;fx();
