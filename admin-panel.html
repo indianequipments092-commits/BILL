@@ -7,10 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Cinzel:wght@700;800;900&family=Bebas+Neue&family=Rajdhani:wght@600;700&family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <!-- Firebase Auth hata diya — ab Supabase Auth use ho raha hai -->
 <!-- Firestore SDK hata diya — ab Supabase use ho raha hai -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -345,10 +343,17 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
       <div style="flex:1;min-width:140px">
         <select id="subPlan" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--tx);font:inherit;font-size:14px">
           <option value="free">Free</option>
-          <option value="lite">Lite</option>
           <option value="silver">Silver</option>
           <option value="golden">Golden</option>
           <option value="platinum">Platinum</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <select id="subMonths" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--tx);font:inherit;font-size:14px">
+          <option value="1">1 mahina</option>
+          <option value="3">3 mahine</option>
+          <option value="6">6 mahine</option>
+          <option value="12">12 mahine</option>
         </select>
       </div>
       <button class="btn ok" style="padding:12px 20px" onclick="applySubscription()">Apply</button>
@@ -381,7 +386,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
       </select>
       <select id="reqPlanFilter" class="of-in" onchange="reqSetPlanFilter(this.value)">
         <option value="all">Sabhi Plans</option>
-        <option value="lite">Lite</option>
         <option value="silver">Silver</option>
         <option value="golden">Golden</option>
         <option value="platinum">Platinum</option>
@@ -422,7 +426,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
       </select>
       <select id="trPlanFilter" class="of-in" onchange="trSetPlanFilter(this.value)">
         <option value="all">Sabhi Plans</option>
-        <option value="lite">Lite</option>
         <option value="silver">Silver</option>
         <option value="golden">Golden</option>
         <option value="platinum">Platinum</option>
@@ -455,7 +458,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
       <select id="sptPlanFilter" class="of-in" onchange="sptSetPlanFilter(this.value)">
         <option value="all">Sabhi Plans</option>
         <option value="free">Free</option>
-        <option value="lite">Lite</option>
         <option value="silver">Silver</option>
         <option value="golden">Golden</option>
         <option value="platinum">Platinum</option>
@@ -533,7 +535,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
         <div>
           <label class="of-label">Plan</label>
           <select id="ofPlan" class="of-in" onchange="ofRenderPreview()">
-            <option value="lite">Lite</option>
             <option value="silver">Silver</option>
             <option value="golden">Golden</option>
             <option value="platinum">Platinum</option>
@@ -689,7 +690,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
         <div>
           <label class="of-label">Kaunse Plans pe chale</label>
           <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
-            <label class="of-check" style="margin:0"><input type="checkbox" class="cpPlanChk" value="lite" checked> Lite</label>
             <label class="of-check" style="margin:0"><input type="checkbox" class="cpPlanChk" value="silver" checked> Silver</label>
             <label class="of-check" style="margin:0"><input type="checkbox" class="cpPlanChk" value="golden" checked> Golden</label>
             <label class="of-check" style="margin:0"><input type="checkbox" class="cpPlanChk" value="platinum" checked> Platinum</label>
@@ -737,10 +737,6 @@ select.of-in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid va
     <p class="sub" style="margin-top:-4px">Jo user apna referral code kisi doston ko de aur wo pehli baar paid plan le (approve hone par), bulane wale ko free din milte hain. Naye user ko discount ek "Sirf Naye Users" wale coupon se milta hai (upar Coupon Manager me banao).</p>
     <label class="of-check"><input type="checkbox" id="rfEnabled" checked> <span><svg class="ic"><use href="#ic-check"/></svg> Referral system ON rakho</span></label>
     <div class="of-grid3">
-      <div>
-        <label class="of-label">Lite — bonus din per referral</label>
-        <input id="rfDaysLite" type="number" value="3">
-      </div>
       <div>
         <label class="of-label">Silver — bonus din per referral</label>
         <input id="rfDaysSilver" type="number" value="7">
@@ -911,7 +907,6 @@ Hardware & Tools,Hand Tools,Spanners,Combination Spanner 8mm,Chrome vanadium,820
         <select id="bcAudience" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--tx);font:inherit;font-size:14px">
           <option value="all">Sabhi Users</option>
           <option value="free">Free Plan</option>
-          <option value="lite">Lite Plan</option>
           <option value="silver">Silver Plan</option>
           <option value="golden">Golden Plan</option>
           <option value="platinum">Platinum Plan</option>
@@ -983,17 +978,6 @@ Hardware & Tools,Hand Tools,Spanners,Combination Spanner 8mm,Chrome vanadium,820
 </div>
 
 <script>
-const firebaseConfig={
-  apiKey:"AIzaSyDLL_j90myyuA79ZOmPDUw5IQE9bY81Y54",
-  authDomain:"mybilling-33fa1.firebaseapp.com",
-  projectId:"mybilling-33fa1",
-  storageBucket:"mybilling-33fa1.firebasestorage.app",
-  messagingSenderId:"964174275031",
-  appId:"1:964174275031:web:a38b58807203621e636b92"
-};
-firebase.initializeApp(firebaseConfig);
-const storage=firebase.storage();
-
 /* ---- Auth adapter: Firebase Auth (auth.*) jaisa hi API, Supabase Auth se backed ----
    app.html jaisa hi shim — currentAdmin/u.uid, u.email waghera bina code badle chalte rahein */
 function createAuthAdapter(supabase){
@@ -1075,6 +1059,7 @@ function createFirestoreAdapter(supabase) {
         const base = existing.data() || {};
         finalData = resolveSpecialValues(obj, base);
         finalData = { ...base, ...finalData };
+        for (const k in obj) { const v = obj[k]; if (v && typeof v === 'object' && v.__fsType === 'deleteField') delete finalData[k]; }
       } else {
         finalData = resolveSpecialValues(obj, {});
       }
@@ -1386,7 +1371,7 @@ function sptSubmitAnswer(questionId){
    Storage path: manual/ie-billing-manual.pdf  (fixed name -> replace overwrites)
    Firestore:    settings/manual  { url, fileName, size, updatedAt }
    ========================================================================= */
-const MANUAL_STORAGE_PATH='manual/ie-billing-manual.pdf';
+const MANUAL_STORAGE_PATH='ie-billing-manual.pdf';
 function mbInit(){
   db.collection('settings').doc('manual').onSnapshot(function(doc){
     const box=document.getElementById('mbCurrentBox');
@@ -1400,51 +1385,38 @@ function mbInit(){
     document.getElementById('mbCurrentLink').href=d.url;
   }, function(err){ console.error('mbInit error:',err); });
 }
-function mbUpload(){
+async function mbUpload(){
+  if(!requireSuper()) return;
   const input=document.getElementById('mbFileInput');
   const file=input.files && input.files[0];
   const msg=document.getElementById('mbMsg');
   if(!file){ msg.textContent='Pehle ek PDF chuno.'; return; }
   if(file.type!=='application/pdf'){ msg.textContent='Sirf PDF file allowed hai.'; return; }
+  if(file.size>25*1024*1024){ msg.textContent='PDF 25 MB se chhoti honi chahiye.'; return; }
   const btn=document.getElementById('mbUploadBtn');
-  btn.disabled=true; btn.textContent='Uploading...';
+  const BTN_HTML='<svg class="ic"><use href="#ic-upload"/></svg> Upload / Replace';
   const wrap=document.getElementById('mbProgressWrap'), bar=document.getElementById('mbProgressBar');
-  wrap.style.display='block'; bar.style.width='0%'; msg.textContent='';
-
-  const ref=storage.ref().child(MANUAL_STORAGE_PATH);
-  const task=ref.put(file,{contentType:'application/pdf'});
-  task.on('state_changed',
-    function(snap){
-      const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100);
-      bar.style.width=pct+'%';
-    },
-    function(err){
-      console.error('mbUpload error:',err);
-      msg.textContent='Upload fail ho gaya: '+err.message;
-      btn.disabled=false; btn.innerHTML='<svg class="ic"><use href="#ic-upload"/></svg> Upload / Replace';
-      wrap.style.display='none';
-    },
-    function(){
-      task.snapshot.ref.getDownloadURL().then(function(url){
-        return db.collection('settings').doc('manual').set({
-          url:url,
-          fileName:file.name,
-          size:file.size,
-          updatedAt:Date.now()
-        });
-      }).then(function(){
-        msg.innerHTML='<svg class="ic"><use href="#ic-check"/></svg> Manual upload ho gaya — turant live hai.';
-        btn.disabled=false; btn.innerHTML='<svg class="ic"><use href="#ic-upload"/></svg> Upload / Replace';
-        wrap.style.display='none';
-        input.value='';
-      }).catch(function(err){
-        console.error('mbUpload save error:',err);
-        msg.textContent='Save fail ho gaya: '+err.message;
-        btn.disabled=false; btn.innerHTML='<svg class="ic"><use href="#ic-upload"/></svg> Upload / Replace';
-        wrap.style.display='none';
-      });
-    }
-  );
+  btn.disabled=true; btn.textContent='Uploading...';
+  wrap.style.display='block'; bar.style.width='40%'; msg.textContent='';
+  try{
+    const path=MANUAL_STORAGE_PATH;
+    const up=await supabaseClient.storage.from('manual').upload(path,file,{upsert:true,contentType:'application/pdf',cacheControl:'60'});
+    if(up.error) throw up.error;
+    bar.style.width='85%';
+    const pub=supabaseClient.storage.from('manual').getPublicUrl(path);
+    const url=pub.data.publicUrl+'?v='+Date.now();
+    await db.collection('settings').doc('manual').set({url:url,fileName:file.name,size:file.size,updatedAt:Date.now()},{merge:true});
+    bar.style.width='100%';
+    msg.innerHTML='<svg class="ic"><use href="#ic-check"/></svg> Manual upload ho gaya — turant live hai.';
+    input.value='';
+    logAdmin('manual_upload',file.name);
+  }catch(err){
+    console.error('mbUpload error:',err);
+    msg.textContent='Upload fail ho gaya: '+(err.message||err);
+  }finally{
+    btn.disabled=false; btn.innerHTML=BTN_HTML;
+    setTimeout(()=>{ wrap.style.display='none'; },600);
+  }
 }
 
 const auIsMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1493,29 +1465,30 @@ auth.getRedirectResult().catch(e=>{
   }
 });
 
+let adminSessionEmail=null; // token refresh par listeners/log dobara na chalein
+function startAdminSession(u,role,label){
+  currentAdminRole=role;
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  applyRolePermissions();
+  if(adminSessionEmail===u.email) return;
+  adminSessionEmail=u.email;
+  adminNavInit();
+  logAdmin('login',label);
+  loadData();
+}
 auth.onAuthStateChanged(async u=>{
   const btn=document.getElementById('auLoginBtn');
-  if(u && ADMIN_EMAILS.includes(u.email)){
-    currentAdminRole='superadmin';
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    applyRolePermissions();
-    adminNavInit();
-    logAdmin('login','Super admin login');
-    loadData();
+  if(u && ADMIN_EMAILS.includes((u.email||'').toLowerCase())){
+    startAdminSession(u,'superadmin','Super admin login');
     return;
   }
   if(u){
     try{
-      const doc=await db.collection('admins').doc(u.email).get();
+      const doc=await db.collection('admins').doc((u.email||'').toLowerCase()).get();
       if(doc.exists && doc.data().active!==false){
-        { const r=doc.data().role; currentAdminRole=(r&&r!=='superadmin')?r:'support'; } // superadmin sirf ADMIN_EMAILS se mil sakta hai
-        document.getElementById('login').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        applyRolePermissions();
-        adminNavInit();
-        logAdmin('login','Sub-admin login ('+currentAdminRole+')');
-        loadData();
+        const r=doc.data().role; const role=(r&&r!=='superadmin')?r:'support'; // superadmin sirf ADMIN_EMAILS se mil sakta hai
+        startAdminSession(u,role,'Sub-admin login ('+role+')');
         return;
       }
     }catch(e){ console.warn('admin role check failed',e); }
@@ -1523,7 +1496,6 @@ auth.onAuthStateChanged(async u=>{
     auth.signOut();
     if(btn){ btn.disabled=false; btn.textContent='Login'; }
   } else {
-    currentAdminRole=null;
     if(btn){ btn.disabled=false; btn.textContent='Login'; }
   }
 });
@@ -1595,10 +1567,20 @@ function renderRequests(){
       <td>${r.amount!=null? '<b>₹'+esc(r.amount)+'</b>' : '<span style="color:var(--mu)">—</span>'}</td>
       <td>${r.utr? '<code style="background:rgba(255,255,255,.06);padding:3px 8px;border-radius:6px">'+esc(r.utr)+'</code>' : '<span style="color:var(--mu)">— nahi diya</span>'}</td>
       <td>${r.requestedAt? new Date(r.requestedAt).toLocaleString('en-IN'):'—'}</td>
-      <td><button class="btn ok" onclick="approveRequest('${r.id}','${esc(r.email)}','${r.plan}')"><svg class="ic"><use href="#ic-check"/></svg> Approve</button></td>
+      <td><button class="btn ok" onclick="approveRequest(${jsq(r.id)},${jsq(r.email)},${jsq(r.plan)})"><svg class="ic"><use href="#ic-check"/></svg> Approve</button></td>
     </tr>`).join('') : '<tr><td colspan="7">Koi pending request nahi hai (is filter ke saath).</td></tr>';
 }
+const _apBusy=new Set();
 async function approveRequest(reqId,email,plan){
+  if(_apBusy.has(reqId)) return;
+  _apBusy.add(reqId);
+  try{
+    const cur=await db.collection('subscriptionRequests').doc(reqId).get();
+    if(cur.exists && cur.data().status!=='pending'){ alert('Ye request pehle hi approve ho chuki hai.'); return; }
+    await _approveRequestRun(reqId,email,plan);
+  }finally{ _apBusy.delete(reqId); }
+}
+async function _approveRequestRun(reqId,email,plan){
   const r=requests.find(x=>x.id===reqId)||{};
 
   /* ============ ₹1 / 7-Din TRIAL REQUEST — alag flow ============ */
@@ -1689,7 +1671,7 @@ function trRenderStats(){
   document.getElementById('trStActive').textContent=active;
   document.getElementById('trStConv').textContent=converted;
   document.getElementById('trStRate').textContent=rate+'%';
-  const plans=['lite','silver','golden','platinum'];
+  const plans=['silver','golden','platinum'];
   const max=Math.max(1,...plans.map(p=>trialOffers.filter(t=>t.plan===p).length));
   document.getElementById('trPlanBars').innerHTML=plans.map(p=>{
     const c=trialOffers.filter(t=>t.plan===p).length;
@@ -1776,7 +1758,7 @@ async function rfRewardReferrerIfAny(referredEmail, plan, /*unused*/_d){
     await db.collection('referralUses').doc(referredEmail).update({rewarded:true,rewardDays:totalDays,rewardedAt:Date.now()});
   }catch(e){ console.warn('referral reward failed',e); }
 }
-const PLAN_LABEL={free:'Free',lite:'Lite',silver:'Silver',golden:'Golden',platinum:'Platinum'};
+const PLAN_LABEL={free:'Free',silver:'Silver',golden:'Golden',platinum:'Platinum'};
 let subscriptions=[];
 function loadSubscriptions(){
   db.collection('subscriptions')
@@ -1800,9 +1782,11 @@ function applySubscription(){
   const msg=document.getElementById('subMsg');
   if(!email||!email.includes('@')){ msg.textContent='Sahi email daalo.'; msg.style.color='#fb7185'; return; }
   msg.textContent='Saving…'; msg.style.color='var(--mu)';
-  db.collection('subscriptions').doc(email).set({
-    email, plan, setAt: Date.now(), setBy: auth.currentUser.email
-  }, {merge:true}).then(()=>{
+  const months=Number(document.getElementById('subMonths').value)||1;
+  const data={ email, plan, setAt: Date.now(), setBy: auth.currentUser.email, isTrial:false, trialEndsAt:db.FieldValue.delete() };
+  if(plan==='free'){ data.planExpiresAt=db.FieldValue.delete(); }
+  else { const d=new Date(); d.setMonth(d.getMonth()+months); data.planExpiresAt=d.getTime(); }
+  db.collection('subscriptions').doc(email).set(data, {merge:true}).then(()=>{
     msg.innerHTML='<svg class="ic"><use href="#ic-check"/></svg> '+email+' ko '+(PLAN_LABEL[plan]||plan)+' plan lag gaya.';
     msg.style.color='#34d399';
     document.getElementById('subEmail').value='';
@@ -1840,6 +1824,14 @@ function coTrialLabelFor(email){
 }
 function coSetStatusFilter(v){ coStatusFilter=v; render(); }
 function coSetSort(v){ coSortOrder=v; render(); }
+function coCreatedMs(c){
+  const v=c&&c.createdAt; if(!v) return 0;
+  if(typeof v==='number') return v;
+  if(typeof v==='string'){ const t=Date.parse(v); return isNaN(t)?0:t; }
+  if(v.seconds!=null) return v.seconds*1000;
+  if(v._seconds!=null) return v._seconds*1000;
+  return 0;
+}
 function render(){
   const q=(document.getElementById('search')?.value||'').toLowerCase();
   let list=companies.filter(c=>!q || (c.ownerEmail||'').toLowerCase().includes(q) ||
@@ -1854,7 +1846,7 @@ function render(){
       const eb=(subscriptions.find(s=>(s.email||'').toLowerCase()===b._email)||{}).planExpiresAt??Infinity;
       return ea-eb;
     }
-    return ((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0);
+    return coCreatedMs(b)-coCreatedMs(a);
   });
   document.getElementById('stCompanies').textContent=companies.length;
   document.getElementById('stOwners').textContent=new Set(companies.map(c=>c.ownerEmail)).size;
@@ -1877,7 +1869,7 @@ function render(){
       <td><span class="avatar">${esc(initials(c.ownerEmail))}</span>${esc(c.ownerEmail)}</td>
       <td><b>${esc(c.name)}</b></td>
       <td>${esc(c.gstin||'—')}</td>
-      <td>${c.createdAt? new Date(c.createdAt.seconds*1000).toLocaleDateString('en-IN'):'—'}</td>
+      <td>${coCreatedMs(c)? new Date(coCreatedMs(c)).toLocaleDateString('en-IN'):'—'}</td>
       <td>${c.invoiceCount||0}</td>
       <td>₹${(c.revenue||0).toLocaleString('en-IN')}</td>
       <td>${esc(planLabel)}<br>${statusBadgeMap[status]}</td>
@@ -1886,7 +1878,7 @@ function render(){
       <td>${c._stats.count}</td>
       <td>₹${c._stats.ltv.toLocaleString('en-IN')}</td>
       <td><span class="badge ${c.blocked?'blocked':'active'}">${c.blocked?'Blocked':'Active'}</span></td>
-      <td><button class="btn ${c.blocked?'ok':'bad'}" onclick="toggleBlock('${c.id}',${!!c.blocked})">
+      <td><button class="btn ${c.blocked?'ok':'bad'}" onclick="toggleBlock(${jsq(c.id)},${!!c.blocked})">
         ${c.blocked?'Unblock':'Block'}</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="13">Koi company nahi mili.</td></tr>';
@@ -1895,21 +1887,22 @@ function toggleBlock(id,curr){
   db.collection('adminIndex').doc('companies').collection('list').doc(id).update({blocked:!curr})
     .then(()=>logAdmin('company_block', id+' -> '+(!curr?'blocked':'unblocked')));
 }
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); } // onclick me safe string argument
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 /* ===================== ANALYTICS DASHBOARD ===================== */
 function anaRender(){
   const now=Date.now();
-  const activeSubs=subscriptions.filter(s=>s.plan!=='free' && s.planExpiresAt && s.planExpiresAt>now);
+  const activeSubs=subscriptions.filter(s=>s.plan!=='free' && s.planExpiresAt && s.planExpiresAt>now && !(s.isTrial && s.trialEndsAt>now));
   const expiredSubs=subscriptions.filter(s=>s.plan!=='free' && s.planExpiresAt && s.planExpiresAt<=now);
   const expiringSoon=activeSubs.filter(s=>s.planExpiresAt-now < 7*24*60*60*1000);
-  const paidEmails=new Set(activeSubs.map(s=>s.email));
-  const ownerEmails=new Set(companies.map(c=>c.ownerEmail));
+  const paidEmails=new Set(activeSubs.map(s=>(s.email||'').toLowerCase()));
+  const ownerEmails=new Set(companies.map(c=>(c.ownerEmail||'').toLowerCase()).filter(Boolean));
   let freeCount=0; ownerEmails.forEach(e=>{ if(!paidEmails.has(e)) freeCount++; });
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('anaActive',activeSubs.length); set('anaExpired',expiredSubs.length);
   set('anaSoon',expiringSoon.length); set('anaFree',freeCount);
-  const counts={lite:0,silver:0,golden:0,platinum:0};
+  const counts={silver:0,golden:0,platinum:0};
   activeSubs.forEach(s=>{ if(counts[s.plan]!=null) counts[s.plan]++; });
   const max=Math.max(1,...Object.values(counts));
   const bars=document.getElementById('anaPlanBars');
@@ -1959,8 +1952,8 @@ function admRender(){
       <td>${esc(a.role||'support')}</td>
       <td><span class="badge ${a.active===false?'blocked':'active'}">${a.active===false?'Disabled':'Active'}</span></td>
       <td>
-        <button class="btn ${a.active===false?'ok':'bad'}" onclick="admToggle('${a.id}',${a.active===false})">${a.active===false?'Enable':'Disable'}</button>
-        <button class="btn bad" onclick="admRemove('${a.id}')">Remove</button>
+        <button class="btn ${a.active===false?'ok':'bad'}" onclick="admToggle(${jsq(a.id)},${a.active===false})">${a.active===false?'Enable':'Disable'}</button>
+        <button class="btn bad" onclick="admRemove(${jsq(a.id)})">Remove</button>
       </td>
     </tr>`).join('') : '<tr><td colspan="4">Koi sub-admin nahi hai.</td></tr>';
 }
@@ -2049,8 +2042,8 @@ function ffRender(){
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)">
       <span>${esc(k)}</span>
       <div style="display:flex;gap:8px">
-        <button class="btn ${featureFlags[k]?'bad':'ok'}" onclick="ffToggle('${k}',${!featureFlags[k]})">${featureFlags[k]?'Turn Off':'Turn On'}</button>
-        <button class="btn of-mini" onclick="ffRemove('${k}')"><svg class="ic"><use href="#ic-trash"/></svg></button>
+        <button class="btn ${featureFlags[k]?'bad':'ok'}" onclick="ffToggle(${jsq(k)},${!featureFlags[k]})">${featureFlags[k]?'Turn Off':'Turn On'}</button>
+        <button class="btn of-mini" onclick="ffRemove(${jsq(k)})"><svg class="ic"><use href="#ic-trash"/></svg></button>
       </div>
     </div>`).join('') : '<p class="sub">Koi flag nahi hai. Upar se add karo.</p>';
 }
@@ -2648,9 +2641,9 @@ function cpRenderList(){
       <td>${c.usedCount||0}${c.totalLimit?' / '+c.totalLimit:''}</td>
       <td>${status}</td>
       <td>
-        <button class="btn ok" style="padding:6px 10px" onclick="cpEditCoupon('${c.id}')"><svg class="ic"><use href="#ic-edit"/></svg></button>
-        <button class="btn ${c.active?'bad':'ok'}" style="padding:6px 10px" onclick="cpToggleActive('${c.id}',${!c.active})">${c.active?'<svg class="ic"><use href="#ic-pause"/></svg>':'<svg class="ic"><use href="#ic-play"/></svg>'}</button>
-        <button class="btn bad" style="padding:6px 10px" onclick="cpDeleteCoupon('${c.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button>
+        <button class="btn ok" style="padding:6px 10px" onclick="cpEditCoupon(${jsq(c.id)})"><svg class="ic"><use href="#ic-edit"/></svg></button>
+        <button class="btn ${c.active?'bad':'ok'}" style="padding:6px 10px" onclick="cpToggleActive(${jsq(c.id)},${!c.active})">${c.active?'<svg class="ic"><use href="#ic-pause"/></svg>':'<svg class="ic"><use href="#ic-play"/></svg>'}</button>
+        <button class="btn bad" style="padding:6px 10px" onclick="cpDeleteCoupon(${jsq(c.id)})"><svg class="ic"><use href="#ic-trash"/></svg></button>
       </td>
     </tr>`;
   }).join('');
@@ -2665,7 +2658,6 @@ function rfInit(){
     const c=s.data();
     document.getElementById('rfEnabled').checked=c.enabled!==false;
     const rd=c.rewardDays||{};
-    document.getElementById('rfDaysLite').value=rd.lite!=null?rd.lite:3;
     document.getElementById('rfDaysSilver').value=rd.silver!=null?rd.silver:7;
     document.getElementById('rfDaysGolden').value=rd.golden!=null?rd.golden:15;
     document.getElementById('rfDaysPlatinum').value=rd.platinum!=null?rd.platinum:30;
@@ -2688,7 +2680,6 @@ async function rfSaveSettings(){
   const data={
     enabled:document.getElementById('rfEnabled').checked,
     rewardDays:{
-      lite:Number(document.getElementById('rfDaysLite').value)||0,
       silver:Number(document.getElementById('rfDaysSilver').value)||0,
       golden:Number(document.getElementById('rfDaysGolden').value)||0,
       platinum:Number(document.getElementById('rfDaysPlatinum').value)||0
@@ -2964,12 +2955,12 @@ function ofRenderList(){
         <span><svg class="ic"><use href="#ic-star"/></svg> Priority: <b>${o.priority||0}</b></span>
       </div>
       <div class="of-oc-btns">
-        <button class="btn ok" onclick="ofEditOffer('${o.id}')"><svg class="ic"><use href="#ic-edit"/></svg> Edit</button>
-        <button class="btn of-mini" onclick="ofDuplicateOffer('${o.id}')"><svg class="ic"><use href="#ic-file"/></svg> Duplicate</button>
-        <button class="btn ${o.active?'bad':'ok'}" onclick="ofToggleActive('${o.id}',${!!o.active})">${o.active?'<svg class="ic"><use href="#ic-pause"/></svg> Turn Off':'<svg class="ic"><use href="#ic-play"/></svg> Turn On'}</button>
-        <button class="btn of-mini" ${i===0?'disabled':''} onclick="ofMovePriority('${o.id}',-1)"><svg class="ic"><use href="#ic-chev-up"/></svg></button>
-        <button class="btn of-mini" ${i===ofOffers.length-1?'disabled':''} onclick="ofMovePriority('${o.id}',1)"><svg class="ic"><use href="#ic-chev-down"/></svg></button>
-        <button class="btn bad" onclick="ofDeleteOffer('${o.id}','${esc(o.name).replace(/'/g,"&#39;")}')"><svg class="ic"><use href="#ic-trash"/></svg> Delete</button>
+        <button class="btn ok" onclick="ofEditOffer(${jsq(o.id)})"><svg class="ic"><use href="#ic-edit"/></svg> Edit</button>
+        <button class="btn of-mini" onclick="ofDuplicateOffer(${jsq(o.id)})"><svg class="ic"><use href="#ic-file"/></svg> Duplicate</button>
+        <button class="btn ${o.active?'bad':'ok'}" onclick="ofToggleActive(${jsq(o.id)},${!!o.active})">${o.active?'<svg class="ic"><use href="#ic-pause"/></svg> Turn Off':'<svg class="ic"><use href="#ic-play"/></svg> Turn On'}</button>
+        <button class="btn of-mini" ${i===0?'disabled':''} onclick="ofMovePriority(${jsq(o.id)},-1)"><svg class="ic"><use href="#ic-chev-up"/></svg></button>
+        <button class="btn of-mini" ${i===ofOffers.length-1?'disabled':''} onclick="ofMovePriority(${jsq(o.id)},1)"><svg class="ic"><use href="#ic-chev-down"/></svg></button>
+        <button class="btn bad" onclick="ofDeleteOffer(${jsq(o.id)},${jsq(o.name)})"><svg class="ic"><use href="#ic-trash"/></svg> Delete</button>
       </div>
     </div>`;
   }).join('');
