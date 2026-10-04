@@ -22961,7 +22961,7 @@ setInterval(tick,TICK);
 <style id="iet-css">
 #ietRoot{position:fixed;inset:0;z-index:2147483000;pointer-events:none;display:none;font-family:inherit}
 #ietRoot.on{display:block}
-.iet-b{position:fixed;background:rgba(2,6,23,.78);pointer-events:auto;touch-action:none;overscroll-behavior:none}
+.iet-b{position:fixed;background:rgba(2,6,23,.38);pointer-events:auto;touch-action:none;overscroll-behavior:none}
 .iet-hb{position:fixed;pointer-events:auto;background:transparent;touch-action:none}
 .iet-ring{position:fixed;pointer-events:none;border-radius:12px;border:2px solid #22d3ee;box-shadow:0 0 0 4px rgba(34,211,238,.25),0 0 28px rgba(34,211,238,.55);animation:ietPulse 1.4s ease-in-out infinite}
 @keyframes ietPulse{0%,100%{box-shadow:0 0 0 3px rgba(34,211,238,.25),0 0 18px rgba(34,211,238,.45)}50%{box-shadow:0 0 0 8px rgba(34,211,238,.12),0 0 34px rgba(34,211,238,.8)}}
@@ -23200,6 +23200,24 @@ function build(){
  card=document.createElement('div');card.className='iet-card';r.appendChild(card);
 }
 function curStep(){return T.list[T.i]}
+/* height of the app's own sticky/fixed top bar (mobile header) so targets never hide behind it */
+function topInset(){
+ var best=0;
+ try{
+  var W=document.documentElement.clientWidth||innerWidth,vt=(window.visualViewport&&visualViewport.offsetTop)||0;
+  [6,Math.round(W/2),W-6].forEach(function(x){
+   var list=document.elementsFromPoint(x,vt+4)||[],top=null;
+   for(var i=0;i<list.length;i++){if(list[i].closest&&list[i].closest('#ietRoot'))continue;top=list[i];break}
+   var c=top;
+   while(c&&c!==document.body&&c!==document.documentElement){
+    var cs=getComputedStyle(c);
+    if(cs.position==='fixed'||cs.position==='sticky'){var b=c.getBoundingClientRect().bottom;if(b>best&&b<innerHeight*0.4)best=b;break}
+    c=c.parentElement;
+   }
+  });
+ }catch(e){}
+ return Math.round(best);
+}
 function tgtOf(s){var er=s._err;if(er&&er.ids&&er.ids.length)return function(){return er.ids.map(wrapOf).filter(Boolean)};return s.t}
 var badEls=[];
 function markBad(ids){badEls.forEach(function(x){x.classList.remove('iet-bad')});badEls=[];(ids||[]).forEach(function(i){var e=document.getElementById(i);if(e){e.classList.add('iet-bad');badEls.push(e)}})}
@@ -23281,6 +23299,8 @@ function layout(force,ensure){
  var g=geom(),W=g.LW,H=g.LH;
  var mob=g.VW<=640,kb=mob&&kbOpen(g);
  var el=s.center||s._locked?null:q(tgtOf(s));
+ var ti=el?topInset():0;
+ if(el&&!ensure&&Date.now()-(T._ens||0)>900){var rr0=rectOf(el);if(rr0.bottom<=ti+4&&ti>0&&Date.now()-(T._sc||0)>1200){ensure=true;T._ens=Date.now()}}
  if(kb!==card.classList.contains('cmp')){card.classList.toggle('cmp',kb);lastKey=''}
  var cw=Math.min(380,g.VW-24),ch=card.offsetHeight;
  card.style.width=cw+'px';
@@ -23296,16 +23316,17 @@ function layout(force,ensure){
   return;
  }
  if(ensure){
-  var fa=side==='top'?[g.VT+ch+18,g.VT+g.VH-10]:[g.VT+10,g.VT+g.VH-ch-22];
+  var fa=side==='top'?[g.VT+ch+18,g.VT+g.VH-10]:[Math.max(g.VT+10,ti+10),g.VT+g.VH-ch-22];
   ensureVisible(el,fa[0],fa[1]);
  }
  var r=rectOf(el),pad=6;
  if(side==='bottom'&&r.bottom+pad>ctop-4&&r.top-pad>g.VT+ch+18){side='top';ctop=g.VT+8}
  else if(side==='top'&&r.top-pad<ctop+ch+4&&r.bottom+pad<g.VT+g.VH-ch-18){side='bottom';ctop=g.VT+g.VH-ch-10}
- var rc={l:Math.max(0,r.left-pad),t:Math.max(0,r.top-pad),r:Math.min(W,r.right+pad),b:Math.min(Math.max(H,g.VT+g.VH),r.bottom+pad)};
+ var rc={l:Math.max(0,r.left-pad),t:Math.max(ti,Math.max(0,r.top-pad)),r:Math.min(W,r.right+pad),b:Math.min(Math.max(H,g.VT+g.VH),r.bottom+pad)};
  var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext&&!s._err;
  var open=clickMode||!!s.free||!!s._err;
- var key=[rc.l,rc.t,rc.r,rc.b,W,H,g.VT,g.VH,ctop,cleft,cw,ch,open,clickMode].join(',');
+ if(rc.b<rc.t+24)rc.b=rc.t+24;
+ var key=[rc.l,rc.t,rc.r,rc.b,ti,W,H,g.VT,g.VH,ctop,cleft,cw,ch,open,clickMode].join(',');
  if(!force&&key===lastKey)return;lastKey=key;
  var BH=Math.max(H,g.VT+g.VH);
  blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+Math.max(0,rc.t)+'px';
@@ -23362,7 +23383,7 @@ function tick(){
  chk(s);
  layout(false,false);
 }
-function onRS(){layout(true,false)}
+function onRS(){T._sc=Date.now();layout(true,false)}
 function onVV(){clearTimeout(T.vvT);layout(true,true);T.vvT=setTimeout(function(){layout(true,true)},260)}
 function onFocus(){clearTimeout(T.fT);T.fT=setTimeout(function(){layout(true,true)},120);clearTimeout(T.fT2);T.fT2=setTimeout(function(){layout(true,true)},420)}
 function afterClick(s){
