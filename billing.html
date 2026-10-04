@@ -22957,5 +22957,416 @@ setInterval(tick,TICK);
 })();
 </script>
 
+<!-- ===== IE Tutorial Mode (guided tour) ===== -->
+<style id="iet-css">
+#ietRoot{position:fixed;inset:0;z-index:2147483000;pointer-events:none;display:none;font-family:inherit}
+#ietRoot.on{display:block}
+.iet-b{position:fixed;background:rgba(2,6,23,.78);pointer-events:auto;transition:all .18s ease}
+.iet-hb{position:fixed;pointer-events:auto;background:transparent}
+.iet-ring{position:fixed;pointer-events:none;border-radius:12px;border:2px solid #22d3ee;box-shadow:0 0 0 4px rgba(34,211,238,.25),0 0 28px rgba(34,211,238,.55);animation:ietPulse 1.4s ease-in-out infinite;transition:all .18s ease}
+@keyframes ietPulse{0%,100%{box-shadow:0 0 0 3px rgba(34,211,238,.25),0 0 18px rgba(34,211,238,.45)}50%{box-shadow:0 0 0 8px rgba(34,211,238,.12),0 0 34px rgba(34,211,238,.8)}}
+.iet-hand{position:fixed;pointer-events:none;font-size:30px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));animation:ietTap 1s ease-in-out infinite;z-index:2}
+@keyframes ietTap{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,-8px)}}
+.iet-card{position:fixed;pointer-events:auto;width:min(380px,calc(100vw - 24px));background:linear-gradient(160deg,#111a33,#0b1226);color:#e5e7eb;border:1px solid rgba(99,102,241,.55);border-radius:18px;padding:14px 16px 12px;box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:3;max-height:calc(100vh - 24px);overflow:auto}
+[data-theme="light"] .iet-card{background:#fff;color:#0f172a;border-color:#c7d2fe}
+.iet-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.iet-part{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#a5b4fc;flex:1}
+.iet-lang,.iet-x{border:1px solid rgba(148,163,184,.4);background:transparent;color:inherit;border-radius:8px;font-size:11px;padding:3px 8px;cursor:pointer}
+.iet-bar{height:5px;border-radius:5px;background:rgba(148,163,184,.25);overflow:hidden;margin-bottom:4px}
+.iet-bar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#22d3ee);transition:width .25s}
+.iet-cnt{font-size:11px;color:#94a3b8;margin-bottom:8px}
+.iet-body{display:flex;gap:10px;align-items:flex-start}
+.iet-ic{font-size:28px;line-height:1;flex:none}
+.iet-t{font-size:15px;font-weight:800;margin-bottom:3px}
+.iet-d{font-size:13px;line-height:1.5;color:inherit;opacity:.92}
+.iet-act{margin-top:10px;font-size:12px;font-weight:700;color:#22d3ee}
+.iet-btns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.iet-btn{border:0;border-radius:10px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;min-height:40px}
+.iet-btn.g{background:rgba(148,163,184,.18);color:inherit;font-weight:700}
+.iet-btn[disabled]{opacity:.4}
+.iet-skip{margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:0;cursor:pointer;text-decoration:underline;padding:6px}
+.iet-confetti{font-size:46px;text-align:center;margin-bottom:4px}
+#ietHelp{position:fixed;right:14px;bottom:84px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(99,102,241,.6);background:#4f46e5;color:#fff;font-weight:900;font-size:18px;z-index:900;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;display:none}
+#ietHelp.show{display:block}
+#ietInvite{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147482000;width:min(420px,calc(100vw - 24px))}
+.iet-pchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.iet-pchips button{border:1px solid var(--border-color,#334155);background:transparent;color:inherit;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer}
+</style>
+<div id="ietRoot" aria-live="polite"></div>
+<button id="ietHelp" type="button" onclick="ieTutMini()" aria-label="Guide" title="Is page ka guide">❓</button>
+<script id="iet-js">
+(function(){
+'use strict';
+var LS='ie_tut_v1_';
+var T={on:false,i:0,list:[],lang:(function(){try{return localStorage.getItem('ie_tut_lang')||'hi'}catch(e){return 'hi'}})(),mode:'full',demo:{},replayCid:null,ready:false,listener:null,timer:null,advTimer:null,seen:{}};
+var PARTS=['Shuruaat','Pehla Bill','Roz ka Hisaab','Stock','Baaki Features','Khatam'];
+var PARTS_EN=['Start','First Bill','Daily Accounts','Stock','More Features','Finish'];
+function $(s){return document.querySelector(s)}
+function vis(el){if(!el)return false;var r=el.getBoundingClientRect();if(r.width<2||r.height<2)return false;var cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none'}
+function q(sel){if(!sel)return null;if(typeof sel==='function'){try{return sel()}catch(e){return null}}var list=document.querySelectorAll(sel);for(var i=0;i<list.length;i++){if(vis(list[i]))return list[i]}return null}
+function isMob(){return window.matchMedia&&window.matchMedia('(max-width:900px)').matches}
+function openSB(){if(isMob()){var s=document.getElementById('sidebar');if(s&&!s.classList.contains('open')&&typeof toggleSidebar==='function')toggleSidebar()}}
+function pg(p){try{if(typeof showPage==='function')showPage(p)}catch(e){}}
+function allowed(f){try{return typeof planAllows!=='function'||planAllows(f)}catch(e){return true}}
+function uid(){try{return (currentUser&&currentUser.uid)||'x'}catch(e){return 'x'}}
+function hasCompanies(){try{return Object.keys((userProfile&&userProfile.companies)||{}).length>0}catch(e){return false}}
+function appOpen(){var a=document.getElementById('appRoot');return a&&!a.classList.contains('hidden')&&typeof currentCompanyId!=='undefined'&&!!currentCompanyId}
+
+/* ---------- STEPS ---------- */
+function S(p,id,ic,h,e,o){o=o||{};o.p=p;o.id=id;o.ic=ic;o.h=h;o.e=e;return o}
+function pageStep(p,id,ic,page,h,e,gate){return S(p,id,ic,h,e,{t:'#'+page+' .top',gate:gate,go:function(){pg(page)},act:null,noScroll:false})}
+var ALL=[
+/* PART 0: Shuruaat */
+S(0,'welcome','👋','Welcome! Ye 2 minute ka guide hai. Hum pehli company aur pehla bill banana seekhenge. Kabhi bhi Skip kar sakte ho.','Welcome! This quick guide teaches you to create your first company and first bill. You can skip anytime.',{center:true,title:['IE Billing me swagat hai','Welcome to IE Billing'],start:true}),
+S(0,'newco','🏢','Neeche "Create New Company" card dabao. Yahan tumhara business banega.','Tap the "Create New Company" card. Your business is created here.',{t:'.co-card.new',mode:'click',title:['Company banao','Create company'],until:function(){return vis(document.getElementById('coName'))},replayNext:true}),
+S(0,'coName','✍️','Apne business ka naam likho. Ye har bill ke upar chhapega.','Enter your business name. It prints on every bill.',{t:'#coName',title:['Company ka naam','Company name'],go:function(){ensureForm()}}),
+S(0,'coGst','🧾','GSTIN dalo (agar hai). Verify button se number check bhi ho jata hai. GST nahi hai to khali chhod do.','Enter your GSTIN if you have one; the verify button checks it. Leave empty if none.',{t:'#coGstin',title:['GST number','GST number']}),
+S(0,'coPrefix','🔢','Invoice Prefix: bill number ka shuruaati hissa (jaise IE-001). Chhota aur yaad rakhne layak rakho.','Invoice Prefix is the start of your bill numbers (e.g. IE-001). Keep it short.',{t:'#coPrefix',title:['Invoice prefix','Invoice prefix']}),
+S(0,'coSave','✅','Ab "Save & Continue" dabao. Pehle naam bharna zaruri hai. Company ban kar app khul jayega.','Now tap "Save & Continue". Name is required. The app opens once the company is created.',{t:'#coSubmitBtn',mode:'click',title:['Company save karo','Save company'],until:function(){return appOpen()},replayNext:true,wait:12000}),
+/* PART 1: Pehla bill */
+S(1,'sidebar','🧭','Ye side menu hai. "Roz ka kaam" me bill, history, payment aur customers milte hain. Baaki groups bhi isi tarah khulte hain.','This is the side menu. "Roz ka kaam" holds invoices, history, payments and customers.',{t:'.nav-group[data-group="daily"]',title:['Side menu','Side menu'],go:function(){pg('dashboard');openSB()}}),
+S(1,'createInv','🧾','"Create Invoice" dabao. Naya bill yahin se banta hai.','Tap "Create Invoice". New bills start here.',{t:'.nav button[data-page="invoice"]',mode:'click',title:['Naya bill','New bill'],go:function(){openSB()},until:function(){var e=document.getElementById('invoice');return e&&!e.classList.contains('hidden')}}),
+S(1,'addCust','👤','Customer chuno ya naya jodo. "+ Add New Customer" dabao. Hum ek Demo Customer bhar denge.','Pick or add a customer. Tap "+ Add New Customer". We will fill a Demo Customer for you.',{t:'#invoice button[onclick="openCustomerModal()"]',mode:'click',title:['Customer jodo','Add customer'],go:function(){pg('invoice')},until:function(){return vis(document.getElementById('mName'))},after:function(){fillDemoCust()}}),
+S(1,'saveCust','💾','Demo details bhar di gayi hain. Asli customer ke liye naam, GST, address aur phone yahin bharte hain. Ab "Save Customer" dabao.','Demo details are filled. For a real customer you enter name, GST, address and phone here. Tap "Save Customer".',{t:'#customerSaveBtn',mode:'click',title:['Customer save','Save customer'],until:function(){return !document.getElementById('customerModal').classList.contains('show')},after:function(){pickDemoCust()}}),
+S(1,'pickItem','📦','Ab item chuno. Box me item ka naam likho ya list se chuno. Mic wala 🎤 Voice Add Items se bolkar bhi jod sakte ho. Hum Demo Item laga rahe hain.','Now pick an item: type its name or choose from the list. 🎤 Voice Add Items lets you speak. We will add a Demo Item.',{t:'#itemEditor .item-card[data-row="0"]',title:['Item chuno','Pick item'],go:function(){pg('invoice');ensureDemoItem()},after:function(){applyDemoItem()}}),
+S(1,'qtyRate','🔢','Qty (kitna maal) aur Rate (daam) yahan dalte hain. Humne Qty 2 daal di hai. Rate item se khud aa jata hai.','Qty and Rate go here. We set Qty 2; Rate comes from the item automatically.',{t:'#itemEditor .item-card[data-row="0"] [data-field="qty"]',title:['Qty aur Rate','Qty and Rate']}),
+S(1,'gstAuto','🧮','GST apne aap judta hai. Same state me CGST+SGST, alag state me IGST. Total yahan dikhta hai.','GST is added automatically: CGST+SGST in-state, IGST inter-state. Totals show here.',{t:'#itemEditor .item-card[data-row="0"] .item-card-head',title:['GST auto','Auto GST']}),
+S(1,'preview','👁️','"Preview" se bill chhapne se pehle waisa hi dikhta hai jaisa customer ko jayega. Abhi sirf samjho, dabana zaruri nahi.','"Preview" shows the bill exactly as the customer will get it. No need to tap now.',{t:'#invoice .top .toolbar button[onclick="openPreviewModal()"]',title:['Preview','Preview']}),
+S(1,'finalize','🔒','"Finalize" bill ko pakka karta hai aur stock ghatata hai. Tutorial me hum finalize nahi karenge, taaki tumhara asli invoice number kharch na ho.','"Finalize" locks the bill and reduces stock. We will not finalize in the tutorial so your real invoice number is not used.',{t:'#invoice .top .toolbar button[onclick="finalizeInvoice()"]',title:['Finalize','Finalize']}),
+S(1,'share','📤','"Save / Share" se PDF banta hai, print hota hai aur WhatsApp par bhej sakte ho.','"Save / Share" makes a PDF, prints, or sends on WhatsApp.',{t:'#invoice .top .toolbar button[onclick="openOutputModal()"]',title:['Save / Share','Save / Share'],end:true}),
+/* PART 2: Roz ka hisaab */
+pageStep(2,'history','📚','history','Bill History me saare purane bill milte hain. Yahan se edit, delete (Deleted Bills me wapas mil jata hai) aur Excel/PDF export hota hai.','Bill History lists all old bills. Edit, delete (recoverable) and export to Excel/PDF here.'),
+pageStep(2,'journal','💰','journal','Payment Journal: kisne kitna diya aur kitna baaki hai. "Baaki" tab me udhaar wale customers dikhte hain, receipt bhi yahin se banti hai.','Payment Journal: who paid, who owes. The "Baaki" tab lists dues and you create receipts here.'),
+pageStep(2,'customers','👥','customers','Customers Directory: sabhi customers, unka udhaar aur purana hisaab. Naya customer bhi yahin se jod sakte ho.','Customers Directory: all customers with dues and history. You can add customers here too.'),
+/* PART 3: Stock */
+pageStep(3,'inventory','📦','inventory','Inventory Master: apne saare item, rate, GST, HSN aur stock. "+ Add Item" se naya item jodo, 📷 se barcode scan karo.','Inventory Master: all items with rate, GST, HSN and stock. "+ Add Item" adds one; 📷 scans barcodes.'),
+pageStep(3,'purchaseBills','🧾','purchaseBills','Purchase Bills: jab maal kharid ke aata hai, yahan entry karo. Stock apne aap badh jata hai.','Purchase Bills: record goods you buy here. Stock increases automatically.'),
+S(3,'vendors','🏭','Vendors me supplier ki list hai aur Purchase Orders me maal mangwane ke order. Dono side menu ke "Stock & Purchase" group me hain.','Vendors holds suppliers and Purchase Orders holds your orders. Both sit in the "Stock & Purchase" group.',{t:'#vendors .top',go:function(){pg('vendors')},title:['Vendors aur PO','Vendors and PO'],end:true}),
+/* PART 4: Baaki */
+S(4,'docs','📄','Create Documents: Quotation, Challan, Proforma jaise kaagaz yahan bante hain.','Create Documents: build Quotations, Challans and Proformas here.',{t:'#documents .top',go:function(){if(typeof openDocuments==='function'){try{openDocuments()}catch(e){pg('documents')}}else pg('documents')},title:['Documents','Documents']}),
+S(4,'analytics','📊','Analytics & Report: sale ka graph, GST range report aur Excel/PDF download.','Analytics & Report: sales charts, GST range report and Excel/PDF downloads.',{t:'#analytics .top',gate:'analytics',go:function(){pg('analytics')},title:['Analytics aur GST','Analytics and GST'],lock:'Ye feature plan ke hisaab se khulta hai.'}),
+S(4,'chats','💬','Chats: customer ya vendor ko seedha app me message ya bill bhejo. "Find People" se naye log dhoondho.','Chats: message or send bills to customers/vendors directly. Use "Find People" to find new contacts.',{t:'#chats .top',gate:'chat',go:function(){pg('chats')},title:['Chats','Chats'],lock:'Ye feature plan ke hisaab se khulta hai.'}),
+S(4,'settings','⚙️','Settings: business details, UPI QR, bank, Document Theme (colour), reminder aur privacy sab yahin hain.','Settings: business details, UPI QR, bank, Document Theme (colour), reminders and privacy.',{t:'#settings .top',go:function(){pg('settings')},title:['Settings','Settings']}),
+S(4,'backup','☁️','Backup / Restore se data ki copy rakho, taaki phone ya laptop badalne par kuch na jaye.','Backup / Restore keeps a copy of your data safe when you change devices.',{t:'#backup .top',gate:'backup',go:function(){pg('backup')},title:['Backup','Backup'],lock:'Ye feature plan ke hisaab se khulta hai.'}),
+S(4,'tutBtn','🎓','Tutorial dobara dekhna ho to Settings me yeh "Tutorial" card hai. Har part alag se chal sakta hai.','To see this again, use the "Tutorial" card in Settings. Each part runs on its own.',{t:'#st-tutorial',go:function(){pg('settings');injectSettings();var e=document.getElementById('st-tutorial');if(e&&e.scrollIntoView)e.scrollIntoView({block:'center'})},title:['Tutorial dobara','Replay tutorial'],end:true}),
+/* PART 5: Khatam */
+S(5,'done','🎉','Badhai ho! Ab tum bill banana jaante ho. Demo data hata diya jayega. Asli kaam shuru karo.','Congratulations! You can now make bills. Demo data will be removed. Start real work.',{center:true,finish:true,title:['Ho gaya!','All done!']})
+];
+function stepsForMode(m){
+ if(m==='full'){return ALL.filter(function(s){return s.p===1||s.p===0&&!hasCompanies()||false}).concat(ALL.filter(function(s){return s.p===5}))}
+ return ALL.slice();
+}
+
+/* ---------- Demo helpers ---------- */
+function ensureForm(){if(!vis(document.getElementById('coName'))&&typeof coOpenForm==='function'&&T.replayCid){try{coOpenForm()}catch(e){}}}
+function fillDemoCust(){setTimeout(function(){var v={mName:'Demo Customer',mGST:'',mAddress:'12, Demo Street, Near Market',mCity:'Vadodara',mState:'GUJARAT',mStateCode:'24',mPin:'390001',mContact:'9999999999',mEmail:''};for(var k in v){var el=document.getElementById(k);if(el)el.value=v[k]}},120)}
+function pickDemoCust(){setTimeout(function(){try{var c=null;for(var i=db.customers.length-1;i>=0;i--){if(db.customers[i].name==='Demo Customer'){c=db.customers[i];break}}if(!c)return;c._tutDemo=true;T.demo.cust=c.id;persistDemo();saveDB();var s=document.getElementById('customerSelect');if(s){s.value=c.id;if(typeof loadCustomer==='function')loadCustomer()}}catch(e){}},250)}
+function ensureDemoItem(){try{if(T.demo.item&&db.items.some(function(x){return x.id===T.demo.item}))return;var it={id:crypto.randomUUID(),name:'Demo Item',description:'',rate:100,purchaseRate:60,size:'',gst:18,unit:'Nos',hsn:'9999',stock:50,barcode:'',active:true,_tutDemo:true};db.items.push(it);T.demo.item=it.id;persistDemo();saveDB();if(!current||!current.items||!current.items.length){current=blankInvoice()}}catch(e){}}
+function applyDemoItem(){try{ensureDemoItem();if(typeof rowItem==='function'&&T.demo.item){rowItem(0,T.demo.item);rowVal(0,'qty','2');var inp=document.querySelector('#itemEditor [data-field="qty"][data-row="0"]');if(inp)inp.value='2';recalc();renderRows()}}catch(e){}}
+function persistDemo(){try{localStorage.setItem(LS+'demo_'+uid(),JSON.stringify(T.demo))}catch(e){}}
+function loadDemo(){try{var r=localStorage.getItem(LS+'demo_'+uid());if(r)T.demo=JSON.parse(r)||{}}catch(e){}}
+function cleanupDemo(){
+ try{
+  if(typeof db==='undefined'||!db)return;
+  var had=false;
+  var dc=T.demo.cust,di=T.demo.item;
+  var n1=db.customers.length,n2=db.items.length;
+  db.customers=db.customers.filter(function(c){return !(c._tutDemo||c.id===dc)});
+  db.items=db.items.filter(function(c){return !(c._tutDemo||c.id===di)});
+  had=(n1!==db.customers.length)||(n2!==db.items.length);
+  try{if(current&&(current.customerId===dc||(current.items||[]).some(function(r){return r.itemId===di}))&&current.status!=='Finalized'){current=blankInvoice();if(typeof bindInvoice==='function')bindInvoice();if(typeof renderRows==='function')renderRows();if(typeof recalc==='function')recalc()}}catch(e){}
+  if(had){saveDB();try{if(typeof populateCustomerSelect==='function')populateCustomerSelect();if(typeof renderCustomers==='function')renderCustomers();if(typeof renderInventory==='function')renderInventory()}catch(e){}}
+ }catch(e){}
+ T.demo={};persistDemo();
+}
+
+/* ---------- State persistence ---------- */
+function stKey(){return LS+uid()}
+function readLocal(){try{return JSON.parse(localStorage.getItem(stKey())||'null')}catch(e){return null}}
+function profT(){return (typeof userProfile!=='undefined'&&userProfile&&userProfile.tutorial)||null}
+function saveState(extra){
+ var st=Object.assign({},readLocal()||{},profT()||{},extra||{});
+ st.updatedAt=Date.now();
+ try{localStorage.setItem(stKey(),JSON.stringify(st))}catch(e){}
+ try{if(typeof userProfile!=='undefined'&&userProfile){userProfile.tutorial=Object.assign({},userProfile.tutorial||{},st);clearTimeout(saveState._t);saveState._t=setTimeout(function(){try{userDocRef(currentUser.uid).set({tutorial:userProfile.tutorial},{merge:true})}catch(e){}},900)}}catch(e){}
+}
+function doneIds(){var s=Object.assign({},readLocal()||{},profT()||{});return (s.doneIds||[])}
+function markDone(id){var d=doneIds();if(d.indexOf(id)<0){d.push(id);saveState({doneIds:d})}}
+
+/* ---------- UI ---------- */
+var R=null,ring=null,hand=null,blk=[],hb=null,card=null;
+function root(){R=R||document.getElementById('ietRoot');return R}
+function L(s,k){return T.lang==='en'?s[k+'e']||s.e:s[k+'h']||s.h}
+function txt(s){return T.lang==='en'?s.e:s.h}
+function ttl(s){return s.title?(T.lang==='en'?s.title[1]:s.title[0]):''}
+function build(){
+ var r=root();r.innerHTML='';blk=[];
+ for(var i=0;i<4;i++){var b=document.createElement('div');b.className='iet-b';r.appendChild(b);blk.push(b)}
+ hb=document.createElement('div');hb.className='iet-hb';r.appendChild(hb);
+ ring=document.createElement('div');ring.className='iet-ring';r.appendChild(ring);
+ hand=document.createElement('div');hand.className='iet-hand';hand.textContent='👆';r.appendChild(hand);
+ card=document.createElement('div');card.className='iet-card';r.appendChild(card);
+}
+function curStep(){return T.list[T.i]}
+function render(){
+ var s=curStep();if(!s)return;
+ var tot=T.list.length,n=T.i+1;
+ var pn=T.lang==='en'?PARTS_EN[s.p]:PARTS[s.p];
+ var lockNote=s._locked?('<div class="iet-act" style="color:#fbbf24">🔒 '+(T.lang==='en'?'Available on higher plans.':s.lock)+'</div>'):'';
+ var isClick=s.mode==='click'&&!T.replayCid&&!s._softNext;
+ var actLine=isClick?'<div class="iet-act">👉 '+(T.lang==='en'?'Tap the glowing button to continue':'Chamakte button ko dabao, tabhi aage badhega')+'</div>':'';
+ var back=T.i>0&&!s.start?'<button class="iet-btn g" data-a="back">'+(T.lang==='en'?'Back':'Back')+'</button>':'';
+ var next='';
+ if(s.finish){next='<button class="iet-btn" data-a="finish">'+(T.lang==='en'?'🧾 Make a new bill':'🧾 Naya bill banao')+'</button><button class="iet-btn g" data-a="again">'+(T.lang==='en'?'Replay':'Tutorial dobara')+'</button><button class="iet-btn g" data-a="help">Help</button>'+((T.mode==='full'&&!T.parts)?'<button class="iet-btn g" data-a="more">'+(T.lang==='en'?'Learn more features ▶':'Aage ke features seekho ▶')+'</button>':'')}
+ else if(s.start){next='<button class="iet-btn" data-a="next">'+(T.lang==='en'?'Start ▶':'Start ▶')+'</button>'}
+ else if(isClick){next='<button class="iet-btn g" data-a="next" title="">'+(T.lang==='en'?'Skip this step':'Ye step chhodo')+'</button>'}
+ else{next='<button class="iet-btn" data-a="next">'+(s.end&&T.mode==='full'?(T.lang==='en'?'Continue ▶':'Aage badho ▶'):(T.lang==='en'?'Next ▶':'Next ▶'))+'</button>'}
+ var skip=s.finish?'':'<button class="iet-skip" data-a="skip">'+(T.lang==='en'?'Skip tutorial':'Skip tutorial')+'</button>';
+ card.innerHTML='<div class="iet-top"><span class="iet-part">'+esc2(pn)+'</span><button class="iet-lang" data-a="lang">'+(T.lang==='en'?'हिंदी':'EN')+'</button><button class="iet-x" data-a="skip" aria-label="Close">✕</button></div>'+
+ (s.finish?'<div class="iet-confetti">🎉</div>':'')+
+ '<div class="iet-bar"><i style="width:'+Math.round(n/tot*100)+'%"></i></div>'+
+ '<div class="iet-cnt">Step '+n+' of '+tot+' · '+(T.lang==='en'?'':'')+doneCount()+'/'+ALL.length+' '+(T.lang==='en'?'complete':'complete')+'</div>'+
+ '<div class="iet-body"><div class="iet-ic">'+s.ic+'</div><div><div class="iet-t">'+esc2(ttl(s))+'</div><div class="iet-d">'+esc2(txt(s))+'</div>'+lockNote+actLine+'</div></div>'+
+ '<div class="iet-btns">'+back+next+skip+'</div>';
+ layout(true);
+}
+function esc2(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function doneCount(){return doneIds().length}
+var lastKey='';
+function layout(force){
+ if(!T.on||!card)return;
+ var s=curStep();if(!s)return;
+ var W=window.innerWidth,H=window.innerHeight;
+ var el=s.center||s._locked?null:q(s.t);
+ var rect=null;
+ if(el){
+  if(!s._scrolled||force===2){s._scrolled=true;try{var r0=el.getBoundingClientRect();if(r0.top<60||r0.bottom>H-170){el.scrollIntoView({block:'center',behavior:'auto'})}}catch(e){}}
+  var r=el.getBoundingClientRect();var pad=6;
+  rect={l:Math.max(0,r.left-pad),t:Math.max(0,r.top-pad),r:Math.min(W,r.right+pad),b:Math.min(H,r.bottom+pad)};
+  if(r.height>H*0.7){rect.b=Math.min(H,rect.t+Math.min(r.height,H*0.7))}
+ }
+ var key=rect?[rect.l,rect.t,rect.r,rect.b,W,H,T.i,card.offsetHeight].join(','):'c'+W+H+T.i+card.offsetHeight;
+ if(!force&&key===lastKey)return;lastKey=key;
+ var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext;
+ if(!rect){
+  blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+H+'px';
+  for(var i=1;i<4;i++)blk[i].style.cssText='display:none';
+  ring.style.display='none';hand.style.display='none';hb.style.display='none';
+  card.style.left=Math.max(12,(W-card.offsetWidth)/2)+'px';card.style.top=Math.max(12,(H-card.offsetHeight)/2)+'px';card.style.bottom='auto';
+  return;
+ }
+ blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+rect.t+'px';
+ blk[1].style.cssText='left:0;top:'+rect.b+'px;width:'+W+'px;height:'+(H-rect.b)+'px';
+ blk[2].style.cssText='left:0;top:'+rect.t+'px;width:'+rect.l+'px;height:'+(rect.b-rect.t)+'px';
+ blk[3].style.cssText='left:'+rect.r+'px;top:'+rect.t+'px;width:'+(W-rect.r)+'px;height:'+(rect.b-rect.t)+'px';
+ ring.style.cssText='display:block;left:'+rect.l+'px;top:'+rect.t+'px;width:'+(rect.r-rect.l)+'px;height:'+(rect.b-rect.t)+'px';
+ hb.style.cssText=clickMode?'display:none':'display:block;left:'+rect.l+'px;top:'+rect.t+'px;width:'+(rect.r-rect.l)+'px;height:'+(rect.b-rect.t)+'px';
+ if(clickMode){hand.style.cssText='display:block;left:'+Math.min(W-40,rect.l+(rect.r-rect.l)/2)+'px;top:'+Math.min(H-40,rect.b-6)+'px'}else hand.style.display='none';
+ var ch=card.offsetHeight,cw=card.offsetWidth,top;
+ var spaceBelow=H-rect.b,spaceAbove=rect.t;
+ if(W<=640){
+  card.style.left=Math.max(12,(W-cw)/2)+'px';
+  if(spaceBelow>=ch+16)top=rect.b+12;else if(spaceAbove>=ch+16)top=rect.t-ch-12;else top=(rect.t>H/2)?12:H-ch-12;
+ }else{
+  var left=Math.min(W-cw-12,Math.max(12,rect.l));card.style.left=left+'px';
+  if(spaceBelow>=ch+16)top=rect.b+14;else if(spaceAbove>=ch+16)top=rect.t-ch-14;else top=(rect.l>cw+30)?Math.max(12,rect.t):Math.max(12,H-ch-12);
+ }
+ card.style.top=Math.max(8,Math.min(H-ch-8,top))+'px';card.style.bottom='auto';
+}
+/* ---------- Engine ---------- */
+function start(opts){
+ opts=opts||{};
+ if(T.on)stop(true);
+ loadDemo();
+ T.mode=opts.mode||'full';T.replayCid=null;T.parts=false;
+ var list;
+ if(opts.part!=null){
+  list=ALL.filter(function(s){return s.p===opts.part});
+  if(opts.part===0){
+   if(appOpen()){T.replayCid=currentCompanyId}
+  }
+  if(opts.part!==5)list=list.concat([ALL[ALL.length-1]]);
+  T.mode='part';
+ }else if(opts.mini){list=opts.mini;T.mode='mini'}
+ else if(opts.parts){list=ALL.filter(function(s){return opts.parts.indexOf(s.p)>=0}).concat([ALL[ALL.length-1]]);T.mode='full';T.parts=true}
+ else{
+  var firstTime=!appOpen()&&!hasCompanies();
+  if(firstTime)list=ALL.filter(function(s){return s.p<=1});
+  else list=ALL.filter(function(s){return s.p>=1&&s.p<=1});
+  list=list.concat([ALL[ALL.length-1]]);
+ }
+ T.list=list;T.i=Math.max(0,Math.min(opts.at||0,list.length-1));T.on=true;
+ if(T.replayCid){try{switchCompany()}catch(e){}}
+ var r=root();r.classList.add('on');build();bind();
+ if(T.mode==='full'&&!readLocal()){saveState({started:true,startedAt:Date.now(),total:ALL.length})}
+ go();
+}
+function bind(){
+ card.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;act(b.getAttribute('data-a'))});
+ if(!T.timer)T.timer=setInterval(function(){layout(false)},160);
+ window.addEventListener('resize',onRS);window.addEventListener('scroll',onRS,true);
+ if(!T.listener){T.listener=function(e){var s=curStep();if(!T.on||!s||s.mode!=='click'||T.replayCid||s._softNext)return;var el=q(s.t);if(el&&el.contains(e.target)){afterClick(s)}};document.addEventListener('click',T.listener,true)}
+}
+function onRS(){layout(true)}
+function afterClick(s){
+ if(s._adv)return;s._adv=true;
+ var t0=Date.now(),lim=s.wait||5000;
+ (function poll(){
+  if(!T.on||curStep()!==s)return;
+  var ok=true;try{ok=s.until?s.until():true}catch(e){ok=true}
+  if(ok){setTimeout(function(){if(T.on&&curStep()===s)advance()},s.after?250:120)}
+  else if(Date.now()-t0<lim){T.advTimer=setTimeout(poll,150)}
+  else{s._adv=false}
+ })();
+}
+function go(){
+ var s=curStep();if(!s)return;
+ s._adv=false;s._scrolled=false;s._locked=false;s._softNext=false;lastKey='';
+ if(s.gate&&!allowed(s.gate)){s._locked=true}
+ if(!s._locked&&s.go){try{s.go()}catch(e){}}
+ if(s.until&&s.mode==='click'&&!T.replayCid){try{if(s.until()&&s.id!=='newco'&&s.id!=='createInv'&&s.id!=='addCust'&&s.id!=='saveCust'&&s.id!=='coSave'){/*already satisfied*/}}catch(e){}}
+ if(T.replayCid&&(s.id==='coSave')){s._softNext=true}
+ render();
+ var tries=0;(function wait(){
+  if(!T.on||curStep()!==s)return;
+  var el=s.center||s._locked?true:q(s.t);
+  tries++;
+  if(el||tries>22){render();return}
+  setTimeout(wait,150);
+ })();
+}
+function advance(){
+ var s=curStep();if(!s)return;
+ markDone(s.id);
+ if(s.after){try{s.after()}catch(e){}}
+ if(T.i>=T.list.length-1){finish();return}
+ T.i++;
+ var n=curStep();
+ saveState({step:T.i,lastStep:n.id,maxStep:Math.max((readLocal()||{}).maxStep||0,ALL.indexOf(n))});
+ /* big gap after part end in full mode: offer to continue */
+ go();
+}
+function back(){if(T.i>0){T.i--;go()}}
+function act(a){
+ if(a==='next')advance();
+ else if(a==='back')back();
+ else if(a==='lang'){T.lang=T.lang==='en'?'hi':'en';try{localStorage.setItem('ie_tut_lang',T.lang)}catch(e){}render()}
+ else if(a==='skip')confirmSkip();
+ else if(a==='finish'){finish(true);try{pg('invoice');if(typeof newInvoice==='function')newInvoice()}catch(e){}}
+ else if(a==='again'){stop(true);cleanupDemo();setTimeout(function(){start({mode:'full',at:0})},200)}
+ else if(a==='more'){stop(true);cleanupDemo();setTimeout(function(){start({parts:[2,3,4]})},200)}
+ else if(a==='help'){finish(true);try{openModal('helpModal')}catch(e){}}
+}
+function confirmSkip(){
+ var ok=true;
+ try{ok=window.confirm(T.lang==='en'?'Skip the tutorial?\n\nYou can watch it any time from Settings → Tutorial.':'Tutorial skip karna hai?\n\nTum kabhi bhi Settings → Tutorial me dekh sakte ho.')}catch(e){}
+ if(!ok)return;
+ var s=curStep();
+ saveState({skipped:true,skippedAt:Date.now(),skipStep:s?s.id:'',lastStep:s?s.id:''});
+ stop(true);cleanupDemo();
+}
+function stop(silent){
+ T.on=false;clearTimeout(T.advTimer);
+ var r=root();r.classList.remove('on');r.innerHTML='';
+ window.removeEventListener('resize',onRS);window.removeEventListener('scroll',onRS,true);
+ if(T.timer){clearInterval(T.timer);T.timer=null}
+ if(T.listener){document.removeEventListener('click',T.listener,true);T.listener=null}
+ try{closeSidebar()}catch(e){}
+ if(T.replayCid){var cid=T.replayCid;T.replayCid=null;try{if(typeof coCloseForm==='function')coCloseForm()}catch(e){}setTimeout(function(){try{coOpenCompany(cid)}catch(e){}},120)}
+ refreshSettingsCard();
+}
+function finish(noClose){
+ var ids=doneIds();ALL.forEach(function(s){});
+ if(T.mode==='full'){saveState({done:true,doneAt:Date.now(),skipped:false})}
+ markDone('done');
+ stop(true);
+ if(T.mode!=='mini'){cleanupDemo();try{pg('dashboard')}catch(e){}}
+}
+window.ieTutStart=function(o){start(o||{})};
+window.ieTutStop=function(){stop(true)};
+
+/* ---------- Mini guides ---------- */
+var MINI={
+ invoice:[
+  S(1,'m_inv1','👤','Pehle customer chuno (list se) ya "+ Add New Customer" se naya jodo.','First pick a customer from the list or add one with "+ Add New Customer".',{t:'#invoice .card:nth-of-type(3)',title:['Customer','Customer']}),
+  S(1,'m_inv2','📦','Items Editor: item chuno, Qty aur Rate dalo. "+ Add Item" se aur rows jodo, 🎤 se bolkar bhi.','Items Editor: pick item, set Qty and Rate. "+ Add Item" adds rows; 🎤 lets you speak.',{t:'#itemEditor',title:['Items','Items']}),
+  S(1,'m_inv3','✅','Upar buttons: Preview dekho, Save Draft se rakho, Finalize se pakka karo, Save/Share se PDF aur WhatsApp.','Top buttons: Preview, Save Draft, Finalize to lock, Save/Share for PDF and WhatsApp.',{t:'#invoice .top .toolbar',title:['Buttons','Buttons'],end:true})
+ ],
+ inventory:[
+  S(3,'m_stk1','➕','"+ Add Item" se naya item jodo: naam, rate, GST, HSN aur shuruaati stock.','"+ Add Item" creates an item: name, rate, GST, HSN and opening stock.',{t:'#inventory .top .toolbar',title:['Naya item','New item']}),
+  S(3,'m_stk2','🔎','Search box se item naam, size ya HSN se dhoondo. Status filter se active/inactive chhanto.','Use the search box by name, size or HSN. The status filter shows active/inactive items.',{t:'#inventorySearch',title:['Search','Search'],end:true})
+ ],
+ purchaseBills:[
+  S(3,'m_pb1','➕','"+ New Purchase Bill" se kharide hue maal ki entry karo. Save karte hi stock badh jata hai.','"+ New Purchase Bill" records goods you bought. Stock rises once saved.',{t:'#purchaseBills .top .toolbar',title:['Purchase bill','Purchase bill']}),
+  S(3,'m_pb2','📊','Upar ke cards me total kharid aur baaki payment ka hisaab dikhta hai.','The cards above show total purchases and pending payments.',{t:'#pbStats',title:['Hisaab','Summary'],end:true})
+ ]
+};
+function activePage(){var p=document.querySelector('.main .page:not(.hidden)');return p?p.id:''}
+window.ieTutMini=function(){var p=activePage();var m=MINI[p];if(!m){try{openModal('helpModal')}catch(e){}return}start({mini:m.map(function(s){return Object.assign({},s)})})};
+function updateHelpBtn(){var b=document.getElementById('ietHelp');if(!b)return;var ap=appOpen()&&!T.on&&MINI[activePage()];b.classList.toggle('show',!!ap)}
+
+/* ---------- Settings card ---------- */
+function injectSettings(){
+ var body=document.getElementById('st2Body');if(!body||document.getElementById('st-tutorial'))return;
+ var c=document.createElement('div');c.className='card';c.id='st-tutorial';c.setAttribute('data-sec','tools');c.style.order='5';
+ body.insertBefore(c,body.firstChild);refreshSettingsCard();
+}
+function refreshSettingsCard(){
+ var c=document.getElementById('st-tutorial');if(!c)return;
+ var d=doneIds();var tot=ALL.length;
+ var chips=PARTS.slice(0,5).map(function(n,i){var ids=ALL.filter(function(s){return s.p===i}).map(function(s){return s.id});var ok=ids.length&&ids.every(function(x){return d.indexOf(x)>=0});return '<button type="button" onclick="ieTutStart({part:'+i+'})">'+(ok?'✅ ':'')+'Part '+(i+1)+': '+n+'</button>'}).join('');
+ c.innerHTML='<div class="section-title">🎓 Tutorial</div><p style="font-size:12px;color:var(--text-muted);margin-top:0">App seekhne ke liye step-by-step guide. Progress: <b>'+Math.min(d.filter(function(x){return x!=='done'}).length,tot-1)+'/'+(tot-1)+' complete</b></p>'+
+ '<div class="toolbar" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" onclick="ieTutStart({mode:\'full\'})">▶ Tutorial shuru karo</button><button type="button" class="btn muted" onclick="ieTutLang()">🌐 Hinglish / English</button><button type="button" class="btn muted" onclick="ieTutReset()">↺ Reset</button></div>'+
+ '<div class="iet-pchips">'+chips+'</div><p style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Mini guide: Invoice, Inventory ya Purchase page par neeche ❓ button dabao.</p>';
+}
+window.ieTutLang=function(){T.lang=T.lang==='en'?'hi':'en';try{localStorage.setItem('ie_tut_lang',T.lang)}catch(e){}try{appToast('Language: '+(T.lang==='en'?'English':'Hinglish'),'ok')}catch(e){}};
+window.ieTutReset=function(){if(!confirm('Tutorial progress reset karna hai?'))return;saveState({doneIds:[],done:false,skipped:false,step:0,lastStep:''});refreshSettingsCard()};
+
+/* ---------- Auto triggers ---------- */
+function card2(html,id){
+ var e=document.getElementById('ietInvite');if(e)e.remove();
+ var d=document.createElement('div');d.id='ietInvite';d.className='iet-card';d.style.position='fixed';d.innerHTML=html;document.body.appendChild(d);
+ d.addEventListener('click',function(ev){var b=ev.target.closest('[data-i]');if(!b)return;var a=b.getAttribute('data-i');d.remove();id(a)});
+}
+function invite(){
+ if(T.on||T.seen.inv)return;T.seen.inv=true;
+ var st=Object.assign({},readLocal()||{},profT()||{});
+ if(st.done||st.skipped||st.inviteOff)return;
+ if(st.step>0&&st.started){
+  card2('<div class="iet-body"><div class="iet-ic">🎓</div><div><div class="iet-t">Tutorial adhura hai</div><div class="iet-d">Jahan chhoda tha wahin se shuru karein?</div></div></div><div class="iet-btns"><button class="iet-btn" data-i="r">Resume</button><button class="iet-btn g" data-i="l">Baad me</button><button class="iet-skip" data-i="s">Skip</button></div>',function(a){if(a==='r')start({mode:'full',at:0});else if(a==='s')saveState({skipped:true})});
+  return;
+ }
+ card2('<div class="iet-body"><div class="iet-ic">🎓</div><div><div class="iet-t">Tutorial dekhna hai?</div><div class="iet-d">2 minute me bill banana seekho. Settings → Tutorial me bhi milega.</div></div></div><div class="iet-btns"><button class="iet-btn" data-i="y">Dekho</button><button class="iet-btn g" data-i="l">Baad me</button><button class="iet-skip" data-i="n">Mat dikhao</button></div>',function(a){if(a==='y')start({mode:'full',at:0});else if(a==='n')saveState({inviteOff:true})});
+}
+function onCompanyScreen(){
+ if(T.on||!userProfile)return;
+ var st=Object.assign({},readLocal()||{},profT()||{});
+ if(!hasCompanies()&&!st.done&&!st.skipped){setTimeout(function(){if(!T.on&&!appOpen())start({mode:'full',at:0})},700)}
+}
+function onCompanyOpened(){
+ injectSettings();
+ loadDemo();
+ if(!T.on)cleanupDemo();
+ setTimeout(function(){
+  if(T.on&&curStep()&&curStep().id==='coSave'){return}
+  if(!T.on)invite();
+  updateHelpBtn();
+ },2200);
+}
+function boot(){
+ if(T.ready)return;T.ready=true;
+ try{
+  var o1=window.showCompanyOverlay;if(typeof o1==='function'){window.showCompanyOverlay=function(){var r=o1.apply(this,arguments);try{onCompanyScreen()}catch(e){}return r}}
+  var o2=window.coOpenCompany;if(typeof o2==='function'){window.coOpenCompany=function(){var r=o2.apply(this,arguments);try{onCompanyOpened()}catch(e){}return r}}
+  var o3=window.runPostCompanyBanners;if(typeof o3==='function'){window.runPostCompanyBanners=function(){if(T.on)return;var st=Object.assign({},readLocal()||{},profT()||{});return o3.apply(this,arguments)}}
+  var o4=window.showPage;if(typeof o4==='function'){window.showPage=function(){var r=o4.apply(this,arguments);setTimeout(function(){updateHelpBtn();if(arguments&&0){}injectSettings()},50);return r}}
+ }catch(e){}
+ setInterval(updateHelpBtn,1500);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,500)});else setTimeout(boot,500);
+})();
+</script>
+<!-- ===== /IE Tutorial Mode ===== -->
+
 </body>
 </html>
