@@ -677,5 +677,66 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     e.classList.add('rv');e.style.transitionDelay=(([].indexOf.call(e.parentNode.children,e))%6*60)+'ms';io.observe(e);});
 })();
 </script>
+<!-- ===== SITE VISITOR TRACKER (Supabase) ===== -->
+<script>
+(function(){
+try{
+if(navigator.webdriver) return;
+var U="https://qbrtmlrwmmgmrqmvwkfv.supabase.co", K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs";
+var LITE = !/^\/?(index\.html)?$/.test(location.pathname); /* landing = full tracking, baaki pages = sirf visit + time */
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,10);}
+function send(t,row){try{fetch(U+"/rest/v1/"+t,{method:"POST",keepalive:true,headers:{apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(row)}).catch(function(){});}catch(e){}}
+var vid=localStorage.getItem("ie_vid"); var returning=!!vid; if(!vid){vid=uid();localStorage.setItem("ie_vid",vid);}
+var sid=sessionStorage.getItem("ie_sid"), fresh=!sid; if(!sid){sid=uid();sessionStorage.setItem("ie_sid",sid);}
+function page(){return location.pathname+(location.hash||"");}
+function ev(type,label){send("site_events",{session_id:sid,visitor_id:vid,type:type,page:page(),label:label?String(label).slice(0,80):null});}
+function device(cb){
+ var ua=navigator.userAgent,os="Other",m;
+ if(/Android/.test(ua))os="Android "+((ua.match(/Android ([\d.]+)/)||[])[1]||"");
+ else if(/iPhone|iPad/.test(ua))os="iOS";else if(/Windows/.test(ua))os="Windows";else if(/Mac OS X/.test(ua))os="macOS";else if(/Linux/.test(ua))os="Linux";
+ var br=/Edg\//.test(ua)?"Edge":/OPR\//.test(ua)?"Opera":/SamsungBrowser/.test(ua)?"Samsung Internet":/Chrome\//.test(ua)?"Chrome":/Firefox\//.test(ua)?"Firefox":/Safari\//.test(ua)?"Safari":"Other";
+ var model=(ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build|\))/)||[])[1]||"";
+ if(/iPhone/.test(ua))model="iPhone";else if(/iPad/.test(ua))model="iPad";else if(!model)model=/Windows|Mac|Linux/.test(os)?"Desktop/Laptop":"";
+ var uad=navigator.userAgentData;
+ if(uad&&uad.getHighEntropyValues&&/Android/.test(ua)){uad.getHighEntropyValues(["model"]).then(function(r){cb(r&&r.model?r.model:model,os,br);},function(){cb(model,os,br);});}
+ else cb(model,os,br);
+}
+function source(){
+ var q=new URLSearchParams(location.search),u=q.get("utm_source");if(u)return u;
+ var r=document.referrer;if(!r)return"Direct";
+ try{var h=new URL(r).hostname.replace(/^www\./,"");if(h===location.hostname)return"Direct";
+  if(/google|bing|duckduckgo|yahoo|ecosia|brave/.test(h))return"Search: "+h;return h;}catch(e){return"Direct";}
+}
+if(fresh){
+ device(function(model,os,br){
+  send("site_visits",{session_id:sid,visitor_id:vid,device:model,os:os,browser:br,screen:screen.width+"x"+screen.height,lang:navigator.language,referrer:document.referrer||null,source:source(),landing:page(),is_return:returning});
+  ev("visit");
+ });
+}else ev("pageview");
+window.addEventListener("hashchange",function(){ev("pageview");});
+setInterval(function(){if(!document.hidden)ev("heartbeat");},20000);
+document.addEventListener("visibilitychange",function(){ev(document.hidden?"hide":"show");});
+window.addEventListener("pagehide",function(){ev("leave");});
+if(!LITE){
+ document.addEventListener("click",function(e){
+  var el=e.target.closest&&e.target.closest("a,button");if(!el)return;
+  var l=(el.innerText||el.getAttribute("aria-label")||el.id||"").replace(/\s+/g," ").trim();
+  var h=el.getAttribute("href");ev("click",(l||"button")+(h?" -> "+h:""));
+ },true);
+ var done={};
+ window.addEventListener("scroll",function(){
+  var d=document.documentElement,p=Math.round((d.scrollTop+innerHeight)/d.scrollHeight*100);
+  [25,50,75,100].forEach(function(s){if(p>=s&&!done[s]){done[s]=1;ev("scroll",s+"%");}});
+ },{passive:true});
+ if("IntersectionObserver" in window){
+  var seen={},io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting&&!seen[x.target.id]){seen[x.target.id]=1;ev("section",x.target.id);}});},{threshold:.4});
+  document.querySelectorAll("section[id]").forEach(function(s){io.observe(s);});
+ }
+}
+}catch(e){}
+})();
+</script>
+<!-- ===== /SITE VISITOR TRACKER ===== -->
+
 </body>
 </html>
