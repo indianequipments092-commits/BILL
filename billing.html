@@ -5821,21 +5821,35 @@ function notifStockToggle(){ notifStockOpen=!notifStockOpen; notifStockLimit=50;
 function notifStockMore(){ notifStockLimit+=50; renderNotifBadgeAndPanel(); }
 function notifMore(){ notifLimit+=50; renderNotifBadgeAndPanel(); }
 /* Stock alert rule: reorder level set -> level par ya neeche. Smart mode me: item kabhi bika ho (finalized bill) aur ab stock<=0.
-   Naye add / import / premium items (stock 0, kabhi bika nahi) alert me nahi aate. */
+   Naye add / import / premium items (stock 0, kabhi stock me nahi aaye) alert me nahi aate; jo item kabhi stock>0 raha aur ab 0 hua, wo aata hai. */
+let _nfHad=null,_nfHadUid=null;
+function notifHadSet(){
+const uid=(typeof currentUser!=='undefined'&&currentUser)?currentUser.uid:'anon';
+if(_nfHad&&_nfHadUid===uid) return _nfHad;
+_nfHadUid=uid;
+try{ _nfHad=new Set(JSON.parse(localStorage.getItem('notifHad_'+uid)||'[]')); }catch(e){ _nfHad=new Set(); }
+return _nfHad;
+}
+function notifHadSave(){
+try{ localStorage.setItem('notifHad_'+_nfHadUid,JSON.stringify([..._nfHad])); }catch(e){}
+}
 function notifStockCompute(sm){
 const mode=notifStockMode();
 if(typeof db==='undefined'||!db) return [];
 let rv={}; try{ rv=(db.accounts&&db.accounts.inv&&db.accounts.inv.reorder)||{}; }catch(e){}
 const res=[];
+const had=notifHadSet(); let hadDirty=false;
 (db.items||[]).forEach(it=>{
 try{
 if(it.active===false||(it.isPremium&&it.premiumInactive)) return;
 const t=trueStock(it,sm);
+if(t>0&&!had.has(it.id)){ had.add(it.id); hadDirty=true; }
 const r=rv[it.id]; const lvl=(r&&+r.level>0)?+r.level:0;
 if(lvl>0){ if(t<=lvl) res.push({it:it,t:t,low:t>0}); return; }
-if(mode==='smart' && t<=0 && sm && (sm.get(it.id)||0)>0) res.push({it:it,t:t,low:false});
+if(mode==='smart' && t<=0 && (had.has(it.id)||(sm&&(sm.get(it.id)||0)>0))) res.push({it:it,t:t,low:false});
 }catch(e){}
 });
+if(hadDirty) notifHadSave();
 res.sort((a,b)=>a.t-b.t);
 return res;
 }
@@ -5843,7 +5857,7 @@ function notifStockDetailHtml(){
 const sl=notifStockCompute(buildSoldQtyMap());
 const mode=notifStockMode();
 let h=`<div style="margin:-4px 2px 12px;padding:10px 12px;border-radius:14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25)">`;
-h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-muted)"><span>Stock alerts</span><select onchange="notifStockSetMode(this.value)" style="font-size:11px;padding:4px 6px;border-radius:8px"><option value="smart"${mode==='smart'?' selected':''}>Smart (bika hua + reorder)</option><option value="reorder"${mode==='reorder'?' selected':''}>Sirf reorder level</option></select></div>`;
+h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-muted)"><span>Stock alerts</span><select onchange="notifStockSetMode(this.value)" style="font-size:11px;padding:4px 6px;border-radius:8px"><option value="smart"${mode==='smart'?' selected':''}>Smart (stock 0 hua + reorder)</option><option value="reorder"${mode==='reorder'?' selected':''}>Sirf reorder level</option></select></div>`;
 sl.slice(0,notifStockLimit).forEach(x=>{
 h+=`<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid rgba(128,128,128,.15);font-size:13px"><span>${esc(x.it.name||'Item')}</span><b style="white-space:nowrap;color:${x.low?'#f59e0b':'#f43f5e'}">${money(x.t)}</b></div>`;
 });
