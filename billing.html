@@ -2932,16 +2932,19 @@ categories[cc].subs.push(cb.dataset.sub);
 }
 });
 if(!Object.keys(categories).length){ alert('Kam se kam ek category/subcategory chuno.'); return; }
-const wasEnabled=!!(db.settings&&db.settings.invPremium&&db.settings.invPremium.enabled);
+const _prevIP=(db.settings&&db.settings.invPremium)||null;
+const wasEnabled=!!(_prevIP&&_prevIP.enabled);
+const firstSetup=!(_prevIP&&_prevIP.setupDone);
+const nowEnabled=wasEnabled||firstSetup;   // pehli baar setup save karte hi sync ON
 db.settings=db.settings||{};
-db.settings.invPremium={setupDone:true, enabled:wasEnabled, categories};
+db.settings.invPremium={setupDone:true, enabled:nowEnabled, categories};
 invPremiumDraftCats=null;
 invPremiumApplyScope();
 saveDB();
 renderInventory();
 const wrap=id('invPremiumWizardWrap'); if(wrap) wrap.remove();
 renderInvPremiumSettingsCard();
-if(wasEnabled) invPremiumStartSync();
+if(nowEnabled) invPremiumStartSync(true);
 }
 function invPremiumCategoryMatches(item, categories){
 const sel=categories[item.catCode];
@@ -2959,7 +2962,7 @@ if(masterInvUnsub){ masterInvUnsub(); masterInvUnsub=null; }
 } else {
 (db.items||[]).forEach(it=>{ if(it.isPremium) it.premiumInactive=false; });
 invPremiumApplyScope();
-invPremiumStartSync();
+invPremiumStartSync(true);
 }
 saveDB();
 renderInventory();
@@ -3009,14 +3012,16 @@ if(!Object.keys(invPremiumDraftCats).length){ alert('Kam se kam ek category chun
 st.categories=invPremiumDraftCats;
 invPremiumDraftCats=null;
 invPremiumApplyScope(); saveDB(); renderInventory(); renderInvPremiumSettingsCard();
-if(st.enabled) invPremiumStartSync();
+if(st.enabled) invPremiumStartSync(true);
 }
-function invPremiumStartSync(){
+function invPremiumStartSync(force){
 if(masterInvUnsub){ masterInvUnsub(); masterInvUnsub=null; }
 const state=db.settings&&db.settings.invPremium;
 if(!state||!state.enabled||!currentCompanyId) return;
-const CACHE_KEY='masterInventoryCache_v1';
-const CACHE_MS=6*60*60*1000;
+const catKeys=Object.keys(state.categories||{});
+if(!catKeys.length) return;
+const CACHE_KEY='masterInventoryCache_v2:'+catKeys.slice().sort().join(',');
+const CACHE_MS=60*60*1000;
 function applyDocs(docs){
 const categories=(db.settings&&db.settings.invPremium&&db.settings.invPremium.categories)||{};
 let changed=false;
@@ -3032,6 +3037,7 @@ invPremiumApplyScope();
 const _a=(db.items||[]).filter(x=>x.isPremium&&x.premiumInactive).length;
 if(changed||_a!==_b){ saveDB(); renderInventory(); }
 }
+if(!force){
 try{
 const cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
 if(cached && cached.savedAt && (Date.now()-cached.savedAt)<CACHE_MS && Array.isArray(cached.docs)){
@@ -3039,11 +3045,23 @@ applyDocs(cached.docs);
 return;
 }
 }catch(e){   }
-fbDb.collection('masterInventory').get().then(snap=>{
-const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+(async()=>{
+try{
+// Supabase 1 request me max 1000 rows deta hai -> 1000-1000 ke pages me saare items lao
+const docs=[], PAGE=1000;
+for(let from=0;;from+=PAGE){
+const {data,error}=await supabaseClient.from('fs_documents').select('doc_id,data')
+.eq('collection_path','masterInventory').in('data->>catCode',catKeys)
+.order('doc_id',{ascending:true}).range(from,from+PAGE-1);
+if(error) throw error;
+(data||[]).forEach(r=>docs.push({id:r.doc_id,...r.data}));
+if(!data||data.length<PAGE) break;
+}
 try{ localStorage.setItem(CACHE_KEY, JSON.stringify({savedAt:Date.now(), docs})); }catch(e){   }
 applyDocs(docs);
-}).catch(err=>console.warn('Inventory Premium sync failed', err));
+}catch(err){ console.warn('Inventory Premium sync failed', err); }
+})();
 }
 function invPremiumIsNewBadge(it){
 return it.isPremium && it.premiumAddedAt && (Date.now()-it.premiumAddedAt) < NEW_BADGE_MS;
@@ -17017,7 +17035,7 @@ if(typeof renderNotifBadgeAndPanel==='function') renderNotifBadgeAndPanel();
 try{localStorage.setItem(currentCompanyId?KEY+'_'+currentCompanyId:KEY,JSON.stringify(db));saveHealthSet('local',true);}catch(e){saveHealthSet('local',false);}
 __booted=true;
 if(planAllows('inventoryPremium') && db.settings && db.settings.invPremium && db.settings.invPremium.enabled){
-loadMasterCatTree().then(invPremiumStartSync);
+loadMasterCatTree().then(()=>invPremiumStartSync());
 }
 }catch(e){ console.warn('boot',e); }
 }</script>
