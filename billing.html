@@ -22961,13 +22961,20 @@ setInterval(tick,TICK);
 <style id="iet-css">
 #ietRoot{position:fixed;inset:0;z-index:2147483000;pointer-events:none;display:none;font-family:inherit}
 #ietRoot.on{display:block}
-.iet-b{position:fixed;background:rgba(2,6,23,.78);pointer-events:auto;transition:all .18s ease}
-.iet-hb{position:fixed;pointer-events:auto;background:transparent}
-.iet-ring{position:fixed;pointer-events:none;border-radius:12px;border:2px solid #22d3ee;box-shadow:0 0 0 4px rgba(34,211,238,.25),0 0 28px rgba(34,211,238,.55);animation:ietPulse 1.4s ease-in-out infinite;transition:all .18s ease}
+.iet-b{position:fixed;background:rgba(2,6,23,.78);pointer-events:auto;touch-action:none;overscroll-behavior:none}
+.iet-hb{position:fixed;pointer-events:auto;background:transparent;touch-action:none}
+.iet-ring{position:fixed;pointer-events:none;border-radius:12px;border:2px solid #22d3ee;box-shadow:0 0 0 4px rgba(34,211,238,.25),0 0 28px rgba(34,211,238,.55);animation:ietPulse 1.4s ease-in-out infinite}
 @keyframes ietPulse{0%,100%{box-shadow:0 0 0 3px rgba(34,211,238,.25),0 0 18px rgba(34,211,238,.45)}50%{box-shadow:0 0 0 8px rgba(34,211,238,.12),0 0 34px rgba(34,211,238,.8)}}
 .iet-hand{position:fixed;pointer-events:none;font-size:30px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));animation:ietTap 1s ease-in-out infinite;z-index:2}
 @keyframes ietTap{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,-8px)}}
-.iet-card{position:fixed;pointer-events:auto;width:min(380px,calc(100vw - 24px));background:linear-gradient(160deg,#111a33,#0b1226);color:#e5e7eb;border:1px solid rgba(99,102,241,.55);border-radius:18px;padding:14px 16px 12px;box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:3;max-height:calc(100vh - 24px);overflow:auto}
+.iet-card{position:fixed;pointer-events:auto;width:min(380px,calc(100vw - 24px));background:linear-gradient(160deg,#111a33,#0b1226);color:#e5e7eb;border:1px solid rgba(99,102,241,.55);border-radius:18px;padding:14px 16px 12px;box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:3;max-height:60vh;overflow:auto;touch-action:pan-y;overscroll-behavior:contain}
+.iet-card.cmp{padding:9px 12px 8px;border-radius:14px}
+.iet-card.cmp .iet-bar,.iet-card.cmp .iet-cnt,.iet-card.cmp .iet-act,.iet-card.cmp .iet-ic{display:none}
+.iet-card.cmp .iet-top{margin-bottom:4px}
+.iet-card.cmp .iet-t{font-size:13px;margin-bottom:1px}
+.iet-card.cmp .iet-d{font-size:12px;line-height:1.4}
+.iet-card.cmp .iet-btns{margin-top:8px}
+.iet-card.cmp .iet-btn{padding:7px 12px;min-height:34px;font-size:12px}
 [data-theme="light"] .iet-card{background:#fff;color:#0f172a;border-color:#c7d2fe}
 .iet-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .iet-part{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#a5b4fc;flex:1}
@@ -23003,13 +23010,15 @@ var PARTS=['Shuruaat','Pehla Bill','Roz ka Hisaab','Stock','Baaki Features','Kha
 var PARTS_EN=['Start','First Bill','Daily Accounts','Stock','More Features','Finish'];
 function $(s){return document.querySelector(s)}
 function vis(el){if(!el)return false;var r=el.getBoundingClientRect();if(r.width<2||r.height<2)return false;var cs=getComputedStyle(el);return cs.visibility!=='hidden'&&cs.display!=='none'}
-function q(sel){if(!sel)return null;if(typeof sel==='function'){try{return sel()}catch(e){return null}}var list=document.querySelectorAll(sel);for(var i=0;i<list.length;i++){if(vis(list[i]))return list[i]}return null}
+function q(sel){if(!sel)return null;if(typeof sel==='function'){try{var r=sel();if(Array.isArray(r)){r=r.filter(vis);return r.length?r:null}return r&&vis(r)?r:null}catch(e){return null}}var list=document.querySelectorAll(sel);for(var i=0;i<list.length;i++){if(vis(list[i]))return list[i]}return null}
+function rectOf(el){var a=Array.isArray(el)?el:[el];var l=1e9,t=1e9,r=-1e9,b=-1e9;a.forEach(function(x){var q=x.getBoundingClientRect();l=Math.min(l,q.left);t=Math.min(t,q.top);r=Math.max(r,q.right);b=Math.max(b,q.bottom)});return {left:l,top:t,right:r,bottom:b,width:r-l,height:b-t}}
 function isMob(){return window.matchMedia&&window.matchMedia('(max-width:900px)').matches}
 function openSB(){if(isMob()){var s=document.getElementById('sidebar');if(s&&!s.classList.contains('open')&&typeof toggleSidebar==='function')toggleSidebar()}}
 function pg(p){try{if(typeof showPage==='function')showPage(p)}catch(e){}}
 function allowed(f){try{return typeof planAllows!=='function'||planAllows(f)}catch(e){return true}}
 function uid(){try{return (currentUser&&currentUser.uid)||'x'}catch(e){return 'x'}}
 function hasCompanies(){try{return Object.keys((userProfile&&userProfile.companies)||{}).length>0}catch(e){return false}}
+function fld(){var a=[].slice.call(arguments);return function(){return a.map(function(i){var e=document.getElementById(i);return e&&(e.closest('.auth-field')||e)}).filter(Boolean)}}
 function appOpen(){var a=document.getElementById('appRoot');return a&&!a.classList.contains('hidden')&&typeof currentCompanyId!=='undefined'&&!!currentCompanyId}
 
 /* ---------- STEPS ---------- */
@@ -23019,17 +23028,19 @@ var ALL=[
 /* PART 0: Shuruaat */
 S(0,'welcome','👋','Welcome! Ye 2 minute ka guide hai. Hum pehli company aur pehla bill banana seekhenge. Kabhi bhi Skip kar sakte ho.','Welcome! This quick guide teaches you to create your first company and first bill. You can skip anytime.',{center:true,title:['IE Billing me swagat hai','Welcome to IE Billing'],start:true}),
 S(0,'newco','🏢','Neeche "Create New Company" card dabao. Yahan tumhara business banega.','Tap the "Create New Company" card. Your business is created here.',{t:'.co-card.new',mode:'click',title:['Company banao','Create company'],until:function(){return vis(document.getElementById('coName'))},replayNext:true}),
-S(0,'coName','✍️','Apne business ka naam likho. Ye har bill ke upar chhapega.','Enter your business name. It prints on every bill.',{t:'#coName',title:['Company ka naam','Company name'],go:function(){ensureForm()}}),
-S(0,'coGst','🧾','GSTIN dalo (agar hai). Verify button se number check bhi ho jata hai. GST nahi hai to khali chhod do.','Enter your GSTIN if you have one; the verify button checks it. Leave empty if none.',{t:'#coGstin',title:['GST number','GST number']}),
-S(0,'coPrefix','🔢','Invoice Prefix: bill number ka shuruaati hissa (jaise IE-001). Chhota aur yaad rakhne layak rakho.','Invoice Prefix is the start of your bill numbers (e.g. IE-001). Keep it short.',{t:'#coPrefix',title:['Invoice prefix','Invoice prefix']}),
-S(0,'coSave','✅','Ab "Save & Continue" dabao. Pehle naam bharna zaruri hai. Company ban kar app khul jayega.','Now tap "Save & Continue". Name is required. The app opens once the company is created.',{t:'#coSubmitBtn',mode:'click',title:['Company save karo','Save company'],until:function(){return appOpen()},replayNext:true,wait:12000}),
+S(0,'coName','✍️','Apne business ka naam likho. Ye har bill ke upar chhapega.','Enter your business name. It prints on every bill.',{t:fld('coName'),free:true,title:['Company ka naam','Company name'],go:function(){ensureForm()}}),
+S(0,'coGst','🧾','GSTIN dalo (agar hai). Verify button se number check bhi ho jata hai. GST nahi hai to khali chhod do.','Enter your GSTIN if you have one; the verify button checks it. Leave empty if none.',{t:fld('coGstin'),free:true,title:['GST number','GST number']}),
+S(0,'coPrefix','🔢','Invoice Prefix: bill number ka shuruaati hissa (jaise IE-001). Chhota aur yaad rakhne layak rakho.','Invoice Prefix is the start of your bill numbers (e.g. IE-001). Keep it short.',{t:fld('coPrefix'),free:true,title:['Invoice prefix','Invoice prefix']}),
+S(0,'coBank','🏦','Bank details zaruri hain: Bank Name, Account Holder aur Account Number. Ye bill ke neeche chhapte hain taaki customer paisa bhej sake.','Bank details are required: Bank Name, Account Holder and Account Number. They print on the bill so customers can pay.',{t:fld('coBankName','coAccName','coAccNo'),free:true,title:['Bank details','Bank details']}),
+S(0,'coIfsc','🔐','IFSC Code (jaise SBIN0001234) aur PAN (jaise ABCDE1234F) bhi bharo. UPI ID chaho to dalo, wo optional hai.','Also fill IFSC Code (e.g. SBIN0001234) and PAN (e.g. ABCDE1234F). UPI ID is optional.',{t:fld('coIfsc','coPan'),free:true,title:['IFSC aur PAN','IFSC and PAN']}),
+S(0,'coSave','✅','Ab "Save & Continue" dabao. Naam aur bank details bharna zaruri hai. Company ban kar app khul jayega.','Now tap "Save & Continue". Name is required. The app opens once the company is created.',{t:'#coSubmitBtn',mode:'click',title:['Company save karo','Save company'],until:function(){return appOpen()},replayNext:true,wait:12000}),
 /* PART 1: Pehla bill */
 S(1,'sidebar','🧭','Ye side menu hai. "Roz ka kaam" me bill, history, payment aur customers milte hain. Baaki groups bhi isi tarah khulte hain.','This is the side menu. "Roz ka kaam" holds invoices, history, payments and customers.',{t:'.nav-group[data-group="daily"]',title:['Side menu','Side menu'],go:function(){pg('dashboard');openSB()}}),
 S(1,'createInv','🧾','"Create Invoice" dabao. Naya bill yahin se banta hai.','Tap "Create Invoice". New bills start here.',{t:'.nav button[data-page="invoice"]',mode:'click',title:['Naya bill','New bill'],go:function(){openSB()},until:function(){var e=document.getElementById('invoice');return e&&!e.classList.contains('hidden')}}),
 S(1,'addCust','👤','Customer chuno ya naya jodo. "+ Add New Customer" dabao. Hum ek Demo Customer bhar denge.','Pick or add a customer. Tap "+ Add New Customer". We will fill a Demo Customer for you.',{t:'#invoice button[onclick="openCustomerModal()"]',mode:'click',title:['Customer jodo','Add customer'],go:function(){pg('invoice')},until:function(){return vis(document.getElementById('mName'))},after:function(){fillDemoCust()}}),
 S(1,'saveCust','💾','Demo details bhar di gayi hain. Asli customer ke liye naam, GST, address aur phone yahin bharte hain. Ab "Save Customer" dabao.','Demo details are filled. For a real customer you enter name, GST, address and phone here. Tap "Save Customer".',{t:'#customerSaveBtn',mode:'click',title:['Customer save','Save customer'],until:function(){return !document.getElementById('customerModal').classList.contains('show')},after:function(){pickDemoCust()}}),
-S(1,'pickItem','📦','Ab item chuno. Box me item ka naam likho ya list se chuno. Mic wala 🎤 Voice Add Items se bolkar bhi jod sakte ho. Hum Demo Item laga rahe hain.','Now pick an item: type its name or choose from the list. 🎤 Voice Add Items lets you speak. We will add a Demo Item.',{t:'#itemEditor .item-card[data-row="0"]',title:['Item chuno','Pick item'],go:function(){pg('invoice');ensureDemoItem()},after:function(){applyDemoItem()}}),
-S(1,'qtyRate','🔢','Qty (kitna maal) aur Rate (daam) yahan dalte hain. Humne Qty 2 daal di hai. Rate item se khud aa jata hai.','Qty and Rate go here. We set Qty 2; Rate comes from the item automatically.',{t:'#itemEditor .item-card[data-row="0"] [data-field="qty"]',title:['Qty aur Rate','Qty and Rate']}),
+S(1,'pickItem','📦','Ab item chuno. Box me item ka naam likho ya list se chuno. Mic wala 🎤 Voice Add Items se bolkar bhi jod sakte ho. Hum Demo Item laga rahe hain.','Now pick an item: type its name or choose from the list. 🎤 Voice Add Items lets you speak. We will add a Demo Item.',{t:'#itemEditor .item-card[data-row="0"]',free:true,title:['Item chuno','Pick item'],go:function(){pg('invoice');ensureDemoItem()},after:function(){applyDemoItem()}}),
+S(1,'qtyRate','🔢','Qty (kitna maal) aur Rate (daam) yahan dalte hain. Humne Qty 2 daal di hai. Rate item se khud aa jata hai.','Qty and Rate go here. We set Qty 2; Rate comes from the item automatically.',{t:function(){var e=document.querySelector('#itemEditor .item-card[data-row="0"] [data-field="qty"]');return e&&(e.parentElement||e)},free:true,title:['Qty aur Rate','Qty and Rate']}),
 S(1,'gstAuto','🧮','GST apne aap judta hai. Same state me CGST+SGST, alag state me IGST. Total yahan dikhta hai.','GST is added automatically: CGST+SGST in-state, IGST inter-state. Totals show here.',{t:'#itemEditor .item-card[data-row="0"] .item-card-head',title:['GST auto','Auto GST']}),
 S(1,'preview','👁️','"Preview" se bill chhapne se pehle waisa hi dikhta hai jaisa customer ko jayega. Abhi sirf samjho, dabana zaruri nahi.','"Preview" shows the bill exactly as the customer will get it. No need to tap now.',{t:'#invoice .top .toolbar button[onclick="openPreviewModal()"]',title:['Preview','Preview']}),
 S(1,'finalize','🔒','"Finalize" bill ko pakka karta hai aur stock ghatata hai. Tutorial me hum finalize nahi karenge, taaki tumhara asli invoice number kharch na ho.','"Finalize" locks the bill and reduces stock. We will not finalize in the tutorial so your real invoice number is not used.',{t:'#invoice .top .toolbar button[onclick="finalizeInvoice()"]',title:['Finalize','Finalize']}),
@@ -23062,7 +23073,7 @@ function ensureForm(){if(!vis(document.getElementById('coName'))&&typeof coOpenF
 function fillDemoCust(){setTimeout(function(){var v={mName:'Demo Customer',mGST:'',mAddress:'12, Demo Street, Near Market',mCity:'Vadodara',mState:'GUJARAT',mStateCode:'24',mPin:'390001',mContact:'9999999999',mEmail:''};for(var k in v){var el=document.getElementById(k);if(el)el.value=v[k]}},120)}
 function pickDemoCust(){setTimeout(function(){try{var c=null;for(var i=db.customers.length-1;i>=0;i--){if(db.customers[i].name==='Demo Customer'){c=db.customers[i];break}}if(!c)return;c._tutDemo=true;T.demo.cust=c.id;persistDemo();saveDB();var s=document.getElementById('customerSelect');if(s){s.value=c.id;if(typeof loadCustomer==='function')loadCustomer()}}catch(e){}},250)}
 function ensureDemoItem(){try{if(T.demo.item&&db.items.some(function(x){return x.id===T.demo.item}))return;var it={id:crypto.randomUUID(),name:'Demo Item',description:'',rate:100,purchaseRate:60,size:'',gst:18,unit:'Nos',hsn:'9999',stock:50,barcode:'',active:true,_tutDemo:true};db.items.push(it);T.demo.item=it.id;persistDemo();saveDB();if(!current||!current.items||!current.items.length){current=blankInvoice()}}catch(e){}}
-function applyDemoItem(){try{ensureDemoItem();if(typeof rowItem==='function'&&T.demo.item){rowItem(0,T.demo.item);rowVal(0,'qty','2');var inp=document.querySelector('#itemEditor [data-field="qty"][data-row="0"]');if(inp)inp.value='2';recalc();renderRows()}}catch(e){}}
+function applyDemoItem(){try{ensureDemoItem();if(current&&current.items&&current.items[0]&&current.items[0].itemId)return;if(typeof rowItem==='function'&&T.demo.item){rowItem(0,T.demo.item);rowVal(0,'qty','2');var inp=document.querySelector('#itemEditor [data-field="qty"][data-row="0"]');if(inp)inp.value='2';recalc();renderRows()}}catch(e){}}
 function persistDemo(){try{localStorage.setItem(LS+'demo_'+uid(),JSON.stringify(T.demo))}catch(e){}}
 function loadDemo(){try{var r=localStorage.getItem(LS+'demo_'+uid());if(r)T.demo=JSON.parse(r)||{}}catch(e){}}
 function cleanupDemo(){
@@ -23114,7 +23125,8 @@ function render(){
  var pn=T.lang==='en'?PARTS_EN[s.p]:PARTS[s.p];
  var lockNote=s._locked?('<div class="iet-act" style="color:#fbbf24">🔒 '+(T.lang==='en'?'Available on higher plans.':s.lock)+'</div>'):'';
  var isClick=s.mode==='click'&&!T.replayCid&&!s._softNext;
- var actLine=isClick?'<div class="iet-act">👉 '+(T.lang==='en'?'Tap the glowing button to continue':'Chamakte button ko dabao, tabhi aage badhega')+'</div>':'';
+ var isFree=!!s.free&&!isClick;
+ var actLine=isFree?'<div class="iet-act">✍️ '+(T.lang==='en'?'You can type here, then tap Next':'Yahan khud bhar sakte ho, phir Next dabao')+'</div>':isClick?'<div class="iet-act">👉 '+(T.lang==='en'?'Tap the glowing button to continue':'Chamakte button ko dabao, tabhi aage badhega')+'</div>':'';
  var back=T.i>0&&!s.start?'<button class="iet-btn g" data-a="back">'+(T.lang==='en'?'Back':'Back')+'</button>':'';
  var next='';
  if(s.finish){next='<button class="iet-btn" data-a="finish">'+(T.lang==='en'?'🧾 Make a new bill':'🧾 Naya bill banao')+'</button><button class="iet-btn g" data-a="again">'+(T.lang==='en'?'Replay':'Tutorial dobara')+'</button><button class="iet-btn g" data-a="help">Help</button>'+((T.mode==='full'&&!T.parts)?'<button class="iet-btn g" data-a="more">'+(T.lang==='en'?'Learn more features ▶':'Aage ke features seekho ▶')+'</button>':'')}
@@ -23125,53 +23137,70 @@ function render(){
  card.innerHTML='<div class="iet-top"><span class="iet-part">'+esc2(pn)+'</span><button class="iet-lang" data-a="lang">'+(T.lang==='en'?'हिंदी':'EN')+'</button><button class="iet-x" data-a="skip" aria-label="Close">✕</button></div>'+
  (s.finish?'<div class="iet-confetti">🎉</div>':'')+
  '<div class="iet-bar"><i style="width:'+Math.round(n/tot*100)+'%"></i></div>'+
- '<div class="iet-cnt">Step '+n+' of '+tot+' · '+(T.lang==='en'?'':'')+doneCount()+'/'+ALL.length+' '+(T.lang==='en'?'complete':'complete')+'</div>'+
+ '<div class="iet-cnt">Step '+n+' of '+tot+'</div>'+
  '<div class="iet-body"><div class="iet-ic">'+s.ic+'</div><div><div class="iet-t">'+esc2(ttl(s))+'</div><div class="iet-d">'+esc2(txt(s))+'</div>'+lockNote+actLine+'</div></div>'+
  '<div class="iet-btns">'+back+next+skip+'</div>';
- layout(true);
+layout(true,true);
 }
 function esc2(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function doneCount(){return doneIds().length}
-var lastKey='';
-function layout(force){
+var lastKey='',dockSide='bottom';
+function geom(){var vv=window.visualViewport,de=document.documentElement;var LW=de.clientWidth||innerWidth,LH=de.clientHeight||innerHeight;return {LW:LW,LH:LH,VT:vv?vv.offsetTop:0,VL:vv?vv.offsetLeft:0,VH:vv?vv.height:LH,VW:vv?vv.width:LW}}
+function kbOpen(g){if(g.LH-g.VH>110)return true;var a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&g.VH<innerHeight*0.8)}
+function scrollers(el){var out=[],n=el.parentElement;while(n&&n!==document.body&&n!==document.documentElement){var cs=getComputedStyle(n);if(/(auto|scroll)/.test(cs.overflowY)&&n.scrollHeight>n.clientHeight+2)out.push(n);n=n.parentElement}return out}
+function ensureVisible(el,top,bottom){
+ for(var k=0;k<3;k++){
+  var r=rectOf(el),delta=0;
+  if(r.height>bottom-top){delta=r.top-top}
+  else if(r.top<top){delta=r.top-top}
+  else if(r.bottom>bottom){delta=r.bottom-bottom}
+  if(Math.abs(delta)<2)return;
+  var host=Array.isArray(el)?el[0]:el,sc=scrollers(host),moved=false;
+  for(var i=0;i<sc.length&&!moved;i++){var b0=sc[i].scrollTop;sc[i].scrollTop=b0+delta;if(sc[i].scrollTop!==b0)moved=true}
+  if(!moved){var y0=window.pageYOffset;window.scrollBy(0,delta);if(window.pageYOffset===y0)return}
+ }
+}
+function layout(force,ensure){
  if(!T.on||!card)return;
  var s=curStep();if(!s)return;
- var W=window.innerWidth,H=window.innerHeight;
+ var g=geom(),W=g.LW,H=g.LH;
+ var mob=g.VW<=640,kb=mob&&kbOpen(g);
  var el=s.center||s._locked?null:q(s.t);
- var rect=null;
- if(el){
-  if(!s._scrolled||force===2){s._scrolled=true;try{var r0=el.getBoundingClientRect();if(r0.top<60||r0.bottom>H-170){el.scrollIntoView({block:'center',behavior:'auto'})}}catch(e){}}
-  var r=el.getBoundingClientRect();var pad=6;
-  rect={l:Math.max(0,r.left-pad),t:Math.max(0,r.top-pad),r:Math.min(W,r.right+pad),b:Math.min(H,r.bottom+pad)};
-  if(r.height>H*0.7){rect.b=Math.min(H,rect.t+Math.min(r.height,H*0.7))}
- }
- var key=rect?[rect.l,rect.t,rect.r,rect.b,W,H,T.i,card.offsetHeight].join(','):'c'+W+H+T.i+card.offsetHeight;
- if(!force&&key===lastKey)return;lastKey=key;
- var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext;
- if(!rect){
-  blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+H+'px';
+ if(kb!==card.classList.contains('cmp')){card.classList.toggle('cmp',kb);lastKey=''}
+ var cw=Math.min(380,g.VW-24),ch=card.offsetHeight;
+ card.style.width=cw+'px';
+ var side=kb?'top':'bottom';
+ var ctop=side==='top'?g.VT+8:g.VT+g.VH-ch-10;
+ var cleft=mob?g.VL+(g.VW-cw)/2:Math.max(12,g.VL+g.VW-cw-16);
+ if(!el){
+  var cx=g.VL+(g.VW-cw)/2,cy=g.VT+Math.max(8,(g.VH-ch)/2);
+  blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+Math.max(H,g.VT+g.VH)+'px';
   for(var i=1;i<4;i++)blk[i].style.cssText='display:none';
   ring.style.display='none';hand.style.display='none';hb.style.display='none';
-  card.style.left=Math.max(12,(W-card.offsetWidth)/2)+'px';card.style.top=Math.max(12,(H-card.offsetHeight)/2)+'px';card.style.bottom='auto';
+  card.style.left=cx+'px';card.style.top=cy+'px';lastKey='c';
   return;
  }
- blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+rect.t+'px';
- blk[1].style.cssText='left:0;top:'+rect.b+'px;width:'+W+'px;height:'+(H-rect.b)+'px';
- blk[2].style.cssText='left:0;top:'+rect.t+'px;width:'+rect.l+'px;height:'+(rect.b-rect.t)+'px';
- blk[3].style.cssText='left:'+rect.r+'px;top:'+rect.t+'px;width:'+(W-rect.r)+'px;height:'+(rect.b-rect.t)+'px';
- ring.style.cssText='display:block;left:'+rect.l+'px;top:'+rect.t+'px;width:'+(rect.r-rect.l)+'px;height:'+(rect.b-rect.t)+'px';
- hb.style.cssText=clickMode?'display:none':'display:block;left:'+rect.l+'px;top:'+rect.t+'px;width:'+(rect.r-rect.l)+'px;height:'+(rect.b-rect.t)+'px';
- if(clickMode){hand.style.cssText='display:block;left:'+Math.min(W-40,rect.l+(rect.r-rect.l)/2)+'px;top:'+Math.min(H-40,rect.b-6)+'px'}else hand.style.display='none';
- var ch=card.offsetHeight,cw=card.offsetWidth,top;
- var spaceBelow=H-rect.b,spaceAbove=rect.t;
- if(W<=640){
-  card.style.left=Math.max(12,(W-cw)/2)+'px';
-  if(spaceBelow>=ch+16)top=rect.b+12;else if(spaceAbove>=ch+16)top=rect.t-ch-12;else top=(rect.t>H/2)?12:H-ch-12;
- }else{
-  var left=Math.min(W-cw-12,Math.max(12,rect.l));card.style.left=left+'px';
-  if(spaceBelow>=ch+16)top=rect.b+14;else if(spaceAbove>=ch+16)top=rect.t-ch-14;else top=(rect.l>cw+30)?Math.max(12,rect.t):Math.max(12,H-ch-12);
+ if(ensure){
+  var fa=side==='top'?[g.VT+ch+18,g.VT+g.VH-10]:[g.VT+10,g.VT+g.VH-ch-22];
+  ensureVisible(el,fa[0],fa[1]);
  }
- card.style.top=Math.max(8,Math.min(H-ch-8,top))+'px';card.style.bottom='auto';
+ var r=rectOf(el),pad=6;
+ if(side==='bottom'&&r.bottom+pad>ctop-4&&r.top-pad>g.VT+ch+18){side='top';ctop=g.VT+8}
+ else if(side==='top'&&r.top-pad<ctop+ch+4&&r.bottom+pad<g.VT+g.VH-ch-18){side='bottom';ctop=g.VT+g.VH-ch-10}
+ var rc={l:Math.max(0,r.left-pad),t:Math.max(0,r.top-pad),r:Math.min(W,r.right+pad),b:Math.min(Math.max(H,g.VT+g.VH),r.bottom+pad)};
+ var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext;
+ var open=clickMode||!!s.free;
+ var key=[rc.l,rc.t,rc.r,rc.b,W,H,g.VT,g.VH,ctop,cleft,cw,ch,open,clickMode].join(',');
+ if(!force&&key===lastKey)return;lastKey=key;
+ var BH=Math.max(H,g.VT+g.VH);
+ blk[0].style.cssText='left:0;top:0;width:'+W+'px;height:'+Math.max(0,rc.t)+'px';
+ blk[1].style.cssText='left:0;top:'+rc.b+'px;width:'+W+'px;height:'+Math.max(0,BH-rc.b)+'px';
+ blk[2].style.cssText='left:0;top:'+rc.t+'px;width:'+rc.l+'px;height:'+Math.max(0,rc.b-rc.t)+'px';
+ blk[3].style.cssText='left:'+rc.r+'px;top:'+rc.t+'px;width:'+Math.max(0,W-rc.r)+'px;height:'+Math.max(0,rc.b-rc.t)+'px';
+ ring.style.cssText='display:block;left:'+rc.l+'px;top:'+rc.t+'px;width:'+(rc.r-rc.l)+'px;height:'+(rc.b-rc.t)+'px';
+ hb.style.cssText=open?'display:none':'display:block;left:'+rc.l+'px;top:'+rc.t+'px;width:'+(rc.r-rc.l)+'px;height:'+(rc.b-rc.t)+'px';
+ if(clickMode&&!kb){var hx=Math.min(W-40,rc.l+(rc.r-rc.l)/2),hy=rc.b-8;if(hy>g.VT+g.VH-ch-50&&side==='bottom')hy=rc.t-30;hand.style.cssText='display:block;left:'+hx+'px;top:'+hy+'px'}else hand.style.display='none';
+ card.style.left=cleft+'px';card.style.top=ctop+'px';
 }
 /* ---------- Engine ---------- */
 function start(opts){
@@ -23203,11 +23232,23 @@ function start(opts){
 }
 function bind(){
  card.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;act(b.getAttribute('data-a'))});
- if(!T.timer)T.timer=setInterval(function(){layout(false)},160);
+ root().addEventListener('wheel',function(e){if(e.target.closest&&e.target.closest('.iet-card'))return;e.preventDefault()},{passive:false});
+ root().addEventListener('touchmove',function(e){if(e.target.closest&&e.target.closest('.iet-card'))return;e.preventDefault()},{passive:false});
+ if(!T.timer)T.timer=setInterval(tick,70);
  window.addEventListener('resize',onRS);window.addEventListener('scroll',onRS,true);
- if(!T.listener){T.listener=function(e){var s=curStep();if(!T.on||!s||s.mode!=='click'||T.replayCid||s._softNext)return;var el=q(s.t);if(el&&el.contains(e.target)){afterClick(s)}};document.addEventListener('click',T.listener,true)}
+ if(window.visualViewport){visualViewport.addEventListener('resize',onVV);visualViewport.addEventListener('scroll',onRS)}
+ document.addEventListener('focusin',onFocus,true);document.addEventListener('focusout',onFocus,true);
+ if(!T.listener){T.listener=function(e){var s=curStep();if(!T.on||!s||s.mode!=='click'||T.replayCid||s._softNext)return;var el=q(s.t);if(el&&(Array.isArray(el)?el:[el]).some(function(x){return x.contains(e.target)})){afterClick(s)}};document.addEventListener('click',T.listener,true)}
 }
-function onRS(){layout(true)}
+function tick(){
+ if(!T.on)return;
+ var s=curStep();
+ if(s&&s.mode==='click'&&!T.replayCid&&!s._adv&&Date.now()-(s._t0||0)>450){var ok=false;try{ok=s.until?s.until():false}catch(e){}if(ok)afterClick(s)}
+ layout(false,false);
+}
+function onRS(){layout(true,false)}
+function onVV(){clearTimeout(T.vvT);layout(true,true);T.vvT=setTimeout(function(){layout(true,true)},260)}
+function onFocus(){clearTimeout(T.fT);T.fT=setTimeout(function(){layout(true,true)},120);clearTimeout(T.fT2);T.fT2=setTimeout(function(){layout(true,true)},420)}
 function afterClick(s){
  if(s._adv)return;s._adv=true;
  var t0=Date.now(),lim=s.wait||5000;
@@ -23221,17 +23262,16 @@ function afterClick(s){
 }
 function go(){
  var s=curStep();if(!s)return;
- s._adv=false;s._scrolled=false;s._locked=false;s._softNext=false;lastKey='';
+ s._adv=false;s._locked=false;s._softNext=false;s._t0=Date.now();lastKey='';
  if(s.gate&&!allowed(s.gate)){s._locked=true}
  if(!s._locked&&s.go){try{s.go()}catch(e){}}
- if(s.until&&s.mode==='click'&&!T.replayCid){try{if(s.until()&&s.id!=='newco'&&s.id!=='createInv'&&s.id!=='addCust'&&s.id!=='saveCust'&&s.id!=='coSave'){/*already satisfied*/}}catch(e){}}
  if(T.replayCid&&(s.id==='coSave')){s._softNext=true}
  render();
  var tries=0;(function wait(){
   if(!T.on||curStep()!==s)return;
   var el=s.center||s._locked?true:q(s.t);
   tries++;
-  if(el||tries>22){render();return}
+  if(el||tries>24){lastKey='';layout(true,true);setTimeout(function(){if(T.on&&curStep()===s)layout(true,true)},320);return}
   setTimeout(wait,150);
  })();
 }
@@ -23268,7 +23308,7 @@ function confirmSkip(){
 function stop(silent){
  T.on=false;clearTimeout(T.advTimer);
  var r=root();r.classList.remove('on');r.innerHTML='';
- window.removeEventListener('resize',onRS);window.removeEventListener('scroll',onRS,true);
+ window.removeEventListener('resize',onRS);window.removeEventListener('scroll',onRS,true);if(window.visualViewport){visualViewport.removeEventListener('resize',onVV);visualViewport.removeEventListener('scroll',onRS)}document.removeEventListener('focusin',onFocus,true);document.removeEventListener('focusout',onFocus,true);
  if(T.timer){clearInterval(T.timer);T.timer=null}
  if(T.listener){document.removeEventListener('click',T.listener,true);T.listener=null}
  try{closeSidebar()}catch(e){}
