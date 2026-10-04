@@ -5783,7 +5783,7 @@ function notifSeenSet(){
 try{ return new Set(JSON.parse(localStorage.getItem(notifSeenKey())||'[]')); }catch(e){ return new Set(); }
 }
 function notifSeenSave(s){
-try{ localStorage.setItem(notifSeenKey(),JSON.stringify([...s].slice(-500))); }catch(e){}
+try{ localStorage.setItem(notifSeenKey(),JSON.stringify([...s].slice(-3000))); }catch(e){}
 }
 function notifFirstKey(){ return 'notifFirst_'+(currentUser?currentUser.uid:'anon'); }
 function notifFirstMap(){
@@ -5814,7 +5814,55 @@ const sod=x=>{ const d=new Date(x); return new Date(d.getFullYear(),d.getMonth()
 const days=Math.round((sod(Date.now())-sod(n.ts))/86400000);
 return days<=0?1:days===1?2:days<7?3:4;
 }
+let notifStockOpen=false, notifStockLimit=50, notifLimit=50, _nfStockPruned=false;
+function notifStockMode(){ try{ return localStorage.getItem('ie_stockAlertMode')||'smart'; }catch(e){ return 'smart'; } }
+function notifStockSetMode(v){ try{ localStorage.setItem('ie_stockAlertMode',v); }catch(e){} renderNotifBadgeAndPanel(); }
+function notifStockToggle(){ notifStockOpen=!notifStockOpen; notifStockLimit=50; renderNotifBadgeAndPanel(); }
+function notifStockMore(){ notifStockLimit+=50; renderNotifBadgeAndPanel(); }
+function notifMore(){ notifLimit+=50; renderNotifBadgeAndPanel(); }
+/* Stock alert rule: reorder level set -> level par ya neeche. Smart mode me: item kabhi bika ho (finalized bill) aur ab stock<=0.
+   Naye add / import / premium items (stock 0, kabhi bika nahi) alert me nahi aate. */
+function notifStockCompute(sm){
+const mode=notifStockMode();
+if(typeof db==='undefined'||!db) return [];
+let rv={}; try{ rv=(db.accounts&&db.accounts.inv&&db.accounts.inv.reorder)||{}; }catch(e){}
+const res=[];
+(db.items||[]).forEach(it=>{
+try{
+if(it.active===false||(it.isPremium&&it.premiumInactive)) return;
+const t=trueStock(it,sm);
+const r=rv[it.id]; const lvl=(r&&+r.level>0)?+r.level:0;
+if(lvl>0){ if(t<=lvl) res.push({it:it,t:t,low:t>0}); return; }
+if(mode==='smart' && t<=0 && sm && (sm.get(it.id)||0)>0) res.push({it:it,t:t,low:false});
+}catch(e){}
+});
+res.sort((a,b)=>a.t-b.t);
+return res;
+}
+function notifStockDetailHtml(){
+const sl=notifStockCompute(buildSoldQtyMap());
+const mode=notifStockMode();
+let h=`<div style="margin:-4px 2px 12px;padding:10px 12px;border-radius:14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25)">`;
+h+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-muted)"><span>Stock alerts</span><select onchange="notifStockSetMode(this.value)" style="font-size:11px;padding:4px 6px;border-radius:8px"><option value="smart"${mode==='smart'?' selected':''}>Smart (bika hua + reorder)</option><option value="reorder"${mode==='reorder'?' selected':''}>Sirf reorder level</option></select></div>`;
+sl.slice(0,notifStockLimit).forEach(x=>{
+h+=`<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid rgba(128,128,128,.15);font-size:13px"><span>${esc(x.it.name||'Item')}</span><b style="white-space:nowrap;color:${x.low?'#f59e0b':'#f43f5e'}">${money(x.t)}</b></div>`;
+});
+if(sl.length>notifStockLimit) h+=`<div style="text-align:center;margin-top:8px"><button type="button" class="nf-btn ghost" onclick="event.stopPropagation();notifStockMore()">Aur dikhao (${Math.min(50,sl.length-notifStockLimit)})</button></div>`;
+return h+'</div>';
+}
+function notifPruneOldStock(){
+try{
+[notifDismissedKey(),notifSeenKey()].forEach(k=>{
+const a=JSON.parse(localStorage.getItem(k)||'[]');
+if(Array.isArray(a)&&a.some(x=>String(x).indexOf('stock:')===0)) localStorage.setItem(k,JSON.stringify(a.filter(x=>String(x).indexOf('stock:')!==0)));
+});
+const fk=notifFirstKey(); const m=JSON.parse(localStorage.getItem(fk)||'{}')||{}; let ch=false;
+Object.keys(m).forEach(x=>{ if(x.indexOf('stock:')===0){ delete m[x]; ch=true; } });
+if(ch) localStorage.setItem(fk,JSON.stringify(m));
+}catch(e){}
+}
 function computeNotifications(){
+if(!_nfStockPruned && typeof currentUser!=='undefined' && currentUser){ _nfStockPruned=true; notifPruneOldStock(); }
 const out=[];
 const hasDb=!(typeof db==='undefined'||!db);
 const todayStr=new Date().toISOString().slice(0,10);
@@ -5843,14 +5891,15 @@ body:`<b>${invNo}</b> — ${cname} ko payment reminder email chala gaya`});
 }
 }catch(e){}
 });
-(hasDb?(db.items||[]):[]).forEach(it=>{
-try{
-if(trueStock(it)<=0){
-out.push({ic:'📦',type:'stock',key:'stock:'+it.id,title:'Stock khatam',
-body:`<b>${esc(it.name||'Item')}</b> stock khatam ho gaya hai`});
+if(hasDb){
+const stockList=notifStockCompute(buildSoldQtyMap());
+if(stockList.length){
+const nm=stockList.slice(0,3).map(x=>esc(x.it.name||'Item')).join(', ');
+out.push({ic:'📦',type:'stock',key:'stockd:'+stockList.length,title:'Stock alert — '+stockList.length+' items',
+body:`<b>${nm}</b>${stockList.length>3?' aur '+(stockList.length-3)+' items':''} ka stock khatam / kam hai`,
+actions:`<button class="nf-btn" onclick="event.stopPropagation();notifStockToggle()">${notifStockOpen?'Chhupao':'Dekho'}</button>`});
 }
-}catch(e){}
-});
+}
 Object.keys(myConnections||{}).forEach(otherUid=>{
 const c=myConnections[otherUid];
 if(c.status==='pending'&&c.requestedBy!==currentUser.uid){
@@ -5936,12 +5985,14 @@ html=`<div class="nf-empty"><div class="nf-eico">${list.length?'🗂️':'🔔'}
 } else {
 const groups=[[],[],[],[],[]];
 shown.forEach(n=>groups[nfGroupOf(n)].push(n));
-let idx=0;
+let idx=0, left=notifLimit;
 groups.forEach((g,gi)=>{
-if(!g.length) return;
+if(!g.length||left<=0) return;
 g.sort((a,b)=>b.ts-a.ts);
-html+=`<div class="nf-grp">${NF_GROUPS[gi]}</div>`+g.map(n=>nfCardHtml(n,idx++)).join('');
+const part=g.slice(0,left); left-=part.length;
+html+=`<div class="nf-grp">${NF_GROUPS[gi]}</div>`+part.map(n=>nfCardHtml(n,idx++)+((n.type==='stock'&&notifStockOpen)?notifStockDetailHtml():'')).join('');
 });
+if(shown.length>notifLimit) html+=`<div style="text-align:center;margin:14px 0"><button type="button" class="nf-btn ghost" onclick="notifMore()">Aur dikhao (${Math.min(50,shown.length-notifLimit)})</button></div>`;
 }
 setH('notifPanelBody',html);
 }
@@ -6002,7 +6053,7 @@ notifSelectMode=false; notifSelectedKeys=new Set();
 renderNotifBadgeAndPanel();
 }
 function notifSetFilter(f){
-notifFilter=f;
+notifFilter=f; notifLimit=50;
 renderNotifBadgeAndPanel();
 const sc=document.querySelector('#notifPanel .nf-scroll'); if(sc) sc.scrollTop=0;
 }
@@ -6043,7 +6094,7 @@ function toggleNotifPanel(ev){
 const page=document.getElementById('notifPanel');
 if(!page) return;
 if(page.classList.contains('show')){ closeNotifPanel(); return; }
-notifFilter='all'; notifSelectMode=false; notifSelectedKeys=new Set();
+notifFilter='all'; notifLimit=50; notifStockOpen=false; notifStockLimit=50; notifSelectMode=false; notifSelectedKeys=new Set();
 page.classList.add('show');
 document.body.classList.add('nf-lock');
 document.addEventListener('keydown',notifKeyHandler);
