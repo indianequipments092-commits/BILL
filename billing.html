@@ -18832,7 +18832,8 @@ st.textContent='#bxPage{position:fixed;inset:0;z-index:2000;background:var(--bg-
 +'.bx-r1{display:flex;justify-content:space-between;gap:8px;font-size:13px}'
 +'.bx-r2{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
 +'.bx-empty{padding:18px;text-align:center;color:var(--text-muted);font-size:13px}'
-+'.bx-foot{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border-color);background:var(--bg-dark);display:flex;align-items:center;gap:10px}'
++'.bx-foot{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border-color);background:var(--bg-dark);display:flex;flex-direction:column;gap:8px}'
++'.bx-btns{display:flex;gap:10px}.bx-btns .btn{flex:1}'
 +'.bx-sum{flex:1;font-size:12.5px;font-weight:700}'
 +'.bx-sum small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}'
 +'.bx-opt{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text-main);cursor:pointer}'
@@ -18885,7 +18886,7 @@ else parts=(k*Math.ceil(n/PART))+' PDF file(s) — copy-wise';
 }
 $('bxPill').textContent=n+' selected';
 $('bxSum').innerHTML=n+' bills × '+k+' copies = '+(n*k)+' copies<small>'+parts+'</small>';
-$('bxGo').disabled=BX.busy||!n||!k;
+$('bxGo').disabled=BX.busy||!n||!k; $('bxShare').disabled=BX.busy||!n||!k;
 var clr=$('bxClear'); if(clr) clr.textContent='Clear ('+BX.sel.size+')';
 var all=$('bxAll');
 if(all&&BX.arr){
@@ -18944,7 +18945,7 @@ return '<div class="bx-head"><button class="btn muted" id="bxClose" type="button
 +'<p class="sub" style="margin:8px 0 0;font-size:12px">Bade export me PDF '+PART+'-'+PART+' bills ke parts me banti hai, taaki phone hang na ho.</p></div>'
 +'<div class="bx-card" id="bxProg" style="display:none"><div id="bxProgTxt" style="font-size:13px;font-weight:700"></div><div class="bx-prog"><i id="bxProgBar"></i></div><button class="btn muted" id="bxCancel" type="button">Cancel</button></div>'
 +'</div>'
-+'<div class="bx-foot"><div class="bx-sum" id="bxSum"></div><button class="btn primary" id="bxGo" type="button">⬇ Export PDF</button></div>';
++'<div class="bx-foot"><div class="bx-sum" id="bxSum"></div><div class="bx-btns"><button class="btn primary" id="bxGo" type="button">⬇ Export PDF</button><button class="btn success" id="bxShare" type="button">📤 Share PDF</button></div></div>';
 }
 window.openBulkExport=function(){
 injectStyle();
@@ -18980,7 +18981,8 @@ copyBoxes.forEach(function(cb){ cb.checked=on; }); updateSummary();
 [].slice.call(pg.querySelectorAll('input[name=bxOut]')).forEach(function(r){ r.onchange=function(){ BX.out=r.value; updateSummary(); }; });
 $('bxClose').onclick=closePage;
 $('bxCancel').onclick=function(){ BX.cancel=true; $('bxProgTxt').textContent='Cancel ho raha hai…'; };
-$('bxGo').onclick=runExport;
+$('bxGo').onclick=function(){ runExport('save'); };
+$('bxShare').onclick=function(){ runExport('share'); };
 renderList();
 };
 function closePage(){
@@ -18990,11 +18992,13 @@ var pg=$('bxPage'); if(pg) pg.remove();
 document.body.style.overflow='';
 }
 function progress(txt,pct){
+if($('bxProg').style.display==='none'){ $('bxProg').style.display=''; try{ $('bxProg').scrollIntoView({block:'center'}); }catch(e){} }
 $('bxProg').style.display='';
 $('bxProgTxt').textContent=txt;
 $('bxProgBar').style.width=(pct||0)+'%';
 }
-function runExport(){
+function runExport(kind){
+kind=kind||'save';
 var invs=selectedInvoices();
 if(!invs.length){ alert('Kam se kam ek invoice select karo.'); return; }
 var copies=BX.copyOrder.map(function(i){return COPY_LABELS[i];});
@@ -19012,6 +19016,7 @@ function partSuffix(i,n){ return n>1?'-Part'+(i+1)+'of'+n:''; }
 function invWiseBody(list){ var parts=[]; list.forEach(function(inv){ copies.forEach(function(c){ parts.push(doc(inv,c)); }); }); return parts.join(BRK); }
 function copyWiseBody(list,c){ return list.map(function(inv){ return doc(inv,c); }).join(BRK); }
 
+if(!app&&kind==='share'){ alert('PDF share sirf APK me chalta hai. Browser me Export PDF use karo.'); return; }
 if(!app){
 // Browser: ek hi print window (Save as PDF) — sab bills ek saath
 var body;
@@ -19034,9 +19039,23 @@ copies.forEach(function(c){ ch2.forEach(function(list,i){
 jobs.push({name:'Invoices-'+shortOf(c)+'-'+stamp+partSuffix(i,ch2.length)+'.pdf',make:function(){ return wrap('Invoices - '+c,copyWiseBody(list,c)); }});
 }); });
 }
-if(jobs.length>60&&!confirm(jobs.length+' alag PDF files banengi. Merged PDF zyada aasan rahegi. Phir bhi aage badhein?')) return;
+var lim=(kind==='share')?20:60;
+if(jobs.length>lim&&!confirm(jobs.length+' alag PDF files '+(kind==='share'?'share hongi':'banengi')+'. Merged PDF zyada aasan rahegi. Phir bhi aage badhein?')) return;
 BX.busy=true; BX.cancel=false; updateSummary();
 progress('PDF ban rahi hai… 0/'+jobs.length,0);
+if(kind==='share'){
+function endUi(msg,pct){
+BX.busy=false; updateSummary(); progress(msg,pct);
+var cb=$('bxCancel'); if(cb) cb.style.display='none';
+setTimeout(function(){ var p=$('bxProg'); if(p){ p.style.display='none'; var c=$('bxCancel'); if(c) c.style.display=''; } },6000);
+}
+IEPDF.shareBulk(jobs,function(done,total){ progress('PDF ban rahi hai… '+done+'/'+total,Math.round(done*100/total)); },function(){ return BX.cancel; })
+.then(function(res){
+if(res&&res.cancelled) endUi('Cancel kiya — share nahi hua',0);
+else endUi('✅ '+(res?res.shared:0)+' PDF share ke liye taiyaar',100);
+},function(e){ console.warn(e); endUi('PDF share nahi ho payi — app update karke dobara try karo',0); });
+return;
+}
 IEPDF.saveBulk(jobs,function(done,total){ progress('PDF ban rahi hai… '+done+'/'+total,Math.round(done*100/total)); },function(){ return BX.cancel; })
 .then(function(res){
 BX.busy=false; updateSummary();
@@ -19126,6 +19145,25 @@ if(/cancel/i.test(msgOf(e))) return;
 console.warn(e); toast('PDF share nahi ho payi — app update karke dobara try karo',4500);
 });
 }
+function shareBulk(items,onProg,isCancelled){
+var uris=[], chain=Promise.resolve();
+items.forEach(function(it){
+chain=chain.then(function(){
+if(isCancelled&&isCancelled()) return;
+return new Promise(function(r){ setTimeout(r,30); }).then(function(){
+var html=it.html||(it.make&&it.make());
+return np('makePdf',{html:html,name:it.name});
+}).then(function(r){ uris.push(r.uri); if(onProg) onProg(uris.length,items.length); });
+});
+});
+return chain.then(function(){
+if(isCancelled&&isCancelled()) return {shared:0,cancelled:true};
+return call('Share','share',{title:items[0].name,files:uris,dialogTitle:'Share PDF'}).then(function(){ return {shared:uris.length}; });
+}).catch(function(e){
+if(/cancel/i.test(msgOf(e))) return {shared:uris.length};
+throw e;
+});
+}
 function saveBulk(items,onProg,isCancelled){
 function run(retry){
 return ensureFolder().then(function(f){
@@ -19180,7 +19218,7 @@ if(a) a.onclick=function(e){ e.preventDefault(); np('pickFolder').then(function(
 });
 }
 }
-return {choose:choose,savePdfs:savePdfs,sharePdfs:sharePdfs,saveBulk:saveBulk,isApp:isApp};
+return {choose:choose,savePdfs:savePdfs,sharePdfs:sharePdfs,saveBulk:saveBulk,shareBulk:shareBulk,isApp:isApp};
 })();</script>
 <script id="premium-icons">(function(){
 var P={p:['#818cf8','#c084fc'],g:['#34d399','#14b8a6'],r:['#fb7185','#f43f5e'],a:['#fbbf24','#f97316'],c:['#22d3ee','#3b82f6'],s:['#e2e8f0','#94a3b8'],y:['#fde047','#f59e0b'],k:['#f472b6','#a78bfa']};
