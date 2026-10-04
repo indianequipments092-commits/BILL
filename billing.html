@@ -2888,17 +2888,17 @@ const subHtml=Object.keys(subs).map(sc=>{
 const sub=subs[sc];
 const subChecked=chosen && (chosen.all || (chosen.subs&&chosen.subs.includes(sc)));
 return `<label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:12.5px;padding:4px 0 4px 22px;cursor:pointer">
-        <input type="checkbox" class="ipw-sub" data-cat="${cc}" data-sub="${sc}" ${subChecked?'checked':''}>
+        <input type="checkbox" class="ipw-sub" data-cat="${cc}" data-sub="${sc}" ${subChecked?'checked':''} onchange="ipwSyncCat('${cc}')">
         <span>${esc(sub.name)} <span style="color:var(--text-muted)">(${cc}${sc})</span></span>
       </label>`;
 }).join('');
-const catChecked=chosen&&chosen.all;
+const catChecked=!!(chosen&&chosen.all);
 return `<div style="border:1px solid var(--border-color);border-radius:10px;padding:10px 12px;margin-bottom:10px">
       <label style="display:flex;align-items:center;gap:8px;text-transform:none;font-weight:700;font-size:13.5px;cursor:pointer">
         <input type="checkbox" class="ipw-cat" data-cat="${cc}" ${catChecked?'checked':''} onchange="ipwCatToggle(this)">
         <span>${esc(cat.name)} <span style="color:var(--text-muted)">(${cc})</span> — sab subcategories</span>
       </label>
-      <div class="ipw-subwrap" data-cat="${cc}" style="${catChecked?'display:none':''}">${subHtml||'<p class="sub" style="margin:4px 0 0 22px">Koi subcategory abhi nahi hai.</p>'}</div>
+      <div class="ipw-subwrap" data-cat="${cc}" style="">${subHtml||'<p class="sub" style="margin:4px 0 0 22px">Koi subcategory abhi nahi hai.</p>'}</div>
     </div>`;
 }).join('') || '<p class="sub">Abhi tak koi master catalog category nahi hai. Admin se catalog banwane ke baad yahan dikhega.</p>';
 const html=`<div class="modal show" id="invPremiumWizardModal"><div class="modalbox">
@@ -2912,16 +2912,27 @@ const html=`<div class="modal show" id="invPremiumWizardModal"><div class="modal
   </div></div>`;
 const wrap=document.createElement('div'); wrap.id='invPremiumWizardWrap'; wrap.innerHTML=html;
 document.body.appendChild(wrap);
+document.querySelectorAll('.ipw-cat').forEach(c=>ipwSyncCat(c.dataset.cat));
 }
 function ipwCatToggle(cb){
-const wrap=document.querySelector('.ipw-subwrap[data-cat="'+cb.dataset.cat+'"]');
-if(wrap) wrap.style.display=cb.checked?'none':'';
+// category tick/untick -> uski saari subcategories bhi tick/untick
+document.querySelectorAll('.ipw-sub[data-cat="'+cb.dataset.cat+'"]').forEach(x=>{ x.checked=cb.checked; });
+cb.indeterminate=false;
+}
+function ipwSyncCat(cc){
+// subcategory badalne par category ka tick update: sab ON = tick, koi nahi = untick, kuch = half
+const subs=[...document.querySelectorAll('.ipw-sub[data-cat="'+cc+'"]')];
+const cat=document.querySelector('.ipw-cat[data-cat="'+cc+'"]');
+if(!cat||!subs.length) return;
+const n=subs.filter(x=>x.checked).length;
+cat.checked=(n===subs.length);
+cat.indeterminate=(n>0 && n<subs.length);
 }
 function closeInvPremiumWizard(){ const el=id('invPremiumWizardWrap'); if(el) el.remove(); }
 function saveInvPremiumSetup(){
 const categories={};
 document.querySelectorAll('.ipw-cat').forEach(cb=>{
-if(cb.checked) categories[cb.dataset.cat]={all:true};
+if(cb.checked && !cb.indeterminate) categories[cb.dataset.cat]={all:true};
 });
 document.querySelectorAll('.ipw-sub').forEach(cb=>{
 const cc=cb.dataset.cat;
@@ -7028,6 +7039,7 @@ showAuthOverlay();
       <div><label>From Date</label><input id="histFrom" type="date" onchange="renderHistory()"></div>
       <div><label>To Date</label><input id="histTo" type="date" onchange="renderHistory()"></div>
     </div>
+    <button class="btn danger" type="button" id="bulkExpBar" onclick="openBulkExport()" style="width:100%;margin-top:14px;justify-content:space-between"><span>📦 Bulk Export PDF</span><span>⌃</span></button>
     <div class="table-wrap" style="margin-top:16px">
       <table><thead><tr><th>Invoice No</th><th>FY</th><th>Date</th><th>Customer</th><th>GSTIN</th><th class="right">Grand Total</th><th>Payment Status</th><th>Payment Mode</th><th>Status</th><th>Actions</th></tr></thead><tbody id="historyBody"></tbody></table>
     </div>
@@ -18792,6 +18804,256 @@ d=d||{};
 return call('Share','share',{title:d.title,text:d.text,url:d.url,dialogTitle:'Share'});
 };
 })();</script>
+<script id="bulk-export">
+(function(){
+var COPY_LABELS=['Original for Recipient','Duplicate for Transporter','Triplicate for Supplier'];
+var PART=25;
+var BX=null;
+function $(i){return document.getElementById(i);}
+function injectStyle(){
+if($('bxStyle')) return;
+var st=document.createElement('style'); st.id='bxStyle';
+st.textContent='#bxPage{position:fixed;inset:0;z-index:2000;background:var(--bg-dark);display:flex;flex-direction:column;color:var(--text-main)}'
++'.bx-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border-color)}'
++'.bx-head h2{margin:0;font-size:16px;flex:1}'
++'.bx-pill{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:700;background:var(--primary);color:#fff;white-space:nowrap}'
++'.bx-body{flex:1;overflow:auto;padding:12px 14px 20px;-webkit-overflow-scrolling:touch}'
++'.bx-card{border:1px solid var(--border-color);background:var(--bg-card);border-radius:14px;padding:12px;margin-bottom:12px}'
++'.bx-title{font-weight:800;font-size:13px;margin:0 0 10px}'
++'.bx-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}'
++'.bx-grid .full{grid-column:1/-1}'
++'.bx-card label.l{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}'
++'.bx-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}'
++'.bx-list{max-height:46vh;overflow:auto;border:1px solid var(--border-color);border-radius:12px}'
++'.bx-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border-color);cursor:pointer}'
++'.bx-row.on{background:rgba(99,102,241,.18)}'
++'.bx-row input{width:20px;height:20px;min-height:0;pointer-events:none;flex:none;margin:0}'
++'.bx-main{flex:1;min-width:0}'
++'.bx-r1{display:flex;justify-content:space-between;gap:8px;font-size:13px}'
++'.bx-r2{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
++'.bx-empty{padding:18px;text-align:center;color:var(--text-muted);font-size:13px}'
++'.bx-foot{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border-color);background:var(--bg-dark);display:flex;align-items:center;gap:10px}'
++'.bx-sum{flex:1;font-size:12.5px;font-weight:700}'
++'.bx-sum small{display:block;font-weight:500;color:var(--text-muted);font-size:11px}'
++'.bx-opt{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text-main);cursor:pointer}'
++'.bx-opt input{width:auto;min-height:0;margin:0}'
++'.bx-prog{height:8px;border-radius:6px;background:var(--border-color);overflow:hidden;margin:10px 0}'
++'.bx-prog>i{display:block;height:100%;width:0;background:var(--primary);transition:width .2s}';
+document.head.appendChild(st);
+}
+function sortInv(arr,sortBy){
+return arr.slice().sort(function(a,b){
+switch(sortBy){
+case 'date_asc': return String(a.date||'').localeCompare(String(b.date||''));
+case 'inv_desc': return String(b.invoiceNumber||'').localeCompare(String(a.invoiceNumber||''),undefined,{numeric:true});
+case 'inv_asc': return String(a.invoiceNumber||'').localeCompare(String(b.invoiceNumber||''),undefined,{numeric:true});
+case 'amt_desc': return Number(b.totals&&b.totals.grand||0)-Number(a.totals&&a.totals.grand||0);
+case 'amt_asc': return Number(a.totals&&a.totals.grand||0)-Number(b.totals&&b.totals.grand||0);
+case 'cust_asc': return String(a.customer&&a.customer.name||'').localeCompare(String(b.customer&&b.customer.name||''));
+case 'date_desc': default: return String(b.date||'').localeCompare(String(a.date||''));
+}
+});
+}
+function filtered(){
+var q=(BX.q||'').toLowerCase();
+var arr=db.invoices.filter(function(x){
+var c=x.customer||{};
+return (!q||[x.invoiceNumber,c.name,c.gst].join(' ').toLowerCase().indexOf(q)>=0)
+&&(!BX.fy||invoiceFY(x)===BX.fy)
+&&(!BX.st||x.status===BX.st)
+&&(!BX.from||(x.date||'')>=BX.from)
+&&(!BX.to||(x.date||'')<=BX.to);
+});
+return sortInv(arr,BX.sort);
+}
+function selectedInvoices(){
+return sortInv(db.invoices.filter(function(x){return BX.sel.has(x.id);}),BX.sort);
+}
+function rowHtml(x){
+var c=x.customer||{}, on=BX.sel.has(x.id), st=String(x.status||'');
+return '<div class="bx-row'+(on?' on':'')+'" data-id="'+esc(x.id)+'"><input type="checkbox" '+(on?'checked':'')+' tabindex="-1">'
++'<div class="bx-main"><div class="bx-r1"><b>'+esc(x.invoiceNumber)+'</b><span>₹ '+money(x.totals&&x.totals.grand)+'</span></div>'
++'<div class="bx-r2">'+esc(x.date)+' • '+esc(c.name||'-')+' • <span class="badge '+st.toLowerCase()+'">'+esc(st)+'</span></div></div></div>';
+}
+function updateSummary(){
+var n=selectedInvoices().length, k=BX.copyOrder.length;
+var parts='';
+if(n&&k){
+if(BX.out==='sep') parts=(n*k)+' alag PDF files';
+else if(BX.out==='inv') parts=Math.ceil(n/PART)+' PDF file(s) — har file me '+PART+' bills tak';
+else parts=(k*Math.ceil(n/PART))+' PDF file(s) — copy-wise';
+}
+$('bxPill').textContent=n+' selected';
+$('bxSum').innerHTML=n+' bills × '+k+' copies = '+(n*k)+' copies<small>'+parts+'</small>';
+$('bxGo').disabled=BX.busy||!n||!k;
+var clr=$('bxClear'); if(clr) clr.textContent='Clear ('+BX.sel.size+')';
+var all=$('bxAll');
+if(all&&BX.arr){
+var allSel=BX.arr.length>0&&BX.arr.every(function(x){return BX.sel.has(x.id);});
+all.textContent=(allSel?'☑ Unselect All (':'✅ Select All (')+BX.arr.length+')';
+all.disabled=!BX.arr.length;
+}
+}
+function renderList(){
+var arr=filtered(); BX.arr=arr;
+var l=$('bxList');
+if(!arr.length){ l.innerHTML='<div class="bx-empty">Koi invoice nahi mila.</div>'; updateSummary(); return; }
+var show=arr.slice(0,BX.lim);
+l.innerHTML=show.map(rowHtml).join('')+(arr.length>show.length?'<div class="bx-empty"><button class="btn muted" data-more="1">Aur dikhao ('+(arr.length-show.length)+' baaki)</button></div>':'');
+updateSummary();
+}
+function toggleRow(row){
+var idv=row.getAttribute('data-id');
+if(BX.sel.has(idv)) BX.sel.delete(idv); else BX.sel.add(idv);
+var on=BX.sel.has(idv);
+row.classList.toggle('on',on);
+var cb=row.querySelector('input'); if(cb) cb.checked=on;
+updateSummary();
+}
+function selectAllToggle(){
+var allSel=BX.arr.length>0&&BX.arr.every(function(x){return BX.sel.has(x.id);});
+BX.arr.forEach(function(x){ if(allSel) BX.sel.delete(x.id); else BX.sel.add(x.id); });
+renderList();
+}
+function build(){
+var copiesHtml=COPY_LABELS.map(function(l,i){
+return '<label class="bx-opt"><input type="checkbox" class="bx-copy" data-i="'+i+'" '+(i===0?'checked':'')+'> '+l+'</label>';
+}).join('');
+return '<div class="bx-head"><button class="btn muted" id="bxClose" type="button" style="min-height:38px;padding:8px 12px">✕</button><h2>📦 Bulk Export PDF</h2><span class="bx-pill" id="bxPill">0 selected</span></div>'
++'<div class="bx-body">'
++'<div class="bx-card"><p class="bx-title">1️⃣ Choose Invoices</p>'
++'<div class="bx-grid">'
++'<div class="full"><label class="l">Search</label><input id="bxQ" placeholder="Invoice / Customer / GST..."></div>'
++'<div><label class="l">Financial Year</label><select id="bxFY"></select></div>'
++'<div><label class="l">Status</label><select id="bxSt"></select></div>'
++'<div><label class="l">From Date</label><input type="date" id="bxFrom"></div>'
++'<div><label class="l">To Date</label><input type="date" id="bxTo"></div>'
++'<div class="full"><label class="l">Sort By</label><select id="bxSort">'
++'<option value="date_desc">Date (Newest First)</option><option value="date_asc">Date (Oldest First)</option>'
++'<option value="inv_desc">Invoice No (High-Low)</option><option value="inv_asc">Invoice No (Low-High)</option>'
++'<option value="amt_desc">Amount (High-Low)</option><option value="amt_asc">Amount (Low-High)</option>'
++'<option value="cust_asc">Customer (A-Z)</option></select></div></div>'
++'<div class="bx-actions"><button class="btn success" id="bxAll" type="button">✅ Select All</button><button class="btn muted" id="bxClear" type="button">Clear (0)</button></div>'
++'<div class="bx-list" id="bxList"></div></div>'
++'<div class="bx-card"><p class="bx-title">2️⃣ Copies</p>'
++'<label class="bx-opt"><input type="checkbox" id="bxCopyAll"> All copies</label>'+copiesHtml+'</div>'
++'<div class="bx-card"><p class="bx-title">3️⃣ Output</p>'
++'<label class="bx-opt"><input type="radio" name="bxOut" value="inv" checked> Merged PDF — har invoice ki copies saath</label>'
++'<label class="bx-opt"><input type="radio" name="bxOut" value="copy"> Merged PDF — copy-wise (saare Original ek me, saare Duplicate ek me)</label>'
++'<label class="bx-opt"><input type="radio" name="bxOut" value="sep"> Separate — har invoice ki har copy alag PDF</label>'
++'<p class="sub" style="margin:8px 0 0;font-size:12px">Bade export me PDF '+PART+'-'+PART+' bills ke parts me banti hai, taaki phone hang na ho.</p></div>'
++'<div class="bx-card" id="bxProg" style="display:none"><div id="bxProgTxt" style="font-size:13px;font-weight:700"></div><div class="bx-prog"><i id="bxProgBar"></i></div><button class="btn muted" id="bxCancel" type="button">Cancel</button></div>'
++'</div>'
++'<div class="bx-foot"><div class="bx-sum" id="bxSum"></div><button class="btn primary" id="bxGo" type="button">⬇ Export PDF</button></div>';
+}
+window.openBulkExport=function(){
+injectStyle();
+var old=$('bxPage'); if(old) old.remove();
+try{ populateFYFilter(); }catch(e){}
+function hv(i){ var e=$(i); return e?e.value:''; }
+BX={sel:new Set(),q:hv('histSearch'),fy:hv('histFY'),st:hv('histStatus'),from:hv('histFrom'),to:hv('histTo'),sort:hv('histSort')||'date_desc',copyOrder:[0],out:'inv',lim:50,busy:false,cancel:false,arr:[]};
+var pg=document.createElement('div'); pg.id='bxPage'; pg.innerHTML=build();
+document.body.appendChild(pg);
+document.body.style.overflow='hidden';
+$('bxFY').innerHTML=$('histFY')?$('histFY').innerHTML:'<option value="">All Financial Years</option>';
+$('bxSt').innerHTML=$('histStatus')?$('histStatus').innerHTML:'<option value="">All Statuses</option>';
+$('bxQ').value=BX.q; $('bxFY').value=BX.fy; $('bxSt').value=BX.st; $('bxFrom').value=BX.from; $('bxTo').value=BX.to; $('bxSort').value=BX.sort;
+var deb=null;
+function refilter(){ BX.q=$('bxQ').value; BX.fy=$('bxFY').value; BX.st=$('bxSt').value; BX.from=$('bxFrom').value; BX.to=$('bxTo').value; BX.sort=$('bxSort').value; BX.lim=50; renderList(); }
+$('bxQ').oninput=function(){ clearTimeout(deb); deb=setTimeout(refilter,200); };
+['bxFY','bxSt','bxFrom','bxTo','bxSort'].forEach(function(i){ $(i).onchange=refilter; });
+$('bxAll').onclick=selectAllToggle;
+$('bxClear').onclick=function(){ BX.sel.clear(); renderList(); };
+$('bxList').onclick=function(e){
+if(e.target.closest('[data-more]')){ BX.lim+=50; renderList(); return; }
+var row=e.target.closest('.bx-row'); if(row) toggleRow(row);
+};
+var copyBoxes=[].slice.call(pg.querySelectorAll('.bx-copy'));
+copyBoxes.forEach(function(cb){ cb.onchange=function(){
+var i=+cb.dataset.i; BX.copyOrder=BX.copyOrder.filter(function(x){return x!==i;}); if(cb.checked) BX.copyOrder.push(i);
+$('bxCopyAll').checked=BX.copyOrder.length===COPY_LABELS.length; updateSummary();
+}; });
+$('bxCopyAll').onchange=function(){
+var on=this.checked; BX.copyOrder=on?COPY_LABELS.map(function(_,i){return i;}):[];
+copyBoxes.forEach(function(cb){ cb.checked=on; }); updateSummary();
+};
+[].slice.call(pg.querySelectorAll('input[name=bxOut]')).forEach(function(r){ r.onchange=function(){ BX.out=r.value; updateSummary(); }; });
+$('bxClose').onclick=closePage;
+$('bxCancel').onclick=function(){ BX.cancel=true; $('bxProgTxt').textContent='Cancel ho raha hai…'; };
+$('bxGo').onclick=runExport;
+renderList();
+};
+function closePage(){
+if(BX&&BX.busy&&!confirm('Export chal raha hai. Cancel karke band karu?')) return;
+if(BX) BX.cancel=true;
+var pg=$('bxPage'); if(pg) pg.remove();
+document.body.style.overflow='';
+}
+function progress(txt,pct){
+$('bxProg').style.display='';
+$('bxProgTxt').textContent=txt;
+$('bxProgBar').style.width=(pct||0)+'%';
+}
+function runExport(){
+var invs=selectedInvoices();
+if(!invs.length){ alert('Kam se kam ek invoice select karo.'); return; }
+var copies=BX.copyOrder.map(function(i){return COPY_LABELS[i];});
+if(!copies.length){ alert('Kam se kam ek copy select karo.'); return; }
+var mode=BX.out, app=window.IEPDF&&IEPDF.isApp();
+var css=invPrintStyles();
+function wrap(title,body){ return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(title)+'</title>\n<style>'+css+'</style></head><body>'+body+'</body></html>'; }
+function doc(inv,c){ return buildPrintDocument(JSON.parse(JSON.stringify(inv)),c); }
+function baseName(inv){ return String(inv.invoiceNumber||'invoice').replace(/[\\\/:*?"<>|]+/g,'-'); }
+function shortOf(c){ return String(c).split(' ')[0]; }
+var BRK='<div class="page-break"></div>';
+var stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+function chunks(arr){ var o=[]; for(var i=0;i<arr.length;i+=PART) o.push(arr.slice(i,i+PART)); return o; }
+function partSuffix(i,n){ return n>1?'-Part'+(i+1)+'of'+n:''; }
+function invWiseBody(list){ var parts=[]; list.forEach(function(inv){ copies.forEach(function(c){ parts.push(doc(inv,c)); }); }); return parts.join(BRK); }
+function copyWiseBody(list,c){ return list.map(function(inv){ return doc(inv,c); }).join(BRK); }
+
+if(!app){
+// Browser: ek hi print window (Save as PDF) — sab bills ek saath
+var body;
+if(mode==='copy'){ body=copies.map(function(c){ return copyWiseBody(invs,c); }).join(BRK); }
+else body=invWiseBody(invs);
+IEPDF.savePdfs([{name:'Invoices-'+stamp+'.pdf',html:wrap('Invoices',body)}]);
+return;
+}
+var jobs=[];
+if(mode==='sep'){
+invs.forEach(function(inv){ copies.forEach(function(c){
+jobs.push({name:baseName(inv)+'-'+shortOf(c)+'.pdf',make:function(){ return wrap(inv.invoiceNumber+' - '+c,doc(inv,c)); }});
+}); });
+} else if(mode==='inv'){
+var ch=chunks(invs);
+ch.forEach(function(list,i){ jobs.push({name:'Invoices-'+stamp+partSuffix(i,ch.length)+'.pdf',make:function(){ return wrap('Invoices',invWiseBody(list)); }}); });
+} else {
+var ch2=chunks(invs);
+copies.forEach(function(c){ ch2.forEach(function(list,i){
+jobs.push({name:'Invoices-'+shortOf(c)+'-'+stamp+partSuffix(i,ch2.length)+'.pdf',make:function(){ return wrap('Invoices - '+c,copyWiseBody(list,c)); }});
+}); });
+}
+if(jobs.length>60&&!confirm(jobs.length+' alag PDF files banengi. Merged PDF zyada aasan rahegi. Phir bhi aage badhein?')) return;
+BX.busy=true; BX.cancel=false; updateSummary();
+progress('PDF ban rahi hai… 0/'+jobs.length,0);
+IEPDF.saveBulk(jobs,function(done,total){ progress('PDF ban rahi hai… '+done+'/'+total,Math.round(done*100/total)); },function(){ return BX.cancel; })
+.then(function(res){
+BX.busy=false; updateSummary();
+if(res&&res.noFolder){ progress('Folder select nahi kiya — PDF save nahi hui',0); }
+else if(BX.cancel){ progress('Cancel kiya — '+(res?res.saved:0)+' PDF save ho chuki thi',0); }
+else { progress('✅ '+res.saved+' PDF save ho gayi'+(res.folder?': '+res.folder:''),100); }
+$('bxCancel').style.display='none';
+setTimeout(function(){ var p=$('bxProg'); if(p){ p.style.display='none'; var c=$('bxCancel'); if(c) c.style.display=''; } },6000);
+},function(e){
+console.warn(e);
+BX.busy=false; updateSummary();
+progress('PDF save nahi ho payi — app update karke dobara try karo',0);
+});
+}
+})();
+
+</script>
 <script>window.IEPDF=(function(){
 var CAP=window.Capacitor;
 function isApp(){ return !!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform()); }
@@ -18864,6 +19126,29 @@ if(/cancel/i.test(msgOf(e))) return;
 console.warn(e); toast('PDF share nahi ho payi — app update karke dobara try karo',4500);
 });
 }
+function saveBulk(items,onProg,isCancelled){
+function run(retry){
+return ensureFolder().then(function(f){
+var saved=0, chain=Promise.resolve();
+items.forEach(function(it){
+chain=chain.then(function(){
+if(isCancelled&&isCancelled()) return;
+return new Promise(function(r){ setTimeout(r,30); }).then(function(){
+var html=it.html||(it.make&&it.make());
+return np('savePdf',{html:html,name:it.name});
+}).then(function(){ saved++; if(onProg) onProg(saved,items.length); });
+});
+});
+return chain.then(function(){ return {saved:saved,total:items.length,folder:(f&&f.name)||''}; });
+}).catch(function(e){
+var m=msgOf(e);
+if(/NO_FOLDER/.test(m)&&retry) return np('pickFolder').then(function(){ return run(false); });
+if(/CANCEL/i.test(m)) return {saved:0,total:items.length,noFolder:true};
+throw e;
+});
+}
+return run(true);
+}
 function choose(kind,cb){
 var el=document.getElementById('iePdfChoice');
 if(!el){
@@ -18895,7 +19180,7 @@ if(a) a.onclick=function(e){ e.preventDefault(); np('pickFolder').then(function(
 });
 }
 }
-return {choose:choose,savePdfs:savePdfs,sharePdfs:sharePdfs,isApp:isApp};
+return {choose:choose,savePdfs:savePdfs,sharePdfs:sharePdfs,saveBulk:saveBulk,isApp:isApp};
 })();</script>
 <script id="premium-icons">(function(){
 var P={p:['#818cf8','#c084fc'],g:['#34d399','#14b8a6'],r:['#fb7185','#f43f5e'],a:['#fbbf24','#f97316'],c:['#22d3ee','#3b82f6'],s:['#e2e8f0','#94a3b8'],y:['#fde047','#f59e0b'],k:['#f472b6','#a78bfa']};
