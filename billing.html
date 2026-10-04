@@ -7296,7 +7296,8 @@ showAuthOverlay();
         <div id="jrnlMoreMenu" class="hidden" style="position:fixed;z-index:9999;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:12px;padding:6px;min-width:220px;max-width:calc(100vw - 24px);max-height:70vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,0.4)">
           <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="(journalTab==='receipt'?exportReceiptLogCSV():exportJournalCSV());toggleJrnlMore()">Export CSV (filtered)</button>
           <button class="btn muted" style="width:100%;justify-content:flex-start;margin-bottom:4px" onclick="(journalTab==='receipt'?printReceiptLogReport():printJournalReport());toggleJrnlMore()">Print Filtered Report</button>
-          <button class="btn muted" style="width:100%;justify-content:flex-start" onclick="printJournalCustomerStatement();toggleJrnlMore()">Print Customer Statement</button>
+          <button class="btn muted" style="width:100%;justify-content:flex-start" onclick="printJournalCustomerStatement();toggleJrnlMore()">Statement of Account (Ledger)</button>
+          <button class="btn muted" style="width:100%;justify-content:flex-start;margin-top:4px" onclick="jrnlItemwise();toggleJrnlMore()">Item-wise Statement</button>
         </div>
       </div>
     </div>
@@ -8634,7 +8635,8 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
 
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
    <button class="btn muted" onclick="exportCustomerHistoryCSV()">Export Excel/CSV</button>
-   <button class="btn muted" onclick="printCustomerStatement()">Print Statement</button>
+   <button class="btn muted" onclick="printCustomerStatement()">Item-wise Statement</button>
+   <button class="btn muted" onclick="printJournalCustomerStatement(historyCustomerId,id('custHistFrom')?.value||'',id('custHistTo')?.value||'')">Statement of Account (Ledger)</button>
    <button class="btn success" onclick="shareCustomerHistoryWhatsApp()">Share on WhatsApp</button>
    <button class="btn primary" onclick="closeModal('customerHistoryModal')">Close</button>
  </div>
@@ -12693,11 +12695,11 @@ const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
 w.document.write(html); w.document.close();
 }
-function printJournalCustomerStatement(cidArg){
+function printJournalCustomerStatement(cidArg,fromArg,toArg){
 const custId=(typeof cidArg==='string'&&cidArg)||id('jrnlCustomer')?.value||'';
 if(!custId){alert('Pehle Customer chuno, phir Statement print karo.');return;}
 const cust=db.customers.find(c=>c.id===custId), s=db.settings||{};
-const from=id('custFrom')?.value||id('jrnlFrom')?.value||'', to=id('custTo')?.value||id('jrnlTo')?.value||'';
+const from=typeof fromArg==='string'?fromArg:(id('custFrom')?.value||id('jrnlFrom')?.value||''), to=typeof toArg==='string'?toArg:(id('custTo')?.value||id('jrnlTo')?.value||'');
 const ev=[];
 db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===custId).forEach(x=>{
 ev.push({d:x.date||'',o:0,t:'Invoice '+x.invoiceNumber,dr:Number(x.totals?.grand||0),cr:0});
@@ -12907,7 +12909,7 @@ function renderCustTab(){
 if(!id('custBody')) return;
 const q=(id('custSearch')?.value||'').toLowerCase(), st='padding:6px 8px;min-height:34px';
 const rows=custSummary().filter(c=>!q||c.name.toLowerCase().includes(q)).sort((a,b)=>b.bal-a.bal);
-id('custBody').innerHTML=rows.length?rows.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td class="right">₹ ${money(c.bal)}</td><td class="right">${c.adv?'₹ '+money(c.adv):'—'}</td><td>${esc(c.last)||'—'}</td><td>${c.bal>0?esc(c.old)||'—':'—'}</td><td style="white-space:nowrap">${c.id?`<button class="btn muted" style="${st}" onclick="printJournalCustomerStatement('${c.id}')">Statement</button> <button class="btn success" style="${st}" onclick="openCustReceipt('${c.id}')">Receipt</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="center">Koi customer nahi.</td></tr>';
+id('custBody').innerHTML=rows.length?rows.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td class="right">₹ ${money(c.bal)}</td><td class="right">${c.adv?'₹ '+money(c.adv):'—'}</td><td>${esc(c.last)||'—'}</td><td>${c.bal>0?esc(c.old)||'—':'—'}</td><td style="white-space:nowrap">${c.id?`<button class="btn muted" style="${st}" onclick="printJournalCustomerStatement('${c.id}')">A/c Statement</button> <button class="btn muted" style="${st}" onclick="openCustomerHistory('${c.id}')">Item-wise</button> <button class="btn success" style="${st}" onclick="openCustReceipt('${c.id}')">Receipt</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="center">Koi customer nahi.</td></tr>';
 }
 function openCustReceipt(cid){
 const sel=id('custRcCust');
@@ -13805,19 +13807,26 @@ let csv=['Invoice Number,Date,Item,HSN,Qty,Unit,Rate,GST %,Amount,Status'];
 rows.forEach(r=>csv.push([r.invoiceNumber,r.date,r.itemName,r.hsn,r.qty,r.unit,r.rate,r.gst,r.taxable,r.status].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')));
 downloadBlob(ieCreditCsv(csv,'customer history'),'IE-HISTORY-'+(cust.name||'customer').replace(/[^a-z0-9]+/gi,'-')+'.csv','text/csv');
 }
+function jrnlItemwise(){
+const c=id('jrnlCustomer')?.value||'';
+if(!c){alert('Pehle Customer chuno (All Invoices tab ke filter me), ya Customers tab me us customer ka "Item-wise" button dabao.');return;}
+openCustomerHistory(c);
+}
 function printCustomerStatement(){
 const cust=db.customers.find(x=>x.id===historyCustomerId);
 if(!cust) return;
 const rows=customerHistoryFilteredRows();
-const grand=rows.reduce((s,r)=>s+r.taxable,0);
+const fin=rows.filter(r=>r.status==='Finalized');
+const tTax=fin.reduce((s,r)=>s+r.taxable,0), tAmt=fin.reduce((s,r)=>s+r.amount,0);
+const from=id('custHistFrom')?.value||'', to=id('custHistTo')?.value||'';
 const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
-const rowsHtml=rows.map(r=>`<tr>
+const rowsHtml=rows.map(r=>`<tr${r.status==='Finalized'?'':' style="color:#888"'}>
     <td>${esc(r.invoiceNumber)}</td><td>${fmtDateShort(r.date)}</td><td>${esc(r.itemName)}</td>
-    <td>${esc(r.hsn)}</td><td style="text-align:right">${r.qty}</td><td style="text-align:right">₹ ${money(r.rate)}</td>
-    <td style="text-align:right">₹ ${money(r.taxable)}</td><td>${esc(r.status)}</td>
+    <td>${esc(r.hsn)}</td><td style="text-align:right">${r.qty}</td><td style="text-align:right">${money(r.rate)}</td>
+    <td style="text-align:right">${money(r.taxable)}</td><td style="text-align:right">${r.gst||0}%</td><td style="text-align:right">${money(r.amount)}</td><td>${esc(r.status)}</td>
   </tr>`).join('');
-w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Statement - ${esc(cust.name)}</title>
+w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Item-wise Statement - ${esc(cust.name)}</title>
   <style>
     @page{size:A4 portrait;margin:10mm}
     body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:0}
@@ -13828,15 +13837,17 @@ w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Statem
     th{background:#1e3a5f;color:#fff}
     tfoot td{font-weight:800;background:#f0f4f8}
   </style></head><body>
-  <h1>Customer Statement</h1>
+  <h1>Item-wise Sales Statement</h1>
   <p class="sub"><b>${esc(cust.name)}</b>${cust.gst?' — GSTIN: '+esc(cust.gst):''}</p>
   <p class="sub">${esc(cust.address||'')} ${esc(cust.city||'')} ${esc(cust.state||'')}</p>
-  <table><thead><tr><th>Invoice No</th><th>Date</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th></tr></thead>
-  <tbody>${rowsHtml||'<tr><td colspan="8" style="text-align:center">No records</td></tr>'}</tbody>
-  <tfoot><tr><td colspan="6" style="text-align:right">Total</td><td>₹ ${money(grand)}</td><td></td></tr></tfoot>
-  </table>${ieCreditHtml('customer statement')}</body></html>`);
+  <p class="sub">Period: ${esc(from||'Start')} to ${esc(to||'Today')}</p>
+  <table><thead><tr><th>Invoice No</th><th>Date</th><th>Item</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Total (incl. GST)</th><th>Status</th></tr></thead>
+  <tbody>${rowsHtml||'<tr><td colspan="10" style="text-align:center">No records</td></tr>'}</tbody>
+  <tfoot><tr><td colspan="6" style="text-align:right">Total (Finalized invoices only)</td><td style="text-align:right">₹ ${money(tTax)}</td><td></td><td style="text-align:right">₹ ${money(tAmt)}</td><td></td></tr></tfoot>
+  </table>
+  <p class="sub" style="margin-top:8px">Note: Payments aur balance ke liye "Statement of Account" dekhein. Draft invoices grey me hain aur total me nahi judte.</p>
+  ${ieCreditHtml('customer statement')}</body></html>`);
 w.document.close();
-setTimeout(()=>{ try{w.focus();w.print();}catch(e){} },600);
 }
 function shareCustomerHistoryWhatsApp(){
 const cust=db.customers.find(x=>x.id===historyCustomerId);
