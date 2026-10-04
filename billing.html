@@ -22996,6 +22996,11 @@ setInterval(tick,TICK);
 #ietHelp{position:fixed;right:14px;bottom:84px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(99,102,241,.6);background:#4f46e5;color:#fff;font-weight:900;font-size:18px;z-index:900;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;display:none}
 #ietHelp.show{display:block}
 #ietInvite{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:2147482000;width:min(420px,calc(100vw - 24px))}
+.iet-bad{outline:2px solid #ef4444!important;outline-offset:2px;border-radius:8px}
+.iet-card.bad{border-color:rgba(239,68,68,.75)}
+.iet-err{margin-top:8px;padding:7px 10px;border-radius:10px;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.5);color:#fecaca;font-size:12px;line-height:1.45;font-weight:600}
+[data-theme="light"] .iet-err{color:#991b1b;background:#fee2e2}
+.iet-ok{margin-top:8px;font-size:12px;font-weight:700;color:#34d399}
 .iet-pchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
 .iet-pchips button{border:1px solid var(--border-color,#334155);background:transparent;color:inherit;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer}
 </style>
@@ -23021,6 +23026,82 @@ function hasCompanies(){try{return Object.keys((userProfile&&userProfile.compani
 function fld(){var a=[].slice.call(arguments);return function(){return a.map(function(i){var e=document.getElementById(i);return e&&(e.closest('.auth-field')||e)}).filter(Boolean)}}
 function appOpen(){var a=document.getElementById('appRoot');return a&&!a.classList.contains('hidden')&&typeof currentCompanyId!=='undefined'&&!!currentCompanyId}
 
+/* ---------- Validation (mirrors the app's own rules: coSubmitFormGo / saveCustomer) ---------- */
+function gv(i){var e=document.getElementById(i);return e?String(e.value||'').trim():''}
+function wrapOf(i){var e=document.getElementById(i);return e&&(e.closest('.auth-field')||e.parentElement||e)}
+function iss(k,ids,th,te,h,e,msg){return {k:k,ids:ids,th:th,te:te,h:h,e:e,msg:msg||''}}
+var BANK_LBL={coBankName:'Bank Name',coAccName:'Account Holder Name',coAccNo:'Account Number'};
+function ifscWhy(v){
+ var n=v.length;
+ if(/[^A-Z0-9]/.test(v))return {h:'Space ya sign (- . /) mat dalo, sirf letters aur numbers.',e:'No spaces or signs (- . /), only letters and numbers.'};
+ if(n!==11)return {h:'Tumne '+n+' character dale, IFSC me poore 11 hote hain.',e:'You typed '+n+' characters; an IFSC has exactly 11.'};
+ if(!/^[A-Z]{4}/.test(v))return {h:'Pehle 4 character letters hone chahiye (bank ka code, jaise SBIN).',e:'The first 4 characters must be letters (the bank code, like SBIN).'};
+ return {h:'5th character number zero (0) hona chahiye, letter O nahi.',e:'The 5th character must be the digit zero (0), not the letter O.'};
+}
+function panWhy(v){
+ var n=v.length;
+ if(/[^A-Z0-9]/.test(v))return {h:'Space ya sign (- . /) mat dalo, sirf letters aur numbers.',e:'No spaces or signs (- . /), only letters and numbers.'};
+ if(n!==10)return {h:'Tumne '+n+' character dale, PAN me poore 10 hote hain.',e:'You typed '+n+' characters; a PAN has exactly 10.'};
+ if(!/^[A-Z]{5}/.test(v))return {h:'Pehle 5 character sirf letters (A-Z) hone chahiye.',e:'The first 5 characters must be letters (A-Z).'};
+ if(!/^[A-Z]{5}[0-9]{4}/.test(v))return {h:'6th se 9th character numbers (0-9) hone chahiye.',e:'Characters 6 to 9 must be digits (0-9).'};
+ return {h:'Aakhri (10th) character ek letter hona chahiye.',e:'The last (10th) character must be a letter.'};
+}
+function issName(){
+ if(gv('coName'))return null;
+ return iss('name',['coName'],'Company ka naam khali hai','Company name is empty','Company Name me apne business ka naam likho, jaise \"ABC Enterprises\". Bina naam ke company nahi banti.','Type your business name in Company Name, e.g. \"ABC Enterprises\". A company cannot be created without it.');
+}
+function issBank(){
+ var ids=['coBankName','coAccName','coAccNo'].filter(function(i){return !gv(i)});
+ if(!ids.length)return null;
+ var l=ids.map(function(i){return BANK_LBL[i]}).join(', ');
+ return iss('bank',ids,'Bank details adhuri hain','Bank details are incomplete','Ye khali hain: '+l+'. Bank Name (jaise State Bank of India), Account Holder (jis naam se khata hai) aur Account Number (passbook ya cheque par milta hai) teeno bharo.','These are empty: '+l+'. Fill Bank Name (e.g. State Bank of India), Account Holder (name on the account) and Account Number (on your passbook or cheque).');
+}
+function issIfsc(){
+ var v=gv('coIfsc').toUpperCase();
+ if(!v)return iss('ifsc0',['coIfsc'],'IFSC Code khali hai','IFSC Code is empty','IFSC cheque book ya passbook par milta hai. 11 character ka hota hai, jaise SBIN0001234.','The IFSC is on your cheque book or passbook. It has 11 characters, e.g. SBIN0001234.');
+ if(/^[A-Z]{4}0[A-Z0-9]{6}$/.test(v))return null;
+ var w=ifscWhy(v);
+ return iss('ifsc',['coIfsc'],'IFSC sahi format me nahi hai','IFSC format is wrong',w.h+' Sahi format: 4 letters + 0 (zero) + 6 letters/numbers, jaise SBIN0001234. Tumne dala: '+v,w.e+' Correct format: 4 letters + 0 (zero) + 6 letters/digits, e.g. SBIN0001234. You typed: '+v);
+}
+function issPan(){
+ var v=gv('coPan').toUpperCase();
+ if(!v)return iss('pan0',['coPan'],'PAN khali hai','PAN is empty','PAN card par 10 character ka hota hai, jaise ABCDE1234F.','Your PAN card shows 10 characters, e.g. ABCDE1234F.');
+ if(/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v))return null;
+ var w=panWhy(v);
+ return iss('pan',['coPan'],'PAN sahi format me nahi hai','PAN format is wrong',w.h+' Sahi format: 5 letters + 4 numbers + 1 letter, jaise ABCDE1234F. Tumne dala: '+v,w.e+' Correct format: 5 letters + 4 digits + 1 letter, e.g. ABCDE1234F. You typed: '+v);
+}
+function coChk(kinds){
+ if(T.replayCid)return null;
+ var fn={name:issName,bank:issBank,ifsc:issIfsc,pan:issPan};
+ for(var i=0;i<kinds.length;i++){var r=fn[kinds[i]]();if(r)return r}
+ return null;
+}
+function custChk(){
+ if(gv('mName'))return null;
+ return iss('cname',['mName'],'Customer ka naam khali hai','Customer name is empty','Customer Name me naam likho (jaise Demo Customer). Bina naam ke customer save nahi hota.','Type a name in Customer Name (e.g. Demo Customer). A customer cannot be saved without a name.');
+}
+/* errors the app only finds on Save (shown in its own message line) */
+function srvIssue(){
+ var m=document.getElementById('coFormMsg');if(!m)return null;
+ var t=String(m.textContent||'').trim();
+ if(!t||!/err/.test(m.className))return null;
+ if(/GSTIN pehle se/.test(t))return iss('gstdup',['coGstin'],'Ye GSTIN pehle se registered hai','This GSTIN is already registered','Ye GSTIN IE Billing me pehle se kisi aur company ke naam hai. Tutorial me GSTIN khali chhod do (GST nahi hai ya baad me Settings me daal sakte ho), ya apna sahi GSTIN dalo. Phir Save dabao.','This GSTIN already belongs to another company in IE Billing. Leave GSTIN empty for the tutorial (add it later in Settings) or enter your own GSTIN, then tap Save.',t);
+ if(/allowed hai/.test(t))return iss('limit',[],'Plan ki company limit poori ho gayi','Plan company limit reached','Tumhare plan me jitni company allowed hain utni ban chuki hain, isliye nayi company nahi ban sakti. Tutorial yahin rok sakte ho (Skip tutorial) ya plan upgrade karo.','You already have as many companies as your plan allows, so a new one cannot be created. You can stop the tutorial (Skip tutorial) or upgrade your plan.',t);
+ var ids=[];
+ if(/Company name daalna/.test(t))ids=['coName'];else if(/Bank Details/.test(t))ids=['coBankName','coAccName','coAccNo','coIfsc','coPan'];else if(/IFSC Code sahi/.test(t))ids=['coIfsc'];else if(/PAN sahi/.test(t))ids=['coPan'];
+ return iss('srv:'+t.slice(0,24),ids,'App ne Save roka','The app blocked Save',ids.length?'Chamakte box me jo galat hai use theek karo, phir dobara Save dabao.':'Internet ya network check karo, phir dobara Save dabao.',ids.length?'Fix what is wrong in the glowing box, then tap Save again.':'Check your internet connection, then tap Save again.',t);
+}
+function evalErr(s){
+ if(!s||!(s.val||s.srv))return null;
+ if(s.live){
+  if(Date.now()-(s._t0||0)<900)return null;
+  var e=s.val?s.val():null;
+  if(!e&&s.srv&&!T.replayCid){e=srvIssue();if(e)e.srv=true}
+  return e;
+ }
+ return s._tried&&s.val?s.val():null;
+}
+
 /* ---------- STEPS ---------- */
 function S(p,id,ic,h,e,o){o=o||{};o.p=p;o.id=id;o.ic=ic;o.h=h;o.e=e;return o}
 function pageStep(p,id,ic,page,h,e,gate){return S(p,id,ic,h,e,{t:'#'+page+' .top',gate:gate,go:function(){pg(page)},act:null,noScroll:false})}
@@ -23028,17 +23109,17 @@ var ALL=[
 /* PART 0: Shuruaat */
 S(0,'welcome','👋','Welcome! Ye 2 minute ka guide hai. Hum pehli company aur pehla bill banana seekhenge. Kabhi bhi Skip kar sakte ho.','Welcome! This quick guide teaches you to create your first company and first bill. You can skip anytime.',{center:true,title:['IE Billing me swagat hai','Welcome to IE Billing'],start:true}),
 S(0,'newco','🏢','Neeche "Create New Company" card dabao. Yahan tumhara business banega.','Tap the "Create New Company" card. Your business is created here.',{t:'.co-card.new',mode:'click',title:['Company banao','Create company'],until:function(){return vis(document.getElementById('coName'))},replayNext:true}),
-S(0,'coName','✍️','Apne business ka naam likho. Ye har bill ke upar chhapega.','Enter your business name. It prints on every bill.',{t:fld('coName'),free:true,title:['Company ka naam','Company name'],go:function(){ensureForm()}}),
+S(0,'coName','✍️','Apne business ka naam likho. Ye har bill ke upar chhapega. Naam khali raha to aage nahi badhega.','Enter your business name. It prints on every bill. You cannot continue if it is empty.',{t:fld('coName'),free:true,val:function(){return coChk(['name'])},title:['Company ka naam','Company name'],go:function(){ensureForm()}}),
 S(0,'coGst','🧾','GSTIN dalo (agar hai). Verify button se number check bhi ho jata hai. GST nahi hai to khali chhod do.','Enter your GSTIN if you have one; the verify button checks it. Leave empty if none.',{t:fld('coGstin'),free:true,title:['GST number','GST number']}),
 S(0,'coPrefix','🔢','Invoice Prefix: bill number ka shuruaati hissa (jaise IE-001). Chhota aur yaad rakhne layak rakho.','Invoice Prefix is the start of your bill numbers (e.g. IE-001). Keep it short.',{t:fld('coPrefix'),free:true,title:['Invoice prefix','Invoice prefix']}),
-S(0,'coBank','🏦','Bank details zaruri hain: Bank Name, Account Holder aur Account Number. Ye bill ke neeche chhapte hain taaki customer paisa bhej sake.','Bank details are required: Bank Name, Account Holder and Account Number. They print on the bill so customers can pay.',{t:fld('coBankName','coAccName','coAccNo'),free:true,title:['Bank details','Bank details']}),
-S(0,'coIfsc','🔐','IFSC Code (jaise SBIN0001234) aur PAN (jaise ABCDE1234F) bhi bharo. UPI ID chaho to dalo, wo optional hai.','Also fill IFSC Code (e.g. SBIN0001234) and PAN (e.g. ABCDE1234F). UPI ID is optional.',{t:fld('coIfsc','coPan'),free:true,title:['IFSC aur PAN','IFSC and PAN']}),
-S(0,'coSave','✅','Ab "Save & Continue" dabao. Naam aur bank details bharna zaruri hai. Company ban kar app khul jayega.','Now tap "Save & Continue". Name is required. The app opens once the company is created.',{t:'#coSubmitBtn',mode:'click',title:['Company save karo','Save company'],until:function(){return appOpen()},replayNext:true,wait:12000}),
+S(0,'coBank','🏦','Bank details zaruri hain: Bank Name, Account Holder aur Account Number. Ye bill ke neeche chhapte hain taaki customer paisa bhej sake.','Bank details are required: Bank Name, Account Holder and Account Number. They print on the bill so customers can pay.',{t:fld('coBankName','coAccName','coAccNo'),free:true,val:function(){return coChk(['bank'])},title:['Bank details','Bank details']}),
+S(0,'coIfsc','🔐','IFSC (jaise SBIN0001234: 4 letter + 0 + 6 akshar/number) aur PAN (jaise ABCDE1234F: 5 letter + 4 number + 1 letter) bharo. UPI ID optional hai. Galat hua to main bata dunga kya sudharna hai.','Fill IFSC (e.g. SBIN0001234: 4 letters + 0 + 6 letters/digits) and PAN (e.g. ABCDE1234F: 5 letters + 4 digits + 1 letter). UPI ID is optional. If something is wrong I will tell you what to fix.',{t:fld('coIfsc','coPan'),free:true,val:function(){return coChk(['ifsc','pan'])},title:['IFSC aur PAN','IFSC and PAN']}),
+S(0,'coSave','✅','Ab "Save & Continue" dabao. Naam aur bank details bharna zaruri hai. Company ban kar app khul jayega.','Now tap "Save & Continue". Name is required. The app opens once the company is created.',{t:'#coSubmitBtn',mode:'click',live:true,noSkip:true,srv:true,clearMsg:'coFormMsg',saveSel:'#coSubmitBtn',val:function(){return coChk(['name','bank','ifsc','pan'])},title:['Company save karo','Save company'],until:function(){return appOpen()},replayNext:true,wait:12000}),
 /* PART 1: Pehla bill */
 S(1,'sidebar','🧭','Ye side menu hai. "Roz ka kaam" me bill, history, payment aur customers milte hain. Baaki groups bhi isi tarah khulte hain.','This is the side menu. "Roz ka kaam" holds invoices, history, payments and customers.',{t:'.nav-group[data-group="daily"]',title:['Side menu','Side menu'],go:function(){pg('dashboard');openSB()}}),
 S(1,'createInv','🧾','"Create Invoice" dabao. Naya bill yahin se banta hai.','Tap "Create Invoice". New bills start here.',{t:'.nav button[data-page="invoice"]',mode:'click',title:['Naya bill','New bill'],go:function(){openSB()},until:function(){var e=document.getElementById('invoice');return e&&!e.classList.contains('hidden')}}),
 S(1,'addCust','👤','Customer chuno ya naya jodo. "+ Add New Customer" dabao. Hum ek Demo Customer bhar denge.','Pick or add a customer. Tap "+ Add New Customer". We will fill a Demo Customer for you.',{t:'#invoice button[onclick="openCustomerModal()"]',mode:'click',title:['Customer jodo','Add customer'],go:function(){pg('invoice')},until:function(){return vis(document.getElementById('mName'))},after:function(){fillDemoCust()}}),
-S(1,'saveCust','💾','Demo details bhar di gayi hain. Asli customer ke liye naam, GST, address aur phone yahin bharte hain. Ab "Save Customer" dabao.','Demo details are filled. For a real customer you enter name, GST, address and phone here. Tap "Save Customer".',{t:'#customerSaveBtn',mode:'click',title:['Customer save','Save customer'],until:function(){return !document.getElementById('customerModal').classList.contains('show')},after:function(){pickDemoCust()}}),
+S(1,'saveCust','💾','Demo details bhar di gayi hain. Asli customer ke liye naam, GST, address aur phone yahin bharte hain. Ab "Save Customer" dabao.','Demo details are filled. For a real customer you enter name, GST, address and phone here. Tap "Save Customer".',{t:'#customerSaveBtn',mode:'click',live:true,noSkip:true,saveSel:'#customerSaveBtn',val:function(){return custChk()},title:['Customer save','Save customer'],until:function(){return !document.getElementById('customerModal').classList.contains('show')},after:function(){pickDemoCust()}}),
 S(1,'pickItem','📦','Ab item chuno. Box me item ka naam likho ya list se chuno. Mic wala 🎤 Voice Add Items se bolkar bhi jod sakte ho. Hum Demo Item laga rahe hain.','Now pick an item: type its name or choose from the list. 🎤 Voice Add Items lets you speak. We will add a Demo Item.',{t:'#itemEditor .item-card[data-row="0"]',free:true,title:['Item chuno','Pick item'],go:function(){pg('invoice');ensureDemoItem()},after:function(){applyDemoItem()}}),
 S(1,'qtyRate','🔢','Qty (kitna maal) aur Rate (daam) yahan dalte hain. Humne Qty 2 daal di hai. Rate item se khud aa jata hai.','Qty and Rate go here. We set Qty 2; Rate comes from the item automatically.',{t:function(){var e=document.querySelector('#itemEditor .item-card[data-row="0"] [data-field="qty"]');return e&&(e.parentElement||e)},free:true,title:['Qty aur Rate','Qty and Rate']}),
 S(1,'gstAuto','🧮','GST apne aap judta hai. Same state me CGST+SGST, alag state me IGST. Total yahan dikhta hai.','GST is added automatically: CGST+SGST in-state, IGST inter-state. Totals show here.',{t:'#itemEditor .item-card[data-row="0"] .item-card-head',title:['GST auto','Auto GST']}),
@@ -23119,26 +23200,60 @@ function build(){
  card=document.createElement('div');card.className='iet-card';r.appendChild(card);
 }
 function curStep(){return T.list[T.i]}
+function tgtOf(s){var er=s._err;if(er&&er.ids&&er.ids.length)return function(){return er.ids.map(wrapOf).filter(Boolean)};return s.t}
+var badEls=[];
+function markBad(ids){badEls.forEach(function(x){x.classList.remove('iet-bad')});badEls=[];(ids||[]).forEach(function(i){var e=document.getElementById(i);if(e){e.classList.add('iet-bad');badEls.push(e)}})}
+function chk(s){
+ if(!s)return;
+ var e=evalErr(s);
+ var sig=e?(e.k+'|'+e.ids.join(',')+(e.srv?'|s':'')):'';
+ if(sig!==(s._sig||'')){
+  var was=!!s._err;s._sig=sig;s._err=e;
+  if(e)s._ok=false;else if(was)s._ok=true;
+  markBad(e?e.ids:[]);
+  if(e&&s._adv)s._adv=false;
+  lastKey='';render();
+ }else if(e&&s._err&&(s._err.h!==e.h||s._err.e!==e.e)){
+  s._err=e;
+  var d=card&&card.querySelector('.iet-d');if(d)d.textContent=T.lang==='en'?e.e:e.h;
+  layout(true,false);
+ }
+}
+function shake(){try{card.animate([{transform:'translateX(0)'},{transform:'translateX(-7px)'},{transform:'translateX(7px)'},{transform:'translateX(-4px)'},{transform:'translateX(0)'}],{duration:260})}catch(e){}}
+function onInput(e){var s=curStep();if(!T.on||!s||!s.clearMsg)return;var f=document.getElementById('coFormModal');if(f&&e.target&&f.contains(e.target)){var m=document.getElementById(s.clearMsg);if(m)m.textContent=''}}
 function render(){
  var s=curStep();if(!s)return;
  var tot=T.list.length,n=T.i+1;
  var pn=T.lang==='en'?PARTS_EN[s.p]:PARTS[s.p];
  var lockNote=s._locked?('<div class="iet-act" style="color:#fbbf24">🔒 '+(T.lang==='en'?'Available on higher plans.':s.lock)+'</div>'):'';
- var isClick=s.mode==='click'&&!T.replayCid&&!s._softNext;
+ var er=s._err||null;
+ var isClick=s.mode==='click'&&!T.replayCid&&!s._softNext&&!er;
  var isFree=!!s.free&&!isClick;
  var actLine=isFree?'<div class="iet-act">✍️ '+(T.lang==='en'?'You can type here, then tap Next':'Yahan khud bhar sakte ho, phir Next dabao')+'</div>':isClick?'<div class="iet-act">👉 '+(T.lang==='en'?'Tap the glowing button to continue':'Chamakte button ko dabao, tabhi aage badhega')+'</div>':'';
  var back=T.i>0&&!s.start?'<button class="iet-btn g" data-a="back">'+(T.lang==='en'?'Back':'Back')+'</button>':'';
  var next='';
  if(s.finish){next='<button class="iet-btn" data-a="finish">'+(T.lang==='en'?'🧾 Make a new bill':'🧾 Naya bill banao')+'</button><button class="iet-btn g" data-a="again">'+(T.lang==='en'?'Replay':'Tutorial dobara')+'</button><button class="iet-btn g" data-a="help">Help</button>'+((T.mode==='full'&&!T.parts)?'<button class="iet-btn g" data-a="more">'+(T.lang==='en'?'Learn more features ▶':'Aage ke features seekho ▶')+'</button>':'')}
  else if(s.start){next='<button class="iet-btn" data-a="next">'+(T.lang==='en'?'Start ▶':'Start ▶')+'</button>'}
- else if(isClick){next='<button class="iet-btn g" data-a="next" title="">'+(T.lang==='en'?'Skip this step':'Ye step chhodo')+'</button>'}
+ else if(isClick){next=s.noSkip?'':'<button class="iet-btn g" data-a="next" title="">'+(T.lang==='en'?'Skip this step':'Ye step chhodo')+'</button>'}
  else{next='<button class="iet-btn" data-a="next">'+(s.end&&T.mode==='full'?(T.lang==='en'?'Continue ▶':'Aage badho ▶'):(T.lang==='en'?'Next ▶':'Next ▶'))+'</button>'}
+ var errBox='',okLine='',icon=s.ic,title=ttl(s),desc=txt(s);
+ if(er){
+  icon='⚠️';title=T.lang==='en'?er.te:er.th;desc=T.lang==='en'?er.e:er.h;
+  var em=er.msg||(T.lang==='en'?'The app will not continue with this mistake.':'App is galti ke saath aage nahi badhne dega.');
+  errBox='<div class="iet-err">❌ '+esc2(em)+'</div>';
+  actLine=er.ids&&er.ids.length?'<div class="iet-act" style="color:#fca5a5">👉 '+(T.lang==='en'?'Fix the red glowing box':'Laal chamakte box ko theek karo')+'</div>':'';
+  if(er.srv)next='<button class="iet-btn" data-a="save">'+(T.lang==='en'?'Save again':'Dobara Save karo')+'</button>';
+  else if(s.live)next='';
+ }else if(s._ok){
+  okLine='<div class="iet-ok">✅ '+(T.lang==='en'?(s.live?'Looks right now. Tap the glowing button.':'Looks right now. Tap Next.'):(s.live?'Ab sahi hai. Chamakte button dabao.':'Ab sahi hai. Next dabao.'))+'</div>';
+ }
+ card.classList.toggle('bad',!!er);
  var skip=s.finish?'':'<button class="iet-skip" data-a="skip">'+(T.lang==='en'?'Skip tutorial':'Skip tutorial')+'</button>';
  card.innerHTML='<div class="iet-top"><span class="iet-part">'+esc2(pn)+'</span><button class="iet-lang" data-a="lang">'+(T.lang==='en'?'हिंदी':'EN')+'</button><button class="iet-x" data-a="skip" aria-label="Close">✕</button></div>'+
  (s.finish?'<div class="iet-confetti">🎉</div>':'')+
  '<div class="iet-bar"><i style="width:'+Math.round(n/tot*100)+'%"></i></div>'+
  '<div class="iet-cnt">Step '+n+' of '+tot+'</div>'+
- '<div class="iet-body"><div class="iet-ic">'+s.ic+'</div><div><div class="iet-t">'+esc2(ttl(s))+'</div><div class="iet-d">'+esc2(txt(s))+'</div>'+lockNote+actLine+'</div></div>'+
+ '<div class="iet-body"><div class="iet-ic">'+icon+'</div><div><div class="iet-t">'+esc2(title)+'</div><div class="iet-d">'+esc2(desc)+'</div>'+errBox+okLine+lockNote+actLine+'</div></div>'+
  '<div class="iet-btns">'+back+next+skip+'</div>';
 layout(true,true);
 }
@@ -23165,7 +23280,7 @@ function layout(force,ensure){
  var s=curStep();if(!s)return;
  var g=geom(),W=g.LW,H=g.LH;
  var mob=g.VW<=640,kb=mob&&kbOpen(g);
- var el=s.center||s._locked?null:q(s.t);
+ var el=s.center||s._locked?null:q(tgtOf(s));
  if(kb!==card.classList.contains('cmp')){card.classList.toggle('cmp',kb);lastKey=''}
  var cw=Math.min(380,g.VW-24),ch=card.offsetHeight;
  card.style.width=cw+'px';
@@ -23188,8 +23303,8 @@ function layout(force,ensure){
  if(side==='bottom'&&r.bottom+pad>ctop-4&&r.top-pad>g.VT+ch+18){side='top';ctop=g.VT+8}
  else if(side==='top'&&r.top-pad<ctop+ch+4&&r.bottom+pad<g.VT+g.VH-ch-18){side='bottom';ctop=g.VT+g.VH-ch-10}
  var rc={l:Math.max(0,r.left-pad),t:Math.max(0,r.top-pad),r:Math.min(W,r.right+pad),b:Math.min(Math.max(H,g.VT+g.VH),r.bottom+pad)};
- var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext;
- var open=clickMode||!!s.free;
+ var clickMode=s.mode==='click'&&!T.replayCid&&!s._softNext&&!s._err;
+ var open=clickMode||!!s.free||!!s._err;
  var key=[rc.l,rc.t,rc.r,rc.b,W,H,g.VT,g.VH,ctop,cleft,cw,ch,open,clickMode].join(',');
  if(!force&&key===lastKey)return;lastKey=key;
  var BH=Math.max(H,g.VT+g.VH);
@@ -23237,13 +23352,14 @@ function bind(){
  if(!T.timer)T.timer=setInterval(tick,70);
  window.addEventListener('resize',onRS);window.addEventListener('scroll',onRS,true);
  if(window.visualViewport){visualViewport.addEventListener('resize',onVV);visualViewport.addEventListener('scroll',onRS)}
- document.addEventListener('focusin',onFocus,true);document.addEventListener('focusout',onFocus,true);
- if(!T.listener){T.listener=function(e){var s=curStep();if(!T.on||!s||s.mode!=='click'||T.replayCid||s._softNext)return;var el=q(s.t);if(el&&(Array.isArray(el)?el:[el]).some(function(x){return x.contains(e.target)})){afterClick(s)}};document.addEventListener('click',T.listener,true)}
+ document.addEventListener('focusin',onFocus,true);document.addEventListener('focusout',onFocus,true);document.addEventListener('input',onInput,true);
+ if(!T.listener){T.listener=function(e){var s=curStep();if(!T.on||!s||s.mode!=='click'||T.replayCid||s._softNext)return;var el=q(s.t);if(el&&(Array.isArray(el)?el:[el]).some(function(x){return x.contains(e.target)})){if(s.clearMsg){var mm=document.getElementById(s.clearMsg);if(mm)mm.textContent=''}afterClick(s)}};document.addEventListener('click',T.listener,true)}
 }
 function tick(){
  if(!T.on)return;
  var s=curStep();
  if(s&&s.mode==='click'&&!T.replayCid&&!s._adv&&Date.now()-(s._t0||0)>450){var ok=false;try{ok=s.until?s.until():false}catch(e){}if(ok)afterClick(s)}
+ chk(s);
  layout(false,false);
 }
 function onRS(){layout(true,false)}
@@ -23262,7 +23378,7 @@ function afterClick(s){
 }
 function go(){
  var s=curStep();if(!s)return;
- s._adv=false;s._locked=false;s._softNext=false;s._t0=Date.now();lastKey='';
+ s._adv=false;s._locked=false;s._softNext=false;s._t0=Date.now();lastKey='';s._err=null;s._sig='';s._tried=false;s._ok=false;markBad([]);
  if(s.gate&&!allowed(s.gate)){s._locked=true}
  if(!s._locked&&s.go){try{s.go()}catch(e){}}
  if(T.replayCid&&(s.id==='coSave')){s._softNext=true}
@@ -23288,7 +23404,8 @@ function advance(){
 }
 function back(){if(T.i>0){T.i--;go()}}
 function act(a){
- if(a==='next')advance();
+ if(a==='next'){var s0=curStep();if(s0&&s0.val&&!s0.live){var v0=s0.val();if(v0){s0._tried=true;chk(s0);shake();return}}advance()}
+ else if(a==='save'){var s1=curStep();var b1=s1&&s1.saveSel?document.querySelector(s1.saveSel):null;if(b1&&!b1.disabled)b1.click()}
  else if(a==='back')back();
  else if(a==='lang'){T.lang=T.lang==='en'?'hi':'en';try{localStorage.setItem('ie_tut_lang',T.lang)}catch(e){}render()}
  else if(a==='skip')confirmSkip();
@@ -23308,7 +23425,7 @@ function confirmSkip(){
 function stop(silent){
  T.on=false;clearTimeout(T.advTimer);
  var r=root();r.classList.remove('on');r.innerHTML='';
- window.removeEventListener('resize',onRS);window.removeEventListener('scroll',onRS,true);if(window.visualViewport){visualViewport.removeEventListener('resize',onVV);visualViewport.removeEventListener('scroll',onRS)}document.removeEventListener('focusin',onFocus,true);document.removeEventListener('focusout',onFocus,true);
+ window.removeEventListener('resize',onRS);window.removeEventListener('scroll',onRS,true);if(window.visualViewport){visualViewport.removeEventListener('resize',onVV);visualViewport.removeEventListener('scroll',onRS)}document.removeEventListener('focusin',onFocus,true);document.removeEventListener('focusout',onFocus,true);document.removeEventListener('input',onInput,true);markBad([]);
  if(T.timer){clearInterval(T.timer);T.timer=null}
  if(T.listener){document.removeEventListener('click',T.listener,true);T.listener=null}
  try{closeSidebar()}catch(e){}
