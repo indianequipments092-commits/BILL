@@ -21937,7 +21937,7 @@ var box=document.createElement('div');box.innerHTML=$('gsBody').innerHTML;box.qu
 w.document.write('<html><head><title>'+esc(title())+'</title><style>body{font:11px Arial,sans-serif;color:#000;padding:14px}h2{font-size:15px;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin-bottom:14px}td,th{border:1px solid #bbb;padding:3px 5px;text-align:left;vertical-align:top}.right{text-align:right}.sub{color:#555;font-size:10px}.section-title{font-weight:700;margin:10px 0 4px}.badge{font-weight:700}</style></head><body onload="window.print()"><h2>'+esc(title())+'</h2><div class="sub" style="margin-bottom:8px">'+$('gsSub').innerText+'</div>'+box.innerHTML+'</body></html>');w.document.close()};
 })();
 (function(){
-var $=function(i){return document.getElementById(i)},tab='gd',plSel='',bomEdit='',bomDraft=[{itemId:'',qty:''}],
+var $=function(i){return document.getElementById(i)},tab='gd',gdLim=100,ivAll=false,gdMore=false,plSel='',bomEdit='',bomDraft=[{itemId:'',qty:''}],
 TABS=[['gd','Godown Stock'],['tr','Stock Transfer'],['pl','Price Lists'],['ur','Units & Reorder'],['mf','Manufacturing'],['sj','Stock Journal']],
 REASONS=['Damage / kharab','Found / extra mila','Sample / gift','Count correction','Other'];
 function A(){return db&&db.accounts}
@@ -21976,12 +21976,14 @@ function gdTab(){var v=I(),sm=sold(),ga=gall(),f=fq(),gs=[{id:'main',name:'Main 
 h+='<div class="grid g4"><div><label>Naya godown / location</label><input id="ivGn" placeholder="Jaise: Shop, Warehouse 2"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="invGdAdd()">+ Add Godown</button></div></div>';
 if(v.godowns.length)h+='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">'+v.godowns.map(function(g){return'<span class="badge" style="display:inline-flex;gap:8px;align-items:center;padding:6px 10px">'+esc(g.name)+' <a href="#" onclick="invGdRen(\''+g.id+'\');return false">Rename</a> <a href="#" onclick="invGdDel(\''+g.id+'\');return false" style="color:#f43f5e">Delete</a></span>'}).join('')+'</div>';
 else h+='<div class="sub" style="margin-top:10px">Abhi sirf Main Godown hai. Doosra godown add karo, phir Stock Transfer tab se maal ek se doosre me bhejo.</div>';
-var rows='',T=0,cols={};
-items().filter(function(i){return f(i.name)}).forEach(function(it){var t=tot(it,sm),g=gq(it,sm,ga);T+=t;gs.forEach(function(x){cols[x.id]=(cols[x.id]||0)+g[x.id]});
+var rows='',T=0,cols={},gc=0;
+items().filter(function(i){return f(i.name)}).forEach(function(it,ix){var t=tot(it,sm),g=gq(it,sm,ga);T+=t;gc++;gs.forEach(function(x){cols[x.id]=(cols[x.id]||0)+g[x.id]});
+if(!(ivAll||ix<gdLim))return;
 rows+='<tr><td>'+esc(it.name)+'</td><td>'+esc(it.unit||'Nos')+'</td><td class="right"><b>'+q3(t)+'</b></td>'+gs.map(function(x){return'<td class="right">'+q3(g[x.id])+'</td>'}).join('')+'</tr>'});
 if(!rows)rows=empty(3+gs.length,'Koi item nahi mila.');
 else rows+='<tr style="border-top:2px solid var(--border-color)"><td colspan="2"><b>Total</b></td><td class="right"><b>'+q3(T)+'</b></td>'+gs.map(function(x){return'<td class="right"><b>'+q3(cols[x.id])+'</b></td>'}).join('')+'</tr>';
-h+=sec('Godown-wise stock','Total = Items page ka stock. Main Godown me wo bacha maal aata hai jo doosre godowns me transfer nahi hua.')+tbl(['Item','Unit','>Total'].concat(gs.map(function(x){return'>'+x.name})),rows);
+gdMore=gc>gdLim;
+h+=sec('Godown-wise stock','Total = Items page ka stock. Main Godown me wo bacha maal aata hai jo doosre godowns me transfer nahi hua.')+(gdMore&&!ivAll?'<div class="sub" style="margin-bottom:6px">'+Math.min(gdLim,gc)+' of '+gc+' items dikh rahe hain (Total row poore items ka hai)</div>':'')+tbl(['Item','Unit','>Total'].concat(gs.map(function(x){return'>'+x.name})),rows)+(gdMore&&!ivAll?'<button class="btn muted" style="margin-top:8px" onclick="invGdMore()">Aur 100 dikhao</button>':'');
 return{sub:'Godown aur stock transfer sirf maal ki location batate hain. Total stock aur invoice/bill ke stock par koi asar nahi padta.',h:h}}
 window.invGdAdd=function(){if(ro())return;var n=$('ivGn').value.trim();if(!n)return alert('Godown ka naam likho');
 if(n.toLowerCase()==='main godown'||I().godowns.some(function(g){return g.name.toLowerCase()===n.toLowerCase()}))return alert('Is naam ka godown pehle se hai');
@@ -22088,8 +22090,11 @@ if(!d)return alert('Date chuno');if(!iid)return alert('Item chuno');if(!(q>0))re
 if(out&&tot(it,sold())<q&&!confirm('Stock sirf '+tot(it,sold())+' hai. Phir bhi '+q+' kam karna hai?'))return;
 var dl=out?-q:q;bump(iid,dl);I().sj.push({id:'sj_'+crypto.randomUUID(),date:d,itemId:iid,delta:dl,reason:$('ivJr').value,note:$('ivJn').value.trim(),createdAt:Date.now()});saveDB();invRender();tt('Stock journal save hua')};
 window.invSjDel=function(id){if(ro())return;var s=I().sj.find(function(x){return x.id===id});if(!s||lk(s.date))return;if(!confirm('Entry delete karni hai? Stock wapas pehle jaisa ho jayega.'))return;bump(s.itemId,-s.delta);I().sj=I().sj.filter(function(x){return x.id!==id});saveDB();invRender()};
-window.invTab=function(t){tab=t;invRender()};
+window.invTab=function(t){tab=t;gdLim=100;invRender()};
+window.invGdMore=function(){gdLim+=100;invRender()};
+window.ivWithAll=function(fn){if(tab==='gd'&&gdMore&&!ivAll){ivAll=true;invRender();try{fn()}finally{ivAll=false;invRender()}}else fn()};
 window.invRender=function(filterOnly){if(!A()||!I())return;
+if(filterOnly)gdLim=100;
 if(filterOnly&&['gd','pl','ur'].indexOf(tab)<0)return;
 $('ivTabs').innerHTML=TABS.map(function(x){return'<button class="btn '+(tab===x[0]?'primary':'muted')+'" onclick="invTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
 var qb=$('ivQ');if(qb&&qb.parentNode)qb.parentNode.style.display=['gd','pl','ur'].indexOf(tab)>-1?'':'none';
@@ -22685,7 +22690,7 @@ function fromDom(box,pfn,sub,label){var pf=window[pfn];return function(kind){var
 if(!R.sections.length){if(kind==='p')return pf();return alert('There is no table to export in this view.')}kind==='x'?toXlsx(R):toPdf(R)}}
 var rep=fromDom('arBody','acctRepPrint','arSub','accounts report'),gst=fromDom('gsBody','acctGstPrint','','gst report'),inv=fromDom('ivBody','invPrint','','inventory report'),ex=fromDom('exBody','exPrint','','accounts report');
 window.acctRepCSV=function(){rep('x')};window.acctRepPrint=function(){rep('p')};window.acctGstCSV=function(){gst('x')};window.acctGstPrint=function(){gst('p')};
-window.invCSV=function(){inv('x')};window.invPrint=function(){inv('p')};window.exCSV=function(){ex('x')};window.exPrint=function(){ex('p')};
+window.invCSV=function(){window.ivWithAll?window.ivWithAll(function(){inv('x')}):inv('x')};window.invPrint=function(){window.ivWithAll?window.ivWithAll(function(){inv('p')}):inv('p')};window.exCSV=function(){ex('x')};window.exPrint=function(){ex('p')};
 function jr(kind,rows,name,head,pick,meta,label){var R=base(name+' | | '+meta,label),tot=rows.reduce(function(a,p){return a+Number(p.amount||0)},0);R.sections=[{name:'',head:head,num:[head.length-1],tot:[],notes:[],rows:rows.map(pick),foot:head.map(function(_,j){return j===0?'Total':j===head.length-1?tot:''})}];kind==='x'?toXlsx(R):toPdf(R)}
 function jinfo(){var c=$('jrnlCustomer'),f=$('jrnlFY');return'Customer: '+(c&&c.value?(c.options[c.selectedIndex]||{}).textContent:'All customers')+'  |  FY: '+(f&&f.value?f.value:'All years')}
 var JH=['Date','Invoice No','Customer','Mode','Note','Amount (₹)'],JP=function(p){return[p.date,p.invoiceNumber,p.customer,p.mode,p.note||'',Number(p.amount||0)]};
