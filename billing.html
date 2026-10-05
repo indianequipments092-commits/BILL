@@ -445,6 +445,8 @@ td:has(> button.btn) > .btn{flex:0 0 auto}
   .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);height:100%;box-shadow:8px 0 30px rgba(0,0,0,0.4);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .sidebar.open{transform:translateX(0)}
   #analytics .card,#analytics .btn{backdrop-filter:none;-webkit-backdrop-filter:none}
+  #analytics .g2{grid-template-columns:minmax(0,1fr)}
+  #analytics .card{min-width:0}
   .mobile-header{display:flex}
   .main{padding:16px 12px}
   .top h1{font-size:20px}
@@ -14043,6 +14045,9 @@ pager.innerHTML = rows.length>25 ? `<div class="inv-pager">
 }
 }
 function refreshAll(){
+const __dashOn=(function(){const d=document.getElementById('dashboard');return !d||!d.classList.contains('hidden')})();
+const __custOn=(function(){const d=document.getElementById('customers');return !d||!d.classList.contains('hidden')})();
+if(__dashOn){
 try{
 const si=id('statInvoices'), sd=id('statDrafts'), sc=id('statCustomers'), st=id('statItems'), rb=id('recentBills');
 if(si) si.textContent=db.invoices.length;
@@ -14062,7 +14067,8 @@ rb.innerHTML=db.invoices.slice(-5).reverse().map(x=>`<div style="padding:12px;bo
 }
 renderTopCustomers();
 }catch(e){console.warn('refreshAll',e);}
-try{renderCustomers();}catch(e){console.warn('refreshAll customers',e);}
+}
+if(__custOn){try{renderCustomers();}catch(e){console.warn('refreshAll customers',e);}}
 try{if(typeof docRefreshCustSelect==='function')docRefreshCustSelect();}catch(e){}
 }
 let editingCustomerId = null;
@@ -19576,7 +19582,7 @@ t.parentNode.replaceChild(f,t);
 });
 }
 var pend=false,q=[];
-function flush(){pend=false;var a=q;q=[];a.forEach(function(r){if(r.isConnected)proc(r);});}
+function flush(){pend=false;var a=q;q=[];a.forEach(function(r){if(r&&r.isConnected)proc(r);});}
 function init(){
 var h=document.createElement('div');h.innerHTML=defs;document.body.insertBefore(h.firstChild,document.body.firstChild);
 proc(document.body);
@@ -23029,5 +23035,24 @@ setInterval(tick,TICK);
 })();
 </script>
 
+<style id="perf-smooth">
+/* ===== SMOOTH MODE: blur/glow hata ke solid premium surfaces (look same, GPU bojh kam) ===== */
+*,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.ic,.ic-g,.ic-r,.ic-a,.ic-y,.ic-c,.ic-k,.ic-s{filter:none!important}
+.card{background:linear-gradient(160deg,#192239,#121929);box-shadow:0 6px 18px rgba(0,0,0,.28)}
+[data-theme="light"] .card{background:#fff;box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.stat-card::after{filter:none;background:radial-gradient(circle,var(--primary-glow),transparent 70%)}
+.modal{background:rgba(3,5,12,.86)}
+.preview-modal{background:rgba(5,8,15,.96)}
+.overlay{background:rgba(0,0,0,.72)}
+#authOverlay .auth-box,.auth-box{background:rgba(14,18,32,.94)}
+#authOverlay .auth-feat>div,#authOverlay .auth-live,#companyOverlay .co-user,#companyOverlay .co-card{background:rgba(14,18,32,.9)}
+/* analytics: jo cards screen ke bahar hain unhe browser paint hi nahi karta */
+#analytics .card{content-visibility:auto;contain-intrinsic-size:auto 320px}
+@media (max-width:900px){
+  .card{box-shadow:0 3px 10px rgba(0,0,0,.25)}
+  .stat-card{box-shadow:none}
+}
+</style>
 </body>
 </html>
