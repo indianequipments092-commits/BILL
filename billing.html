@@ -23664,7 +23664,26 @@ function nativeBio(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; ret
 function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return ' [DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | bio: '+(window.__dlBio||'-')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+']'; }catch(e){ return ' [DL2]'; } }
 function nativeAuth(){
   var B=nativeBio(); if(!B) return Promise.resolve(false);
-  return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(e){ window.__dlErr=String((e&&(e.code||e.message))||e); return false; });
+  /* Try several option sets; if one never opens a prompt (hangs), move on to the next after 5s */
+  var tries=[
+    {reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'},
+    {reason:'Confirm it is you',allowDeviceCredential:true},
+    {reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:false,androidTitle:'IE Billing'}
+  ];
+  var i=0;
+  function run(){
+    if(i>=tries.length) return Promise.resolve(false);
+    var o=tries[i++]; window.__dlTry=i;
+    return new Promise(function(res){
+      var done=false;
+      var t=setTimeout(function(){ if(done) return; done=true; window.__dlErr='hang on try '+i; res('HANG'); },5000);
+      try{
+        B.authenticate(o).then(function(){ if(done) return; done=true; clearTimeout(t); res(true); })
+        .catch(function(e){ if(done) return; done=true; clearTimeout(t); window.__dlErr=String((e&&(e.code||e.message))||e); res(false); });
+      }catch(e){ if(done) return; done=true; clearTimeout(t); window.__dlErr=String(e); res('HANG'); }
+    }).then(function(r){ return r==='HANG' ? run() : r; });
+  }
+  return run();
 }
 function supported(){
   if(isNativeApp()){
@@ -23685,7 +23704,7 @@ function enableLock(){
       if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.'+dlDbg(),'OK');
       if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.'+dlDbg(),'OK');
       ui('Device Lock','Step 2: opening fingerprint / screen lock prompt…'+dlDbg(),'OK');
-      var __t=setTimeout(function(){ ui('Device Lock','Prompt did not open after 12 seconds.'+dlDbg(),'OK'); },12000);
+      var __t=setTimeout(function(){ ui('Device Lock','Prompt did not open after 20 seconds.'+dlDbg(),'OK'); },20000);
       return nativeAuth().then(function(done){ clearTimeout(__t);
         if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.'+dlDbg(),'OK');
         try{ localStorage.setItem(lk(),'NATIVE'); }catch(e){}
