@@ -23661,7 +23661,7 @@ function lockOn(){ try{ return !!localStorage.getItem(lk()); }catch(e){ return f
 /* Native (Android APK / Capacitor) biometric bridge: WebAuthn does not work inside the APK WebView */
 function isNativeApp(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
 function nativeBio(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; return (P&&(P.BiometricAuthNative||P.BiometricAuth))||null; }catch(e){ return null; } }
-function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return ' [DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+']'; }catch(e){ return ' [DL2]'; } }
+function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return ' [DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | bio: '+(window.__dlBio||'-')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+']'; }catch(e){ return ' [DL2]'; } }
 function nativeAuth(){
   var B=nativeBio(); if(!B) return Promise.resolve(false);
   return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(e){ window.__dlErr=String((e&&(e.code||e.message))||e); return false; });
@@ -23669,7 +23669,7 @@ function nativeAuth(){
 function supported(){
   if(isNativeApp()){
     var B=nativeBio(); if(!B) return Promise.resolve(false);
-    return Promise.race([B.checkBiometry(),new Promise(function(_,rj){ setTimeout(function(){ rj(new Error('timeout 8s')); },8000); })]).then(function(r){ window.__dlErr='-'; return !!(r&&(r.isAvailable||r.deviceIsSecure)); }).catch(function(e){ window.__dlErr=String((e&&(e.message||e.code))||e); return false; });
+    return Promise.race([B.checkBiometry(),new Promise(function(_,rj){ setTimeout(function(){ rj(new Error('timeout 8s')); },8000); })]).then(function(r){ window.__dlErr='-'; try{ window.__dlBio=JSON.stringify(r); }catch(e){} return !!(r&&(r.isAvailable||r.deviceIsSecure)); }).catch(function(e){ window.__dlErr=String((e&&(e.message||e.code))||e); return false; });
   }
   if(!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)) return Promise.resolve(false);
   return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function(){ return false; });
@@ -23684,6 +23684,7 @@ function enableLock(){
     if(isNativeApp()){
       if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.'+dlDbg(),'OK');
       if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.'+dlDbg(),'OK');
+      ui('Device Lock','Step 2: opening fingerprint / screen lock prompt…'+dlDbg(),'OK');
       return nativeAuth().then(function(done){
         if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.'+dlDbg(),'OK');
         try{ localStorage.setItem(lk(),'NATIVE'); }catch(e){}
