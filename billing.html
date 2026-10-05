@@ -3118,6 +3118,7 @@ userProfile=null;
 fbAuth.signOut();
 }
 function openDeleteAccountConfirm(){
+if(window.RSG) return RSG.start('delete');
 const step1=confirm('⚠️ Ye action PERMANENT hai.\n\nTumhara account, saari companies, invoices, customers, inventory — sab HAMESHA KE LIYE delete ho jayega. Ye wapas nahi aa sakta.\n\nContinue karna hai?');
 if(!step1) return;
 const typed=(prompt('Confirm karne ke liye niche capital letters me DELETE type karo:')||'').trim();
@@ -3645,6 +3646,7 @@ let loaded=null;
 if(snap.exists && snap.data() && snap.data().data){
 try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
 }
+try{ const __rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0), __lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(__rv>__lv){ iePendSet(companyId,false); localStorage.removeItem(KEY+'_'+companyId); localStorage.setItem('IE_RESETV_'+companyId,String(__rv)); } }catch(e){}
 if(iePendGet(companyId)){
 const loc=ieLocalDb(companyId);
 if(loc){ loaded=loc; setTimeout(()=>{ try{ fsScheduleSave(); }catch(e){} },1500); }
@@ -8470,7 +8472,9 @@ var ph=document.getElementById('pfPhoto');if(ph)new MutationObserver(pf2Update).
   <div class="card" data-sec="privacy" style="border-color:rgba(244,63,94,.35);order:60">
     <div class="section-title" style="color:#fb7185">⚠️ Danger Zone</div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:0">Account delete karne par tumhari saari companies, invoices, customers, inventory — sab HAMESHA KE LIYE mit jayega. Isi Gmail se dobara login karoge to bilkul naye account jaisa fresh start milega. Purane chats me tumhara naam automatically "Deleted account 🚫" dikhega.</p>
-    <button class="btn danger" id="deleteAccountBtn" onclick="openDeleteAccountConfirm()">🚫 Delete Account Permanently</button>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:0">Reset Data clears your business data after Owner verification. Password is required.</p>
+    <button class="btn danger" id="resetDataBtn" onclick="RSG.start('reset')" style="margin-bottom:10px">🔄 Reset Data</button><br>
+    <button class="btn danger" id="deleteAccountBtn" onclick="RSG.start('delete')">🚫 Delete Account Permanently</button>
   </div>
   </div>
   <div class="st2-empty" id="st2Empty" style="display:none">Koi setting nahi mili. Dusra shabd try karo.</div>
@@ -23145,5 +23149,583 @@ setInterval(tick,TICK);
   .stat-card{box-shadow:none}
 }
 </style>
+<!-- RSG-PHASE1-START: Secure Reset gate -->
+<style>
+#rsgOverlay{position:fixed;inset:0;z-index:10060;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,13,.78);backdrop-filter:blur(6px)}
+#rsgOverlay.show{display:flex}
+#rsgBox{width:100%;max-width:400px;background:#12151f;border:1px solid rgba(244,63,94,.35);border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.55);color:#e8ebf5}
+#rsgBox h3{margin:0 0 8px;font-size:17px;color:#fb7185}
+#rsgMsg{font-size:13px;line-height:1.5;color:#c3c9dc;margin:0 0 12px}
+#rsgIn{display:none;width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#0b0d15;color:#fff;font-size:15px;margin-bottom:8px}
+#rsgErr{display:none;font-size:12px;color:#fb7185;margin:0 0 10px}
+#rsgBtns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+#rsgBtns .btn{min-height:40px}
+</style>
+<div id="rsgOverlay" role="dialog" aria-modal="true" aria-labelledby="rsgTitle">
+  <div id="rsgBox">
+    <h3 id="rsgTitle"></h3>
+    <p id="rsgMsg"></p>
+    <input id="rsgIn" autocomplete="off">
+    <div id="rsgErr"></div>
+    <div id="rsgBtns">
+      <button type="button" class="btn muted" id="rsgSec"></button>
+      <button type="button" class="btn danger" id="rsgPri"></button>
+    </div>
+  </div>
+</div>
+<script id="rsg-js">
+(function(){
+if(window.RSG) return;
+var $=function(i){return document.getElementById(i)};
+var busy=false, cur=null;
+
+function role(){ try{ return localStorage.getItem('IE_ROLE')||'owner'; }catch(e){ return 'owner'; } }
+function cidk(){ try{ return currentCompanyId||'default'; }catch(e){ return 'default'; } }
+function lockDate(){ try{ return (db&&db.accounts&&db.accounts.lockDate)||''; }catch(e){ return ''; } }
+function legacyPin(){ try{ return (db&&db.accounts&&db.accounts.rolePin)||''; }catch(e){ return ''; } }
+function hash(s){ var h=5381; s='ie|'+s; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return String(h); }
+function rpc(fn,args){
+  return Promise.resolve(supabaseClient.rpc(fn,args)).then(function(r){ if(r&&r.error) throw r.error; return r.data; });
+}
+
+/* ---- dialog helper ---- */
+function close(){ $('rsgOverlay').classList.remove('show'); $('rsgIn').value=''; busy=false; cur=null; }
+function show(o){
+  cur=o;
+  $('rsgTitle').textContent=o.title||'';
+  $('rsgMsg').textContent=o.msg||'';
+  var inp=$('rsgIn'), err=$('rsgErr');
+  err.style.display='none'; err.textContent='';
+  if(o.input){
+    inp.style.display='block'; inp.value='';
+    inp.type=o.input.type||'text'; inp.placeholder=o.input.placeholder||'';
+    inp.setAttribute('inputmode',o.input.mode||'text'); inp.maxLength=o.input.max||64;
+  } else inp.style.display='none';
+  var pri=$('rsgPri'), sec=$('rsgSec');
+  pri.textContent=o.primary||'OK'; pri.disabled=false;
+  if(o.secondary){ sec.style.display=''; sec.textContent=o.secondary; } else sec.style.display='none';
+  pri.onclick=function(){ if(o.onPrimary) o.onPrimary(inp.value.trim()); else close(); };
+  sec.onclick=function(){ if(o.onSecondary) o.onSecondary(); else close(); };
+  inp.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); pri.click(); } };
+  $('rsgOverlay').classList.add('show');
+  if(o.input) setTimeout(function(){ try{ inp.focus(); }catch(e){} },60);
+}
+function showErr(t){ var e=$('rsgErr'); e.textContent=t; e.style.display='block'; $('rsgPri').disabled=false; }
+
+/* ---- Step 1: Owner role + PIN ---- */
+function stepRole(purpose,done){
+  if(role()!=='owner'){
+    return show({title:'Access Restricted',msg:'Only the Owner can '+(purpose==='delete'?'delete the account':'reset data')+'. Please switch this device to Owner mode from Audit & Security.',primary:'OK'});
+  }
+  show({title:'Checking Security',msg:'Please wait…',primary:'Please wait'}); $('rsgPri').disabled=true; $('rsgSec').style.display='none';
+  rpc('owner_sec_status',{p_cid:cidk()}).then(function(d){
+    var serverPin=!!(d&&d.has_pin), legacy=legacyPin();
+    if(!serverPin&&!legacy) return done();
+    askPin(serverPin,legacy,done);
+  }).catch(function(){
+    show({title:'Verification Unavailable',msg:'Unable to verify Owner security right now. Please check your internet connection and try again.',primary:'OK'});
+  });
+}
+function askPin(serverPin,legacy,done){
+  show({title:'Owner PIN Required',msg:'Enter your Owner PIN to continue.',input:{type:'password',mode:'numeric',placeholder:'Owner PIN',max:32},primary:'Verify',secondary:'Cancel',
+    onPrimary:function(p){
+      if(!p) return showErr('Please enter the PIN.');
+      $('rsgPri').disabled=true;
+      if(serverPin){
+        rpc('owner_verify',{p_cid:cidk(),p_code:p}).then(function(r){
+          if(r==='pin'||r==='rec') return done();
+          if(r==='locked') return showErr('Too many incorrect attempts. Please try again after 15 minutes.');
+          if(r==='nopin'&&legacy&&hash(p)===legacy) return done();
+          showErr('Incorrect PIN.');
+        }).catch(function(){ showErr('Server error. Please try again.'); });
+      } else {
+        if(hash(p)===legacy) return done();
+        showErr('Incorrect PIN.');
+      }
+    }});
+}
+
+/* ---- Step 2: Period lock ---- */
+function stepLock(purpose,done){
+  var l=lockDate();
+  if(purpose==='reset'&&l){
+    return show({title:'Reset Blocked',msg:'A period lock is active until '+l+'. Data cannot be reset while a lock is set. The Owner must remove the lock from Audit & Security > Period Lock first.',primary:'OK'});
+  }
+  done();
+}
+
+/* ---- Step 3: Password must exist ---- */
+function stepPassword(purpose,done){
+  var f=(typeof fbAuth!=='undefined')?fbAuth:null;
+  if(!f||!f.hasPasswordLogin){
+    return show({title:'Verification Unavailable',msg:'Unable to check your password status right now. Please try again.',primary:'OK'});
+  }
+  f.hasPasswordLogin().then(function(has){
+    if(has) return done();
+    show({title:'Password Required',msg:(purpose==='delete'?'Deleting the account':'Resetting data')+' requires a password. Please set a password in your Profile first. This also applies to accounts that sign in with Google.',primary:'Go to Profile',secondary:'Cancel',
+      onPrimary:function(){ close(); try{ showPage('profile'); }catch(e){} }});
+  });
+}
+
+/* ---- Public API ---- */
+var RSG={
+  next:{},
+  gate:function(purpose,cb){
+    if(busy) return; busy=true;
+    stepRole(purpose,function(){ stepLock(purpose,function(){ stepPassword(purpose,function(){ close(); cb&&cb(); }); }); });
+  },
+  start:function(purpose){
+    RSG.gate(purpose,function(){
+      var fn=RSG.next[purpose];
+      if(typeof fn==='function') return fn();
+      show({title:'Security Checks Passed',msg:'All security checks are complete. The next steps will be enabled in the upcoming update. No data has been changed.',primary:'OK'});
+    });
+  }
+};
+window.RSG=RSG;
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&$('rsgOverlay').classList.contains('show')&&cur&&cur.secondary) $('rsgSec').click(); });
+})();
+</script>
+<!-- RSG-PHASE1-END -->
+<!-- RSG-PHASE2-START: Reset wizard -->
+<style>
+#rswOverlay{position:fixed;inset:0;z-index:10061;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,13,.8);backdrop-filter:blur(6px)}
+#rswOverlay.show{display:flex}
+#rswBox{width:100%;max-width:420px;max-height:90vh;overflow:auto;background:#12151f;border:1px solid rgba(244,63,94,.35);border-radius:16px;padding:20px;color:#e8ebf5;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+#rswBox h3{margin:0 0 4px;font-size:17px;color:#fb7185}
+#rswStep{font-size:11px;color:#8b93ab;margin-bottom:10px}
+#rswBody{font-size:13px;line-height:1.5;color:#c3c9dc}
+.rswOpt{display:block;padding:11px 12px;margin:8px 0;border:1px solid rgba(255,255,255,.16);border-radius:10px;cursor:pointer}
+.rswOpt.sel{border-color:#fb7185;background:rgba(244,63,94,.1)}
+.rswOpt b{display:block;color:#fff;font-size:14px}
+.rswRow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+#rswIn{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#0b0d15;color:#fff;font-size:15px;margin-top:8px}
+#rswErr{display:none;font-size:12px;color:#fb7185;margin-top:8px}
+#rswCount{font-size:44px;font-weight:700;text-align:center;color:#fb7185;margin:14px 0}
+#rswBtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+#rswBtns .btn{min-height:40px}
+</style>
+<div id="rswOverlay" role="dialog" aria-modal="true">
+  <div id="rswBox">
+    <h3 id="rswTitle"></h3>
+    <div id="rswStep"></div>
+    <div id="rswBody"></div>
+    <input id="rswIn" autocomplete="off" style="display:none">
+    <div id="rswErr"></div>
+    <div id="rswBtns"><button type="button" class="btn muted" id="rswCancel">Cancel</button><button type="button" class="btn danger" id="rswNext">Next</button></div>
+  </div>
+</div>
+<script id="rsw-js">
+(function(){
+if(!window.RSG||window.RSW) return;
+var $=function(i){return document.getElementById(i)};
+var st=null, timer=null;
+var MAX=3, LOCK_MS=15*60*1000;
+
+function uid(){ try{ return (currentUser&&(currentUser.uid||currentUser.id))||'u'; }catch(e){ return 'u'; } }
+function lkKey(){ return 'IE_RSW_LOCK_'+uid(); }
+function getLock(){ try{ return JSON.parse(localStorage.getItem(lkKey())||'{}')||{}; }catch(e){ return {}; } }
+function setLock(o){ try{ localStorage.setItem(lkKey(),JSON.stringify(o)); }catch(e){} }
+function lockedLeft(){ var l=getLock(); return l.until&&l.until>Date.now()?Math.ceil((l.until-Date.now())/60000):0; }
+function n(k){ try{ return Array.isArray(db[k])?db[k].length:0; }catch(e){ return 0; } }
+function vch(){ try{ return ((db.accounts&&db.accounts.vouchers)||[]).length; }catch(e){ return 0; } }
+
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+function close(){ stopTimer(); $('rswOverlay').classList.remove('show'); $('rswIn').value=''; st=null; }
+function err(t){ var e=$('rswErr'); if(t){ e.textContent=t; e.style.display='block'; } else { e.style.display='none'; e.textContent=''; } }
+function setBtn(next,disabled,cancel){ var b=$('rswNext'); b.textContent=next; b.disabled=!!disabled; b.style.display=next?'':'none'; $('rswCancel').textContent=cancel||'Cancel'; }
+function input(on,type,ph,mode){ var i=$('rswIn'); i.style.display=on?'block':'none'; i.value=''; if(on){ i.type=type; i.placeholder=ph; i.setAttribute('inputmode',mode||'text'); setTimeout(function(){ try{ i.focus(); }catch(e){} },60); } }
+function head(step,total,title,body){ if(st&&st.purpose==='delete') total=7; $('rswTitle').textContent=title; $('rswStep').textContent='Step '+step+' of '+total; $('rswBody').innerHTML=body; err(''); }
+
+/* Step 1: mode */
+function s1(){
+  st.step=1;
+  head(1,6,'Choose Reset Type',
+   '<label class="rswOpt'+(st.mode==='tx'?' sel':'')+'" data-m="tx"><b>Transactions only</b>Removes invoices, documents, purchases, payments and vouchers. Customers, items and settings are kept.</label>'+
+   '<label class="rswOpt'+(st.mode==='all'?' sel':'')+'" data-m="all"><b>Everything</b>Removes all business data, including customers, items and vendors. Company details, logo, stamp and UPI are restored afterwards.</label>');
+  input(false); setBtn('Next',!st.mode);
+  Array.prototype.forEach.call($('rswBody').querySelectorAll('.rswOpt'),function(el){
+    el.onclick=function(){ st.mode=el.getAttribute('data-m'); s1(); };
+  });
+  $('rswNext').onclick=s2;
+}
+/* Step 2: summary */
+function s2(){
+  st.step=2;
+  var rows=[['Invoices',n('invoices')],['Documents',n('documents')],['Purchase bills',n('purchaseBills')],['Purchase orders',n('purchaseOrders')],['Accounting vouchers',vch()]];
+  if(st.mode==='all') rows=rows.concat([['Customers',n('customers')],['Items',n('items')],['Vendors',n('vendors')],['Cheques',n('cheques')]]);
+  var del=st.purpose==='delete';
+  var numUi=del?'':'<div style="margin-top:10px"><b style="color:#fff">Invoice numbering after reset</b><label class="rswOpt'+(st.num==='continue'?' sel':'')+'" data-n="continue"><b>Continue</b>Next invoice follows the last number used.</label><label class="rswOpt'+(st.num==='restart'?' sel':'')+'" data-n="restart"><b>Restart</b>Numbering starts again from the configured start number.</label></div>';
+  head(2,6,del?'Review Account Deletion':'Review What Will Be Removed','<div style="margin-bottom:8px">'+(del?'Your account and <b>all companies</b> will be permanently deleted. The current company contains:':(st.mode==='all'?'Everything':'Transactions only')+' — the following records will be permanently removed:')+'</div>'+
+    rows.map(function(r){ return '<div class="rswRow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>'; }).join('')+numUi);
+  input(false); setBtn('Continue',!del&&!st.num);
+  Array.prototype.forEach.call($('rswBody').querySelectorAll('[data-n]'),function(el){ el.onclick=function(){ st.num=el.getAttribute('data-n'); s2(); }; });
+  $('rswNext').onclick=s3;
+}
+/* Step 3: backup */
+function s3(){
+  st.step=3;
+  head(3,6,'Download Backup','A full backup must be downloaded before you can continue. Keep the file in a safe place. It can be restored later from Backup &amp; Restore.<div style="margin-top:12px"><button type="button" class="btn success" id="rswBk">⬇ Download Backup</button></div><div id="rswBkOk" style="margin-top:8px;color:#34d399;display:none">Backup downloaded.</div>');
+  input(false); setBtn('Continue',!st.backup);
+  if(st.backup) $('rswBkOk').style.display='block';
+  $('rswBk').onclick=function(){
+    try{ backupJSON(); st.backup=true; $('rswBkOk').style.display='block'; $('rswNext').disabled=false; err(''); }
+    catch(e){ err('Backup failed. Reset cannot continue without a backup.'); }
+  };
+  $('rswNext').onclick=s4;
+}
+/* Step 4: type RESET */
+function s4(){
+  st.step=4;
+  var W=st.purpose==='delete'?'DELETE':'RESET';
+  head(4,6,st.purpose==='delete'?'Confirm Deletion':'Confirm Reset','Type <b>'+W+'</b> in capital letters to confirm.');
+  input(true,'text','Type '+W,'text'); setBtn('Confirm',false);
+  $('rswNext').onclick=function(){
+    if($('rswIn').value.trim()!==W) return err('Text does not match. Please type '+W+'.');
+    s5();
+  };
+}
+/* Step 5: password */
+function s5(){
+  st.step=5;
+  var m=lockedLeft();
+  head(5,6,'Verify Password','Enter your account password to continue.'+(m?'<div style="margin-top:8px;color:#fb7185">Too many incorrect attempts. Try again in '+m+' minute(s).</div>':''));
+  input(true,'password','Account password','text'); setBtn('Verify',false);
+  $('rswNext').onclick=function(){
+    var left=lockedLeft();
+    if(left) return err('Too many incorrect attempts. Try again in '+left+' minute(s).');
+    var pw=$('rswIn').value;
+    if(!pw) return err('Please enter your password.');
+    var email=(currentUser&&currentUser.email)||'';
+    if(!email) return err('Account email not found. Please sign in again.');
+    $('rswNext').disabled=true; err('');
+    /* separate client: does not touch the current login session */
+    var tmp=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:'ie-rsw-tmp'}});
+    tmp.auth.signInWithPassword({email:email,password:pw}).then(function(r){
+      var e=r&&r.error;
+      if(!e&&r.data&&r.data.user){ setLock({}); try{ tmp.auth.signOut({scope:'local'}); }catch(x){} return st.purpose==='delete'?sOtp():s6(); }
+      var msg=String(e&&e.message||'').toLowerCase();
+      if(e&&(e.status===429||msg.indexOf('rate')>-1)){ $('rswNext').disabled=false; return err('Too many requests. Please wait a few minutes and try again.'); }
+      if(e&&(e.status===400||msg.indexOf('invalid')>-1)){
+        var l=getLock(); l.count=(l.count||0)+1;
+        if(l.count>=MAX){ l={count:0,until:Date.now()+LOCK_MS}; setLock(l); $('rswNext').disabled=false; return err('Too many incorrect attempts. Reset is locked for 15 minutes.'); }
+        setLock(l); $('rswNext').disabled=false; return err('Incorrect password. '+(MAX-l.count)+' attempt(s) remaining.');
+      }
+      $('rswNext').disabled=false; err('Unable to verify right now. Please check your connection and try again.');
+    }).catch(function(){ $('rswNext').disabled=false; err('Unable to verify right now. Please check your connection and try again.'); });
+  };
+}
+/* Step 6 (delete only): email OTP */
+function sOtp(){
+  st.step=6; var email=(currentUser&&currentUser.email)||'';
+  head(6,7,'Email Verification','Sending a verification code to <b>'+email+'</b>…');
+  input(false); setBtn('',true);
+  var tmp=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storageKey:'ie-rsw-otp'}});
+  tmp.auth.signInWithOtp({email:email,options:{shouldCreateUser:false}}).then(function(r){
+    if(!st||st.step!==6) return;
+    if(r&&r.error){ head(6,7,'Email Verification','We could not send the code. Please wait a few minutes and try again.'); setBtn('',true,'Close'); return; }
+    head(6,7,'Email Verification','Enter the verification code sent to <b>'+email+'</b>.');
+    input(true,'text','Verification code','numeric'); setBtn('Verify',false);
+    $('rswNext').onclick=function(){
+      var c=$('rswIn').value.trim(); if(!c) return err('Please enter the code.');
+      $('rswNext').disabled=true; err('');
+      tmp.auth.verifyOtp({email:email,token:c,type:'email'}).then(function(v){
+        if(v&&!v.error&&v.data&&v.data.user){ try{ tmp.auth.signOut({scope:'local'}); }catch(x){} return s6(); }
+        $('rswNext').disabled=false; err('Incorrect or expired code.');
+      }).catch(function(){ $('rswNext').disabled=false; err('Unable to verify right now. Please try again.'); });
+    };
+  }).catch(function(){ if(st&&st.step===6){ head(6,7,'Email Verification','We could not send the code. Please check your connection and try again.'); setBtn('',true,'Close'); } });
+}
+/* Final step: countdown */
+function s6(){
+  st.step=6;
+  head(st.purpose==='delete'?7:6,6,'Final Countdown',(st.purpose==='delete'?'Account deletion':'Reset')+' will start automatically. Press Cancel to stop.<div id="rswCount">10</div>');
+  input(false); setBtn('',true,'Cancel Reset');
+  var t=10;
+  stopTimer();
+  timer=setInterval(function(){
+    t--; var c=$('rswCount'); if(c) c.textContent=String(t);
+    if(t<=0){ stopTimer(); done(); }
+  },1000);
+}
+function done(){
+  var mode=st.mode, num=st.num, pur=st.purpose; close();
+  if(pur==='delete'&&typeof window.RSG.execDelete==='function') return window.RSG.execDelete();
+  if(typeof window.RSG.exec==='function') return window.RSG.exec(mode,num);
+  var o=$('rswOverlay'); /* Phase 3 not installed yet: nothing is deleted */
+  st={mode:mode}; head(6,6,'Verification Complete','All checks passed and your backup is saved. The reset itself will be enabled in the next update. <b>No data has been changed.</b>');
+  input(false); setBtn('',true,'Close'); o.classList.add('show');
+}
+
+window.RSW={start:function(purpose){
+  st={mode:'',backup:false,step:1,num:'',purpose:purpose||'reset'};
+  $('rswOverlay').classList.add('show');
+  if(st.purpose==='delete'){ st.mode='all'; s2(); } else s1();
+}};
+$('rswCancel').onclick=close;
+window.RSG.next.reset=function(){ window.RSW.start('reset'); };
+window.RSG.next.delete=function(){ window.RSW.start('delete'); };
+})();
+</script>
+<!-- RSG-PHASE2-END -->
+<!-- RSG-PHASE3-START: Reset + Delete execution -->
+<div id="rsxOverlay" style="position:fixed;inset:0;z-index:10062;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,13,.85)"><div style="max-width:380px;width:100%;background:#12151f;border:1px solid rgba(244,63,94,.35);border-radius:16px;padding:20px;color:#e8ebf5"><h3 id="rsxT" style="margin:0 0 8px;font-size:17px;color:#fb7185"></h3><div id="rsxM" style="font-size:13px;line-height:1.5;color:#c3c9dc"></div><div style="text-align:right;margin-top:14px"><button type="button" class="btn danger" id="rsxB" style="display:none">OK</button></div></div></div>
+<script id="rsx-js">
+(function(){
+if(!window.RSG||window.RSX) return;
+var $=function(i){return document.getElementById(i)};
+function ui(t,m,btn,fn){ $('rsxT').textContent=t; $('rsxM').textContent=m; var b=$('rsxB'); b.style.display=btn?'':'none'; if(btn){ b.textContent=btn; b.onclick=fn||function(){ $('rsxOverlay').style.display='none'; }; } $('rsxOverlay').style.display='flex'; }
+function cref(){ return fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(currentCompanyId); }
+function lastNo(list){ var mx=0; (list||[]).forEach(function(v){ var t=String(v&&(v.no||v.number||v.invoiceNo||v.invNo||'')); var m=t.match(/(\d+)\D*$/); if(m) mx=Math.max(mx,parseInt(m[1],10)||0); }); return mx; }
+function cloneJ(o){ return JSON.parse(JSON.stringify(o)); }
+
+function buildNew(mode,num){
+  var old=db, nd;
+  if(mode==='all'){
+    nd=emptyDB(); nd.settings=Object.assign({},nd.settings,cloneJ(old.settings||{}));
+    var oa=old.accounts||{}; nd.accounts.lockDate=''; nd.accounts.rolePin=oa.rolePin||''; nd.accounts.audit=Array.isArray(oa.audit)?oa.audit.slice():[];
+  } else {
+    nd=normalizeDB(cloneJ(old));
+    ['invoices','deletedInvoices','documents','duplicateInvoices','purchaseOrders','purchaseBills','importedChatInvoices'].forEach(function(k){ nd[k]=[]; });
+    nd.pendingChatInvoiceMappings={};
+    var a=nd.accounts; a.vouchers=[]; a.pdc=[]; a.recon={}; a.reconStmt={}; a.counters={};
+  }
+  var ln=lastNo(old.invoices);
+  if(num==='continue') nd.settings.start=Math.max(1,parseInt(nd.settings.start,10)||1,ln+1);
+  nd.receiptCounter=(num==='continue')?Math.max(1,Number(old.receiptCounter)||1):1;
+  return nd;
+}
+function counts(){ function n(k){ return Array.isArray(db[k])?db[k].length:0; } return {invoices:n('invoices'),customers:n('customers'),items:n('items'),vouchers:((db.accounts&&db.accounts.vouchers)||[]).length}; }
+
+RSG.exec=function(mode,num){
+  if(!currentUser||!currentCompanyId) return ui('Reset Failed','No active company found. Please reopen the company and try again.','OK');
+  ui('Resetting Data','Please do not close this window…');
+  var cid=currentCompanyId, c=counts(), nd, rv=1;
+  /* 1. flush pending local save and cancel queued cloud saves */
+  try{ lsFlushNow(); }catch(e){}
+  try{ clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); __fsVer++; }catch(e){}
+  try{ nd=buildNew(mode,num); }catch(e){ return ui('Reset Failed','Unable to prepare the new data. Nothing was changed.','OK'); }
+  return cref().get().then(function(snap){
+    rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0)+1;
+    nd.accounts.audit.push({ts:Date.now(),action:'DATA_RESET',mode:mode,by:(currentUser.email||currentUser.uid),detail:c});
+    /* 2. cloud first (resetVersion +1) */
+    return cref().set({data:JSON.stringify(nd),updatedAt:Date.now(),resetVersion:rv,lastReset:{at:Date.now(),mode:mode}},{merge:true});
+  }).then(function(){
+    /* 3. cloud succeeded -> local */
+    db=nd;
+    try{ localStorage.setItem(KEY+'_'+cid,JSON.stringify(nd)); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){}
+    /* 4. audit record in cloud (best effort) */
+    try{ fbDb.collection('users').doc(currentUser.uid).collection('resetAudit').doc(cid+'_'+Date.now()).set({companyId:cid,mode:mode,at:Date.now(),by:currentUser.email||'',counts:c,resetVersion:rv}).catch(function(){}); }catch(e){}
+    ui('Reset Complete','Your data has been reset successfully. The app will now reload.','Reload Now',function(){ location.reload(); });
+    setTimeout(function(){ location.reload(); },2500);
+    return true;
+  }).catch(function(e){
+    console.warn('reset failed',e);
+    ui('Reset Failed','The cloud could not be updated, so no local data was removed. Please check your connection and try again.','OK');
+    return false;
+  });
+};
+
+RSG.execDelete=function(){
+  if(!currentUser) return;
+  var uid=currentUser.uid;
+  ui('Deleting Account','Please do not close this window…');
+  try{ clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); __fsVer++; }catch(e){}
+  fbDb.collection('users').doc(uid).collection('companies').get().then(function(snap){
+    var b=fbDb.batch(); snap.docs.forEach(function(d){ b.delete(d.ref); }); return b.commit();
+  }).then(function(){ return fbDb.collection('publicProfiles').doc(uid).set({name:'Deleted account 🚫',userId:'',photoURL:'',companyNames:[],companyGstins:[],connectionUids:[],deleted:true,deletedAt:Date.now()}); })
+  .then(function(){ return fbDb.collection('users').doc(uid).delete(); })
+  .then(function(){
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf(KEY)===0||k.indexOf('ie_pending_')===0||k.indexOf('IE_RESETV_')===0) localStorage.removeItem(k); }); }catch(e){}
+    return fbAuth.signOut();
+  }).then(function(){
+    userProfile=null; currentCompanyId=null; db=null;
+    ui('Account Deleted','Your account data has been permanently deleted.','OK',function(){ location.reload(); });
+    setTimeout(function(){ location.reload(); },2500);
+  }).catch(function(e){
+    ui('Deletion Failed','The account could not be fully deleted. Please check your connection and try again. '+(e&&e.message?'('+e.message+')':''),'OK');
+  });
+};
+
+/* Stale-device guard: if another device reset this company, reload instead of re-uploading old data */
+function guard(){
+  try{
+    if(!currentUser||!currentCompanyId||navigator.onLine===false||!db) return;
+    var cid=currentCompanyId;
+    cref().get().then(function(s){
+      var rv=Number((s.exists&&s.data()&&s.data().resetVersion)||0), lv=Number(localStorage.getItem('IE_RESETV_'+cid)||0);
+      if(rv>lv){ try{ iePendSet(cid,false); localStorage.removeItem(KEY+'_'+cid); localStorage.setItem('IE_RESETV_'+cid,String(rv)); }catch(e){}
+        ui('Data Was Reset','This company was reset from another device. The app will reload with the latest data.','Reload Now',function(){ location.reload(); }); }
+    }).catch(function(){});
+  }catch(e){}
+}
+setInterval(guard,90000);
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') guard(); });
+window.RSX={guard:guard,ui:ui,cref:cref};
+})();
+</script>
+<!-- RSG-PHASE3-END -->
+<!-- RSG-PHASE4-START: Extra safety -->
+<script id="rsy-js">
+(function(){
+if(!window.RSG||!window.RSX||window.RSY) return;
+var $=function(i){return document.getElementById(i)}, DAY=86400000, WEEK=7*DAY;
+function uid(){ return currentUser&&currentUser.uid; }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function fmt(t){ try{ return new Date(t).toLocaleString(); }catch(e){ return ''; } }
+function ui(t,m,b,f){ return RSX.ui(t,m,b,f); }
+/* dialog with two buttons */
+function dlg(title,msg,pri,onPri,sec,onSec){
+  var o=$('rsyOv');
+  if(!o){ o=document.createElement('div'); o.id='rsyOv'; o.style.cssText='position:fixed;inset:0;z-index:10063;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,13,.85)';
+    o.innerHTML='<div style="max-width:380px;width:100%;background:#12151f;border:1px solid rgba(244,63,94,.35);border-radius:16px;padding:20px;color:#e8ebf5"><h3 id="rsyT" style="margin:0 0 8px;font-size:17px;color:#fb7185"></h3><div id="rsyM" style="font-size:13px;line-height:1.5;color:#c3c9dc"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap"><button type="button" class="btn muted" id="rsyS"></button><button type="button" class="btn danger" id="rsyP"></button></div></div>'; document.body.appendChild(o); }
+  $('rsyT').textContent=title; $('rsyM').innerHTML=msg;
+  var P=$('rsyP'),S=$('rsyS'); P.textContent=pri; P.disabled=false; S.style.display=sec?'':'none'; S.textContent=sec||'';
+  function hide(){ o.style.display='none'; }
+  P.onclick=function(){ hide(); if(onPri) onPri(); };
+  S.onclick=function(){ hide(); if(onSec) onSec(); };
+  o.style.display='flex';
+}
+function isOwner(){ try{ return (localStorage.getItem('IE_ROLE')||'owner')==='owner'; }catch(e){ return true; } }
+
+/* ---------- 4. Owner email alert (best effort; needs the security-alert edge function) ---------- */
+function alertOwner(type,extra){
+  try{ var c=null; try{ c=(db&&db.settings&&db.settings.company)||''; }catch(e){}
+    supabaseClient.functions.invoke('security-alert',{body:Object.assign({type:type,company:c,at:Date.now()},extra||{})}).catch(function(){}); }catch(e){}
+}
+
+/* ---------- 1. Device lock (WebAuthn: fingerprint / face / screen lock) ---------- */
+function lk(){ return 'IE_DLOCK_'+uid(); }
+function b64(buf){ var a=new Uint8Array(buf),s=''; for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]); return btoa(s); }
+function unb64(t){ var s=atob(t),a=new Uint8Array(s.length); for(var i=0;i<s.length;i++) a[i]=s.charCodeAt(i); return a.buffer; }
+function rnd(){ var a=new Uint8Array(32); crypto.getRandomValues(a); return a; }
+function lockOn(){ try{ return !!localStorage.getItem(lk()); }catch(e){ return false; } }
+function supported(){
+  if(!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)) return Promise.resolve(false);
+  return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function(){ return false; });
+}
+function verifyLock(){
+  var id=localStorage.getItem(lk());
+  return navigator.credentials.get({publicKey:{challenge:rnd(),allowCredentials:[{type:'public-key',id:unb64(id)}],userVerification:'required',timeout:60000}}).then(function(c){ return !!c; }).catch(function(){ return false; });
+}
+function enableLock(){
+  supported().then(function(ok){
+    if(!ok) return ui('Device Lock Unavailable','This device or browser does not support biometric / screen-lock verification. In the Android APK this needs a native biometric plugin and an APK rebuild.','OK');
+    var em=(currentUser.email||'user');
+    navigator.credentials.create({publicKey:{challenge:rnd(),rp:{name:'IE Billing'},user:{id:new TextEncoder().encode(uid()).slice(0,64),name:em,displayName:em},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}})
+    .then(function(c){ localStorage.setItem(lk(),b64(c.rawId)); paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK'); })
+    .catch(function(){ ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.','OK'); });
+  });
+}
+function toggleLock(){
+  if(!isOwner()) return ui('Access Restricted','Only the Owner can change Device Lock.','OK');
+  if(!uid()) return;
+  if(!lockOn()) return enableLock();
+  verifyLock().then(function(ok){
+    if(!ok) return ui('Verification Failed','Device Lock was not turned off.','OK');
+    try{ localStorage.removeItem(lk()); }catch(e){} paint(); ui('Device Lock Disabled','Device Lock is now off for this device.','OK');
+  });
+}
+/* extra layer in the existing gate (in addition to password, not instead of it) */
+var gate0=RSG.gate;
+RSG.gate=function(purpose,cb){
+  gate0.call(RSG,purpose,function(){
+    if(!lockOn()) return cb&&cb();
+    verifyLock().then(function(ok){ if(ok) return cb&&cb(); ui('Device Verification Failed','Fingerprint / screen-lock verification is required to continue. No data was changed.','OK'); });
+  });
+};
+
+/* ---------- 2. Undo Reset (7-day cloud snapshot) ---------- */
+function sref(){ return fbDb.collection('users').doc(uid()).collection('resetSnapshots').doc(currentCompanyId); }
+function saveSnapshot(mode){
+  try{ lsFlushNow(); }catch(e){}
+  return sref().set({data:JSON.stringify(db),at:Date.now(),expiresAt:Date.now()+WEEK,mode:mode,by:currentUser.email||''}).then(function(){ return true; }).catch(function(){ return false; });
+}
+var exec0=RSG.exec;
+RSG.exec=function(mode,num){
+  if(!currentUser||!currentCompanyId) return exec0.call(RSG,mode,num);
+  ui('Preparing Reset','Saving a 7-day safety snapshot…');
+  return saveSnapshot(mode).then(function(ok){
+    if(!ok) return ui('Reset Cancelled','The safety snapshot could not be saved, so nothing was changed. Please check your connection and try again.','OK');
+    return Promise.resolve(exec0.call(RSG,mode,num)).then(function(r){ if(r) alertOwner('reset',{mode:mode}); });
+  });
+};
+function undoReset(){
+  if(!isOwner()) return ui('Access Restricted','Only the Owner can undo a reset.','OK');
+  if(!currentUser||!currentCompanyId) return;
+  var run=function(){
+    sref().get().then(function(sn){
+      var d=sn.exists&&sn.data();
+      if(!d||!d.data) return ui('Nothing To Undo','No reset snapshot was found for this company.','OK');
+      if(d.expiresAt<Date.now()){ sref().delete().catch(function(){}); return ui('Snapshot Expired','The 7-day undo window for the last reset has ended.','OK'); }
+      dlg('Undo Reset','Restore this company to its state before the reset on <b>'+esc(fmt(d.at))+'</b>?<br><br>Any data created after the reset will be replaced.','Restore Data',function(){ restore(d); },'Cancel');
+    }).catch(function(){ ui('Undo Unavailable','Unable to reach the server. Please try again.','OK'); });
+  };
+  RSG.gate('undo',run);
+}
+function restore(d){
+  var cid=currentCompanyId, rv=1;
+  ui('Restoring','Please do not close this window…');
+  try{ clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); __fsVer++; }catch(e){}
+  RSX.cref().get().then(function(s){
+    rv=Number((s.exists&&s.data()&&s.data().resetVersion)||0)+1;
+    return RSX.cref().set({data:d.data,updatedAt:Date.now(),resetVersion:rv,lastReset:null},{merge:true});
+  }).then(function(){
+    try{ localStorage.setItem(KEY+'_'+cid,d.data); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){}
+    sref().delete().catch(function(){});
+    alertOwner('undo_reset',{});
+    ui('Data Restored','Your data has been restored. The app will now reload.','Reload Now',function(){ location.reload(); });
+    setTimeout(function(){ location.reload(); },2500);
+  }).catch(function(){ ui('Restore Failed','The data could not be restored. Nothing was changed. Please try again.','OK'); });
+}
+
+/* ---------- 3. Delete pending window (7 days) ---------- */
+RSG.execDeleteNow=RSG.execDelete;
+RSG.execDelete=function(){
+  if(!currentUser) return;
+  var u=currentUser.uid, dp={requestedAt:Date.now(),executeAt:Date.now()+WEEK};
+  ui('Scheduling Deletion','Please wait…');
+  fbDb.collection('users').doc(u).set({deletePending:dp},{merge:true}).then(function(){
+    try{ if(userProfile) userProfile.deletePending=dp; }catch(e){}
+    alertOwner('delete_scheduled',{executeAt:dp.executeAt});
+    ui('Deletion Scheduled','Your account will be eligible for permanent deletion on '+fmt(dp.executeAt)+'. Sign in before then to cancel. You will now be signed out.','OK',function(){ fbAuth.signOut().then(function(){ location.reload(); }); });
+  }).catch(function(){ ui('Scheduling Failed','Deletion could not be scheduled. Nothing was changed. Please try again.','OK'); });
+};
+function cancelDelete(){
+  fbDb.collection('users').doc(uid()).set({deletePending:null},{merge:true}).then(function(){
+    try{ userProfile.deletePending=null; }catch(e){}
+    alertOwner('delete_cancelled',{}); ui('Deletion Cancelled','Your account will not be deleted.','OK');
+  }).catch(function(){ ui('Cancel Failed','Unable to cancel right now. Please try again.','OK'); });
+}
+var chk=0, shown={};
+function checkPending(){
+  if(!currentUser||!userProfile||shown[currentUser.uid]) return;
+  var dp=userProfile.deletePending; shown[currentUser.uid]=1;
+  if(!dp||!dp.executeAt) return;
+  if(dp.executeAt>Date.now()){
+    dlg('Account Deletion Scheduled','This account is scheduled for deletion on <b>'+esc(fmt(dp.executeAt))+'</b>. Your data is safe until then.','Cancel Deletion',cancelDelete,'Keep Pending');
+  } else {
+    dlg('Deletion Period Ended','The 7-day waiting period is over. Do you want to delete this account permanently now?','Delete Permanently',function(){ RSG.execDeleteNow(); },'Cancel Deletion',cancelDelete);
+  }
+}
+setInterval(checkPending,3000);
+
+/* ---------- UI in Danger Zone ---------- */
+function paint(){
+  var b=$('rsyLockBtn'); if(b) b.textContent='🔐 Device Lock: '+(lockOn()?'On':'Off');
+}
+var anchor=$('resetDataBtn');
+if(anchor&&!$('rsyUndoBtn')){
+  anchor.insertAdjacentHTML('afterend','<br><button class="btn" id="rsyUndoBtn" type="button" style="margin-bottom:10px">↩ Undo Last Reset (7 days)</button><br><button class="btn" id="rsyLockBtn" type="button" style="margin-bottom:10px">🔐 Device Lock</button>');
+  $('rsyUndoBtn').onclick=undoReset; $('rsyLockBtn').onclick=toggleLock; paint();
+  setInterval(paint,4000);
+}
+window.RSY={undo:undoReset};
+})();
+</script>
+<!-- RSG-PHASE4-END -->
+
+
+
 </body>
 </html>
