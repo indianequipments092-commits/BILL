@@ -14047,7 +14047,7 @@ const si=id('statInvoices'), sd=id('statDrafts'), sc=id('statCustomers'), st=id(
 if(si) si.textContent=db.invoices.length;
 if(sd) sd.textContent=db.invoices.filter(x=>x.status==='Draft').length;
 if(sc) sc.textContent=db.customers.length;
-if(st) st.textContent=db.items.length;
+if(st) st.textContent=db.items.filter(x=>x.active!==false&&!(x.isPremium&&x.premiumInactive)).length;
 const finalized=db.invoices.filter(x=>x.status==='Finalized');
 const so=id('statOutstanding'); if(so) so.textContent='₹ '+money(finalized.reduce((s,x)=>s+balanceDue(x),0));
 const scoll=id('statCollected');
@@ -16778,6 +16778,33 @@ const legend=items.map((it,i)=>{const frac=(Number(it.value)||0)/total;
 return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:4px"><span style="width:10px;height:10px;border-radius:2px;background:${colors[i%colors.length]};display:inline-block;flex-shrink:0"></span>${esc(it.label)}: ₹ ${money(it.value)} (${(frac*100).toFixed(1)}%)</div>`;}).join('');
 return `<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><svg viewBox="0 0 ${size} ${size}" style="width:150px;height:150px;flex-shrink:0">${slices}</svg><div>${legend}</div></div>`;
 }
+function slowModeList(){
+const m=window._slowMode||'stock';
+return (window._slowBase||[]).filter(x=>m==='all'||x.stock>0).sort((a,b)=>(b.value-a.value)||(b.stock-a.stock)||String(a.name).localeCompare(String(b.name)));
+}
+function renderSlowItems(){
+const el=id('anaSlowItems'); if(!el) return;
+const mode=window._slowMode||'stock', q=String(window._slowQ||'').trim().toLowerCase();
+const full=slowModeList();
+if(typeof analyticsExportData==='object'&&analyticsExportData) analyticsExportData.slow=full;
+const list=q?full.filter(x=>String(x.name).toLowerCase().indexOf(q)>=0):full;
+const lim=window._slowLimit||100, shown=list.slice(0,lim);
+const totVal=full.reduce((t,x)=>t+x.value,0);
+const ctl=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><select onchange="window._slowMode=this.value;window._slowLimit=100;renderSlowItems()" style="padding:6px 8px"><option value="stock"${mode==='stock'?' selected':''}>Stock wale</option><option value="all"${mode==='all'?' selected':''}>Sab (zero stock bhi)</option></select><input id="slowSearch" type="search" placeholder="Item search" value="${esc(window._slowQ||'')}" oninput="slowSearch(this.value)" style="padding:6px 8px;flex:1;min-width:120px"></div>`;
+let body;
+if(!full.length) body='<p class="sub">Sab items recently bik rahe hain 👍</p>';
+else{
+body=`<p class="sub">Ye items 90+ din se nahi bike (ya kabhi nahi bike) — poore lifetime data se, date filter se independent. Atka hua paisa: ₹ ${money(totVal)}</p><p class="sub">${shown.length} of ${list.length} dikh rahe hain</p><div class="table-wrap"><table><thead><tr><th>Item</th><th>Stock</th><th>Stock Value</th><th>Total Qty Sold (lifetime)</th><th>Last Sale</th></tr></thead><tbody>${shown.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.stock}</td><td>₹ ${money(x.value)}</td><td>${x.qty}</td><td>${x.last?fmtDateShort(x.last):'Kabhi nahi'}</td></tr>`).join('')}</tbody></table></div>`;
+if(list.length>lim) body+=`<button class="btn" style="margin-top:8px" onclick="window._slowLimit+=100;renderSlowItems()">Aur 100 dikhao</button>`;
+}
+el.innerHTML=ctl+`<div id="slowBody">${body}</div>`;
+}
+function slowSearch(v){
+window._slowQ=v; window._slowLimit=100;
+const f=document.getElementById('slowSearch'); const pos=f?f.selectionStart:0;
+renderSlowItems();
+const g=document.getElementById('slowSearch'); if(g){g.focus(); try{g.setSelectionRange(pos,pos)}catch(e){}}
+}
 function renderAnalytics(){
 if(!anaInitialized){ anaInitialized=true; analyticsPreset('thisFY'); return; }
 populateAnalyticsFYSelect();
@@ -16850,8 +16877,10 @@ id('anaBestItems').innerHTML=bestItems.length?`<div class="table-wrap"><table><t
 const soldMap={};
 db.invoices.filter(x=>x.status==='Finalized').forEach(x=>(x.items||[]).forEach(r=>{if(!r.itemId)return; if(!soldMap[r.itemId])soldMap[r.itemId]={qty:0,last:''}; soldMap[r.itemId].qty+=Number(r.qty||0); if(!soldMap[r.itemId].last||x.date>soldMap[r.itemId].last)soldMap[r.itemId].last=x.date;}));
 const ninetyAgo=new Date(); ninetyAgo.setDate(ninetyAgo.getDate()-90);
-const slow=(db.items||[]).filter(it=>{const s=soldMap[it.id]; return !s||new Date(s.last)<ninetyAgo;}).map(it=>({name:it.name,qty:soldMap[it.id]?soldMap[it.id].qty:0,last:soldMap[it.id]?soldMap[it.id].last:''}));
-id('anaSlowItems').innerHTML=slow.length?`<p class="sub">Ye items 90+ din se nahi bike (ya kabhi nahi bike) — poore lifetime data se, date filter se independent.</p><div class="table-wrap"><table><thead><tr><th>Item</th><th>Total Qty Sold (lifetime)</th><th>Last Sale</th></tr></thead><tbody>${slow.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${x.last?fmtDateShort(x.last):'Kabhi nahi'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="sub">Sab items recently bik rahe hain 👍</p>';
+window._slowBase=(db.items||[]).filter(it=>it.active!==false&&!(it.isPremium&&it.premiumInactive)).filter(it=>{const s=soldMap[it.id]; return !s||new Date(s.last)<ninetyAgo;}).map(it=>{const stk=Number(it.stock)||0; return {name:it.name,qty:soldMap[it.id]?soldMap[it.id].qty:0,last:soldMap[it.id]?soldMap[it.id].last:'',stock:stk,value:stk*(Number(it.purchaseRate)||0)};});
+window._slowLimit=100; window._slowQ=''; if(!window._slowMode) window._slowMode='stock';
+const slow=slowModeList();
+renderSlowItems();
 const vendMap={};
 pbs.forEach(p=>{const key=p.vendorId||p.vendorName; if(!vendMap[key])vendMap[key]={name:p.vendorName,total:0}; vendMap[key].total+=Number(p.totals?.grand||0);});
 const vendArr=Object.values(vendMap).sort((a,b)=>b.total-a.total);
@@ -16908,7 +16937,7 @@ return `<div class="invoice">
     ${analyticsSectionHtml('Outstanding Aging Report','anaAging')}
     ${analyticsSectionHtml('New vs Repeat Customers','anaNewRepeat')}
     ${analyticsSectionHtml('Best-Selling Items','anaBestItems')}
-    ${analyticsSectionHtml('Slow-Moving / Zero-Sale Items','anaSlowItems')}
+    <div style="margin-top:18px"><h3 style="color:#1e3a5f;font-size:13px;letter-spacing:.4px;border-bottom:2px solid #1e3a5f;padding-bottom:4px;margin:0 0 8px">Slow-Moving / Zero-Sale Items</h3>${(d.slow||[]).length?`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr><th style="text-align:left">Item</th><th>Stock</th><th>Stock Value</th><th>Qty Sold</th><th>Last Sale</th></tr></thead><tbody>${(d.slow||[]).map(x=>`<tr><td>${esc(x.name)}</td><td style="text-align:center">${x.stock}</td><td style="text-align:right">${Number(x.value).toFixed(2)}</td><td style="text-align:center">${x.qty}</td><td style="text-align:center">${x.last?fmtDateShort(x.last):'Never'}</td></tr>`).join('')}</tbody></table>`:'<p>Koi slow-moving item nahi.</p>'}</div>
     ${analyticsSectionHtml('Vendor-wise Purchase','anaVendorPurchase')}
     ${analyticsSectionHtml('Purchase vs Sales','anaPurchaseVsSales')}
     ${analyticsSectionHtml('Collected vs Outstanding Trend','anaCollectionTrend')}
@@ -16963,8 +16992,8 @@ html+=sectionTitle('Best-Selling Items');
 html+=`<tr>${th('#')}${th('Item')}${th('Qty Sold')}${th('Revenue')}</tr>`;
 html+=(d.bestItems||[]).map((it,i)=>`<tr>${td(i+1)}${td(esc(it.name))}${td(it.qty)}${td(Number(it.amount).toFixed(2),'right')}</tr>`).join('')+spacer;
 html+=sectionTitle('Slow-Moving / Zero-Sale Items');
-html+=`<tr>${th('Item')}${th('Total Qty Sold')}${th('Last Sale')}</tr>`;
-html+=(d.slow||[]).map(x=>`<tr>${td(esc(x.name))}${td(x.qty)}${td(x.last?fmtDateShort(x.last):'Never')}</tr>`).join('')+spacer;
+html+=`<tr>${th('Item')}${th('Stock')}${th('Stock Value')}${th('Total Qty Sold')}${th('Last Sale')}</tr>`;
+html+=(d.slow||[]).map(x=>`<tr>${td(esc(x.name))}${td(x.stock)}${td(Number(x.value).toFixed(2),'right')}${td(x.qty)}${td(x.last?fmtDateShort(x.last):'Never')}</tr>`).join('')+spacer;
 html+=sectionTitle('Vendor-wise Purchase');
 html+=`<tr>${th('Vendor')}${th('Total Purchase')}</tr>`;
 html+=(d.vendArr||[]).map(v=>`<tr>${td(esc(v.name))}${td(Number(v.total).toFixed(2),'right')}</tr>`).join('')+spacer;
