@@ -23678,7 +23678,7 @@ function nativeAuth(){
       var done=false;
       var t=setTimeout(function(){ if(done) return; done=true; window.__dlErr='hang on try '+i; res('HANG'); },5000);
       try{
-        B.authenticate(o).then(function(){ if(done) return; done=true; clearTimeout(t); res(true); })
+        ((typeof B.authenticate==='function')?B.authenticate(o):B.internalAuthenticate(o)).then(function(){ if(done) return; done=true; clearTimeout(t); res(true); })
         .catch(function(e){ if(done) return; done=true; clearTimeout(t); window.__dlErr=String((e&&(e.code||e.message))||e); res(false); });
       }catch(e){ if(done) return; done=true; clearTimeout(t); window.__dlErr=String(e); res('HANG'); }
     }).then(function(r){ return r==='HANG' ? run() : r; });
