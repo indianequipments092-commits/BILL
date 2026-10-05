@@ -1352,8 +1352,8 @@ sendPasswordResetEmail(email){
 return supabase.auth.resetPasswordForEmail(email, { redirectTo: IS_NATIVE_APP ? APP_AUTH_CALLBACK : window.location.href }).then(({error})=>{ if(error) throw error; });
 },
 onPasswordRecovery(cb){ recoveryCbs.push(cb); if(recoveryPending){ recoveryPending=false; setTimeout(()=>{ try{cb();}catch(e){console.error(e);} },0); } },
-updatePassword(pw){ return supabase.auth.updateUser({ password: pw }).then(({error})=>{ if(error) throw error; }); },
-hasPasswordLogin(){ return supabase.auth.getUser().then(({data})=>{ const u=data&&data.user; const ids=(u&&u.identities)||[]; return ids.some(i=>i.provider==='email'); }).catch(()=>false); },
+updatePassword(pw){ return supabase.auth.updateUser({ password: pw, data:{ has_password:true } }).then(({error})=>{ if(error) throw error; }); },
+hasPasswordLogin(){ return supabase.auth.getUser().then(({data})=>{ const u=data&&data.user; const ids=(u&&u.identities)||[]; const um=(u&&u.user_metadata)||{}; const am=(u&&u.app_metadata)||{}; return ids.some(i=>i.provider==='email')||um.has_password===true||((am.providers||[]).indexOf('email')>=0); }).catch(()=>false); },
 signOut(){ return supabase.auth.signOut(); }
 };
 }
