@@ -23661,14 +23661,15 @@ function lockOn(){ try{ return !!localStorage.getItem(lk()); }catch(e){ return f
 /* Native (Android APK / Capacitor) biometric bridge: WebAuthn does not work inside the APK WebView */
 function isNativeApp(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
 function nativeBio(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; return (P&&(P.BiometricAuthNative||P.BiometricAuth))||null; }catch(e){ return null; } }
+function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return '<br><br><small style="opacity:.7">Debug DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+'</small>'; }catch(e){ return '<br><br><small>Debug DL2</small>'; } }
 function nativeAuth(){
   var B=nativeBio(); if(!B) return Promise.resolve(false);
-  return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(){ return false; });
+  return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(e){ window.__dlErr=String((e&&(e.code||e.message))||e); return false; });
 }
 function supported(){
   if(isNativeApp()){
     var B=nativeBio(); if(!B) return Promise.resolve(false);
-    return B.checkBiometry().then(function(r){ return !!(r&&(r.isAvailable||r.deviceIsSecure)); }).catch(function(){ return false; });
+    return Promise.race([B.checkBiometry(),new Promise(function(_,rj){ setTimeout(function(){ rj(new Error('timeout 8s')); },8000); })]).then(function(r){ window.__dlErr='-'; return !!(r&&(r.isAvailable||r.deviceIsSecure)); }).catch(function(e){ window.__dlErr=String((e&&(e.message||e.code))||e); return false; });
   }
   if(!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)) return Promise.resolve(false);
   return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function(){ return false; });
@@ -23681,15 +23682,15 @@ function verifyLock(){
 function enableLock(){
   supported().then(function(ok){
     if(isNativeApp()){
-      if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.','OK');
-      if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.','OK');
+      if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.'+dlDbg(),'OK');
+      if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.'+dlDbg(),'OK');
       return nativeAuth().then(function(done){
-        if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.','OK');
+        if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.'+dlDbg(),'OK');
         try{ localStorage.setItem(lk(),'NATIVE'); }catch(e){}
         paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK');
       });
     }
-    if(!ok) return ui('Device Lock Unavailable','This device or browser does not support biometric / screen-lock verification.','OK');
+    if(!ok) return ui('Device Lock Unavailable','This device or browser does not support biometric / screen-lock verification.'+dlDbg(),'OK');
     var em=(currentUser.email||'user');
     navigator.credentials.create({publicKey:{challenge:rnd(),rp:{name:'IE Billing'},user:{id:new TextEncoder().encode(uid()).slice(0,64),name:em,displayName:em},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}})
     .then(function(c){ localStorage.setItem(lk(),b64(c.rawId)); paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK'); })
@@ -23698,7 +23699,7 @@ function enableLock(){
 }
 function toggleLock(){
   if(!isOwner()) return ui('Access Restricted','Only the Owner can change Device Lock.','OK');
-  if(!uid()) return;
+  if(!uid()) return ui('Please Wait','Account is still loading. Please try again in a moment.'+dlDbg(),'OK');
   if(!lockOn()) return enableLock();
   verifyLock().then(function(ok){
     if(!ok) return ui('Verification Failed','Device Lock was not turned off.','OK');
