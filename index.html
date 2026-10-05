@@ -304,6 +304,38 @@ html:not(.paid-mode) .live-grid{grid-template-columns:repeat(2,1fr);max-width:52
  nav.open .nav-login-m{display:block;color:var(--text);font-weight:700}
 }
 :root[data-theme=light] .plan-card.platinum-card .plan-name{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#0284c7);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-price{background:linear-gradient(135deg,#3730a3,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-mrp{color:#475569}
+
+/* ===== APP DOWNLOAD (Android APK / iPhone / Laptop) ===== */
+.dl-card{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(18px);overflow:hidden;box-shadow:0 26px 60px rgba(0,0,0,.28)}
+.dl-main{padding:30px 28px;background:radial-gradient(520px 240px at 0% 0%,rgba(99,102,241,.2),transparent 70%)}
+.dl-side{padding:30px 26px;border-left:1px solid var(--line)}
+.dl-app{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.dl-logo{width:60px;height:60px;flex:none;filter:drop-shadow(0 10px 22px rgba(99,102,241,.5))}
+.dl-app b{display:block;font:800 22px 'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;letter-spacing:-.4px}
+.dl-app span{display:block;font-size:12.5px;color:var(--mu);margin-top:3px}
+.dl-btns{display:flex;gap:12px;flex-wrap:wrap}
+.dl-btns .btn-lg{justify-content:center}
+.dl-btns .i,.hero-cta .btn-lg .i{width:17px;height:17px}
+.dl-note{margin:14px 0 0;font-size:12.5px;line-height:1.6;color:var(--mu2)}
+.dl-note[hidden]{display:none}
+.dl-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.dl-badges span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--mu2);padding:6px 11px;border-radius:99px;border:1px solid var(--line)}
+.dl-badges .i{width:13px;height:13px;color:var(--green)}
+.dl-side h3{font-size:15px;margin:0 0 14px}
+.dl-steps{display:grid;gap:13px;margin:0;padding:0;list-style:none;counter-reset:dl}
+.dl-steps li{display:flex;gap:12px;font-size:13px;color:var(--mu2);line-height:1.55}
+.dl-steps li:before{counter-increment:dl;content:counter(dl);flex:none;width:24px;height:24px;border-radius:50%;background:rgba(99,102,241,.16);color:#a5b4fc;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+:root[data-theme=light] .dl-steps li:before{color:#4338ca}
+.dl-steps b{color:var(--text)}
+.dl-ios,.dl-qr{display:none}
+html.dev-ios .dl-android{display:none}
+html.dev-ios .dl-ios{display:block}
+html.dev-ios #dlApk{display:none}
+.dl-qr.on{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);align-items:center;gap:14px;font-size:12.5px;color:var(--mu2);line-height:1.5}
+html.dev-desktop .dl-qr.on{display:flex}
+#dlQrBox{width:96px;height:96px;flex:none;background:#fff;border-radius:10px;padding:5px}
+#dlQrBox svg{width:100%;height:100%;display:block}
+@media (max-width:820px){.dl-card{grid-template-columns:1fr}.dl-side{border-left:0;border-top:1px solid var(--line)}.dl-main,.dl-side{padding:24px 20px}.dl-btns .btn-lg{flex:1 1 100%}}
 </style>
 <script>
 /* Pichli baar ki value turant lagao taaki page flash na kare (fresh value neeche load hoti hai) */
@@ -326,6 +358,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
       <a href="#who">Kis Ke Liye</a>
       <a href="#features">Features</a>
       <a href="#docs">Documents</a>
+      <a href="#download">App</a>
       <a href="/billing" class="nav-login-m">Login</a>
       <a href="#pricing" class="paid-only">Plans</a>
     </div>
@@ -346,6 +379,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="hero-cta">
       <a href="/billing" class="btn-lg btn-primary"><svg class="i" aria-hidden="true"><use href="#i-rocket"/></svg> Free Mein Shuru Karein</a>
       <a href="#features" class="btn-lg btn-outline">Sabhi Features Dekhein</a>
+      <a href="#download" class="btn-lg btn-outline"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg> App Download</a>
     </div>
     <div class="trust-row">Kirana stores se lekar bade Manufacturers tak — har business ke liye</div>
   </div>
@@ -377,6 +411,54 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="trial-promo-note">7 din baad plan Free ho jaata hai — jab chahein real price par continue karein ya doosra plan choose karein.</div>
   </div>
 </div>
+
+<section id="download">
+  <div class="sec-head">
+    <div class="eyebrow">MOBILE APP</div>
+    <h2>Phone Se Bill Banayein</h2>
+    <p>Dukaan par ho ya safar mein, invoice seedha mobile se. App download karein aur 2 minute mein shuru karein.</p>
+  </div>
+  <div class="dl-card">
+    <div class="dl-main">
+      <div class="dl-app">
+        <svg class="dl-logo" viewBox="0 0 120 120" aria-hidden="true"><use href="#ieMark"/></svg>
+        <div><b>IE Billing</b><span id="dlMeta">Android App</span></div>
+      </div>
+      <div class="dl-btns">
+        <a id="dlApk" class="btn-lg btn-primary" href="/app/IEBilling.apk" download="IE-Billing.apk"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg> Android App Download Karein</a>
+        <a id="dlWeb" class="btn-lg btn-outline" href="/billing"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg> Web App Kholein</a>
+      </div>
+      <p id="dlNote" class="dl-note" hidden></p>
+      <div class="dl-badges">
+        <span><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg> Free download</span>
+        <span><svg class="i" aria-hidden="true"><use href="#i-bolt"/></svg> App khud update hota hai</span>
+        <span><svg class="i" aria-hidden="true"><use href="#i-cloud"/></svg> Data cloud par safe</span>
+      </div>
+    </div>
+    <div class="dl-side">
+      <div class="dl-android">
+        <h3>Install kaise karein (Android)</h3>
+        <ol class="dl-steps">
+          <li><span><b>Download</b> button dabayein. Browser puchhe to <b>Download anyway</b> chunein.</span></li>
+          <li><span>Download hui file kholein. <b>Settings</b> aaye to is browser ko <b>Install allow</b> kar dein. Play Protect dikhe to <b>More details</b> &rarr; <b>Install anyway</b>.</span></li>
+          <li><span>App kholein aur apne account se <b>Login</b> karein. Aage se update apne aap milega.</span></li>
+        </ol>
+      </div>
+      <div class="dl-ios">
+        <h3>iPhone par app jaisa chalayein</h3>
+        <ol class="dl-steps">
+          <li><span><b>Safari</b> mein <b>Web App Kholein</b> dabayein.</span></li>
+          <li><span>Neeche <b>Share</b> icon dabayein.</span></li>
+          <li><span><b>Add to Home Screen</b> chunein. Ab ye home screen se app ki tarah khulega.</span></li>
+        </ol>
+      </div>
+      <div class="dl-qr" id="dlQr">
+        <div id="dlQrBox"></div>
+        <div>Phone ke camera se scan karein aur ye page mobile par kholein.</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="who">
   <div class="sec-head">
@@ -471,7 +553,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-building"/></svg></div><b>Multi-Company Support</b><p>Ek account se multiple companies manage karein — plan ke hisaab se limit.</p></div>
     <div class="feat-card paid-only"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-ticket"/></svg>️</div><b>Coupons &amp; Referral Rewards</b><p>Coupon code se extra discount, dost ko refer karein aur free din paayein.</p></div>
     <div class="feat-card paid-only" style="background:linear-gradient(160deg,rgba(251,191,36,.09),rgba(139,92,246,.05))"><div class="feat-tag gold paid-only"><svg class="i" aria-hidden="true"><use href="#i-flame"/></svg> LIVE</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-spark"/></svg></div><b>Launch Offers</b><p>Limited time discounts, countdown timer ke saath — jaldi karein, badhiya bachaayein.</p></div>
-    <div class="feat-card"><div class="feat-tag paid-only">COMING SOON</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg></div><b>Android &amp; PC App</b><p>Wahi billing system, ab desktop aur mobile app ke roop mein bhi.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg></div><b>Android App</b><p>Wahi poora billing system, ab mobile app mein. <a href="#download" style="color:#a5b4fc;font-weight:700">Download karein</a></p></div>
   </div>
 </section>
 
@@ -737,6 +819,56 @@ if(!LITE){
 })();
 </script>
 <!-- ===== /SITE VISITOR TRACKER ===== -->
+
+
+<!-- ===== APP DOWNLOAD (device detect, APK size/date, QR) ===== -->
+<script>
+(function(){
+  try{
+    var ua=navigator.userAgent||'';
+    var ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    var and=/Android/i.test(ua);
+    var root=document.documentElement;
+    root.classList.add(ios?'dev-ios':(and?'dev-android':'dev-desktop'));
+    var APK='/app/IEBilling.apk';
+    var btn=document.getElementById('dlApk'), meta=document.getElementById('dlMeta'), note=document.getElementById('dlNote'), web=document.getElementById('dlWeb');
+    if(!btn||!meta) return;
+    if(ios){ web.className='btn-lg btn-primary'; }
+
+    /* APK sach me hai ya nahi: Pages me file na ho to index.html (text/html) aa jaata hai, use miss maano */
+    fetch(APK,{method:'HEAD',cache:'no-store'}).then(function(res){
+      var ct=res.headers.get('content-type')||'';
+      if(!res.ok||/text\/html/i.test(ct)) throw 'missing';
+      var parts=['Android App'];
+      var len=parseInt(res.headers.get('content-length'),10);
+      if(len>0) parts.push((len/1048576).toFixed(1)+' MB');
+      var lm=res.headers.get('last-modified');
+      if(lm){ var d=new Date(lm); if(!isNaN(d)) parts.push('Updated '+d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})); }
+      meta.textContent=parts.join(' \u00b7 ');
+    }).catch(function(e){
+      if(e!=='missing') return;            /* net ki dikkat me button waise hi rehne do */
+      btn.style.display='none';
+      meta.textContent='Android App \u00b7 jald aa raha hai';
+      note.textContent='App file abhi upload nahi hui. Tab tak Web App kholein, wahi poora system hai.';
+      note.hidden=false;
+    });
+
+    /* Laptop par: phone ke liye QR */
+    if(!ios&&!and){
+      var s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+      s.onload=function(){
+        try{
+          var q=qrcode(0,'M'); q.addData(location.origin+'/#download'); q.make();
+          document.getElementById('dlQrBox').innerHTML=q.createSvgTag(4,0);
+          document.getElementById('dlQr').classList.add('on');
+        }catch(e){}
+      };
+      document.head.appendChild(s);
+    }
+  }catch(e){}
+})();
+</script>
 
 </body>
 </html>
