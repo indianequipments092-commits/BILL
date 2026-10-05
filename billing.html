@@ -1250,28 +1250,6 @@ input[type="radio"]:checked{border-color:var(--primary);background:var(--primary
 [data-theme="light"] .tt-sw i{left:3px}
 @media (prefers-reduced-motion:reduce){.sidebar,.ng-body,.ng-chev,.tt-sw i{transition:none!important}}
 </style>
-
-<style id="ie-fix2">
-/* ===== FIX2: right-scroll / overflow (sirf Analytics page) ===== */
-#analytics .card,#analytics .grid>*,#analytics .dashboard>*{min-width:0;max-width:100%}
-#analytics .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-#analytics .dashboard{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:900px){#analytics .dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){#analytics .g2,#analytics .dashboard{grid-template-columns:minmax(0,1fr)}}
-#analytics svg{max-width:100%}
-/* ===== FIX2: fewer buttons ===== */
-.ie-more-wrap{position:relative;display:inline-flex}
-.ie-more-menu{position:fixed;z-index:99999;background:var(--sidebar-bg);border:1px solid var(--border-color);border-radius:12px;padding:6px;min-width:190px;max-width:calc(100vw - 16px);max-height:65vh;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:4px}
-.ie-more-menu button{width:100%;justify-content:flex-start;text-align:left;white-space:normal;padding:10px 12px;min-height:40px;font-size:13px}
-.ie-more-menu.ie-gone{display:none}
-.ie-tabscroll{flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%}
-.ie-tabscroll::-webkit-scrollbar{display:none}
-.ie-tabscroll>.btn,.ie-tabscroll>button{flex:0 0 auto!important;white-space:nowrap!important;min-height:36px;padding:8px 12px}
-.ie-up-ov{position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
-.ie-up-sheet{width:100%;max-width:440px;background:var(--sidebar-bg,#0d1322);color:var(--text-main,#f3f4f6);border:1px solid var(--border-color);border-radius:20px 20px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px));text-align:center}
-.ie-up-sheet h3{margin:6px 0 6px;font-size:17px}.ie-up-sheet p{margin:0 0 16px;color:var(--text-muted);font-size:13px;line-height:1.5}
-.ie-up-sheet .row{display:flex;gap:8px}.ie-up-sheet .row .btn{flex:1}
-</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -16781,7 +16759,6 @@ let angle=-90,slices='';
 items.forEach((it,i)=>{
 const val=Number(it.value)||0, frac=val/total;
 const a0=angle,a1=angle+frac*360; angle=a1;
-if(frac>=0.9999){slices+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colors[i%colors.length]}"><title>${esc(it.label)}: Rs. ${money(val)} (100.0%)</title></circle>`;return;}
 const large=(a1-a0)>180?1:0;
 const toXY=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];
 const [x0,y0]=toXY(a0),[x1,y1]=toXY(a1);
@@ -19559,14 +19536,14 @@ t.parentNode.replaceChild(f,t);
 });
 }
 var pend=false,q=[];
-function flush(){pend=false;var a=q;q=[];a.forEach(function(r){try{if(r&&r.isConnected)proc(r);}catch(e){}});}
+function flush(){pend=false;var a=q;q=[];a.forEach(function(r){if(r.isConnected)proc(r);});}
 function init(){
 var h=document.createElement('div');h.innerHTML=defs;document.body.insertBefore(h.firstChild,document.body.firstChild);
 proc(document.body);
 new MutationObserver(function(ms){
 ms.forEach(function(m){
 if(m.type==='characterData'){if(m.target.parentNode)q.push(m.target.parentNode);}
-else m.addedNodes.forEach(function(n){var t=n.nodeType===1?n:n.parentNode;if(t)q.push(t);});
+else m.addedNodes.forEach(function(n){q.push(n.nodeType===1?n:n.parentNode);});
 });
 if(!pend&&q.length){pend=true;requestAnimationFrame(flush);}
 }).observe(document.body,{childList:true,subtree:true,characterData:true});
@@ -23569,113 +23546,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 <!-- ===== /IE Tutorial Mode ===== -->
 
-
-<script id="ie-fix2-js">
-(function(){
-'use strict';
-/* ---------- 1) Locked feature: alert() ki jagah in-app sheet ---------- */
-window.showUpgradeModal=function(name){
-  try{
-    var old=document.getElementById('ieUpOv'); if(old) old.remove();
-    var lbl=(typeof PLAN_LABEL!=='undefined'&&PLAN_LABEL[currentPlan])||currentPlan||'Free';
-    var o=document.createElement('div'); o.id='ieUpOv'; o.className='ie-up-ov';
-    o.innerHTML='<div class="ie-up-sheet"><div style="font-size:34px">🔒</div><h3></h3><p></p><div class="row"><button class="btn muted" data-x="1">Baad me</button><button class="btn primary" data-p="1">Plans dekho</button></div></div>';
-    o.querySelector('h3').textContent=(name||'Ye feature')+' locked hai';
-    o.querySelector('p').textContent='Ye feature tumhare '+lbl+' plan me nahi hai. Upgrade karke use kholo.';
-    o.addEventListener('click',function(e){
-      var t=e.target;
-      if(t===o||t.getAttribute('data-x')){o.remove();}
-      else if(t.getAttribute('data-p')){o.remove();try{closeSidebar()}catch(_){ } if(typeof showPlanOverlay==='function')showPlanOverlay(function(){});}
-    });
-    document.body.appendChild(o);
-  }catch(e){ alert('🔒 '+(name||'Feature')+' is plan me nahi hai.'); }
-};
-
-/* ---------- 2) Analytics: render crash ho to page blank na rahe ---------- */
-var _ra=window.renderAnalytics;
-if(typeof _ra==='function'){
-  window.renderAnalytics=function(){
-    try{ return _ra.apply(this,arguments); }
-    catch(e){
-      console.error('renderAnalytics',e);
-      var k=document.getElementById('anaKPIs');
-      if(k) k.innerHTML='<div class="card" style="grid-column:1/-1"><b>Analytics load me dikkat aayi</b><div class="sub" style="margin-top:6px">'+String(e&&e.message||e).replace(/</g,'&lt;')+'</div><button class="btn primary" style="margin-top:10px" onclick="anaInitialized=false;renderAnalytics()">Dobara try karo</button></div>';
-    }
-  };
-}
-
-/* ---------- 3) Buttons kam: "⋮ More" ---------- */
-var MQ=window.matchMedia('(max-width:700px)');
-function closeMenus(){document.querySelectorAll('.ie-more-menu').forEach(function(m){m.remove()});}
-document.addEventListener('click',function(e){ if(!e.target.closest('.ie-more-wrap')&&!e.target.closest('.ie-more-menu')) closeMenus(); },true);
-window.addEventListener('scroll',closeMenus,{passive:true});
-
-function labelOf(b){ var t=(b.getAttribute('title')||'')+''; var x=b.textContent.replace(/\s+/g,' ').trim(); return x||t||'Action'; }
-function collapse(container,keep){
-  if(container.getAttribute('data-ieac')) return;
-  var btns=[].filter.call(container.children,function(c){return c.tagName==='BUTTON'});
-  if(btns.length<=keep+1) return;
-  container.setAttribute('data-ieac','1');
-  var rest=btns.slice(keep);
-  rest.forEach(function(b){b.setAttribute('data-ie-hid','1');b.style.display='none';});
-  var wrap=document.createElement('span'); wrap.className='ie-more-wrap';
-  var mb=document.createElement('button'); mb.type='button';
-  mb.className='btn muted'; mb.style.cssText='padding:6px 10px;min-height:34px'; mb.setAttribute('aria-label','Aur options'); mb.textContent='⋮ More';
-  mb.addEventListener('click',function(ev){
-    ev.stopPropagation();
-    var had=document.querySelector('.ie-more-menu[data-for="'+wrap.dataset.id+'"]'); closeMenus(); if(had) return;
-    var m=document.createElement('div'); m.className='ie-more-menu'; m.dataset.for=wrap.dataset.id;
-    rest.forEach(function(orig){
-      var it=document.createElement('button'); it.type='button'; it.className='btn muted';
-      it.textContent=labelOf(orig);
-      it.addEventListener('click',function(e2){e2.stopPropagation();closeMenus();orig.click();});
-      m.appendChild(it);
-    });
-    document.body.appendChild(m);
-    var r=mb.getBoundingClientRect(), mw=m.offsetWidth, mh=m.offsetHeight;
-    var left=Math.max(8,Math.min(r.right-mw,window.innerWidth-mw-8));
-    var top=r.bottom+6; if(top+mh>window.innerHeight-8) top=Math.max(8,r.top-mh-6);
-    m.style.left=left+'px'; m.style.top=top+'px';
-  });
-  wrap.dataset.id='m'+Math.random().toString(36).slice(2,8);
-  wrap.appendChild(mb);
-  btns[keep-1].insertAdjacentElement('afterend',wrap);
-}
-function uncollapseAll(){
-  document.querySelectorAll('[data-ieac]').forEach(function(c){
-    c.removeAttribute('data-ieac');
-    c.querySelectorAll(':scope>[data-ie-hid]').forEach(function(b){b.style.display='';b.removeAttribute('data-ie-hid')});
-    c.querySelectorAll(':scope>.ie-more-wrap').forEach(function(w){w.remove()});
-  });
-  document.querySelectorAll('.ie-tabscroll').forEach(function(t){t.classList.remove('ie-tabscroll')});
-  closeMenus();
-}
-var TABS={invAdv:1,acctGst:1,acctExt:1,acctControl:1,acctLedgers:1,journal:1};
-function apply(){
-  if(!MQ.matches) return;
-  /* page header toolbars */
-  document.querySelectorAll('.page > .top > .toolbar').forEach(function(tb){
-    var pid=tb.closest('.page').id;
-    var n=[].filter.call(tb.children,function(c){return c.tagName==='BUTTON'}).length;
-    if(TABS[pid]){ if(n>3) tb.classList.add('ie-tabscroll'); }
-    else if(n>3) collapse(tb,2);
-  });
-  /* table-row action groups (Edit / Dup / Download / Share / Payments ...) */
-  document.querySelectorAll('.page td > div, .page td > span').forEach(function(d){
-    if(d.getAttribute('data-ieac')) return;
-    var n=[].filter.call(d.children,function(c){return c.tagName==='BUTTON'}).length;
-    if(n>=4) collapse(d,1);
-  });
-}
-var q=false;
-function sched(){ if(q) return; q=true; requestAnimationFrame(function(){q=false; try{apply()}catch(e){console.warn('ie-fix2',e)}}); }
-var root=document.getElementById('appRoot')||document.body;
-new MutationObserver(function(ms){
-  for(var i=0;i<ms.length;i++){ if(ms[i].addedNodes&&ms[i].addedNodes.length){sched();return;} }
-}).observe(root,{childList:true,subtree:true});
-(MQ.addEventListener?MQ.addEventListener('change',function(){ if(MQ.matches) sched(); else uncollapseAll(); }):MQ.addListener(function(){ if(MQ.matches) sched(); else uncollapseAll(); }));
-sched();
-})();
-</script>
 </body>
 </html>
