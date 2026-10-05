@@ -7221,6 +7221,7 @@ showAuthOverlay();
       <div><label>Closing Stock value (₹)</label><input id="arSC" type="number" step="0.01" onchange="acctRepStock()"></div>
       <div style="display:flex;align-items:flex-end"><button class="btn muted" onclick="acctRepStockItems()">Items se closing stock nikalo</button></div>
       <div class="sub" style="grid-column:1/-1">Stock ka value yahin daalo. Stock-in-Hand ke naam se alag ledger mat banao, warna stock do baar ginega.</div>
+      <div id="arStockWarn" class="sub" style="grid-column:1/-1;color:#fb7185;font-weight:600"></div>
     </div>
   </div>
   <div class="card" style="margin-top:18px"><div id="arSub" class="sub" style="margin-bottom:12px"></div><div id="arBody" class="table-wrap"></div></div>
@@ -21382,6 +21383,9 @@ var ok=Math.abs(D-C)<0.005;
 h+='<tr style="border-top:2px solid var(--border-color)"><td><b>Grand Total</b></td><td></td><td class="right"><b>'+money(pd)+'</b></td><td class="right"><b>'+money(pc)+'</b></td><td class="right"><b>Dr '+money(D)+'<br>Cr '+money(C)+'</b></td></tr></tbody>';
 $('arSub').innerHTML=ok?'<span style="color:#34d399">Trial Balance tally ho raha hai.</span>':'<span style="color:#fb7185">Fark ₹ '+money(Math.abs(D-C))+' ('+(D>C?'Debit':'Credit')+' zyada). Ledgers page par opening balances check karo.</span>';return h}
 function stock(){var s=A().stock;return{open:+(s&&s.open)||0,close:+(s&&s.close)||0}}
+function stockWarn(f,t){var el=$('arStockWarn');if(!el)return;var st=stock();if(!(st.close>0)){el.textContent='';return}
+var rows=calc(f,t),dr=function(x){return x.dr-x.cr},lim=st.open+blk(pg('purchAcc'),rows,dr).tot+blk(pg('directExp'),rows,dr).tot;
+el.textContent=st.close>lim+0.5?'⚠ Closing Stock (₹ '+money(st.close)+') Opening Stock + Purchase + Direct Expenses (₹ '+money(lim)+') se zyada hai. Aisa normally nahi hota. Stock value check karo, warna Profit galat dikhega.':''}
 function pl(f,t){var rows=calc(f,t),st=stock(),cr=function(b){return b.cr-b.dr},dr=function(b){return b.dr-b.cr},
 sa=blk(pg('salesAcc'),rows,cr),di=blk(pg('directInc'),rows,cr),pu=blk(pg('purchAcc'),rows,dr),de=blk(pg('directExp'),rows,dr),ii=blk(pg('indirectInc'),rows,cr),ie=blk(pg('indirectExp'),rows,dr),
 inc=sa.tot+di.tot+st.close,cost=st.open+pu.tot+de.tot,gp=inc-cost,net=gp+ii.tot-ie.tot,h=th(['Particulars','>Amount'])+'<tbody>';
@@ -21390,7 +21394,7 @@ h+='<tr><td colspan="2" class="sub"><b>TRADING ACCOUNT</b></td></tr>'+sa.h+di.h+
 '<tr><td><b>'+(gp>=0?'Gross Profit':'Gross Loss')+' (A - B)</b></td><td class="right" style="color:'+(gp>=0?'#34d399':'#fb7185')+'"><b>₹ '+m2(Math.abs(gp))+'</b></td></tr>'+
 '<tr><td colspan="2" class="sub" style="padding-top:18px"><b>PROFIT &amp; LOSS ACCOUNT</b></td></tr>'+hrow(gp>=0?'Gross Profit b/d':'Gross Loss b/d',gp)+ii.h+trow('Total (C)',gp+ii.tot)+ie.h+trow('Indirect Expenses (D)',ie.tot)+
 '<tr><td><b>'+(net>=0?'Net Profit':'Net Loss')+' (C - D)</b></td><td class="right" style="color:'+(net>=0?'#34d399':'#fb7185')+';font-size:16px"><b>₹ '+m2(Math.abs(net))+'</b></td></tr></tbody>';
-$('arSub').textContent=f+' se '+t+' tak | Sales ₹ '+money(sa.tot)+' | '+(net>=0?'Net Profit':'Net Loss')+' ₹ '+money(Math.abs(net));return h}
+stockWarn(f,t);$('arSub').textContent=f+' se '+t+' tak | Sales ₹ '+money(sa.tot)+' | '+(net>=0?'Net Profit':'Net Loss')+' ₹ '+money(Math.abs(net));return h}
 function bsTree(t){var rows=calc('',t),st=stock(),G=X.groups(),f0=fy()[0];if(t<f0)f0='';
 var pe=0,po=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
 var P=r2(pe+st.close-st.open);
@@ -21416,7 +21420,7 @@ else L.push({name:'Profit & Loss A/c',amt:0,ledgers:[],line:true,blank:true});
 var lt=0,at=0;L.forEach(function(g){lt+=g.amt});R.forEach(function(g){at+=g.amt});var df=r2(at-lt);
 if(df>0.004)L.push({name:'Difference in opening balances',amt:df,ledgers:[],line:true});else if(df<-0.004)R.push({name:'Difference in opening balances',amt:-df,ledgers:[],line:true});
 window.__bsTree={L:L,R:R,t:t,start:f0}}
-function bs(f,t){bsTree(t);var rows=calc('',t),st=stock(),pe=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
+function bs(f,t){stockWarn(f,t);bsTree(t);var rows=calc('',t),st=stock(),pe=0;rows.forEach(function(b){var n=X.gOf(b.l.group).nature;if(n==='I'||n==='E')pe-=b.c});
 var P=pe+st.close-st.open,L=blk(pgs('L'),rows,function(b){return-b.c}),As=blk(pgs('A'),rows,function(b){return b.c}),
 lt=L.tot+P,at=As.tot+st.close,df=r2(at-lt),lT=lt+(df>0?df:0),aT=at+(df<0?-df:0),
 h=th(['Particulars','>Amount'])+'<tbody><tr><td colspan="2" class="sub"><b>LIABILITIES</b></td></tr>'+L.h+hrow('Profit & Loss A/c ('+(P>=0?'Profit':'Loss')+')',P)+(df>0.004?hrow('Difference in opening balances',df):'')+trow('Total Liabilities',lT)+
@@ -22336,6 +22340,7 @@ M.blocks.push({cap:'Trading Account',head:['Expenses','Income'],L:L1,R:R1,totL:T
 var sales=sumA(R1.filter(function(g){return /^sales/i.test(g.name)}));M.strip.push((net>=0?'Net Profit ':'Net Loss ')+'₹ '+fm(Math.abs(net)));
 if(sales>0.004){M.strip.unshift('Net Sales ₹ '+fm(sales));M.strip.push((gp>=0?'Gross Profit ':'Gross Loss ')+(Math.abs(gp)/sales*100).toFixed(1)+'%');M.strip.push('Net Margin '+(net/sales*100).toFixed(1)+'%')}
 }
+var zw=$('arStockWarn');if(zw&&zw.textContent.trim())M.notes.push('Note: Closing Stock is higher than Opening Stock + Purchases + Direct Expenses. Please verify the stock value.');
 M.blocks.forEach(function(b){[[b.L,b.head[0]],[b.R,b.head[1]]].forEach(function(sd){sd[0].forEach(function(g){var sec=b.cap||M.title;if(g.ledgers.length)g.ledgers.forEach(function(l){if(l.led&&l.led.length){l.led.forEach(function(q){M.detail.push([sec,sd[1],g.name+' \u203a '+l.name,q.name,q.amt,''])});return}if(l.amt==null)return;M.detail.push([sec,sd[1],g.name,l.name,l.amt,l.note||''])});else if(!g.blank)M.detail.push([sec,sd[1],'',g.name,g.amt,''])})})});
 return M}
 function sideRows(items){var o=[];items.forEach(function(g){var n=g.ledgers.length;o.push({k:n?'g':'line',label:g.name,outer:g.amt,span:n,blank:g.blank});g.ledgers.forEach(function(l,i){o.push({k:'l',label:l.name,inner:l.amt,last:i===n-1,sub:l.sub})})});return o}
