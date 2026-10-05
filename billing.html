@@ -23685,7 +23685,8 @@ function enableLock(){
       if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.'+dlDbg(),'OK');
       if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.'+dlDbg(),'OK');
       ui('Device Lock','Step 2: opening fingerprint / screen lock prompt…'+dlDbg(),'OK');
-      return nativeAuth().then(function(done){
+      var __t=setTimeout(function(){ ui('Device Lock','Prompt did not open after 12 seconds.'+dlDbg(),'OK'); },12000);
+      return nativeAuth().then(function(done){ clearTimeout(__t);
         if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.'+dlDbg(),'OK');
         try{ localStorage.setItem(lk(),'NATIVE'); }catch(e){}
         paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK');
