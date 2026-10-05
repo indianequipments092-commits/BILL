@@ -23661,7 +23661,7 @@ function lockOn(){ try{ return !!localStorage.getItem(lk()); }catch(e){ return f
 /* Native (Android APK / Capacitor) biometric bridge: WebAuthn does not work inside the APK WebView */
 function isNativeApp(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
 function nativeBio(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; return (P&&(P.BiometricAuthNative||P.BiometricAuth))||null; }catch(e){ return null; } }
-function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return '<br><br><small style="opacity:.7">Debug DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+'</small>'; }catch(e){ return '<br><br><small>Debug DL2</small>'; } }
+function dlDbg(){ try{ var P=(window.Capacitor&&window.Capacitor.Plugins)||{}; return ' [DL2 | native: '+isNativeApp()+' | plugin: '+(nativeBio()?'found':'missing')+' | err: '+(window.__dlErr||'-')+' | plugins: '+Object.keys(P).join(', ')+']'; }catch(e){ return ' [DL2]'; } }
 function nativeAuth(){
   var B=nativeBio(); if(!B) return Promise.resolve(false);
   return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(e){ window.__dlErr=String((e&&(e.code||e.message))||e); return false; });
@@ -23699,6 +23699,7 @@ function enableLock(){
 }
 function toggleLock(){
   if(!isOwner()) return ui('Access Restricted','Only the Owner can change Device Lock.','OK');
+  ui('Device Lock','Checking… '+dlDbg(),'OK');
   if(!uid()) return ui('Please Wait','Account is still loading. Please try again in a moment.'+dlDbg(),'OK');
   if(!lockOn()) return enableLock();
   verifyLock().then(function(ok){
@@ -23792,7 +23793,7 @@ setInterval(checkPending,3000);
 
 /* ---------- UI in Danger Zone ---------- */
 function paint(){
-  var b=$('rsyLockBtn'); if(b) b.textContent='🔐 Device Lock: '+(lockOn()?'On':'Off');
+  var b=$('rsyLockBtn'); if(b) b.textContent='🔐 Device Lock: '+(lockOn()?'On':'Off')+' (v2)';
 }
 var anchor=$('resetDataBtn');
 if(anchor&&!$('rsyUndoBtn')){
