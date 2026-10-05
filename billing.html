@@ -8514,7 +8514,7 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
   </div>
   <div class="card">
     <div class="section-title">Import / Restore Database</div>
-    <p style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">Poora backup wapas laane ke liye "Complete Backup" wala JSON file yahin daalo. Sirf Customers ya Inventory ya Invoices restore karna ho to niche unke apne alag buttons use karo.</p>
+    <p style="font-size:11px;color:var(--text-muted);margin:-6px 0 12px">To restore everything, select the "Complete Backup" JSON file here. To restore only Customers, Inventory or Invoices, use their separate import buttons below.</p>
     <input type="file" id="importFile" accept=".json" style="max-width:100%">
     <button class="btn success" style="margin-top:12px" onclick="importJSON()">Validate & Import JSON</button>
     <div id="importMsg" class="sub" style="margin-top:8px"></div>
@@ -9982,7 +9982,14 @@ q.onerror=function(){on=false};
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 })();</script>
 <!-- IDB-STORAGE-END -->
-<script>const KEY='IE_BILLING_DB_V1';
+<script>
+/* ======================================================================
+   NOTE FOR ANY AI / DEVELOPER EDITING THIS FILE:
+   All user-facing text (buttons, toasts, alerts, labels, placeholders,
+   notifications, messages) must be written in Professional English.
+   Never use Hinglish or mixed-language text in anything the user sees.
+   ====================================================================== */
+const KEY='IE_BILLING_DB_V1';
 const DEFAULT_SETTINGS={
 company:'ABC ENTERPRISES',
 address:'Plot No.1/10, Opp.Shri Nandkishor Vadiyalay Nr. Post Office ,GIDC Nandesari, Vadodara – 391340\nA/120/1, Bismillah Park, Nr. Shalimar Park, Kareliba Road, Gorwa, Vadodara-390003',
@@ -17201,7 +17208,89 @@ r.onload=()=>{db.settings[key]=r.result;saveDB();alert('Asset loaded successfull
 r.onerror=()=>alert('Failed to load image.');
 r.readAsDataURL(f);
 }
-function backupJSON(){downloadBlob(JSON.stringify(db,null,2),'IE-BILLING-COMPLETE-BACKUP.json','application/json')}
+/* NOTE FOR ANY AI / DEVELOPER: all user-facing text here must be Professional English (never Hinglish). */
+const BACKUP_COUNT_KEYS=['invoices','customers','items','vendors','purchaseOrders','purchaseBills','documents','deletedInvoices','duplicateInvoices','cheques'];
+function backupOutstandingTotal(list){
+let t=0;
+(Array.isArray(list)?list:[]).forEach(i=>{
+if(!i) return;
+const paid=(Array.isArray(i.payments)?i.payments:[]).reduce((a,p)=>a+Number(p&&p.amount||0),0);
+t+=Number(i.totals&&i.totals.grand||0)-paid;
+});
+return Math.round(t*100)/100;
+}
+function buildBackupObject(){
+const counts={};
+BACKUP_COUNT_KEYS.forEach(k=>{counts[k]=Array.isArray(db[k])?db[k].length:0;});
+counts.vouchers=((db.accounts&&db.accounts.vouchers)||[]).length;
+return {...db,__backupMeta:{
+format:'IE-BILLING-COMPLETE-BACKUP',
+schema:2,
+createdAt:new Date().toISOString(),
+company:(db.settings&&db.settings.company)||'',
+counts:counts,
+outstandingTotal:backupOutstandingTotal(db.invoices),
+receiptCounter:Number(db.receiptCounter)||1
+}};
+}
+function backupJSON(){downloadBlob(JSON.stringify(buildBackupObject(),null,2),'IE-BILLING-COMPLETE-BACKUP.json','application/json')}
+function restoreExtraBackupData(x){
+const mergeById=(key)=>{
+if(!Array.isArray(db[key])) db[key]=[];
+if(Array.isArray(x[key])) x[key].forEach(n=>{
+if(!n||!n.id) return;
+const i=db[key].findIndex(a=>a.id===n.id);
+if(i>=0) db[key][i]=n; else db[key].push(n);
+});
+};
+mergeById('cheques');
+mergeById('duplicateInvoices');
+db.receiptCounter=Math.max(Number(db.receiptCounter)||1,Number(x.receiptCounter)||1);
+if(!Array.isArray(db.importedChatInvoices)) db.importedChatInvoices=[];
+if(Array.isArray(x.importedChatInvoices)) x.importedChatInvoices.forEach(k=>{ if(!db.importedChatInvoices.includes(k)) db.importedChatInvoices.push(k); });
+if(!db.pendingChatInvoiceMappings||typeof db.pendingChatInvoiceMappings!=='object') db.pendingChatInvoiceMappings={};
+if(x.pendingChatInvoiceMappings&&typeof x.pendingChatInvoiceMappings==='object'&&!Array.isArray(x.pendingChatInvoiceMappings)) Object.assign(db.pendingChatInvoiceMappings,x.pendingChatInvoiceMappings);
+const xa=x.accounts;
+if(xa&&typeof xa==='object'){
+const AC=db.accounts=db.accounts||acctNormalize(null);
+if(!Array.isArray(AC.pdc)) AC.pdc=[];
+(Array.isArray(xa.pdc)?xa.pdc:[]).forEach(n=>{
+if(!n||!n.id) return;
+const i=AC.pdc.findIndex(a=>a.id===n.id);
+if(i>=0) AC.pdc[i]=n; else AC.pdc.push(n);
+});
+if(!Array.isArray(AC.audit)) AC.audit=[];
+const seen=new Set(AC.audit.map(e=>JSON.stringify(e)));
+(Array.isArray(xa.audit)?xa.audit:[]).forEach(e=>{ const k=JSON.stringify(e); if(!seen.has(k)){ seen.add(k); AC.audit.push(e); } });
+AC.audit.sort((a,b)=>String(a&&a.t||'').localeCompare(String(b&&b.t||'')));
+AC.recon=Object.assign(AC.recon&&typeof AC.recon==='object'?AC.recon:{},xa.recon&&typeof xa.recon==='object'?xa.recon:{});
+AC.reconStmt=Object.assign(AC.reconStmt&&typeof AC.reconStmt==='object'?AC.reconStmt:{},xa.reconStmt&&typeof xa.reconStmt==='object'?xa.reconStmt:{});
+AC.gst=Object.assign(AC.gst&&typeof AC.gst==='object'?AC.gst:{},xa.gst&&typeof xa.gst==='object'?xa.gst:{});
+if(xa.stock&&typeof xa.stock==='object') AC.stock={open:+xa.stock.open||0,close:+xa.stock.close||0};
+if(typeof xa.lockDate==='string'&&xa.lockDate&&!AC.lockDate) AC.lockDate=xa.lockDate;
+if(typeof xa.rolePin==='string'&&xa.rolePin&&!AC.rolePin) AC.rolePin=xa.rolePin;
+Object.keys(xa).forEach(k=>{ if(!(k in AC)) AC[k]=xa[k]; });
+}
+}
+function buildImportSummary(x,dupCount){
+const names={invoices:'Invoices',customers:'Customers',items:'Inventory items',vendors:'Vendors',purchaseOrders:'Purchase orders',purchaseBills:'Purchase bills',documents:'Documents',deletedInvoices:'Deleted invoices',duplicateInvoices:'Duplicate invoices',cheques:'Cheques'};
+const lines=['Import completed successfully.','Records in backup file / now in this company:'];
+BACKUP_COUNT_KEYS.forEach(k=>{
+const inFile=Array.isArray(x[k])?x[k].length:0;
+const inDb=Array.isArray(db[k])?db[k].length:0;
+if(inFile||inDb) lines.push('• '+names[k]+': '+inFile+' / '+inDb);
+});
+const vf=((x.accounts&&x.accounts.vouchers)||[]).length, vd=((db.accounts&&db.accounts.vouchers)||[]).length;
+if(vf||vd) lines.push('• Accounting vouchers: '+vf+' / '+vd);
+const fileOut=backupOutstandingTotal(x.invoices), dbOut=backupOutstandingTotal(db.invoices);
+lines.push('Total outstanding in backup file: ₹ '+money(fileOut));
+lines.push('Total outstanding in this company: ₹ '+money(dbOut));
+lines.push(Math.abs(fileOut-dbOut)<0.01?'✅ Outstanding matches the backup exactly.':'⚠️ Outstanding differs from the backup. This is expected only if this company already contained other data.');
+const meta=x.__backupMeta;
+if(meta&&typeof meta.outstandingTotal==='number'&&Math.abs(meta.outstandingTotal-fileOut)>=0.01) lines.push('⚠️ The outstanding recorded when the backup was created (₹ '+money(meta.outstandingTotal)+') differs from the file contents. The backup file may have been modified.');
+if(dupCount) lines.push('⚠️ '+dupCount+' invoice number conflict(s) found. The older invoice was moved to "Duplicate Invoices".');
+return lines.join('\n');
+}
 function backupCustomers(){downloadBlob(JSON.stringify(db.customers,null,2),'IE-CUSTOMERS.json','application/json')}
 function backupInventory(){downloadBlob(JSON.stringify(db.items,null,2),'IE-INVENTORY.json','application/json')}
 function backupInvoices(){downloadBlob(JSON.stringify(db.invoices,null,2),'IE-INVOICES.json','application/json')}
@@ -17227,7 +17316,7 @@ if(Array.isArray(x.invoices)) x.invoices.forEach(n=>{
 if(!n||!n.id) return;
 let idx=db.invoices.findIndex(a=>a.id===n.id);
 if(idx>=0){ db.invoices[idx]=n; return; }
-if(resolveInvoiceNumberClash(n.invoiceNumber,n.id,'Backup Restore ke time isi number ka naya invoice aaya')) dupCount++;
+if(resolveInvoiceNumberClash(n.invoiceNumber,n.id,'A new invoice with the same number arrived during Backup Restore')) dupCount++;
 db.invoices.push(n);
 });
 if(x.accounts&&typeof x.accounts==='object'){
@@ -17248,9 +17337,11 @@ P7.budgets=P7.budgets&&typeof P7.budgets==='object'?P7.budgets:{}; Object.assign
 }
 Object.keys(x.accounts.counters||{}).forEach(t=>{AC.counters[t]=Math.max(AC.counters[t]||0,x.accounts.counters[t]||0)});
 }
+restoreExtraBackupData(x);
 migrateReceiptNumbers();
 saveDB(); loadSettingsUI(); renderDuplicates(); try{renderJournal();}catch(e){}
-const msg=id('importMsg'); if(msg) msg.textContent='Import successful.'+(dupCount?` ⚠️ ${dupCount} invoice number clash mila — purana wala "Duplicate Invoices" me move kar diya gaya hai.`:'');
+try{renderHistory();}catch(e){}
+const msg=id('importMsg'); if(msg){ msg.style.whiteSpace='pre-line'; msg.textContent=buildImportSummary(x,dupCount); }
 }catch(e){
 const msg=id('importMsg'); if(msg) msg.textContent='Import failed: '+e.message;
 }
@@ -17264,14 +17355,14 @@ r.onload=()=>{
 try{
 let parsed=JSON.parse(r.result);
 let arr=Array.isArray(parsed)?parsed:(parsed&&Array.isArray(parsed[dbKey])?parsed[dbKey]:null);
-if(!Array.isArray(arr)) throw new Error('File me valid '+label+' data nahi mila.');
+if(!Array.isArray(arr)) throw new Error('No valid '+label+' data was found in this file.');
 if(!Array.isArray(db[dbKey])) db[dbKey]=[];
 let count=0, dupCount=0;
 arr.forEach(n=>{
 if(!n||!n.id) return;
 let idx=db[dbKey].findIndex(a=>a.id===n.id);
 if(idx>=0){ db[dbKey][idx]=n; count++; return; }
-if(dbKey==='invoices'&&resolveInvoiceNumberClash(n.invoiceNumber,n.id,'Invoices Import ke time isi number ka naya invoice aaya')) dupCount++;
+if(dbKey==='invoices'&&resolveInvoiceNumberClash(n.invoiceNumber,n.id,'A new invoice with the same number arrived during Invoices Import')) dupCount++;
 db[dbKey].push(n);
 count++;
 });
@@ -17280,7 +17371,7 @@ saveDB();
 if(dbKey==='items') try{renderInventory();}catch(e){}
 if(dbKey==='invoices') try{renderHistory(); renderDuplicates();}catch(e){}
 if(dbKey==='documents') try{renderDocList();}catch(e){}
-const msg=id(msgId); if(msg) msg.textContent=count+' '+label+' imported successfully.'+(dupCount?` ⚠️ ${dupCount} invoice number clash mila — purana wala "Duplicate Invoices" me move kar diya gaya hai.`:'');
+const msg=id(msgId); if(msg) msg.textContent=count+' '+label+' imported successfully.'+(dupCount?` ⚠️ ${dupCount} invoice number conflict(s) found. The older invoice was moved to "Duplicate Invoices".`:'');
 }catch(e){
 const msg=id(msgId); if(msg) msg.textContent='Import failed: '+e.message;
 }
