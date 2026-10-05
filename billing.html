@@ -7205,6 +7205,7 @@ showAuthOverlay();
   <div class="top"><h1>Reports</h1>
     <div class="toolbar">
       <button class="btn muted" onclick="acctRepPrint()">Print</button>
+      <button class="btn muted" id="arShareBtn" onclick="acctRepShare()">📤 Share PDF</button>
       <button class="btn muted" onclick="acctRepCSV()">Export CSV</button>
     </div>
   </div>
@@ -21245,6 +21246,8 @@ window.acctSaveVoucher=function(){var t=S.type,d=$('avDate').value,h=S.head=$('a
 if(!d)return alert('Date daalo');
 var rows=S.lines.map(function(x){return{ledger:x.ledger,dc:x.dc,amount:r2(x.amt)}});
 if(rows.some(function(x){return!x.ledger||x.amount<=0}))return alert('Har line me ledger aur amount (0 se zyada) chahiye');
+if(rows.some(function(x){return x.amount>=100000000})&&!confirm('Is voucher me ₹10 crore ya usse zyada ki line hai. Kahin extra zero to nahi laga? Sahi hai to OK dabao.'))return;
+if(rows.some(function(x){return x.amount>=1e13}))return alert('Amount bahut zyada hai (₹1 lakh crore se upar). Calculation galat ho jayegi. Amount check karo.');
 if(t==='Journal'){if(rows.length<2)return alert('Journal me kam se kam 2 lines chahiye');var df=Math.abs(sum(rows,'Dr')-sum(rows,'Cr'));if(df>0.005)return alert('Debit aur Credit barabar nahi hain (fark ₹'+money(df)+')');L=rows}
 else{if(!h)return alert('Cash / Bank ledger chuno');if(rows.some(function(x){return x.ledger===h}))return alert('Dono side me same ledger nahi ho sakta');
 var dc=t==='Receipt'?'Cr':'Dr';L=rows.map(function(x){return{ledger:x.ledger,dc:dc,amount:x.amount}});L.push({ledger:h,dc:dc==='Dr'?'Cr':'Dr',amount:r2(sum(rows))})}
@@ -22238,7 +22241,7 @@ if(typeof _sv==='function')window.acctSaveVoucher=function(){var no=$('avNo').va
 <script id="acct-export-pro">(function(){
 var $=function(i){return document.getElementById(i)};
 function E(s){return String(s==null?'':s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function fm(n){return Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fm(n){n=Number(n||0);if(!isFinite(n))n=0;return n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function ST(){try{return db.settings||{}}catch(e){return{}}}
 function credit(l){try{return ieCreditOn()?ieCreditText(l):''}catch(e){return''}}
 function dec(s){return String(s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&')}
@@ -22355,12 +22358,12 @@ var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs
 'tr.tot td.gp{padding:0;border-left:.7pt solid #000}tr.sp td{height:14px;padding:0}'+
 '.ck{font-size:8.5pt;font-weight:700;margin-top:12px;color:#000}.nt{font-size:7.5pt;color:#374151;margin-top:6px;line-height:1.4}.nt.it{font-style:italic}'+
 '.sg{margin-top:26px;display:flex;justify-content:flex-end}.sg div{width:56mm;text-align:center;font-size:8.5pt}.sg i{display:block;height:30px}.sg b{display:block;border-top:.6pt solid #000;padding-top:3px;font-weight:700}@media screen{body{padding:14px}}';
-var cgf=function(b){var mo=10,mi=9,sc=function(items){items.forEach(function(g){mo=Math.max(mo,stNum(g.amt).length);(g.ledgers||[]).forEach(function(l){if(l.amt!=null)mi=Math.max(mi,stNum(l.amt).length)})})};sc(b.L);sc(b.R);mo=Math.max(mo,stNum(b.totL).length,stNum(b.totR).length);var wi=(mi+2)+'ch',wo=(mo+3)+'ch';return'<colgroup><col><col style="width:'+wi+'"><col style="width:'+wo+'"><col style="width:4mm"><col><col style="width:'+wi+'"><col style="width:'+wo+'"></colgroup>'};
-var ncl=function(v,cl){return'<td class="n '+cl+'">'+stNum(v)+'</td>'};
+var SC=1,cgf=function(b){var mo=10,mi=9,sc=function(items){items.forEach(function(g){mo=Math.max(mo,stNum(g.amt).length);(g.ledgers||[]).forEach(function(l){if(l.amt!=null)mi=Math.max(mi,stNum(l.amt).length)})})};sc(b.L);sc(b.R);mo=Math.max(mo,stNum(b.totL).length,stNum(b.totR).length);var avail=57,need=mi*1.75+mo*1.95;SC=Math.max(.5,Math.min(1,avail/need));var wi=(mi*1.75*SC+3).toFixed(1)+'mm',wo=(mo*1.95*SC+3).toFixed(1)+'mm';return'<colgroup><col><col style="width:'+wi+'"><col style="width:'+wo+'"><col style="width:4mm"><col><col style="width:'+wi+'"><col style="width:'+wo+'"></colgroup>'};
+var ncl=function(v,cl){return'<td class="n '+cl+'"'+(SC<1?' style="font-size:'+(9.5*SC).toFixed(2)+'pt"':'')+'>'+stNum(v)+'</td>'};
 var cell=function(x){if(!x)return'<td class="e"></td><td class="e"></td><td class="e"></td>';
 if(x.k==='g')return'<td class="g">'+E(x.label)+'</td><td class="g"></td>'+ncl(x.outer,'g');
 if(x.k==='line')return'<td class="ln">'+E(x.label)+'</td><td class="ln"></td>'+(x.blank?'<td class="n ln"></td>':ncl(x.outer,'ln'));
-return'<td class="'+(x.sub?'s':'l')+'">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'">'+stNum(x.inner)+'</td><td class="e"></td>'};
+return'<td class="'+(x.sub?'s':'l')+'">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'"'+(SC<1?' style="font-size:'+(8.5*SC).toFixed(2)+'pt"':'')+'>'+stNum(x.inner)+'</td><td class="e"></td>'};
 var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cgf(b)+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
 for(var i=0;i<n;i++)h+='<tr>'+cell(L[i])+'<td class="gp"></td>'+cell(R[i])+'</tr>';
 return h+'<tr class="sp"><td colspan="3"></td><td class="gp"></td><td colspan="3"></td></tr><tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
@@ -22428,7 +22431,7 @@ var dN=function(i,x){return'<dxf>'+x+'</dxf>'};
 var cf='<conditionalFormatting sqref="B'+firstData+':C'+lastData+' F'+firstData+':G'+lastData+'"><cfRule type="cellIs" dxfId="0" priority="1" operator="lessThan"><formula>0</formula></cfRule></conditionalFormatting>';
 if(ckRow)cf+='<conditionalFormatting sqref="A'+ckRow+':G'+ckRow+'"><cfRule type="expression" dxfId="1" priority="2"><formula>ABS($G$'+ckRow+')&lt;0.005</formula></cfRule><cfRule type="expression" dxfId="2" priority="3"><formula>ABS($G$'+ckRow+')&gt;=0.005</formula></cfRule></conditionalFormatting>';
 var pr='<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.6" header="0.3" footer="0.3"/>',hf='<headerFooter><oddFooter>&amp;L'+E(M.company)+' · '+E(M.title)+'&amp;RPage &amp;P of &amp;N</oddFooter></headerFooter>';
-var s1=XH+'<worksheet '+NS+'><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100" tabSelected="1"></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols([34,13,14,2,34,13,14])+'<sheetData>'+rx(S1)+'</sheetData>'+mg(S1)+cf+'<printOptions horizontalCentered="1"/>'+pr+'<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
+var s1=XH+'<worksheet '+NS+'><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100" tabSelected="1"></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols((function(){var mi=10,mo=11,sc=function(it){it.forEach(function(g){mo=Math.max(mo,stNum(g.amt).length);(g.ledgers||[]).forEach(function(l){if(l.amt!=null)mi=Math.max(mi,stNum(l.amt).length)})})};M.blocks.forEach(function(b){sc(b.L);sc(b.R);mo=Math.max(mo,stNum(b.totL).length,stNum(b.totR).length)});var wi=Math.min(60,mi+3),wo=Math.min(60,mo+3);return[34,wi,wo,2,34,wi,wo]})())+'<sheetData>'+rx(S1)+'</sheetData>'+mg(S1)+cf+'<printOptions horizontalCentered="1"/>'+pr+'<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
 var S2=mk(),n2=M.detail.length,l2=6+Math.max(n2,1);
 var C2=st(['Cambria',14,1,0,NV]),T2=st(['Calibri',12,1,0,NV]),MU=st(['Calibri',9,0,1,'FF6B7280']),TH=st(['Calibri',10,1,0,'FFFFFFFF'],NV,{bottom:['medium',GDc]},0,'horizontal="center" vertical="center" wrapText="1"'),
 TD=st(['Calibri',10,0,0,'FF1F2937'],0,{bottom:['hair','FFC9CFDA']},0,'vertical="top" wrapText="1"'),TDN=st(['Calibri',10,0,0,'FF1F2937'],0,{bottom:['hair','FFC9CFDA']},164,'horizontal="right" vertical="top"'),
@@ -22437,7 +22440,7 @@ S2.hts[1]=22;S2.T(1,0,M.company,C2);S2.hts[2]=18;S2.T(2,0,M.title+' — Ledger D
 S2.T(5,0,'Filtered total — filter by Side first',FT);for(var q=1;q<4;q++)S2.B(5,q,FT);S2.F(5,4,'SUBTOTAL(109,E7:E'+l2+')',r2(M.detail.reduce(function(a,d){return a+d[4]},0)),FTN);S2.B(5,5,FT);
 ['Statement','Side','Group','Ledger','Amount (₹)','Note'].forEach(function(h,j){S2.T(6,j,h,TH)});S2.hts[6]=20;
 M.detail.forEach(function(d,i){var rr=7+i;[0,1,2,3].forEach(function(j){S2.T(rr,j,d[j],TD)});S2.N(rr,4,d[4],TDN);S2.T(rr,5,d[5],TD)});
-var s2=XH+'<worksheet '+NS+'><sheetPr><tabColor rgb="'+NV+'"/><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100"><pane ySplit="6" topLeftCell="A7" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols([22,14,26,36,16,34])+'<sheetData>'+rx(S2)+'</sheetData><autoFilter ref="A6:F'+l2+'"/><conditionalFormatting sqref="E7:E'+l2+'"><cfRule type="cellIs" dxfId="0" priority="1" operator="lessThan"><formula>0</formula></cfRule></conditionalFormatting>'+pr+'<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
+var s2=XH+'<worksheet '+NS+'><sheetPr><tabColor rgb="'+NV+'"/><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100"><pane ySplit="6" topLeftCell="A7" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>'+cols([22,14,26,36,Math.min(60,Math.max(16,M.detail.reduce(function(m,r){return Math.max(m,stNum(r[4]).length)},0)+3)),34])+'<sheetData>'+rx(S2)+'</sheetData><autoFilter ref="A6:F'+l2+'"/><conditionalFormatting sqref="E7:E'+l2+'"><cfRule type="cellIs" dxfId="0" priority="1" operator="lessThan"><formula>0</formula></cfRule></conditionalFormatting>'+pr+'<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>'+hf+'</worksheet>';
 var q2=function(s){return s.replace(/"/g,'&quot;')};
 var styles=XH+'<styleSheet '+NS+'><numFmts count="3"><numFmt numFmtId="164" formatCode="'+q2(E(INR).replace(/&quot;/g,'"'))+'"/><numFmt numFmtId="165" formatCode="'+q2(E(RUP).replace(/&quot;/g,'"'))+'"/><numFmt numFmtId="166" formatCode="'+q2('"(-)"#,##0.00;"(-)"#,##0.00')+'"/></numFmts>'+
 '<fonts count="'+FN.x.length+'">'+FN.x.join('')+'</fonts><fills count="'+FL.x.length+'">'+FL.x.join('')+'</fills><borders count="'+BD.x.length+'">'+BD.x.join('')+'</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="'+XF.x.length+'">'+XF.x.join('')+'</cellXfs>'+
@@ -22647,6 +22650,21 @@ window.exportJournalCSV=function(){jr('x',journalFilteredLogRows(),'Payment Jour
 window.exportReceiptLogCSV=function(){jr('x',journalFilteredReceiptRows(),'Receipt Log',RH,RP,'','receipt log')};window.printReceiptLogReport=function(){jr('p',journalFilteredReceiptRows(),'Receipt Log',RH,RP,'','receipt log report')};
 var LB={acctRepCSV:'📊 Export Excel',acctRepPrint:'📄 PDF / Print',acctGstCSV:'📊 Excel',acctGstPrint:'📄 PDF',invCSV:'📊 Excel',invPrint:'📄 PDF',exCSV:'📊 Excel',exPrint:'📄 PDF',exportJournalCSV:'📊 Export Excel (filtered)',printJournalReport:'📄 PDF Report (filtered)',exportReceiptLogCSV:'📊 Export Excel (filtered)',printReceiptLogReport:'📄 PDF Report (filtered)'};
 Object.keys(LB).forEach(function(k){document.querySelectorAll('button[onclick^="'+k+'("]').forEach(function(b){b.textContent=LB[k]})});
+
+window.acctRepShare=function(){
+var A=document.getElementById('arBody');
+if(!A||!A.querySelector('table')){alert('Share karne ke liye report me data nahi hai.');return}
+if(!(window.IEPDF&&IEPDF.isApp())){alert('PDF share sirf IE Billing app (APK) me chalta hai. Abhi PDF / Print khul raha hai, wahan se "Save as PDF" karke share kar sakte ho.');try{window.acctRepPrint()}catch(e){}return}
+var buf=[],real=window.open,ok=true;
+window.open=function(){return{closed:false,document:{open:function(){buf=[];return this},write:function(){buf.push(Array.prototype.join.call(arguments,''))},writeln:function(){buf.push(Array.prototype.join.call(arguments,'')+'\n')},close:function(){}},focus:function(){},blur:function(){},close:function(){},print:function(){}}};
+try{window.acctRepPrint()}catch(e){ok=false;console.warn(e)}
+window.open=real;
+var html=buf.join('');
+if(!ok||html.length<50){alert('PDF nahi ban payi. Report dobara kholkar try karo.');return}
+html=html.replace(/onload\s*=\s*"[^"]*window\.print\(\)[^"]*"/gi,'');
+var m=html.match(/<title>([^<]*)<\/title>/i),nm=String(m?m[1]:'Report').replace(/&amp;/g,'&').replace(/[\\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim().slice(0,80)||'Report';
+IEPDF.sharePdfs([{name:nm+'.pdf',html:html}]);
+};
 })();</script>
 
 <script>(function(){
