@@ -23658,17 +23658,38 @@ function b64(buf){ var a=new Uint8Array(buf),s=''; for(var i=0;i<a.length;i++) s
 function unb64(t){ var s=atob(t),a=new Uint8Array(s.length); for(var i=0;i<s.length;i++) a[i]=s.charCodeAt(i); return a.buffer; }
 function rnd(){ var a=new Uint8Array(32); crypto.getRandomValues(a); return a; }
 function lockOn(){ try{ return !!localStorage.getItem(lk()); }catch(e){ return false; } }
+/* Native (Android APK / Capacitor) biometric bridge: WebAuthn does not work inside the APK WebView */
+function isNativeApp(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+function nativeBio(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; return (P&&(P.BiometricAuthNative||P.BiometricAuth))||null; }catch(e){ return null; } }
+function nativeAuth(){
+  var B=nativeBio(); if(!B) return Promise.resolve(false);
+  return B.authenticate({reason:'Confirm it is you',cancelTitle:'Cancel',allowDeviceCredential:true,androidTitle:'IE Billing',androidSubtitle:'Use fingerprint, face or screen lock'}).then(function(){ return true; }).catch(function(){ return false; });
+}
 function supported(){
+  if(isNativeApp()){
+    var B=nativeBio(); if(!B) return Promise.resolve(false);
+    return B.checkBiometry().then(function(r){ return !!(r&&(r.isAvailable||r.deviceIsSecure)); }).catch(function(){ return false; });
+  }
   if(!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)) return Promise.resolve(false);
   return PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(function(){ return false; });
 }
 function verifyLock(){
   var id=localStorage.getItem(lk());
+  if(id==='NATIVE') return nativeAuth();
   return navigator.credentials.get({publicKey:{challenge:rnd(),allowCredentials:[{type:'public-key',id:unb64(id)}],userVerification:'required',timeout:60000}}).then(function(c){ return !!c; }).catch(function(){ return false; });
 }
 function enableLock(){
   supported().then(function(ok){
-    if(!ok) return ui('Device Lock Unavailable','This device or browser does not support biometric / screen-lock verification. In the Android APK this needs a native biometric plugin and an APK rebuild.','OK');
+    if(isNativeApp()){
+      if(!nativeBio()) return ui('App Update Required','Device Lock needs the latest version of the IE Billing app. Please install the newest APK and try again.','OK');
+      if(!ok) return ui('Screen Lock Not Set','Please set a fingerprint, face or screen lock (PIN / pattern) in your phone settings first, then turn on Device Lock.','OK');
+      return nativeAuth().then(function(done){
+        if(!done) return ui('Device Lock Not Enabled','Verification was cancelled or failed. Nothing was changed.','OK');
+        try{ localStorage.setItem(lk(),'NATIVE'); }catch(e){}
+        paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK');
+      });
+    }
+    if(!ok) return ui('Device Lock Unavailable','This device or browser does not support biometric / screen-lock verification.','OK');
     var em=(currentUser.email||'user');
     navigator.credentials.create({publicKey:{challenge:rnd(),rp:{name:'IE Billing'},user:{id:new TextEncoder().encode(uid()).slice(0,64),name:em,displayName:em},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},timeout:60000}})
     .then(function(c){ localStorage.setItem(lk(),b64(c.rawId)); paint(); ui('Device Lock Enabled','Reset and Delete Account will now also ask for your fingerprint, face or screen lock on this device.','OK'); })
