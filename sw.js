@@ -1,14 +1,15 @@
 /* IE Billing — Service Worker (offline support)
    Online: hamesha network se taaza file (cache bhi update hota hai).
-   Offline: cache se khulta hai. Supabase/API calls kabhi cache nahi hoti. */
-var VER = 'ie-v3';
+   Offline: cache se khulta hai. Supabase/API calls kabhi cache nahi hoti.
+   APK / /app/ folder: service worker ke raaste se nahi jaata, seedha server se aata hai. */
+var VER = 'ie-v4';
 var CORE = ['loader.html', 'billing.html'];
 var LIBS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap'
 ];
-var SKIP = /admin-panel|\.supabase\.co|razorpay|googleapis\.com\/(?!css)|firebase|generativelanguage/i;
+var SKIP = /admin-panel|\.apk|\/app\/|\.supabase\.co|razorpay|googleapis\.com\/(?!css)|firebase|generativelanguage/i;
 
 /* ?v=... hataao aur .html hataao, taaki /billing aur billing.html?v=123 ek hi cache key bane */
 function keyOf(u) {
