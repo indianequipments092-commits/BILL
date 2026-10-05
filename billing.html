@@ -22160,7 +22160,11 @@ window.exCurDel=function(c){if(ro())return;if(!confirm(c+' delete karni hai? Pur
 window.exFxRate=function(){if(!$('exFc'))return;var c=P().cur.find(function(x){return x.code===$('exFc').value});if(c&&$('exFr'))$('exFr').value=c.rate;exFxPrev()};
 function fxCalc(){var t=$('exFt').value,a=+$('exFa').value,r=+$('exFr').value,k=+$('exFk').value||0;if(!(a>0&&r>0))return null;var inr=r2(a*r),bk=k>0?r2(a*k):inr,d=r2(t==='R'?inr-bk:bk-inr);return{t:t,inr:inr,bk:bk,d:d}}
 window.exFxPrev=function(){var e=$('exFpv');if(!e)return;var c=fxCalc();e.textContent=c?('Bank: ₹ '+m2(c.inr)+(Math.abs(c.d)>0.004?' | Party: ₹ '+m2(c.bk)+' | Exchange '+(c.d>0?'Gain':'Loss')+': ₹ '+m2(Math.abs(c.d)):'')):''};
-window.exFxPost=function(){if(ro())return;var d=$('exFd').value,pl=$('exFp').value,bl=$('exFb').value,cur=$('exFc').value,a=+$('exFa').value,r=+$('exFr').value,c=fxCalc();
+window.exFxPost=function(){if(ro())return;var d=$('exFd').value,pl=$('exFp').value,bl=$('exFb').value,cur=$('exFc').value,a=+$('exFa').value,r=+$('exFr').value,c=fxCalc();var bkr=+$('exFk').value||0;
+if(r>0&&bkr>0&&(bkr>r*1.5||bkr<r/1.5)&&!confirm('Booked rate ('+bkr+') aaj ke rate ('+r+') se bahut alag hai. Kya sahi hai? Galat hai to Cancel dabao.'))return;
+if(c&&c.inr>0&&Math.abs(c.d)>c.inr*0.5&&!confirm('Exchange '+(c.d>0?'Gain':'Loss')+' ₹ '+m2(Math.abs(c.d))+' bahut bada hai (amount ke 50% se zyada). Pakka save karna hai?'))return;
+if(c&&(c.inr>100000000||c.bk>100000000)&&!confirm('Amount ₹ 10 crore se zyada hai. Rate ya amount me extra zero to nahi?'))return;
+
 if(!d)return alert('Date chuno');if(!pl)return alert('Party chuno');if(!bl)return alert('Bank / Cash chuno');if(!c)return alert('Foreign amount aur rate likho');
 var rec=c.t==='R',L=[],fx=ensL('lg_forex','Exchange Gain/Loss','indirectExp');
 if(rec){ln(L,bl,'Dr',c.inr);ln(L,pl,'Cr',c.bk);if(c.d>0)ln(L,fx,'Cr',c.d);else ln(L,fx,'Dr',-c.d)}else{ln(L,pl,'Dr',c.bk);ln(L,bl,'Cr',c.inr);if(c.d>0)ln(L,fx,'Cr',c.d);else ln(L,fx,'Dr',-c.d)}
@@ -22343,7 +22347,7 @@ var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs
 '.cap{font-size:10pt;font-weight:700;letter-spacing:1px;margin:34px 0 4px;text-align:center}.hd+.cap{margin-top:0}'+
 'table.st{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{page-break-inside:avoid}'+
 'th{padding:5px 6px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:2px;border-top:.7pt solid #000;border-bottom:.7pt solid #000}th.as{text-align:center;font-weight:400;letter-spacing:0;font-size:8.5pt}th.gp{padding:0;border-left:.7pt solid #000}'+
-'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap}'+
+'td{vertical-align:top;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}td.n{text-align:right;white-space:nowrap;overflow:visible;padding-left:2px;padding-right:6px}'+
 'td.gp{padding:0;border-left:.7pt solid #000}'+
 'td.g,td.ln{font-size:9.5pt;font-weight:700;padding:9px 6px 2px}'+
 'td.l{font-size:9pt;font-style:italic;font-weight:400;padding:1.5px 6px 1.5px 16px}td.la{font-size:8.5pt;font-style:normal;font-weight:400;padding:1.5px 6px}td.la.u{border-bottom:.7pt solid #000}td.e{padding:1.5px 6px}td.s{font-size:9pt;font-style:normal;font-weight:400;padding:1.5px 6px 1.5px 16px}'+
@@ -22351,13 +22355,13 @@ var css='@page{size:A4 portrait;margin:14mm 12mm 14mm;@bottom-left{content:"'+cs
 'tr.tot td.gp{padding:0;border-left:.7pt solid #000}tr.sp td{height:14px;padding:0}'+
 '.ck{font-size:8.5pt;font-weight:700;margin-top:12px;color:#000}.nt{font-size:7.5pt;color:#374151;margin-top:6px;line-height:1.4}.nt.it{font-style:italic}'+
 '.sg{margin-top:26px;display:flex;justify-content:flex-end}.sg div{width:56mm;text-align:center;font-size:8.5pt}.sg i{display:block;height:30px}.sg b{display:block;border-top:.6pt solid #000;padding-top:3px;font-weight:700}@media screen{body{padding:14px}}';
-var cg='<colgroup><col style="width:27%"><col style="width:10%"><col style="width:11%"><col style="width:4%"><col style="width:27%"><col style="width:10%"><col style="width:11%"></colgroup>';
+var cgf=function(b){var mo=10,mi=9,sc=function(items){items.forEach(function(g){mo=Math.max(mo,stNum(g.amt).length);(g.ledgers||[]).forEach(function(l){if(l.amt!=null)mi=Math.max(mi,stNum(l.amt).length)})})};sc(b.L);sc(b.R);mo=Math.max(mo,stNum(b.totL).length,stNum(b.totR).length);var wi=(mi+2)+'ch',wo=(mo+3)+'ch';return'<colgroup><col><col style="width:'+wi+'"><col style="width:'+wo+'"><col style="width:4mm"><col><col style="width:'+wi+'"><col style="width:'+wo+'"></colgroup>'};
 var ncl=function(v,cl){return'<td class="n '+cl+'">'+stNum(v)+'</td>'};
 var cell=function(x){if(!x)return'<td class="e"></td><td class="e"></td><td class="e"></td>';
 if(x.k==='g')return'<td class="g">'+E(x.label)+'</td><td class="g"></td>'+ncl(x.outer,'g');
 if(x.k==='line')return'<td class="ln">'+E(x.label)+'</td><td class="ln"></td>'+(x.blank?'<td class="n ln"></td>':ncl(x.outer,'ln'));
 return'<td class="'+(x.sub?'s':'l')+'">'+E(x.label)+'</td><td class="n la'+(x.last?' u':'')+'">'+stNum(x.inner)+'</td><td class="e"></td>'};
-var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cg+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
+var blk=function(b){var L=sideRows(b.L),R=sideRows(b.R),n=Math.max(L.length,R.length),h=(b.cap?'<div class="cap">'+E(b.cap)+'</div>':'')+'<table class="st">'+cgf(b)+'<thead><tr><th>'+E(b.head[0])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th><th class="gp"></th><th>'+E(b.head[1])+'</th><th class="as" colspan="2">'+(asat?'as at '+E(asat):'')+'</th></tr></thead><tbody>';
 for(var i=0;i<n;i++)h+='<tr>'+cell(L[i])+'<td class="gp"></td>'+cell(R[i])+'</tr>';
 return h+'<tr class="sp"><td colspan="3"></td><td class="gp"></td><td colspan="3"></td></tr><tr class="tot"><td class="tl">Total</td><td></td>'+ncl(b.totL,'ta')+'<td class="gp"></td><td class="tl">Total</td><td></td>'+ncl(b.totR,'ta')+'</tr></tbody></table>'};
 var b='<div id="pg"><div class="hd"><div class="co">'+E(stHdName(M))+'</div><div class="ad">'+E(M.address)+(M.gstin?'<br>GSTIN: '+E(M.gstin):'')+'</div><div class="ttl">'+E(M.title)+'</div><div class="per">'+E(M.period)+'</div></div>'+M.blocks.map(blk).join('');
