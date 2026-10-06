@@ -1306,6 +1306,7 @@ function fireRecovery(){ if(recoveryCbs.length){ recoveryCbs.forEach(cb=>{ try{c
 supabase.auth.onAuthStateChange((event,session)=>{ if(event==='PASSWORD_RECOVERY') fireRecovery(); if(!session && event!=='SIGNED_OUT') return;   const u=wrapUser(session&&session.user); authStateCbs.forEach(cb=>cb(u)); });
 const IS_NATIVE_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const APP_AUTH_CALLBACK = 'com.iebilling.app://auth-callback';
+const GOOGLE_WEB_CLIENT_ID = '964174275031-iptdupn27inokm1dqluv5tcrv0kl7hr8.apps.googleusercontent.com';
 if(IS_NATIVE_APP && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
 window.Capacitor.Plugins.App.addListener('appUrlOpen', async (ev)=>{
 try{
@@ -1332,6 +1333,18 @@ return ()=>{ authStateCbs=authStateCbs.filter(x=>x!==cb); };
 },
 signInWithPopup(){
 if(IS_NATIVE_APP){
+const SL = window.Capacitor.Plugins && window.Capacitor.Plugins.SocialLogin;
+if(SL && GOOGLE_WEB_CLIENT_ID && GOOGLE_WEB_CLIENT_ID.indexOf('PASTE_')!==0){
+/* Native Google "Choose an account" popup */
+return SL.initialize({ google:{ webClientId: GOOGLE_WEB_CLIENT_ID } })
+.then(()=>SL.login({ provider:'google', options:{} }))
+.then(res=>{
+const idToken = res && res.result && res.result.idToken;
+if(!idToken) throw new Error('Google idToken nahi mila');
+return supabase.auth.signInWithIdToken({ provider:'google', token:idToken });
+})
+.then(({error})=>{ if(error) throw error; });
+}
 return supabase.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: APP_AUTH_CALLBACK, skipBrowserRedirect:true } })
 .then(({data,error})=>{ if(error) throw error; return window.Capacitor.Plugins.Browser.open({ url: data.url }); });
 }
