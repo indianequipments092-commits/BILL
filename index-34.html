@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IE Billing — Invoice Bhejein, Jhanjhat Nahi</title>
+<meta name="description" content="IE Billing — do-party invoicing: invoice bhejein, doosri taraf Purchase Bill khud ban jaata hai. Auto GST, QR UPI payment, analytics aur AI HSN.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20120%20120%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22ieg1%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%234f46e5%22/%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%238b5cf6%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c026d3%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient%20id%3D%22ieg2%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2322d3ee%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2367e8f9%22/%3E%3C/linearGradient%3E%0A%3ClinearGradient%20id%3D%22ieg3%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.38%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22/%3E%3C/linearGradient%3E%0A%3C/defs%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%22112%22%20height%3D%22112%22%20rx%3D%2230%22%20fill%3D%22url%28%23ieg1%29%22/%3E%3Cpath%20d%3D%22M4%2034a30%2030%200%200%201%2030-30h52a30%2030%200%200%201%2030%2030v22C90%2066%2030%2066%204%2056z%22%20fill%3D%22url%28%23ieg3%29%22/%3E%3Crect%20x%3D%224.75%22%20y%3D%224.75%22%20width%3D%22110.5%22%20height%3D%22110.5%22%20rx%3D%2229.5%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%22.3%22%20stroke-width%3D%221.5%22/%3E%3Crect%20x%3D%2232%22%20y%3D%2232%22%20width%3D%2213%22%20height%3D%2256%22%20rx%3D%224%22%20fill%3D%22%23fff%22/%3E%3Crect%20x%3D%2256%22%20y%3D%2232%22%20width%3D%2213%22%20height%3D%2256%22%20rx%3D%224%22%20fill%3D%22%23fff%22/%3E%3Crect%20x%3D%2256%22%20y%3D%2232%22%20width%3D%2236%22%20height%3D%2212%22%20rx%3D%224%22%20fill%3D%22%23fff%22/%3E%3Crect%20x%3D%2256%22%20y%3D%2254%22%20width%3D%2228%22%20height%3D%2212%22%20rx%3D%224%22%20fill%3D%22url%28%23ieg2%29%22/%3E%3Crect%20x%3D%2256%22%20y%3D%2276%22%20width%3D%2236%22%20height%3D%2212%22%20rx%3D%224%22%20fill%3D%22%23fff%22/%3E%3Ccircle%20cx%3D%2292%22%20cy%3D%2230%22%20r%3D%229%22%20fill%3D%22%230b0e1a%22%20stroke%3D%22%2322d3ee%22%20stroke-width%3D%222.5%22/%3E%3Cpath%20d%3D%22m87.8%2030.2%203%203%205.4-6%22%20fill%3D%22none%22%20stroke%3D%22%2322d3ee%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04050a">
+<meta property="og:title" content="IE Billing — Invoice Bhejein, Jhanjhat Nahi">
+<meta property="og:description" content="India ka complete do-party billing platform.">
+<meta property="og:type" content="website">
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('ie_land_theme')==='light'?'light':'dark')}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04050a; --panel:rgba(18,22,38,.55); --panel2:rgba(22,26,44,.7); --line:rgba(255,255,255,.09);
+  --indigo:#6366f1; --violet:#8b5cf6; --cyan:#22d3ee; --gold:#fbbf24; --gold2:#f59e0b;
+  --text:#f5f6fa; --mu:#8b93a7; --mu2:#aab0c4;
+  --green:#34d399; --green2:#6ee7b7; --red:#fb7185;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;overflow-x:hidden}
+h1,h2,h3,.brand{font-family:'Bricolage Grotesque',sans-serif}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.grad-text{background:linear-gradient(120deg,#818cf8,#a78bfa 45%,#67e8f9,#818cf8);background-size:250% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shineText 6s linear infinite}
+@keyframes shineText{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@media (prefers-reduced-motion:reduce){.grad-text{animation:none}}
+.grad-gold{background:linear-gradient(120deg,#fde68a,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.mesh{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%}
+.b1{width:46vw;height:46vw;left:-10%;top:-8%;background:radial-gradient(circle,var(--indigo),transparent 70%)}
+.b2{width:40vw;height:40vw;right:-8%;top:4%;background:radial-gradient(circle,var(--violet),transparent 70%)}
+.b3{width:36vw;height:36vw;left:20%;bottom:-16%;background:radial-gradient(circle,var(--cyan),transparent 70%)}
+@keyframes f1{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(4%,6%,0)}}
+@keyframes f2{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-5%,4%,0)}}
+@keyframes f3{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(3%,-5%,0)}}
+@media (prefers-reduced-motion:reduce){.blob{animation:none!important}}
+
+nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(5,7,13,.72);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1180px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px}
+.brand .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--indigo),var(--violet));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 6px 18px rgba(99,102,241,.4)}
+.nav-links{display:flex;gap:26px;font-size:13.5px;color:var(--mu2)}
+.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:16px;font-size:14px}
+.btn-pill{padding:9px 18px;border-radius:99px;font-weight:700;font-size:13.5px}
+.btn-primary{background:linear-gradient(135deg,var(--indigo),#7c5cf5);box-shadow:0 8px 22px rgba(99,102,241,.4)}
+.btn-gold{background:linear-gradient(135deg,#fde68a,var(--gold),var(--gold2));color:#221600;box-shadow:0 8px 22px rgba(251,191,36,.35)}
+.btn-platinum{background:linear-gradient(135deg,#818cf8,#6366f1 45%,#38bdf8);color:#fff;box-shadow:0 8px 26px rgba(99,102,241,.5)}
+.btn-outline{border:1px solid var(--line);color:var(--text)}
+.btn-gold,.btn-platinum,.btn-primary{position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.btn-gold:hover,.btn-platinum:hover,.btn-primary:hover{transform:translateY(-2px)}
+.btn-gold::after,.btn-platinum::after,.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);background-size:250% 100%;background-position:150% 0;transition:background-position .7s}
+.btn-gold:hover::after,.btn-platinum:hover::after,.btn-primary:hover::after{background-position:-50% 0}
+@media (max-width:900px){.nav-links{display:none}}
+
+.hero{position:relative;z-index:1;padding:74px 24px 36px;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center}
+@media (max-width:900px){.hero{grid-template-columns:1fr;padding-top:48px}}
+
+/* ===================== ₹1 / 7-DIN TRIAL PROMO BAND ===================== */
+.trial-promo{position:relative;z-index:1;max-width:1180px;margin:0 auto 50px;padding:0 24px}
+.trial-promo-in{position:relative;overflow:hidden;border-radius:24px;padding:36px 32px;text-align:center;
+  background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(139,92,246,.14) 45%,rgba(251,191,36,.1));
+  border:1px solid rgba(251,191,36,.35);box-shadow:0 25px 60px rgba(99,102,241,.25)}
+.trial-promo-in::before{content:'';position:absolute;inset:-2px;border-radius:24px;padding:2px;
+  background:linear-gradient(120deg,transparent,rgba(251,191,36,.7),transparent 60%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  background-size:250% 250%;animation:tpBorder 5s linear infinite;pointer-events:none}
+@keyframes tpBorder{0%{background-position:0% 0%}100%{background-position:200% 200%}}
+.trial-promo-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:99px;background:rgba(251,191,36,.16);
+  border:1px solid rgba(251,191,36,.4);color:#fde68a;font-size:11.5px;font-weight:800;letter-spacing:.5px;margin-bottom:16px}
+.trial-promo h2{font-size:32px;font-weight:800;letter-spacing:-.5px;margin:0 0 10px;line-height:1.2}
+.trial-promo h2 b{background:linear-gradient(120deg,#fde68a,var(--gold) 55%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.trial-promo p.tp-sub{max-width:560px;margin:0 auto 26px;color:var(--mu2);font-size:14.5px;line-height:1.6}
+.tp-feats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:28px}
+.tp-feat{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;color:var(--mu2);max-width:150px}
+.tp-feat .em{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;
+  background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(99,102,241,.18));border:1px solid rgba(255,255,255,.1)}
+.trial-promo .btn-lg{font-size:15.5px;padding:16px 32px}
+.trial-promo-note{margin-top:14px;font-size:12px;color:var(--mu)}
+@media (max-width:640px){.trial-promo-in{padding:28px 18px}.trial-promo h2{font-size:24px}}
+.badge-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:99px;background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.35);color:#c7d2fe;font-size:12.5px;font-weight:700;margin-bottom:20px}
+.hero h1{font-size:44px;line-height:1.08;font-weight:800;letter-spacing:-1px;margin:0 0 16px}
+@media (max-width:520px){.hero h1{font-size:32px}}
+.hero p.lede{font-size:15.5px;color:var(--mu2);line-height:1.65;max-width:480px;margin:0 0 26px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.btn-lg{padding:15px 26px;border-radius:14px;font-weight:700;font-size:14.5px;display:inline-flex;align-items:center;gap:8px}
+.trust-row{display:flex;align-items:center;gap:10px;color:var(--mu);font-size:13px;flex-wrap:wrap}
+.stars{color:#fbbf24;letter-spacing:1px}
+
+.mock{position:relative}
+.mock-card{background:var(--panel);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 30px 70px rgba(0,0,0,.5)}
+.mock-dots{display:flex;gap:6px;margin-bottom:14px}
+.mock-dots span{width:9px;height:9px;border-radius:50%}
+.mock-dots span:nth-child(1){background:#fb7185}.mock-dots span:nth-child(2){background:#fbbf24}.mock-dots span:nth-child(3){background:#34d399}
+.mock-title{font-size:13px;color:var(--mu2);margin-bottom:14px;font-weight:600}
+.mock-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mu);margin-bottom:9px}
+.mock-bar{flex:1;height:7px;border-radius:5px;background:rgba(255,255,255,.08);margin-left:12px;overflow:hidden}
+.mock-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--indigo),var(--violet))}
+.mock-total{display:flex;justify-content:space-between;align-items:center;padding-top:14px;margin-top:6px;border-top:1px solid var(--line);font-weight:700}
+.mock-total b{color:var(--green2);font-size:19px}
+.chip{position:absolute;background:rgba(15,20,35,.92);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:12px;font-weight:700;box-shadow:0 14px 34px rgba(0,0,0,.45);display:flex;align-items:center;gap:7px}
+.chip.c1{top:-14px;right:-6px;color:var(--green2);animation:chipFloat 5s ease-in-out infinite}
+.chip.c2{bottom:20px;left:-22px;color:#c7d2fe;animation:chipFloat 5s ease-in-out infinite 1.4s}
+@keyframes chipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media (max-width:900px){.chip{display:none}}
+
+section{position:relative;z-index:1;padding:64px 24px}
+.sec-head{text-align:center;max-width:640px;margin:0 auto 40px}
+.eyebrow{font-size:12px;font-weight:700;color:#a5b4fc;letter-spacing:1.5px;margin-bottom:10px}
+.sec-head h2{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 12px}
+.sec-head p{color:var(--mu);font-size:14.5px;line-height:1.6}
+
+/* who can use */
+.who-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1080px;margin:0 auto}
+@media (max-width:900px){.who-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.who-grid{grid-template-columns:1fr}}
+.who-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:center;transition:.25s}
+.who-card:hover{border-color:rgba(99,102,241,.4);transform:translateY(-3px)}
+.who-card .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,rgba(99,102,241,.2),rgba(139,92,246,.15));display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px}
+.who-card b{display:block;font-size:14.5px;margin-bottom:5px}
+.who-card span{font-size:12px;color:var(--mu);line-height:1.5}
+
+/* doc grid */
+.grid8{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1000px;margin:0 auto}
+@media (max-width:900px){.grid8{grid-template-columns:repeat(2,1fr)}}
+.doc-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 18px;text-align:center;transition:transform .25s,border-color .25s}
+.doc-card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,.4)}
+.doc-card .ic{font-size:26px;margin-bottom:10px}
+.doc-card b{display:block;font-size:14px;margin-bottom:5px}
+.doc-card span{font-size:12px;color:var(--mu)}
+
+/* live stats */
+.live-wrap{background:linear-gradient(160deg,rgba(99,102,241,.09),rgba(139,92,246,.05));border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:56px 24px}
+.live-in{max-width:1080px;margin:0 auto}
+.live-tag{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:700;color:var(--green2);margin-bottom:26px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green2);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.live-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;text-align:center}
+@media (max-width:820px){.live-grid{grid-template-columns:1fr 1fr}}
+.live-card{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:26px 14px}
+.live-card b{display:block;font-size:30px;font-weight:800;font-family:'Bricolage Grotesque',sans-serif;background:linear-gradient(120deg,#818cf8,#a78bfa 60%,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.live-card span{font-size:12px;color:var(--mu)}
+
+/* mini before/after compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:900px;margin:0 auto 46px}
+@media (max-width:720px){.compare{grid-template-columns:1fr}}
+.cmp-col{border-radius:18px;padding:22px;border:1px solid var(--line)}
+.cmp-col.bad{background:rgba(251,113,133,.06)}
+.cmp-col.good{background:rgba(52,211,153,.07)}
+.cmp-head{font-weight:700;font-size:14px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.cmp-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mu2);padding:9px 0;border-top:1px solid var(--line)}
+.cmp-row:first-of-type{border-top:0}
+.cmp-row b{font-weight:700}
+.bad .cmp-row b{color:var(--red)}
+.good .cmp-row b{color:var(--green2)}
+
+/* feature cards */
+.grid9{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1080px;margin:0 auto}
+@media (max-width:900px){.grid9{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.grid9{grid-template-columns:1fr}}
+.feat-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;position:relative;transition:transform .25s,border-color .25s,box-shadow .25s}
+.feat-card:hover{transform:translateY(-4px);border-color:rgba(129,140,248,.4);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.feat-ic{width:38px;height:38px;border-radius:10px;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px}
+.feat-tag{position:absolute;top:18px;right:18px;font-size:10px;font-weight:800;padding:4px 9px;border-radius:8px;background:rgba(99,102,241,.18);color:#c7d2fe}
+.feat-tag.gold{background:rgba(251,191,36,.2);color:#fde68a}
+.feat-card b{display:block;font-size:15px;margin-bottom:6px}
+.feat-card p{font-size:12.5px;color:var(--mu);line-height:1.55;margin:0}
+
+/* plan cards */
+.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:1150px;margin:0 auto 50px}
+@media (max-width:980px){.plan-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.plan-grid{grid-template-columns:1fr}}
+.plan-card{position:relative;background:var(--panel2);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:24px 20px 20px;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.45);transition:transform .2s,border-color .2s}
+.plan-card:hover{transform:translateY(-4px);border-color:rgba(129,140,248,.45)}
+.plan-card.featured{border-color:#fbbf24;box-shadow:0 20px 60px rgba(251,191,36,.18)}
+.plan-card.featured::after,.plan-card.platinum-card::after{content:'';position:absolute;top:-30px;left:50%;transform:translateX(-50%);width:70%;height:60px;filter:blur(30px);z-index:-1;border-radius:50%}
+.plan-card.featured::after{background:rgba(251,191,36,.35)}
+.plan-card.platinum-card::after{background:rgba(129,140,248,.4)}
+.plan-card.platinum-card{border:1px solid rgba(129,140,248,.35);background:linear-gradient(160deg,rgba(99,102,241,.14),rgba(24,20,45,.8));box-shadow:0 25px 65px rgba(99,102,241,.22)}
+.plan-card.platinum-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(115deg,#818cf8,#a78bfa,#38bdf8,#818cf8);background-size:300% 300%;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:platBorderGlow 3.2s ease-in-out infinite,platGradientMove 6s linear infinite;pointer-events:none}
+@keyframes platBorderGlow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes platGradientMove{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+.plan-card.platinum-card:hover{transform:translateY(-6px);box-shadow:0 32px 85px rgba(99,102,241,.42)}
+.plan-card.platinum-card .plan-em{animation:platIconFloat 2.6s ease-in-out infinite;filter:drop-shadow(0 0 14px rgba(129,140,248,.75))}
+@keyframes platIconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.plan-card.platinum-card .plan-name{background:linear-gradient(135deg,#c7d2fe,#a78bfa 50%,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.plan-card.platinum-card .plan-price{background:linear-gradient(135deg,#e0e7ff,#c4b5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+.plan-card.platinum-card .plan-mrp{color:#8b93a8}
+.plan-ribbon{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;padding:4px 14px;border-radius:20px;letter-spacing:.4px;white-space:nowrap}
+.plan-ribbon.gold{background:linear-gradient(135deg,#fde68a,var(--gold));color:#221600;box-shadow:0 6px 16px rgba(251,191,36,.4)}
+.plan-ribbon.plat{background:linear-gradient(135deg,#818cf8,#a78bfa,#38bdf8);color:#fff;box-shadow:0 6px 16px rgba(99,102,241,.45)}
+.plan-em{font-size:26px;margin-bottom:8px}
+.plan-name{font-weight:800;font-size:17px;margin-bottom:4px}
+.plan-price{font-size:25px;font-weight:800;margin-bottom:2px;letter-spacing:-.4px}
+.plan-price small{font-size:12px;color:var(--mu);font-weight:600}
+.plan-mrp{font-size:12px;color:var(--mu);text-decoration:line-through;margin-bottom:14px}
+.plan-feats{list-style:none;padding:0;margin:0 0 18px;flex:1}
+.plan-feats li{font-size:12px;color:var(--mu2);padding:7px 0;border-top:1px dashed var(--line);display:flex;align-items:flex-start;gap:7px}
+.plan-feats li:first-child{border-top:0}
+.plan-feats li.no{color:#5b6274}
+.plan-feats .ic{flex-shrink:0}
+
+/* comparison — no-scroll grid, desktop only */
+.pcg{max-width:1100px;margin:0 auto;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--panel2)}
+.pcg-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.pcg-row:last-child{border-bottom:0}
+.pcg-row.head{background:rgba(255,255,255,.03)}
+.pcg-cell{flex:1;text-align:center;padding:13px 8px;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+.pcg-cell.label{flex:1.6;justify-content:flex-start;text-align:left;padding-left:20px;color:var(--mu2);font-weight:600}
+.pcg-cell.gold{background:rgba(251,191,36,.07)}
+.pcg-cell.plat{background:linear-gradient(180deg,rgba(139,92,246,.16),rgba(139,92,246,.05))}
+.pcg-head-cell{flex-direction:column;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px;padding:18px 8px 14px;gap:2px}
+.pcg-head-cell .em{font-size:20px}
+.pcg-head-cell small{font-size:11px;color:var(--mu);font-weight:600}
+.pcg-yes{color:var(--green2);font-size:15px;font-weight:700}
+.pcg-no{color:#4b5568;font-size:15px}
+.pcg-note{text-align:center;font-size:12px;color:var(--mu);margin-top:14px}
+@media (max-width:860px){.pcg{display:none}.pcg-note{display:none}}
+
+/* small stats bar */
+.stats{display:flex;justify-content:center;gap:60px;flex-wrap:wrap;padding:50px 24px;background:rgba(255,255,255,.02);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.stat b{display:block;font-size:28px;font-weight:800;font-family:'Bricolage Grotesque',sans-serif}
+.stat span{font-size:12px;color:var(--mu)}
+
+/* steps */
+.steps{display:flex;justify-content:space-between;max-width:900px;margin:0 auto;position:relative}
+.steps::before{content:'';position:absolute;top:22px;left:60px;right:60px;height:1px;background:var(--line)}
+.step{flex:1;text-align:center;position:relative;padding:0 10px}
+.step-num{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;margin:0 auto 16px;position:relative;z-index:1;box-shadow:0 8px 22px rgba(99,102,241,.4)}
+.step b{display:block;font-size:14.5px;margin-bottom:6px}
+.step span{font-size:12.5px;color:var(--mu);line-height:1.5}
+@media (max-width:700px){.steps{flex-direction:column;gap:28px}.steps::before{display:none}}
+
+.cta-final{text-align:center;padding:86px 24px}
+.cta-final h2{font-size:32px;margin:0 0 14px}
+.cta-final p{color:var(--mu2);font-size:14.5px;margin:0 0 30px}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--line);padding:50px 24px 26px}
+.foot-grid{display:grid;grid-template-columns:1.4fr .8fr .8fr .8fr;gap:30px;max-width:1080px;margin:0 auto 34px}
+@media (max-width:720px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-grid h4{font-size:11.5px;letter-spacing:1px;color:var(--mu);margin:0 0 14px}
+.foot-grid a{display:block;font-size:13px;color:var(--mu2);margin-bottom:10px}
+.foot-grid a:hover{color:var(--text)}
+.foot-bottom{max-width:1080px;margin:0 auto;padding-top:22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mu)}
+/* ===== PAID MODE switch (admin panel -> settings/featureFlags.paid_mode) =====
+   Default = hidden. Sirf paid_mode===true hone par .paid-only dikhta hai. */
+html:not(.paid-mode) .paid-only{display:none!important}
+html:not(.paid-mode) .live-grid{grid-template-columns:repeat(2,1fr);max-width:520px;margin-left:auto;margin-right:auto}
+
+/* ===== icons ===== */
+.i{width:1.12em;height:1.12em;display:inline-block;vertical-align:-.22em;flex:none;overflow:visible}
+.i[href]{}
+.btn-primary .i,.btn-platinum .i{filter:brightness(0) invert(1)}.btn-gold .i{filter:brightness(0);opacity:.8}
+.btn-primary,.btn-platinum,.step-num,.brand .mark{color:#fff}
+/* ===== theme toggle + mobile menu ===== */
+.tg,.burger{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;padding:0;transition:transform .2s,background .2s}
+.tg:hover,.burger:hover{background:rgba(129,140,248,.18);transform:translateY(-1px)}
+.tg .sun{display:none}:root[data-theme=light] .tg .sun{display:inline-block}:root[data-theme=light] .tg .moon{display:none}
+.burger{display:none}
+@media (max-width:900px){.burger{display:inline-flex}
+ nav.open .nav-links{display:flex;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;padding:8px 24px 16px;background:inherit;backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+ nav.open .nav-links a{padding:13px 0;border-bottom:1px solid var(--line);font-size:15px}}
+/* ===== reveal + spotlight (transform/opacity only) ===== */
+.rvon .rv{opacity:0;translate:0 22px;transition:opacity .7s ease,translate .7s ease,transform .25s,border-color .25s}
+.rvon .rv.in{opacity:1;translate:0 0}
+.who-card,.doc-card,.feat-card,.live-card{position:relative}
+.who-card::before,.doc-card::before,.feat-card::before,.live-card::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),rgba(129,140,248,.2),transparent 70%)}
+.who-card:hover::before,.doc-card:hover::before,.feat-card:hover::before,.live-card:hover::before{opacity:1}
+/* ===== LIGHT THEME ===== */
+:root[data-theme=light]{--bg:#f4f5fb;--panel:rgba(255,255,255,.75);--panel2:rgba(255,255,255,.92);--line:rgba(15,23,42,.1);--text:#12172a;--mu:#5a6378;--mu2:#3f485f;--green:#059669;--green2:#047857;--red:#e11d48;--gold:#d97706;--gold2:#b45309}
+:root[data-theme=light] .mesh{opacity:.4}
+:root[data-theme=light] .tg,:root[data-theme=light] .burger{background:rgba(15,23,42,.04)}
+:root[data-theme=light] .pcg-no{color:#94a3b8}
+:root[data-theme=light] .btn-gold,:root[data-theme=light] .btn-gold .i{color:#221600}
+:root[data-theme=light] [style*="color:#a5b4fc"],:root[data-theme=light] [style*="color:#c7d2fe"]{color:#4338ca!important}
+:root[data-theme=light] [style*="color:#fde68a"]{color:#b45309!important}
+:root[data-theme=light] nav{background:rgba(255,255,255,.72)}:root[data-theme=light] .trial-promo-tag{color:#b45309}:root[data-theme=light] .tp-feat .em{border:1px solid rgba(15,23,42,.1)}:root[data-theme=light] .badge-pill{color:#4338ca}:root[data-theme=light] .stars{color:#b45309}:root[data-theme=light] .mock-bar{background:rgba(15,23,42,.08)}:root[data-theme=light] .chip{background:rgba(255,255,255,.92)}:root[data-theme=light] .chip.c2{color:#4338ca}:root[data-theme=light] .eyebrow{color:#4338ca}:root[data-theme=light] .feat-tag{color:#4338ca}:root[data-theme=light] .feat-tag.gold{color:#b45309}:root[data-theme=light] .plan-card.platinum-card{background:linear-gradient(160deg,rgba(99,102,241,.14),rgba(255,255,255,.8))}:root[data-theme=light] .pcg-row.head{background:rgba(15,23,42,.03)}:root[data-theme=light] /* small stats bar */
+.stats{background:rgba(15,23,42,.02)}.brand .logo{width:34px;height:34px;flex:none;filter:drop-shadow(0 6px 16px rgba(99,102,241,.5))}
+.brand b{font:800 18px 'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;letter-spacing:-.4px}
+.brand b span{background:linear-gradient(90deg,#818cf8,#c084fc 55%,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+:root[data-theme=light] .brand b span{background-image:linear-gradient(90deg,#4f46e5,#7c3aed 55%,#0891b2)}
+:root[data-theme=light] .grad-gold{background-image:linear-gradient(120deg,#d97706,#b45309)}
+
+/* ===== mobile nav fix ===== */
+:root{--navbg:#070910}:root[data-theme=light]{--navbg:#ffffff}
+.brand,.brand b,.btn-pill{white-space:nowrap}
+.nav-login-m{display:none}
+@media (max-width:900px){nav.open .nav-links{background:var(--navbg);box-shadow:0 18px 40px rgba(0,0,0,.35);max-height:calc(100vh - 70px);overflow-y:auto}}
+@media (max-width:520px){
+ .nav-in{padding:10px 14px;gap:8px}
+ .brand{gap:7px}.brand .logo{width:30px;height:30px}.brand b{font-size:16px}
+ .nav-right{gap:8px}
+ .nav-right>a:not(.btn-pill){display:none}
+ .nav-right .btn-pill{padding:8px 13px;font-size:12.5px}
+ .tg,.burger{width:34px;height:34px}
+ nav.open .nav-login-m{display:block;color:var(--text);font-weight:700}
+}
+:root[data-theme=light] .plan-card.platinum-card .plan-name{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#0284c7);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-price{background:linear-gradient(135deg,#3730a3,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}:root[data-theme=light] .plan-card.platinum-card .plan-mrp{color:#475569}
+
+/* ===== APP DOWNLOAD (Android APK / iPhone / Laptop) ===== */
+.dl-card{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:0;background:var(--panel);border:1px solid var(--line);border-radius:24px;backdrop-filter:blur(18px);overflow:hidden;box-shadow:0 26px 60px rgba(0,0,0,.28)}
+.dl-main{padding:30px 28px;background:radial-gradient(520px 240px at 0% 0%,rgba(99,102,241,.2),transparent 70%)}
+.dl-side{padding:30px 26px;border-left:1px solid var(--line)}
+.dl-app{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.dl-logo{width:60px;height:60px;flex:none;filter:drop-shadow(0 10px 22px rgba(99,102,241,.5))}
+.dl-app b{display:block;font:800 22px 'Bricolage Grotesque','Plus Jakarta Sans',sans-serif;letter-spacing:-.4px}
+.dl-app span{display:block;font-size:12.5px;color:var(--mu);margin-top:3px}
+.dl-btns{display:flex;gap:12px;flex-wrap:wrap}
+.dl-btns .btn-lg{justify-content:center}
+.dl-btns .i,.hero-cta .btn-lg .i{width:17px;height:17px}
+.dl-note{margin:14px 0 0;font-size:12.5px;line-height:1.6;color:var(--mu2)}
+.dl-note[hidden]{display:none}
+.dl-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.dl-badges span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--mu2);padding:6px 11px;border-radius:99px;border:1px solid var(--line)}
+.dl-badges .i{width:13px;height:13px;color:var(--green)}
+.dl-side h3{font-size:15px;margin:0 0 14px}
+.dl-steps{display:grid;gap:13px;margin:0;padding:0;list-style:none;counter-reset:dl}
+.dl-steps li{display:flex;gap:12px;font-size:13px;color:var(--mu2);line-height:1.55}
+.dl-steps li:before{counter-increment:dl;content:counter(dl);flex:none;width:24px;height:24px;border-radius:50%;background:rgba(99,102,241,.16);color:#a5b4fc;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+:root[data-theme=light] .dl-steps li:before{color:#4338ca}
+.dl-steps b{color:var(--text)}
+.dl-ios,.dl-qr{display:none}
+#download[data-tab=ios] .dl-android{display:none}
+#download[data-tab=ios] .dl-ios{display:block}
+html.dev-ios #dlApk{display:none}
+.dl-tabs{display:flex;gap:6px;padding:4px;border:1px solid var(--line);border-radius:13px;margin-bottom:18px;background:rgba(127,127,160,.08)}
+.dl-tab{flex:1;border:0;background:none;color:var(--mu2);font:700 13px 'Plus Jakarta Sans',sans-serif;padding:10px 8px;border-radius:10px;cursor:pointer}
+.dl-tab[aria-selected=true]{background:linear-gradient(135deg,var(--indigo),#7c5cf5);color:#fff;box-shadow:0 6px 16px rgba(99,102,241,.35)}
+.dl-tab:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.dl-why{margin:14px 0 0;font-size:12px;line-height:1.55;color:var(--mu)}
+.dl-qr.on{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);align-items:center;gap:14px;font-size:12.5px;color:var(--mu2);line-height:1.5}
+html.dev-desktop .dl-qr.on{display:flex}
+#dlQrBox{width:96px;height:96px;flex:none;background:#fff;border-radius:10px;padding:5px}
+#dlQrBox svg{width:100%;height:100%;display:block}
+@media (max-width:820px){.dl-card{grid-template-columns:1fr}.dl-side{border-left:0;border-top:1px solid var(--line)}.dl-main,.dl-side{padding:24px 20px}.dl-btns .btn-lg{flex:1 1 100%}}
+
+/* ===== FAQ (admin panel > Quick FAQ Manager se live) ===== */
+#faq{display:none;padding-top:20px}
+#faq.on{display:block}
+.faq-wrap{max-width:780px;margin:0 auto}
+.faq-search{position:relative;margin:0 0 18px}
+.faq-search input{width:100%;padding:14px 16px 14px 44px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:14.5px;outline:none;transition:border-color .2s,box-shadow .2s}
+.faq-search input:focus{border-color:rgba(129,140,248,.6);box-shadow:0 0 0 4px rgba(99,102,241,.15)}
+.faq-search svg{position:absolute;left:15px;top:50%;width:18px;height:18px;margin-top:-9px;stroke:var(--mu);fill:none;stroke-width:2;stroke-linecap:round}
+.faq-item{border:1px solid var(--line);background:var(--panel);border-radius:16px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,background .2s}
+.faq-item.open{border-color:rgba(129,140,248,.45);background:var(--panel2)}
+.faq-q{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;cursor:pointer;font-weight:700;font-size:15px;line-height:1.4;color:var(--text)}
+.faq-q:focus-visible{outline:2px solid var(--indigo);outline-offset:-2px;border-radius:16px}
+.faq-q .pm{flex:none;width:26px;height:26px;border-radius:50%;background:rgba(99,102,241,.16);position:relative;transition:transform .3s}
+.faq-q .pm:before,.faq-q .pm:after{content:'';position:absolute;left:7px;top:12px;width:12px;height:2px;border-radius:2px;background:#a5b4fc}
+.faq-q .pm:after{transform:rotate(90deg);transition:transform .3s}
+.faq-item.open .pm:after{transform:rotate(0)}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a>div{overflow:hidden}
+.faq-a p{margin:0;padding:0 18px 18px;color:var(--mu2);font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.faq-more,.faq-none a{display:inline-flex;margin:8px auto 0;padding:10px 20px;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--text);font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+.faq-foot{text-align:center}
+.faq-none{text-align:center;color:var(--mu);font-size:14px;padding:18px 0;display:none}
+.faq-none.on{display:block}
+.faq-hint{text-align:center;color:var(--mu);font-size:13px;margin-top:22px}
+.faq-hint a{color:#a5b4fc;font-weight:700}
+:root[data-theme=light] .faq-hint a{color:#4338ca}
+:root[data-theme=light] .faq-q .pm:before,:root[data-theme=light] .faq-q .pm:after{background:#4338ca}
+@media (prefers-reduced-motion:reduce){.faq-a,.faq-q .pm,.faq-q .pm:after{transition:none}}
+</style>
+<script>
+/* Pichli baar ki value turant lagao taaki page flash na kare (fresh value neeche load hoti hai) */
+try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.classList.add('paid-mode'); }catch(e){}
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="ieg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f46e5"/><stop offset=".55" stop-color="#8b5cf6"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+<linearGradient id="ieg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#67e8f9"/></linearGradient>
+<linearGradient id="ieg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<symbol id="ieMark" viewBox="0 0 120 120"><rect x="4" y="4" width="112" height="112" rx="30" fill="url(#ieg1)"/><path d="M4 34a30 30 0 0 1 30-30h52a30 30 0 0 1 30 30v22C90 66 30 66 4 56z" fill="url(#ieg3)"/><rect x="4.75" y="4.75" width="110.5" height="110.5" rx="29.5" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.5"/><rect x="32" y="32" width="13" height="56" rx="4" fill="#fff"/><rect x="56" y="32" width="13" height="56" rx="4" fill="#fff"/><rect x="56" y="32" width="36" height="12" rx="4" fill="#fff"/><rect x="56" y="54" width="28" height="12" rx="4" fill="url(#ieg2)"/><rect x="56" y="76" width="36" height="12" rx="4" fill="#fff"/><circle cx="92" cy="30" r="9" fill="#0b0e1a" stroke="#22d3ee" stroke-width="2.5"/><path d="m87.8 30.2 3 3 5.4-6" fill="none" stroke="#22d3ee" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818cf8"/><stop offset=".55" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient><linearGradient id="ig2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient><linearGradient id="ig3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="1" stop-color="#94a3b8"/></linearGradient></defs><g fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/></symbol><symbol id="i-checkc" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="m8 12 3 3 5-6" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/></symbol><symbol id="i-gift" viewBox="0 0 24 24"><path d="M4 9h16v4H4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M5 13h14v8H5z" fill="none" stroke="url(#ig)"/><path d="M12 9v12" fill="none" stroke="url(#ig)"/><path d="M12 9S9 9 8.5 7a2 2 0 0 1 3.5-1.5C12.5 6.5 12 9 12 9zm0 0s3 0 3.5-2A2 2 0 0 0 12 5.5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M19 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 6v12" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-target" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" fill="none" stroke="url(#ig)"/><path d="M12 11.5v1" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-building" viewBox="0 0 24 24"><path d="M5 21V4h9v17" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 9h5v12" fill="none" stroke="url(#ig)"/><path d="M8 8h3M8 12h3M8 16h3" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M5 12v9h14v-9" fill="none" stroke="url(#ig)"/><path d="M10 21v-5h4v5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 21V10l6 4V10l6 4V6h3v15z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M7 21v-3M12 21v-3" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 12L3 9z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M3 9h18M9 4l-1 5 4 12 4-12-1-5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M8 9.5h8M8 12.5h5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 3v5h5" fill="none" stroke="url(#ig)"/><path d="M9 13h7M9 17h5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><path d="M4 6h16v15H4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M4 10h16M8 3v4M16 3v4" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 12h3v8H5zM10.5 7h3v13h-3zM16 14h3v6h-3z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/></symbol><symbol id="i-clip" viewBox="0 0 24 24"><path d="M6 5h12v16H6z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 3h6v4H9z" fill="none" stroke="url(#ig)"/><path d="M9 12h6M9 16h4" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h12a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 8h6M9 12h6" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M3 13l9 5 9-5" fill="none" stroke="url(#ig)"/><path d="M3 17.5l9 5 9-5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-mega" viewBox="0 0 24 24"><path d="M4 10v4h3l8 4V6L7 10z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M18 9a4 4 0 0 1 0 6" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M5 16v4h14v-4" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M12 4v11M7.5 11 12 15.5 16.5 11" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><path d="M7 3h10v18H7z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M11 18h2" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><path d="M5 11h14v10H5z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-8z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/></symbol><symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18v2" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><path d="M4 4h16v4H4z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M5 8h14v12H5z" fill="none" stroke="url(#ig)"/><path d="M10 12h4" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 3c4 1 6 5 6 9l-3 3H9l-3-3c0-4 2-8 6-9z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 15l-3 1 .5 3.5L9 18M15 15l3 1-.5 3.5L15 18" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M14 9h4l3 3v4h-7" fill="none" stroke="url(#ig)"/><path d="M7 18.5h.01M17 18.5h.01" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h3l2.5 11h9L20 7H7" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M10 20h.01M17 20h.01" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-bot" viewBox="0 0 24 24"><path d="M5 8h14v10H5z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M12 8V4M9 13h.01M15 13h.01" fill="none" stroke="url(#ig)"/><path d="M9.5 16h5" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-calc" viewBox="0 0 24 24"><path d="M6 3h12v18H6z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 7h6" fill="none" stroke="url(#ig)"/><path d="M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-tools" viewBox="0 0 24 24"><path d="M3 8h18v12H3z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 8V5h6v3" fill="none" stroke="url(#ig)"/><path d="M3 13h18" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M9 8h6M9 12h6" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 11a3.5 3.5 0 0 1-.5 7z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/></symbol><symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z" fill="url(#ig)" fill-opacity=".2" stroke="url(#ig)"/><path d="M7.5 8h.01" fill="none" stroke="url(#ig)"/></symbol><symbol id="i-medalg" viewBox="0 0 24 24"><path d="M12 9a6 6 0 1 0 0 12 6 6 0 0 0 0-12z" fill="url(#ig2)" fill-opacity=".2" stroke="url(#ig2)"/><path d="M8 3l4 6 4-6" fill="none" stroke="url(#ig2)"/><path d="M12 12.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="none" stroke="url(#ig2)"/></symbol><symbol id="i-medals" viewBox="0 0 24 24"><path d="M12 9a6 6 0 1 0 0 12 6 6 0 0 0 0-12z" fill="url(#ig3)" fill-opacity=".2" stroke="url(#ig3)"/><path d="M8 3l4 6 4-6" fill="none" stroke="url(#ig3)"/><path d="M12 12.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" fill="none" stroke="url(#ig3)"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill="none" stroke="currentColor"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" fill="none" stroke="currentColor"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor"/></symbol><symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor"/></symbol><symbol id="i-boltw" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#fff" fill-opacity=".3" stroke="#fff"/></symbol><symbol id="i-flag" viewBox="0 0 24 24"><clipPath id="fc"><rect x="3" y="5" width="18" height="14" rx="2.5"/></clipPath><g clip-path="url(#fc)"><rect x="3" y="5" width="18" height="4.7" fill="#f93"/><rect x="3" y="9.7" width="18" height="4.6" fill="#fff"/><rect x="3" y="14.3" width="18" height="4.7" fill="#138808"/></g><circle cx="12" cy="12" r="1.7" fill="none" stroke="#000080" stroke-width=".8"/></symbol></g></svg>
+
+<div class="mesh"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+<nav>
+  <div class="nav-in">
+    <div class="brand"><svg class="logo" viewBox="0 0 120 120" aria-hidden="true"><use href="#ieMark"/></svg><b>IE <span>Billing</span></b></div>
+    <div class="nav-links">
+      <a href="#who">Kis Ke Liye</a>
+      <a href="#features">Features</a>
+      <a href="#docs">Documents</a>
+      <a href="#download">App</a>
+      <a href="#faq" id="navFaq" style="display:none">FAQ</a>
+      <a href="/billing" class="nav-login-m">Login</a>
+      <a href="#pricing" class="paid-only">Plans</a>
+    </div>
+    <div class="nav-right">
+      <button class="tg" id="themeBtn" type="button" aria-label="Dark / Light theme"><svg class="i moon"><use href="#i-moon"/></svg><svg class="i sun"><use href="#i-sun"/></svg></button>
+      <a href="/billing">Login</a>
+      <a href="/billing" class="btn-pill btn-primary">Start Free →</a>
+      <button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false"><svg class="i"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div>
+    <div class="badge-pill"><svg class="i" aria-hidden="true"><use href="#i-bolt"/></svg> India's Most Complete Billing Platform</div>
+    <h1>Invoice Bhejein,<br><span class="grad-text">Jhanjhat Nahi.</span></h1>
+    <p class="lede">Ek invoice bhejein, doosri party accept kare to unki taraf khud Purchase Bill ban jaata hai. GST auto-calculate, QR se instant UPI payment, poori analytics aur AI-powered HSN suggestion — apna poora business ek hi platform par chalayein.</p>
+    <div class="hero-cta">
+      <a href="/billing" class="btn-lg btn-primary"><svg class="i" aria-hidden="true"><use href="#i-rocket"/></svg> Free Mein Shuru Karein</a>
+      <a href="#features" class="btn-lg btn-outline">Sabhi Features Dekhein</a>
+      <a href="#download" class="btn-lg btn-outline"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg> App Download</a>
+    </div>
+    <div class="trust-row">Kirana stores se lekar bade Manufacturers tak — har business ke liye</div>
+  </div>
+  <div class="mock">
+    <div class="chip c1"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg> Purchase Bill auto-fill ho gaya</div>
+    <div class="chip c2 paid-only"><svg class="i" aria-hidden="true"><use href="#i-flame"/></svg> 3 mahine ka offer live</div>
+    <div class="mock-card">
+      <div class="mock-dots"><span></span><span></span><span></span></div>
+      <div class="mock-title"><svg class="i" aria-hidden="true"><use href="#i-doc"/></svg> Invoice #INV-0042</div>
+      <div class="mock-row">Equipment Rental<div class="mock-bar"><i style="width:80%"></i></div></div>
+      <div class="mock-row">Qty × Rate<div class="mock-bar"><i style="width:55%"></i></div></div>
+      <div class="mock-row">GST 18%<div class="mock-bar"><i style="width:30%"></i></div></div>
+      <div class="mock-total"><span>Grand Total</span><b>₹12,980</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="trial-promo paid-only">
+  <div class="trial-promo-in">
+    <div class="trial-promo-tag"><svg class="i" aria-hidden="true"><use href="#i-gift"/></svg> SIRF NAYE USERS KE LIYE</div>
+    <h2>Kisi Bhi Plan Ko <b>Sirf ₹1</b> Mein<br>7 Din Try Karein</h2>
+    <p class="tp-sub">Silver, Golden ya Platinum — jo bhi plan try karna hai, sirf ₹1 mein poore 7 din uska pura luft uthayein. Koi risk nahi, koi jhanjhat nahi.</p>
+    <div class="tp-feats">
+      <div class="tp-feat"><div class="em"><svg class="i" aria-hidden="true"><use href="#i-target"/></svg></div>Koi Bhi Plan Choose Karein</div>
+      <div class="tp-feat"><div class="em"><svg class="i" aria-hidden="true"><use href="#i-cal"/></svg></div>Poore 7 Din Full Access</div>
+      <div class="tp-feat"><div class="em"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg></div>Data 100% Safe — Kabhi Delete Nahi Hota</div>
+    </div>
+    <a href="/billing" class="btn-lg btn-gold" style="display:inline-flex"><svg class="i" aria-hidden="true"><use href="#i-rocket"/></svg> ₹1 Mein Shuru Karein →</a>
+    <div class="trial-promo-note">7 din baad plan Free ho jaata hai — jab chahein real price par continue karein ya doosra plan choose karein.</div>
+  </div>
+</div>
+
+<section id="download">
+  <div class="sec-head">
+    <div class="eyebrow">MOBILE APP</div>
+    <h2>Phone Se Bill Banayein</h2>
+    <p>Dukaan par ho ya safar mein, invoice seedha mobile se. App download karein aur 2 minute mein shuru karein.</p>
+  </div>
+  <div class="dl-card">
+    <div class="dl-main">
+      <div class="dl-app">
+        <svg class="dl-logo" viewBox="0 0 120 120" aria-hidden="true"><use href="#ieMark"/></svg>
+        <div><b>IE Billing</b><span id="dlMeta">Android App</span></div>
+      </div>
+      <div class="dl-btns">
+        <a id="dlApk" class="btn-lg btn-primary" href="/app/IEBilling.apk" download="IE-Billing.apk"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg> Android App Download Karein</a>
+        <a id="dlWeb" class="btn-lg btn-outline" href="/billing"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg> Web App Kholein</a>
+      </div>
+      <p id="dlNote" class="dl-note" hidden></p>
+      <div class="dl-badges">
+        <span><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg> Free download</span>
+        <span><svg class="i" aria-hidden="true"><use href="#i-bolt"/></svg> App khud update hota hai</span>
+        <span><svg class="i" aria-hidden="true"><use href="#i-cloud"/></svg> Data cloud par safe</span>
+      </div>
+    </div>
+    <div class="dl-side">
+      <div class="dl-tabs" role="tablist">
+        <button type="button" class="dl-tab" id="tabAnd" role="tab" aria-selected="true" data-t="android">Android</button>
+        <button type="button" class="dl-tab" id="tabIos" role="tab" aria-selected="false" data-t="ios">iPhone</button>
+      </div>
+      <div class="dl-android">
+        <h3>Install kaise karein (Android)</h3>
+        <ol class="dl-steps">
+          <li><span><b>Download</b> button dabayein. Browser puchhe to <b>Download anyway</b> chunein.</span></li>
+          <li><span>Download hui file kholein. <b>Settings</b> aaye to is browser ko <b>Install allow</b> kar dein. Play Protect dikhe to <b>More details</b> &rarr; <b>Install anyway</b>.</span></li>
+          <li><span>App kholein aur apne account se <b>Login</b> karein. Aage se update apne aap milega.</span></li>
+        </ol>
+      </div>
+      <div class="dl-ios">
+        <h3>iPhone par app jaisa chalayein</h3>
+        <ol class="dl-steps">
+          <li><span>iPhone ke <b>Safari</b> mein <b>iebilling.pages.dev/billing</b> kholein.</span></li>
+          <li><span>Neeche <b>Share</b> icon dabayein.</span></li>
+          <li><span><b>Add to Home Screen</b> chunein, phir <b>Add</b>. Ab ye home screen se app ki tarah khulega.</span></li>
+        </ol>
+        <p class="dl-why">iPhone par APK file nahi chalti, isliye ye tareeka hai. Install nahi karna padta aur update apne aap milta hai. Safari me hi kholein (Chrome me ye option nahi aata).</p>
+      </div>
+      <div class="dl-qr" id="dlQr">
+        <div id="dlQrBox"></div>
+        <div>Phone ke camera se scan karein aur ye page mobile par kholein.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="who">
+  <div class="sec-head">
+    <div class="eyebrow">KIS KE LIYE HAI</div>
+    <h2>Har Tarah Ke Business Ke Liye</h2>
+    <p>Chhote kirana store se lekar bade manufacturing unit tak — IE Billing har scale par kaam karta hai.</p>
+  </div>
+  <div class="who-grid">
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-store"/></svg></div><b>Kirana / General Store</b><span>Daily transactions, udhaar tracking aur GST invoicing — sab digital aur organized</span></div>
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-box"/></svg></div><b>Wholesaler</b><span>Bulk orders aur multi-item invoices chutki mein — tez aur accurate billing</span></div>
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-truck"/></svg></div><b>Distributor</b><span>Retailers ko invoice bhejein — unki taraf Purchase Bill khud ban jaata hai</span></div>
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-factory"/></svg></div><b>Manufacturer</b><span>Raw material se finished goods tak, sahi GST classification ke saath</span></div>
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-bag"/></svg>️</div><b>Retailer / Trader</b><span>Quotation se lekar Receipt tak — poora sales cycle ek hi app mein</span></div>
+    <div class="who-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-tools"/></svg></div><b>Service Provider</b><span>Freelancers, consultants aur agencies ke liye professional invoicing</span></div>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="sec-head">
+    <div class="eyebrow">DOCUMENTS</div>
+    <h2>Ek Platform, Har Document</h2>
+    <p>Invoice se lekar Purchase Order tak — sab kuch ek jagah, sahi format mein.</p>
+  </div>
+  <div class="grid8">
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-doc"/></svg></div><b>Invoice</b><span>Bhejein, doosri taraf auto-accept</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-receipt"/></svg></div><b>Receipt</b><span>Asli print jaisa sahi format</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-clip"/></svg></div><b>Quotation</b><span>Deal se pehle rate confirm karein</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-doc"/></svg></div><b>Proforma</b><span>Advance billing ke liye</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-truck"/></svg></div><b>Delivery Challan</b><span>Bina bill maal bhejne ka record</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-cart"/></svg></div><b>Purchase Order</b><span>Order confirm, likhit mein</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-layers"/></svg></div><b>Bill History</b><span>Sab purane documents ek jagah</span></div>
+    <div class="doc-card"><div class="ic"><svg class="i" aria-hidden="true"><use href="#i-down"/></svg></div><b>PDF Download</b><span>Original/Duplicate copy chunein</span></div>
+  </div>
+</section>
+
+<div class="live-wrap" id="stats-live">
+  <div class="live-in">
+    <div class="live-tag"><span class="live-dot"></span> IE Billing Ek Nazar Mein</div>
+    <div class="live-grid">
+      <div class="live-card"><b>2 Min</b><span>Mein Invoice Taiyaar</span></div>
+      <div class="live-card"><b>0</b><span>Double Entry — Purchase Bill khud bante hain</span></div>
+      <div class="live-card paid-only"><b>₹1</b><span>Mein 7 Din Trial</span></div>
+      <div class="live-card paid-only"><b>4</b><span>Subscription Tiers</span></div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="sec-head">
+    <div class="eyebrow">FEATURES</div>
+    <h2>Pehle Aur Ab — Fark Dekhein</h2>
+    <p>Bina IE Billing ke kaam kaisa tha, aur hamare saath kaisa hai.</p>
+  </div>
+  <div class="compare">
+    <div class="cmp-col bad">
+      <div class="cmp-head"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg> Pehle</div>
+      <div class="cmp-row">Invoice banana <b>15+ min</b></div>
+      <div class="cmp-row">Dono taraf entry <b>Alag-alag likhna</b></div>
+      <div class="cmp-row">Payment confirm <b>Phone par bolna</b></div>
+      <div class="cmp-row">Documents <b>Alag-alag jagah</b></div>
+      <div class="cmp-row">Purana record <b>Dhundna mushkil</b></div>
+    </div>
+    <div class="cmp-col good">
+      <div class="cmp-head"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg> IE Billing Ke Saath</div>
+      <div class="cmp-row">Invoice banana <b>2 min <svg class="i" aria-hidden="true"><use href="#i-bolt"/></svg></b></div>
+      <div class="cmp-row">Dono taraf entry <b>Ek bhejein, khud accept ho</b></div>
+      <div class="cmp-row">Payment confirm <b>Receipt app mein hi</b></div>
+      <div class="cmp-row">Documents <b>Sab ek app mein</b></div>
+      <div class="cmp-row">Purana record <b>1 tap mein poori history</b></div>
+    </div>
+  </div>
+
+  <div class="sec-head" style="margin-top:10px">
+    <div class="eyebrow">HAR ZAROORI FEATURE</div>
+    <h2>Ek Hi Platform Mein Sab Kuch</h2>
+    <p>Aapke business ko chalane ke liye jo bhi chahiye — sab kuch yahin milega.</p>
+  </div>
+  <div class="grid9">
+    <div class="feat-card"><div class="feat-tag paid-only">MOST USED</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-link"/></svg></div><b>Invoice → Auto Purchase Bill</b><p>Seller invoice bhejta hai, buyer accept karta hai — buyer ki taraf khud Purchase Bill ban jaata hai, koi double entry nahi.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-calc"/></svg></div><b>Auto GST Calculation</b><p>CGST, SGST, IGST khud calculate hota hai — sahi rate, sahi split, har baar.</p></div>
+    <div class="feat-card"><div class="feat-tag gold paid-only">GOLDEN+</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-qr"/></svg></div><b>QR Code Instant UPI</b><p>Invoice par QR code, customer scan karke turant UPI se payment kar sakta hai.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg></div><b>Statement of Account &amp; Item-wise Statement</b><p>Opening balance, debit, credit aur running balance — chuni hui period ke hisaab se. Saath me item-wise maal ka statement, GST ke saath.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-receipt"/></svg></div><b>Collections &amp; Receipts</b><p>Baaki invoices aging ke saath (1-30, 31-60, 60+ din), ek customer ka ek receipt kai invoices me adjust, zyada paisa advance me jama.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-archive"/></svg></div><b>Accounts — Vouchers, Ledgers, Reports</b><p>Vouchers, ledgers &amp; groups, Balance Sheet, Profit &amp; Loss, bank reconciliation, post-dated cheques aur GST &amp; Tax — ek hi app me.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg></div><b>Period Lock &amp; Audit</b><p>Purani period lock karein, har badlav ka record rakhein. Payment delete nahi hoti — karan likhkar cancel hoti hai, receipt number me gap nahi banta.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-chat"/></svg></div><b>Built-in Chat</b><p>Customers aur vendors se seedha app ke andar baat karein, alag app ki zaroorat nahi.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-cloud"/></svg>️</div><b>Cloud Backup &amp; Restore</b><p>Sara data surakshit cloud par — phone kho jaaye to bhi kuch nahi jaata.</p></div>
+    <div class="feat-card"><div class="feat-tag gold paid-only">GOLDEN+</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-chart"/></svg></div><b>Full Analytics &amp; Reports</b><p>Sales, GST, Profit — sabhi reports, Excel/PDF mein export bhi.</p></div>
+    <div class="feat-card"><div class="feat-tag gold paid-only">GOLDEN+</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-bot"/></svg></div><b>AI HSN Code Suggestion</b><p>Item likhein, AI khud sahi HSN code aur GST rate suggest kar deta hai.</p></div>
+    <div class="feat-card"><div class="feat-tag gold paid-only">PLATINUM</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-mega"/></svg></div><b>Broadcast Messaging</b><p>Sabhi customers ya vendors ko ek click mein offer ya update bhej dein.</p></div>
+    <div class="feat-card"><div class="feat-tag gold paid-only">PLATINUM</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-archive"/></svg>️</div><b>Inventory Premium</b><p>Har category aur type ka full item master, multi-company auto-sync ke saath.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-building"/></svg></div><b>Multi-Company Support</b><p>Ek account se multiple companies manage karein — plan ke hisaab se limit.</p></div>
+    <div class="feat-card paid-only"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-ticket"/></svg>️</div><b>Coupons &amp; Referral Rewards</b><p>Coupon code se extra discount, dost ko refer karein aur free din paayein.</p></div>
+    <div class="feat-card paid-only" style="background:linear-gradient(160deg,rgba(251,191,36,.09),rgba(139,92,246,.05))"><div class="feat-tag gold paid-only"><svg class="i" aria-hidden="true"><use href="#i-flame"/></svg> LIVE</div><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-spark"/></svg></div><b>Launch Offers</b><p>Limited time discounts, countdown timer ke saath — jaldi karein, badhiya bachaayein.</p></div>
+    <div class="feat-card"><div class="feat-ic"><svg class="i" aria-hidden="true"><use href="#i-phone"/></svg></div><b>Android App</b><p>Wahi poora billing system, ab mobile app mein. <a href="#download" style="color:#a5b4fc;font-weight:700">Download karein</a></p></div>
+  </div>
+</section>
+
+<section id="pricing" class="paid-only">
+  <div class="sec-head">
+    <div class="eyebrow">PLANS</div>
+    <h2>Har Business Ke Liye Sahi Plan</h2>
+    <p>Chhote se bade tak — jaise-jaise business badhe, plan upgrade karein.</p>
+  </div>
+
+  <div class="plan-grid">
+    <div class="plan-card">
+      <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg></div><div class="plan-name">Free</div>
+      <div class="plan-price">₹0<small> /forever</small></div>
+      <div class="plan-mrp" style="text-decoration:none">1 Company</div>
+      <ul class="plan-feats">
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>1 Company free mein manage karein</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Unlimited Invoice / PO / Purchase Bill</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Professional PDF — WhatsApp/Email se share</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Auto GST Calculation (CGST/SGST/IGST)</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Customer &amp; Item Management</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>QR Code UPI Payment</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Customer Statement / Ledger</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Chat &amp; Cloud Backup</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Analytics &amp; AI HSN</li>
+      </ul>
+      <a href="/billing" class="btn-lg btn-outline" style="justify-content:center">Start Free</a>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-medals"/></svg></div><div class="plan-name">Silver</div>
+      <div class="plan-price">₹249<small> /mo</small></div>
+      <div class="plan-mrp" style="text-decoration:none">3 Companies</div>
+      <ul class="plan-feats">
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>3 Companies ek saath manage karein</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Everything in Free</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>QR Code — Instant UPI Payment</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Customer Statement / Ledger</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Direct Chat with Vendors &amp; Customers</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Cloud Backup &amp; Restore</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Analytics &amp; Reports</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>AI HSN Suggestion</li>
+      </ul>
+      <a href="/billing" class="btn-lg btn-outline" style="justify-content:center">Choose Silver</a>
+      <a href="/billing" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:#a5b4fc"><svg class="i" aria-hidden="true"><use href="#i-gift"/></svg> Ya sirf ₹1 mein 7 din try karein</a>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="plan-ribbon gold">MOST POPULAR</div>
+      <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-medalg"/></svg></div><div class="plan-name">Golden</div>
+      <div class="plan-price">₹499<small> /mo</small></div>
+      <div class="plan-mrp" style="text-decoration:none">6 Companies</div>
+      <ul class="plan-feats">
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>6 Companies ek saath manage karein</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Everything in Silver</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Full Analytics &amp; Reports — Sales, GST, Profit</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Excel &amp; PDF Export har report ka</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>AI-Powered HSN Code Suggestion</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Priority Email Support</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Broadcast Messaging</li>
+        <li class="no"><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></span>Inventory Premium</li>
+      </ul>
+      <a href="/billing" class="btn-lg btn-gold" style="justify-content:center">Choose Golden →</a>
+      <a href="/billing" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:#fde68a"><svg class="i" aria-hidden="true"><use href="#i-gift"/></svg> Ya sirf ₹1 mein 7 din try karein</a>
+    </div>
+
+    <div class="plan-card platinum-card">
+      <div class="plan-ribbon plat"><svg class="i" aria-hidden="true"><use href="#i-gem"/></svg> BEST VALUE</div>
+      <div class="plan-em"><svg class="i" aria-hidden="true"><use href="#i-gem"/></svg></div><div class="plan-name">Platinum</div>
+      <div class="plan-price">₹899<small> /mo</small></div>
+      <div class="plan-mrp" style="text-decoration:none">Unlimited Companies</div>
+      <ul class="plan-feats">
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Unlimited Companies — jitni chahein utni</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Everything in Golden</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Broadcast Messaging — sabko ek click mein</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Inventory Premium — har category, har type</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Sabhi companies mein items auto-sync</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Priority WhatsApp Support</li>
+        <li><span class="ic"><svg class="i" aria-hidden="true"><use href="#i-checkc"/></svg></span>Naye features sabse pehle</li>
+      </ul>
+      <a href="/billing" class="btn-lg btn-platinum" style="justify-content:center">Choose Platinum →</a>
+      <a href="/billing" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:#c7d2fe"><svg class="i" aria-hidden="true"><use href="#i-gift"/></svg> Ya sirf ₹1 mein 7 din try karein</a>
+    </div>
+  </div>
+
+  <div class="pcg">
+    <div class="pcg-row head">
+      <div class="pcg-cell label"></div>
+      <div class="pcg-cell pcg-head-cell"><span class="em"><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg></span>Free</div>
+      <div class="pcg-cell pcg-head-cell"><span class="em"><svg class="i" aria-hidden="true"><use href="#i-medals"/></svg></span>Silver</div>
+      <div class="pcg-cell gold pcg-head-cell"><span class="em"><svg class="i" aria-hidden="true"><use href="#i-medalg"/></svg></span>Golden</div>
+      <div class="pcg-cell plat pcg-head-cell"><span class="em"><svg class="i" aria-hidden="true"><use href="#i-gem"/></svg></span>Platinum</div>
+    </div>
+    <div class="pcg-row"><div class="pcg-cell label">Companies</div><div class="pcg-cell">1</div><div class="pcg-cell">3</div><div class="pcg-cell gold">6</div><div class="pcg-cell plat">Unlimited</div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Invoice / PO / Purchase Bill</div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Auto GST (CGST/SGST/IGST)</div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">QR Code — Instant UPI Payment</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Customer Statement / Ledger</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Chat with Vendors/Customers</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Cloud Backup &amp; Restore</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Full Analytics &amp; Reports</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">AI HSN Code Suggestion</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell gold pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Broadcast Messaging</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell gold pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Inventory Premium</div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell gold pcg-no"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></div><div class="pcg-cell plat pcg-yes"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg></div></div>
+    <div class="pcg-row"><div class="pcg-cell label">Support</div><div class="pcg-cell">Community</div><div class="pcg-cell">Email</div><div class="pcg-cell gold">Priority Email</div><div class="pcg-cell plat">Priority WhatsApp</div></div>
+  </div>
+  <p class="pcg-note">Mobile par har plan card mein poori feature list upar hi dekhein — koi swipe ya scroll nahi karna padega.</p>
+</section>
+
+<section id="how">
+  <div class="sec-head">
+    <div class="eyebrow">SIMPLE PROCESS</div>
+    <h2>3 Steps Mein Kaam Shuru</h2>
+    <p>Bahut simple hai — koi training nahi chahiye.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><b>Connect Karein</b><span>Doosre business se connect ho jaayein — ek baar accept karein, hamesha ke liye judein.</span></div>
+    <div class="step"><div class="step-num">2</div><b>Invoice Bhejein</b><span>Item daalein, bhejein — doosri taraf accept karte hi Purchase Bill khud ban jaata hai.</span></div>
+    <div class="step"><div class="step-num">3</div><b>Receipt Se Clear Karein</b><span>Buyer chat me "Payment Sent" bataye, aap Receipt bhejein — dono ki history hamesha match rahe.</span></div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat paid-only"><b>4</b><span>Subscription Plans</span></div>
+  <div class="stat"><b>8+</b><span>Document Types</span></div>
+  <div class="stat"><b>100%</b><span>Format Match</span></div>
+  <div class="stat"><b><svg class="i" aria-hidden="true"><use href="#i-flag"/></svg></b><span>Made for Indian Business</span></div>
+</div>
+
+<section id="faq" aria-label="Aksar Poochhe Jaane Wale Sawal">
+  <div class="sec-head">
+    <div class="eyebrow">FAQ</div>
+    <h2>Aksar Poochhe Jaane Wale Sawal</h2>
+    <p>Jawab yahin mil jayega. Na mile to Login karke Help &amp; Support me sawal bhejein.</p>
+  </div>
+  <div class="faq-wrap">
+    <div class="faq-search" id="faqSearchBox" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="faqSearch" type="search" placeholder="Sawal search karein..." aria-label="FAQ search" autocomplete="off"></div>
+    <div id="faqList"></div>
+    <div class="faq-none" id="faqNone">Is naam ka koi sawal nahi mila. Doosra shabd try karein.</div>
+    <div class="faq-foot"><button type="button" class="faq-more" id="faqMore" hidden></button></div>
+    <div class="faq-hint">Jawab nahi mila? <a href="/billing">Login karke sawal poochhein</a></div>
+  </div>
+</section>
+
+<section class="cta-final">
+  <div class="eyebrow" style="margin-bottom:12px">GET STARTED TODAY</div>
+  <h2>Aaj Hi Shuru Karein — <span class="grad-gold">Bilkul Muft!</span></h2>
+  <p>Koi setup fee nahi. Registration karein aur apna pehla invoice sirf 2 minute mein banayein.</p>
+  <a href="/billing" class="btn-lg btn-gold" style="display:inline-flex">Free Account Banayein →</a>
+</section>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <div class="brand" style="margin-bottom:12px"><svg class="logo" viewBox="0 0 120 120" aria-hidden="true"><use href="#ieMark"/></svg><b>IE <span>Billing</span></b></div>
+      <p style="font-size:13px;color:var(--mu);line-height:1.6;max-width:260px">India ka sabse complete do-party billing platform — invoicing, GST, analytics aur payments sab ek jagah.</p>
+    </div>
+    <div><h4>PRODUCT</h4><a href="#features">Features</a><a href="#docs">Documents</a><a href="#pricing" class="paid-only">Plans</a><a href="#faq" id="footFaq" style="display:none">FAQ</a></div>
+    <div><h4>ACCOUNT</h4><a href="/billing">Login</a><a href="/billing">Start Free</a></div>
+    <div><h4>LEGAL</h4><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 IE Billing. All rights reserved.</span>
+    <span>Made with <svg class="i" aria-hidden="true"><use href="#i-heart"/></svg>️ for Indian businesses</span>
+  </div>
+</footer>
+
+<script>
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* PAID MODE: admin panel ka switch (settings/featureFlags.paid_mode) yahan bhi lagta hai — billing.html jaisa hi */
+(function(){
+  var URL_="https://qbrtmlrwmmgmrqmvwkfv.supabase.co";
+  var KEY_="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs";
+  function apply(on){
+    document.documentElement.classList.toggle('paid-mode',!!on);
+    try{ localStorage.setItem('ie_paid_mode',on?'1':'0'); }catch(e){}
+  }
+  function load(){
+    fetch(URL_+'/rest/v1/fs_documents?collection_path=eq.settings&doc_id=eq.featureFlags&select=data',
+      {headers:{apikey:KEY_,Authorization:'Bearer '+KEY_}})
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(rows){ apply(rows&&rows[0]&&rows[0].data&&rows[0].data.paid_mode===true); })
+      .catch(function(e){ console.warn('paid_mode load failed',e); });
+  }
+  load();
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) load(); });
+  /* realtime: admin switch karte hi page turant badle */
+  window.addEventListener('load',function(){
+    try{
+      if(!window.supabase) return;
+      var c=window.supabase.createClient(URL_,KEY_);
+      c.channel('landing_paid_mode')
+        .on('postgres_changes',{event:'*',schema:'public',table:'fs_documents',filter:'collection_path=eq.settings'},
+          function(p){ var r=p.new||p.old; if(r&&r.doc_id==='featureFlags') load(); })
+        .subscribe();
+    }catch(e){}
+  });
+})();
+</script>
+<script>
+(function(){
+  var d=document, h=d.documentElement;
+  var tb=d.getElementById('themeBtn');
+  if(tb) tb.addEventListener('click',function(){var l=h.getAttribute('data-theme')!=='light';h.setAttribute('data-theme',l?'light':'dark');try{localStorage.setItem('ie_land_theme',l?'light':'dark')}catch(e){}var m=d.querySelector('meta[name=theme-color]');if(m)m.content=l?'#f4f5fb':'#04050a';});
+  var bg=d.getElementById('burger'), nv=d.querySelector('nav');
+  if(bg&&nv){bg.addEventListener('click',function(){var o=nv.classList.toggle('open');bg.setAttribute('aria-expanded',o);});
+    nv.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.nav-links a')){nv.classList.remove('open');bg.setAttribute('aria-expanded','false');}});}
+  d.addEventListener('pointermove',function(e){var c=e.target.closest&&e.target.closest('.who-card,.doc-card,.feat-card,.live-card');if(!c)return;var r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');},{passive:true});
+  var R=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(R||!('IntersectionObserver' in window)) return;
+  h.classList.add('rvon');
+  var io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting){var t=x.target;t.classList.add('in');io.unobserve(t);setTimeout(function(){t.style.transitionDelay=''},900);}});},{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+  [].forEach.call(d.querySelectorAll('.sec-head,.who-card,.doc-card,.feat-card,.plan-card,.step,.cmp-col,.live-card,.stat,.trial-promo-in,.mock-card'),function(e){
+    e.classList.add('rv');e.style.transitionDelay=(([].indexOf.call(e.parentNode.children,e))%6*60)+'ms';io.observe(e);});
+})();
+</script>
+<script>
+/* FAQ: admin panel (settings/faq) se live. Cache se turant dikhta hai, phir fresh data aata hai. Admin add/delete kare to page khud badal jaata hai. */
+(function(){
+  var U="https://qbrtmlrwmmgmrqmvwkfv.supabase.co";
+  var K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs";
+  var LIMIT=6, items=[], showAll=false, q="", sig="";
+  var $=function(i){return document.getElementById(i)};
+  var sec=$("faq"); if(!sec) return;
+  function clean(a){ return (Array.isArray(a)?a:[]).filter(function(x){return x&&String(x.q||"").trim()&&String(x.a||"").trim();}).map(function(x){return {q:String(x.q).trim(),a:String(x.a).trim()};}); }
+  function ld(){
+    var o=document.getElementById("faqLd"); if(o) o.remove();
+    if(!items.length) return;
+    var e=document.createElement("script"); e.type="application/ld+json"; e.id="faqLd";
+    e.text=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":items.slice(0,30).map(function(f){return {"@type":"Question","name":f.q,"acceptedAnswer":{"@type":"Answer","text":f.a}};})});
+    document.head.appendChild(e);
+  }
+  function render(){
+    var on=items.length>0;
+    sec.classList.toggle("on",on);
+    ["navFaq","footFaq"].forEach(function(i){var n=$(i); if(n) n.style.display=on?"":"none";});
+    $("faqSearchBox").hidden=items.length<5;
+    var list=$("faqList"), more=$("faqMore"), none=$("faqNone");
+    var t=q.toLowerCase(), rows=items.filter(function(f){return !t||f.q.toLowerCase().indexOf(t)>=0||f.a.toLowerCase().indexOf(t)>=0;});
+    var vis=(showAll||t)?rows:rows.slice(0,LIMIT);
+    list.textContent="";
+    vis.forEach(function(f,i){
+      var d=document.createElement("div"); d.className="faq-item";
+      var b=document.createElement("button"); b.type="button"; b.className="faq-q"; b.setAttribute("aria-expanded","false");
+      var s=document.createElement("span"); s.textContent=f.q;
+      var pm=document.createElement("span"); pm.className="pm"; pm.setAttribute("aria-hidden","true");
+      b.appendChild(s); b.appendChild(pm);
+      var a=document.createElement("div"); a.className="faq-a";
+      var w=document.createElement("div"), p=document.createElement("p"); p.textContent=f.a; w.appendChild(p); a.appendChild(w);
+      b.onclick=function(){var o=d.classList.toggle("open"); b.setAttribute("aria-expanded",o);};
+      d.appendChild(b); d.appendChild(a); list.appendChild(d);
+    });
+    none.classList.toggle("on",on&&!rows.length);
+    more.hidden=!(rows.length>LIMIT&&!t);
+    more.textContent=showAll?"Kam dikhayein":"Sab "+rows.length+" sawal dekhein";
+  }
+  function apply(arr){
+    arr=clean(arr); var s2=JSON.stringify(arr);
+    if(s2===sig) return; sig=s2; items=arr; render(); ld();
+  }
+  function load(){
+    fetch(U+"/rest/v1/fs_documents?collection_path=eq.settings&doc_id=eq.faq&select=data",{headers:{apikey:K,Authorization:"Bearer "+K}})
+      .then(function(r){if(!r.ok) throw 0; return r.json();})
+      .then(function(rows){
+        var arr=rows&&rows[0]&&rows[0].data&&rows[0].data.items;
+        apply(arr); try{localStorage.setItem("ie_faq_cache",JSON.stringify(clean(arr)));}catch(e){}
+      }).catch(function(){});
+  }
+  $("faqMore").onclick=function(){showAll=!showAll; render();};
+  var si=$("faqSearch"), tm; if(si) si.addEventListener("input",function(){clearTimeout(tm); tm=setTimeout(function(){q=si.value.trim(); render();},120);});
+  try{var c=JSON.parse(localStorage.getItem("ie_faq_cache")||"[]"); if(c.length) apply(c);}catch(e){}
+  load();
+  document.addEventListener("visibilitychange",function(){if(!document.hidden) load();});
+  window.addEventListener("load",function(){
+    try{
+      if(!window.supabase) return;
+      window.supabase.createClient(U,K).channel("landing_faq")
+        .on("postgres_changes",{event:"*",schema:"public",table:"fs_documents",filter:"collection_path=eq.settings"},function(p){var r=p.new||p.old; if(r&&r.doc_id==="faq") load();})
+        .subscribe();
+    }catch(e){}
+  });
+})();
+</script>
+<!-- ===== SITE VISITOR TRACKER (Supabase) ===== -->
+<script>
+(function(){
+try{
+if(navigator.webdriver) return;
+var U="https://qbrtmlrwmmgmrqmvwkfv.supabase.co", K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs";
+var LITE = !/^\/?(index\.html)?$/.test(location.pathname); /* landing = full tracking, baaki pages = sirf visit + time */
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,10);}
+function send(t,row){try{fetch(U+"/rest/v1/"+t,{method:"POST",keepalive:true,headers:{apikey:K,Authorization:"Bearer "+K,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify(row)}).catch(function(){});}catch(e){}}
+var vid=localStorage.getItem("ie_vid"); var returning=!!vid; if(!vid){vid=uid();localStorage.setItem("ie_vid",vid);}
+var sid=sessionStorage.getItem("ie_sid"), fresh=!sid; if(!sid){sid=uid();sessionStorage.setItem("ie_sid",sid);}
+function page(){return location.pathname+(location.hash||"");}
+function ev(type,label){send("site_events",{session_id:sid,visitor_id:vid,type:type,page:page(),label:label?String(label).slice(0,80):null});}
+function device(cb){
+ var ua=navigator.userAgent,os="Other",m;
+ if(/Android/.test(ua))os="Android "+((ua.match(/Android ([\d.]+)/)||[])[1]||"");
+ else if(/iPhone|iPad/.test(ua))os="iOS";else if(/Windows/.test(ua))os="Windows";else if(/Mac OS X/.test(ua))os="macOS";else if(/Linux/.test(ua))os="Linux";
+ var br=/Edg\//.test(ua)?"Edge":/OPR\//.test(ua)?"Opera":/SamsungBrowser/.test(ua)?"Samsung Internet":/Chrome\//.test(ua)?"Chrome":/Firefox\//.test(ua)?"Firefox":/Safari\//.test(ua)?"Safari":"Other";
+ var model=(ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build|\))/)||[])[1]||"";
+ if(/iPhone/.test(ua))model="iPhone";else if(/iPad/.test(ua))model="iPad";else if(!model)model=/Windows|Mac|Linux/.test(os)?"Desktop/Laptop":"";
+ var uad=navigator.userAgentData;
+ if(uad&&uad.getHighEntropyValues&&/Android/.test(ua)){uad.getHighEntropyValues(["model"]).then(function(r){cb(r&&r.model?r.model:model,os,br);},function(){cb(model,os,br);});}
+ else cb(model,os,br);
+}
+function source(){
+ var q=new URLSearchParams(location.search),u=q.get("utm_source");if(u)return u;
+ var r=document.referrer;if(!r)return"Direct";
+ try{var h=new URL(r).hostname.replace(/^www\./,"");if(h===location.hostname)return"Direct";
+  if(/google|bing|duckduckgo|yahoo|ecosia|brave/.test(h))return"Search: "+h;return h;}catch(e){return"Direct";}
+}
+if(fresh){
+ device(function(model,os,br){
+  send("site_visits",{session_id:sid,visitor_id:vid,device:model,os:os,browser:br,screen:screen.width+"x"+screen.height,lang:navigator.language,referrer:document.referrer||null,source:source(),landing:page(),is_return:returning});
+  ev("visit");
+ });
+}else ev("pageview");
+window.addEventListener("hashchange",function(){ev("pageview");});
+setInterval(function(){if(!document.hidden)ev("heartbeat");},20000);
+document.addEventListener("visibilitychange",function(){ev(document.hidden?"hide":"show");});
+window.addEventListener("pagehide",function(){ev("leave");});
+if(!LITE){
+ document.addEventListener("click",function(e){
+  var el=e.target.closest&&e.target.closest("a,button");if(!el)return;
+  var l=(el.innerText||el.getAttribute("aria-label")||el.id||"").replace(/\s+/g," ").trim();
+  var h=el.getAttribute("href");ev("click",(l||"button")+(h?" -> "+h:""));
+ },true);
+ var done={};
+ window.addEventListener("scroll",function(){
+  var d=document.documentElement,p=Math.round((d.scrollTop+innerHeight)/d.scrollHeight*100);
+  [25,50,75,100].forEach(function(s){if(p>=s&&!done[s]){done[s]=1;ev("scroll",s+"%");}});
+ },{passive:true});
+ if("IntersectionObserver" in window){
+  var seen={},io=new IntersectionObserver(function(es){es.forEach(function(x){if(x.isIntersecting&&!seen[x.target.id]){seen[x.target.id]=1;ev("section",x.target.id);}});},{threshold:.4});
+  document.querySelectorAll("section[id]").forEach(function(s){io.observe(s);});
+ }
+}
+}catch(e){}
+})();
+</script>
+<!-- ===== /SITE VISITOR TRACKER ===== -->
+
+
+<!-- ===== APP DOWNLOAD (device detect, APK size/date, QR) ===== -->
+<script>
+(function(){
+  try{
+    var ua=navigator.userAgent||'';
+    var ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    var and=/Android/i.test(ua);
+    var root=document.documentElement;
+    root.classList.add(ios?'dev-ios':(and?'dev-android':'dev-desktop'));
+    var sec=document.getElementById('download');
+    function setTab(t){
+      if(!sec) return;
+      sec.setAttribute('data-tab',t);
+      var a=document.getElementById('tabAnd'), i=document.getElementById('tabIos');
+      if(a) a.setAttribute('aria-selected',t==='android'?'true':'false');
+      if(i) i.setAttribute('aria-selected',t==='ios'?'true':'false');
+    }
+    setTab(ios?'ios':'android');
+    var tb=document.getElementById('tabAnd'), ti=document.getElementById('tabIos');
+    if(tb) tb.addEventListener('click',function(){setTab('android');});
+    if(ti) ti.addEventListener('click',function(){setTab('ios');});
+    var APK='/app/IEBilling.apk';
+    var btn=document.getElementById('dlApk'), meta=document.getElementById('dlMeta'), note=document.getElementById('dlNote'), web=document.getElementById('dlWeb');
+    if(!btn||!meta) return;
+    if(ios){ web.className='btn-lg btn-primary'; }
+
+    /* APK sach me hai ya nahi: Pages me file na ho to index.html (text/html) aa jaata hai, use miss maano */
+    fetch(APK,{method:'HEAD',cache:'no-store'}).then(function(res){
+      var ct=res.headers.get('content-type')||'';
+      if(!res.ok||/text\/html/i.test(ct)) throw 'missing';
+      var parts=['Android App'];
+      var len=parseInt(res.headers.get('content-length'),10);
+      if(len>0) parts.push((len/1048576).toFixed(1)+' MB');
+      var lm=res.headers.get('last-modified');
+      if(lm){ var d=new Date(lm); if(!isNaN(d)) parts.push('Updated '+d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})); }
+      meta.textContent=parts.join(' \u00b7 ');
+      if(lm){ var d2=new Date(lm); if(!isNaN(d2)) btn.setAttribute('data-ver',d2.toISOString().slice(0,10)); }
+    }).catch(function(e){
+      if(e!=='missing') return;            /* net ki dikkat me button waise hi rehne do */
+      btn.style.display='none';
+      meta.textContent='Android App \u00b7 jald aa raha hai';
+      note.textContent='App file abhi upload nahi hui. Tab tak Web App kholein, wahi poora system hai.';
+      note.hidden=false;
+    });
+
+    /* Download click tracking -> Supabase RPC log_app_download (admin panel > App Download). Fail ho to download pe koi asar nahi */
+    btn.addEventListener('click',function(){
+      try{
+        var U='https://qbrtmlrwmmgmrqmvwkfv.supabase.co', K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs';
+        var os='Other',m;
+        if(and) os='Android '+((ua.match(/Android ([\d.]+)/)||[])[1]||'');
+        else if(ios) os='iOS'; else if(/Windows/.test(ua)) os='Windows'; else if(/Mac OS X/.test(ua)) os='macOS'; else if(/Linux/.test(ua)) os='Linux';
+        var br=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/SamsungBrowser/.test(ua)?'Samsung Internet':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Other';
+        var dev=(m=ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build|\))/))?m[1]:(ios?'iPhone':'Desktop/Laptop');
+        var src='Direct'; try{ var q=new URLSearchParams(location.search).get('utm_source'); if(q) src=q; else if(document.referrer){ var h=new URL(document.referrer).hostname.replace(/^www\./,''); if(h!==location.hostname) src=h; } }catch(e){}
+        var vid=null, sid=null; try{ vid=localStorage.getItem('ie_vid'); sid=sessionStorage.getItem('ie_sid'); }catch(e){}
+        if(!vid){ vid=Date.now().toString(36)+Math.random().toString(36).slice(2,10); try{ localStorage.setItem('ie_vid',vid); }catch(e){} }
+        fetch(U+'/rest/v1/rpc/log_app_download',{method:'POST',keepalive:true,
+          headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},
+          body:JSON.stringify({p:{vid:vid,sid:sid,pf:ios?'ios':(and?'android':'desktop'),dev:dev,os:os,br:br,src:src,ver:btn.getAttribute('data-ver')||''}})
+        }).catch(function(){});
+      }catch(e){}
+    });
+
+    /* Laptop par: phone ke liye QR */
+    if(!ios&&!and){
+      var s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+      s.onload=function(){
+        try{
+          var q=qrcode(0,'M'); q.addData(location.origin+'/#download'); q.make();
+          document.getElementById('dlQrBox').innerHTML=q.createSvgTag(4,0);
+          document.getElementById('dlQr').classList.add('on');
+        }catch(e){}
+      };
+      document.head.appendChild(s);
+    }
+  }catch(e){}
+})();
+</script>
+
+</body>
+</html>
