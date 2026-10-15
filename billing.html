@@ -26481,17 +26481,17 @@ function dn(t){goP('documents');try{if(typeof DOC_TYPES!=='undefined'&&!DOC_TYPE
 function ed(p,m){goP(p);try{if(typeof window[m]==='function')window[m]();else tip('Ye voucher abhi available nahi hai')}catch(e){tip('Voucher nahi khul paya')}}
 var VTG=[
 ['ACCOUNTING VOUCHERS',[
-{p:'v-contra',pf:'c',t:'Contra',kb:'F4',fk:'F4',pg:'acctVouchers',fn:function(){acc('Contra')}},
-{p:'v-pay',pf:'p',t:'Payment',kb:'F5',fk:'F5',pg:'acctVouchers',fn:function(){acc('Payment')}},
-{p:'v-rcpt',pf:'r',t:'Receipt',kb:'F6',fk:'F6',pg:'acctVouchers',fn:function(){acc('Receipt')}},
-{p:'v-jrnl',pf:'j',t:'Journal',kb:'F7',fk:'F7',pg:'acctVouchers',fn:function(){acc('Journal')}},
+{p:'v-contra',pf:'c',t:'Contra',pg:'acctVouchers',fn:function(){acc('Contra')}},
+{p:'v-pay',pf:'p',t:'Payment',pg:'acctVouchers',fn:function(){acc('Payment')}},
+{p:'v-rcpt',pf:'r',t:'Receipt',pg:'acctVouchers',fn:function(){acc('Receipt')}},
+{p:'v-jrnl',pf:'j',t:'Journal',pg:'acctVouchers',fn:function(){acc('Journal')}},
 {p:'v-exp',pf:'x',t:'Expense Voucher',pg:'acctVouchers',fn:function(){acc('Payment',true)}},
 {p:'v-cn',pf:'e',t:'Credit Note (Sales Return)',pg:'acctVouchers',fn:function(){note('Credit Note')}},
 {p:'v-dn',pf:'d',t:'Debit Note (Purchase Return)',pg:'acctVouchers',fn:function(){note('Debit Note')}},
 {p:'v-cr',pf:'u',t:'Customer Receipt (against bill)',pg:'journal',fn:function(){ed('journal','openCustReceipt')}}
 ]],
 ['SALES VOUCHERS',[
-{p:'s-inv',pf:'s',t:'Sales Invoice',kb:'F8',fk:'F8',pg:'invoice',fn:function(){goP('invoice')}},
+{p:'s-inv',pf:'s',t:'Sales Invoice',pg:'invoice',fn:function(){goP('invoice')}},
 {p:'s-bos',pf:'b',t:'Bill of Supply',pg:'bosCreate',fn:function(){goP('bosCreate')}},
 {p:'s-cash',pf:'m',t:'Cash Memo',pg:'cashCreate',fn:function(){goP('cashCreate')}},
 {p:'s-qt',pf:'q',t:'Quotation',pg:'documents',fn:function(){dn('quotation')}},
@@ -26500,7 +26500,7 @@ var VTG=[
 {p:'s-dc',pf:'v',t:'Delivery Challan',pg:'documents',fn:function(){dn('challan')}}
 ]],
 ['PURCHASE VOUCHERS',[
-{p:'p-pb',pf:'h',t:'Purchase Bill',kb:'F9',fk:'F9',pg:'purchaseBills',fn:function(){ed('purchaseBills','openPBModal')}},
+{p:'p-pb',pf:'h',t:'Purchase Bill',pg:'purchaseBills',fn:function(){ed('purchaseBills','openPBModal')}},
 {p:'p-po',pf:'o',t:'Purchase Order',pg:'purchaseOrders',fn:function(){ed('purchaseOrders','openPOModal')}}
 ]],
 ['OTHER DOCUMENTS',[
