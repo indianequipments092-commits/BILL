@@ -658,6 +658,30 @@ td:has(> button.btn) > .btn{flex:0 0 auto}
 .dz-d{font-size:12.5px;color:var(--text-muted);line-height:1.55}
 .dz-n{margin-top:auto;font-size:11.5px;font-weight:700;color:var(--c)}
 
+.dz-rail,.dz-tabs{display:none}
+@media(min-width:901px){
+.dz-desk{display:grid;grid-template-columns:240px minmax(0,1fr);gap:20px;align-items:start}
+.dz-rail{display:flex;flex-direction:column;gap:3px;position:sticky;top:12px;padding:10px;border:1px solid var(--border-color);background:var(--bg-card);border-radius:14px}
+.dz-rh{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted);padding:14px 10px 4px}
+.dz-ri{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;border:0;background:transparent;color:var(--text-muted);padding:9px 10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer}
+.dz-ri b{font-size:11px;min-width:22px;text-align:center;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.07)}
+.dz-ri:hover{background:rgba(255,255,255,.06);color:#fff}
+.dz-ri.on{background:rgba(99,102,241,.18);color:#c7d2fe}
+.dz-tabs{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.dz-tt{font-size:16px;font-weight:800;padding:8px 2px}
+.dz-tab{border:1px solid var(--border-color);background:transparent;color:var(--text-muted);border-radius:10px;padding:10px 18px;font-size:13.5px;font-weight:800;cursor:pointer}
+.dz-tab:hover{color:#fff;border-color:var(--primary)}
+.dz-tab.mk{background:var(--primary);border-color:var(--primary);color:#fff}
+.dz-tab.on{background:rgba(99,102,241,.18);border-color:var(--primary);color:#c7d2fe}
+.dz-cards-wrap,#dzChips{display:none}
+.dz-main .card>.section-title{display:none}
+.dz-main .card{margin-top:0!important}
+#dzTable.dz-one th:first-child,#dzTable.dz-one td:first-child{display:none}
+[data-theme="light"] .dz-ri:hover,[data-theme="light"] .dz-tab:hover{color:#0f172a}
+[data-theme="light"] .dz-ri.on,[data-theme="light"] .dz-tab.on{color:#4338ca}
+[data-theme="light"] .dz-ri b{background:rgba(15,23,42,.07)}
+}
+
 .dz-chips{display:flex;gap:8px;flex-wrap:wrap}
 .dz-chip{border:1px solid var(--border-color);background:rgba(255,255,255,0.04);color:var(--text-muted);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;min-height:36px}
 .dz-chip:hover{background:rgba(255,255,255,0.09);color:#fff}
@@ -7166,6 +7190,8 @@ showAuthOverlay();
     <div class="top"><h1>Create Documents</h1></div>
     <p class="dz-lead">Choose the document you want to create. Each one opens its own form and prints on a ready A4 format.</p>
 
+    <div class="dz-desk"><div class="dz-rail" id="dzRail"></div><div class="dz-main"><div class="dz-tabs" id="dzTabs"></div>
+<div class="dz-cards-wrap">
     <div class="dz-choose">
       <button class="dz-card" style="--c:#818cf8;--cbg:rgba(129,140,248,0.16)" onclick="docNew('quotation')">
         <span class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span>
@@ -7226,6 +7252,7 @@ showAuthOverlay();
       </button>
     </div>
 
+</div>
     <div class="card" style="margin-top:22px">
       <div class="section-title">Saved Documents</div>
       <div class="dz-chips" id="dzChips"></div>
@@ -7237,6 +7264,7 @@ showAuthOverlay();
         </table>
       </div>
     </div>
+    </div></div>
   </div>
 
   <!-- Editor -->
@@ -18810,7 +18838,7 @@ return {acc:c,gold:c,imp:'',extra:''};
 }
 return {acc:fallbackAcc,gold:fallbackGold,imp:'',extra:''};
 }
-let docCur=null, docIsNew=true, docDirty=false, docFilter='all';
+let docCur=null, docIsNew=true, docDirty=false, docFilter=(function(){try{var v=localStorage.getItem('dzLastType');if(v&&window.matchMedia('(min-width:901px)').matches&&(v==='all'||DOC_TYPES[v]))return v;}catch(e){}return 'all';})();
 let docPrintSrc=null, docConvSrc=null;
 function docClone(x){return JSON.parse(JSON.stringify(x))}
 function docToast(msg){
@@ -19271,6 +19299,19 @@ if(['Rejected','Expired','Cancelled','Returned'].includes(s)) return 'red';
 return '';
 }
 function docSetFilter(f){docFilter=f;renderDocList()}
+function dzDeskRender(all,cnt){
+const rail=id('dzRail'),tabs=id('dzTabs'); if(!rail||!tabs) return;
+const item=(k,l,n)=>`<button class="dz-ri ${docFilter===k?'on':''}" onclick="docSetFilter('${k}')"><span>${esc(l)}</span><b>${n}</b></button>`;
+const sales=['quotation','challan','proforma','salesorder','workorder','packingslip','gatepass'];
+const hr=['salaryslip','rentreceipt'];
+rail.innerHTML=item('all','All Documents',all.length)
++'<div class="dz-rh">Sales</div>'+sales.map(k=>item(k,DOC_TYPES[k].label,cnt(k))).join('')
++'<div class="dz-rh">Personal / HR</div>'+hr.map(k=>item(k,DOC_TYPES[k].label,cnt(k))).join('');
+if(docFilter==='all'||!DOC_TYPES[docFilter]){ tabs.innerHTML='<div class="dz-tt">All Documents</div>'; }
+else{ const L=esc(DOC_TYPES[docFilter].label); tabs.innerHTML=`<button class="dz-tab mk" onclick="docNew('${docFilter}')">+ Create ${L}</button><button class="dz-tab on">${L} History (${cnt(docFilter)})</button>`; }
+try{localStorage.setItem('dzLastType',docFilter);}catch(e){}
+const t=id('dzTable'); if(t) t.classList.toggle('dz-one',docFilter!=='all');
+}
 function renderDocList(){
 const all=db.documents||[];
 const cnt=t=>all.filter(x=>x.type===t).length;
@@ -19278,6 +19319,7 @@ const put=(k,n)=>{const e=id(k);if(e)e.textContent=n+' saved';};
 put('dzCntQuotation',cnt('quotation'));put('dzCntChallan',cnt('challan'));put('dzCntProforma',cnt('proforma'));
 ['salesorder','workorder','gatepass','packingslip','salaryslip','rentreceipt'].forEach(k=>put('dzCnt'+k,cnt(k)));
 const chips=id('dzChips'); if(!chips) return;
+try{dzDeskRender(all,cnt);}catch(e){}
 chips.innerHTML=[['all','All',all.length],['quotation','Quotations',cnt('quotation')],['challan','Delivery Challans',cnt('challan')],['proforma','Proformas',cnt('proforma')],['salesorder','Sales Orders',cnt('salesorder')],['workorder','Work Orders',cnt('workorder')],['gatepass','Gate Passes',cnt('gatepass')],['packingslip','Packing Slips',cnt('packingslip')],['salaryslip','Salary Slips',cnt('salaryslip')],['rentreceipt','Rent Receipts',cnt('rentreceipt')]]
 .map(c=>`<button class="dz-chip ${docFilter===c[0]?'on':''}" onclick="docSetFilter('${c[0]}')">${c[1]} (${c[2]})</button>`).join('');
 const q=(id('dzSearch')?.value||'').trim().toLowerCase();
