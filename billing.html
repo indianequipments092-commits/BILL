@@ -26273,7 +26273,7 @@ lockNow();paint();
 
 <!-- IE PC MODE (Tally-style) : active only in desktop .exe (IEPC) or ?pc=1 -->
 <style id="iepcCss">
-html.iepc,html.iepc[data-theme]{--bg-dark:#070a12;--bg-card:rgba(17,23,41,.82);--bg-card-hover:rgba(26,34,60,.9);--border-color:rgba(148,163,255,.14);--border-focus:#818cf8;--primary:#6366f1;--primary-hover:#7c7ff5;--primary-glow:rgba(99,102,241,.35);--text-main:#eef0fa;--text-muted:#a4abc4;--text-dim:#707894;--muted:#a4abc4;--sidebar-bg:#0a0f1d;--gold:#e8c987;--gold2:#c9a35a;--cyan:#22d3ee}
+html.iepc[data-theme="dark"],html.iepc:not([data-theme]){--bg-dark:#070a12;--bg-card:rgba(17,23,41,.82);--bg-card-hover:rgba(26,34,60,.9);--border-color:rgba(148,163,255,.14);--border-focus:#818cf8;--primary:#6366f1;--primary-hover:#7c7ff5;--primary-glow:rgba(99,102,241,.35);--text-main:#eef0fa;--text-muted:#a4abc4;--text-dim:#707894;--muted:#a4abc4;--sidebar-bg:#0a0f1d;--gold:#e8c987;--gold2:#c9a35a;--cyan:#22d3ee}
 html.iepc body{font-family:"Plus Jakarta Sans","Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;background:radial-gradient(1100px 620px at 12% -8%,rgba(99,102,241,.20),transparent 60%),radial-gradient(900px 560px at 100% 105%,rgba(168,85,247,.14),transparent 60%),#070a12!important;font-variant-numeric:tabular-nums;color:var(--text-main)}
 html.iepc *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.iepc #sbToggle,html.iepc #sidebarOverlay,html.iepc .mobile-header,html.iepc .sidebar,html.iepc .hamburger,html.iepc .menu-btn,html.iepc .bottom-nav,html.iepc .mobile-nav{display:none!important}
@@ -26349,11 +26349,67 @@ html.iepc #iepcSt{display:flex;position:fixed;left:0;right:0;bottom:0;height:30p
 #iepcGw .gw-i u{text-decoration:none;font-weight:800;color:var(--gold);border-bottom:2px solid rgba(232,201,135,.6)}
 #iepcGw .gw-i.on{color:#fff;font-weight:700;background:linear-gradient(90deg,rgba(99,102,241,.6),rgba(139,92,246,.2));border-color:rgba(167,139,250,.55);box-shadow:0 10px 26px -12px rgba(99,102,241,.9)}
 #iepcGw .gw-f{border-top:1px solid rgba(148,163,255,.14);padding:9px 12px;font-size:11px;letter-spacing:.4px;color:#7f88ad;text-align:center;background:rgba(0,0,0,.18)}
+
+/* ---- PC mode: theme toggle button (both themes) ---- */
+#iepcTop .rt{display:flex;align-items:center;gap:16px}
+#iepcTh{display:inline-flex;align-items:center;gap:7px;height:24px;min-height:0;width:auto;margin:0;padding:0 11px 0 9px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.4px;line-height:1;text-transform:none;color:#dfe3f7;background:rgba(255,255,255,.06);border:1px solid rgba(148,163,255,.28);box-shadow:none;transition:background .15s,border-color .15s,transform .15s}
+#iepcTh:hover{background:rgba(99,102,241,.22);border-color:rgba(167,139,250,.65)}
+#iepcTh:active{transform:scale(.96)}
+#iepcTh svg{width:14px;height:14px;flex-shrink:0;opacity:1}
+/* ---- PC mode: LIGHT theme ---- */
+html.iepc[data-theme="light"]{--bg-dark:#eef0f8;--bg-card:rgba(255,255,255,.96);--bg-card-hover:#fff;--border-color:rgba(15,23,42,.11);--border-focus:#6366f1;--primary:#6366f1;--primary-hover:#4f46e5;--primary-glow:rgba(99,102,241,.22);--text-main:#12172a;--text-muted:#4b5568;--text-dim:#6b7280;--muted:#4b5568;--sidebar-bg:#fff;--gold:#8a5a00;--gold2:#a8791f;--cyan:#0e7490;
+--ix-in-bg:#fff;--ix-in-bd:rgba(15,23,42,.18);--ix-ph:#8b93a7;--ix-card:linear-gradient(180deg,#fff,#f8f9fe);--ix-card-sh:0 14px 34px -22px rgba(30,41,90,.38),0 1px 0 rgba(255,255,255,.9) inset;--ix-th-bg:linear-gradient(180deg,#eaedfc,#dde2f8);--ix-th-fg:#3730a3;--ix-th-bd:rgba(99,102,241,.38);--ix-td-bd:rgba(15,23,42,.08);--ix-hover:rgba(99,102,241,.10);--ix-stripe:rgba(99,102,241,.045);--ix-sel:rgba(99,102,241,.25);--ix-sb:rgba(79,70,229,.30);--ix-sb-h:rgba(79,70,229,.52)}
+html.iepc[data-theme="light"] :is(#authOverlay,#companyOverlay,#coFormModal,#planOverlay,.mp-card,.preview-modal,.dz-toast,.ie-toast,#loPopupOverlay,#sbBannerOverlay){--ix-in-bg:rgba(8,12,24,.72);--ix-in-bd:rgba(148,163,255,.16);--ix-ph:#5d6584;--ix-card:linear-gradient(180deg,rgba(24,31,56,.88),rgba(14,19,35,.88));--ix-card-sh:0 18px 40px -22px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.05);--ix-th-bg:linear-gradient(180deg,#1b2347,#141a36);--ix-th-fg:#e8c987;--ix-th-bd:rgba(232,201,135,.28);--ix-td-bd:rgba(148,163,255,.08);--ix-hover:rgba(99,102,241,.16);--ix-stripe:rgba(99,102,241,.035);--ix-gold:#e8c987}
+html.iepc[data-theme="light"] body{background:radial-gradient(1100px 620px at 12% -8%,rgba(99,102,241,.13),transparent 60%),radial-gradient(900px 560px at 100% 105%,rgba(168,85,247,.09),transparent 60%),#eef0f8!important;color:var(--text-main)}
+html.iepc[data-theme="light"] .card{background:var(--ix-card)!important;box-shadow:var(--ix-card-sh)!important}
+html.iepc[data-theme="light"] input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),html.iepc[data-theme="light"] select,html.iepc[data-theme="light"] textarea{background:var(--ix-in-bg)!important;border:1px solid var(--ix-in-bd)!important;color:var(--text-main)!important}
+html.iepc[data-theme="light"] input::placeholder,html.iepc[data-theme="light"] textarea::placeholder{color:var(--ix-ph)}
+html.iepc[data-theme="light"] input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):focus,html.iepc[data-theme="light"] select:focus,html.iepc[data-theme="light"] textarea:focus{background:var(--ix-in-bg)!important;border-color:#6366f1!important;box-shadow:0 0 0 3px rgba(99,102,241,.18),0 0 18px -4px rgba(99,102,241,.28)!important}
+html.iepc[data-theme="light"] table th{background:var(--ix-th-bg)!important;color:var(--ix-th-fg)!important;border-bottom:1px solid var(--ix-th-bd)!important}
+html.iepc[data-theme="light"] table td{border-bottom-color:var(--ix-td-bd)}
+html.iepc[data-theme="light"] table tbody tr:nth-child(even) td{background:var(--ix-stripe)}
+html.iepc[data-theme="light"] table tr:hover td{background:var(--ix-hover)!important}
+html.iepc[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--ix-sb)}
+html.iepc[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:var(--ix-sb-h)}
+html.iepc[data-theme="light"] ::selection{background:var(--ix-sel)}
+html.iepc[data-theme="light"] .page .btn[data-kb]::after{background:rgba(15,23,42,.10)}
+html.iepc[data-theme="light"] .page .btn.primary[data-kb]::after,html.iepc[data-theme="light"] .page .btn.success[data-kb]::after,html.iepc[data-theme="light"] .page .btn.danger[data-kb]::after{background:rgba(255,255,255,.24)}
+html.iepc[data-theme="light"] #iepcTop{color:#2a3150;background:linear-gradient(180deg,#fff,#eef0fa);box-shadow:0 8px 24px -14px rgba(30,41,90,.40)}
+html.iepc[data-theme="light"] #iepcTop .lg{color:#12172a}
+html.iepc[data-theme="light"] #iepcTop #iepcTitle{color:var(--gold);text-shadow:none}
+html.iepc[data-theme="light"] #iepcTop #iepcClk{color:#5b6385}
+html.iepc[data-theme="light"] #iepcTh{color:#2a3150;background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.16)}
+html.iepc[data-theme="light"] #iepcTh:hover{background:rgba(99,102,241,.13);border-color:rgba(99,102,241,.5)}
+html.iepc[data-theme="light"] #iepcBar{background:linear-gradient(180deg,#fff,#f1f3fb);border-left-color:rgba(15,23,42,.10)}
+html.iepc[data-theme="light"] #iepcBar .hd{color:#6b7396}
+html.iepc[data-theme="light"] #iepcBar button{color:#343c5e}
+html.iepc[data-theme="light"] #iepcBar button kbd{color:#7a5200;background:linear-gradient(180deg,#fff8e2,#f6e9c3);border-color:rgba(154,107,18,.35)}
+html.iepc[data-theme="light"] #iepcBar button:hover{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.30)}
+html.iepc[data-theme="light"] #iepcBar button.cur{color:#fff;background:linear-gradient(90deg,rgba(99,102,241,.96),rgba(139,92,246,.82));border-color:rgba(99,102,241,.6);box-shadow:0 8px 20px -10px rgba(99,102,241,.7)}
+html.iepc[data-theme="light"] #iepcBar button.cur kbd{color:#1a1204;background:linear-gradient(180deg,#f3dba3,#d8b46a);border-color:#f6e2ae}
+html.iepc[data-theme="light"] #iepcSt{color:#5b6385;background:linear-gradient(0deg,#fff,#eef0fa);border-top-color:rgba(15,23,42,.10)}
+html.iepc[data-theme="light"] #iepcSt kbd{color:#7a5200;background:rgba(154,107,18,.08);border-color:rgba(154,107,18,.30)}
+html.iepc[data-theme="light"] #iepcSt .r{color:#8a92b3}
+html.iepc[data-theme="light"] #iepcGw.on,html.iepc[data-theme="light"] #iepcKb.on{background:radial-gradient(700px 420px at 50% 30%,rgba(99,102,241,.16),transparent 70%),rgba(226,230,246,.80)}
+html.iepc[data-theme="light"] #iepcGw .gw-box,html.iepc[data-theme="light"] #iepcKb .kb-box{background:linear-gradient(180deg,#fff,#f4f6fd) padding-box,linear-gradient(135deg,rgba(99,102,241,.8),rgba(201,163,90,.6) 45%,rgba(168,85,247,.6)) border-box;box-shadow:0 40px 90px -30px rgba(30,41,90,.45),0 0 60px -24px rgba(99,102,241,.35)}
+html.iepc[data-theme="light"] #iepcGw .gw-h,html.iepc[data-theme="light"] #iepcKb .kb-h{background:linear-gradient(180deg,rgba(99,102,241,.12),transparent)}
+html.iepc[data-theme="light"] #iepcGw .gw-h small,html.iepc[data-theme="light"] #iepcGw .gw-g,html.iepc[data-theme="light"] #iepcGw .gw-f,html.iepc[data-theme="light"] #iepcKb .kb-f,html.iepc[data-theme="light"] #iepcKb .kb-none{color:#6b7396}
+html.iepc[data-theme="light"] #iepcGw .gw-g:after{background:linear-gradient(90deg,rgba(15,23,42,.20),transparent)}
+html.iepc[data-theme="light"] #iepcGw .gw-i,html.iepc[data-theme="light"] #iepcKb .kb-r{color:#2a3150}
+html.iepc[data-theme="light"] #iepcGw .gw-i u{border-bottom-color:rgba(138,90,0,.55)}
+html.iepc[data-theme="light"] #iepcGw .gw-i.on{color:#312e81;background:linear-gradient(90deg,rgba(99,102,241,.20),rgba(139,92,246,.08));border-color:rgba(99,102,241,.45);box-shadow:0 8px 20px -12px rgba(99,102,241,.5)}
+html.iepc[data-theme="light"] #iepcGw .gw-f,html.iepc[data-theme="light"] #iepcKb .kb-f{border-top-color:rgba(15,23,42,.10);background:rgba(15,23,42,.03)}
+html.iepc[data-theme="light"] #iepcKb .kb-x{border-color:rgba(15,23,42,.20);background:rgba(15,23,42,.05);color:#2a3150}
+html.iepc[data-theme="light"] #iepcKb .kb-t{border-bottom-color:rgba(138,90,0,.28)}
+html.iepc[data-theme="light"] #iepcKb .kb-t.cur{color:#4338ca}
+html.iepc[data-theme="light"] #iepcKb .kb-t.cur:after{color:#6d28d9}
+html.iepc[data-theme="light"] #iepcKb .kb-r:hover{background:rgba(99,102,241,.10)}
+html.iepc[data-theme="light"] #iepcKb .kb-r kbd{color:#7a5200;background:linear-gradient(180deg,#fff8e2,#f6e9c3);border-color:rgba(154,107,18,.35)}
 </style>
 <script id="iepcJs">
 (function(){
 if(!(/IEPC/.test(navigator.userAgent)||/[?&]pc=1/.test(location.search)))return;
-var H=document.documentElement;H.classList.add('iepc');H.setAttribute('data-theme','dark');try{new MutationObserver(function(){if(H.getAttribute('data-theme')!=='dark')H.setAttribute('data-theme','dark')}).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+var H=document.documentElement;H.classList.add('iepc');var _sv='dark';try{_sv=localStorage.getItem('ie_theme')==='light'?'light':'dark'}catch(e){}if(typeof applyTheme==='function')applyTheme(_sv);else H.setAttribute('data-theme',_sv);
 var $=function(s,r){return(r||document).querySelector(s)};
 function esc(s){return String(s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
 function btn(p){return $('.nav button[data-page="'+p+'"]')}
@@ -26368,9 +26424,16 @@ var GROUPS=[
 var KEYS=[['F1','Gateway',null],['F2','Dashboard','dashboard'],['F3','Customers','customers'],['F4','New Invoice','invoice'],['F5','Sales Register','history'],['F6','Journal','journal'],['F7','Inventory','inventory'],['F8','Purchase Bills','purchaseBills'],['F9','Reports','acctReports'],['F10','Analytics','analytics'],['F11','Settings','settings'],['F12','Backup','backup']];
 var items=[],sel=0,gwOpen=false,hadModal=false;
 function mk(tag,id,html){var d=document.createElement(tag);d.id=id;d.innerHTML=html;document.body.appendChild(d);return d}
-var top=mk('div','iepcTop','<span class="lg"><i>IE</i>IE BILLING</span><span id="iepcTitle">Gateway of IE Billing</span><span id="iepcClk"></span>');
+var top=mk('div','iepcTop','<span class="lg"><i>IE</i>IE BILLING</span><span id="iepcTitle">Gateway of IE Billing</span><span class="rt"><button type="button" id="iepcTh" title="Dark / Light mode (Ctrl+Shift+L)"></button><span id="iepcClk"></span></span>');
 var bar=mk('div','iepcBar','<div class="hd">QUICK KEYS</div>');
-var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span class="r">IE BILLING &middot; PC EDITION</span>');
+var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span><kbd>Ctrl+Shift+L</kbd>Theme</span><span class="r">IE BILLING &middot; PC EDITION</span>');
+var thB=$('#iepcTh');
+function thSync(){var l=H.getAttribute('data-theme')==='light',ic='';try{ic=l?SB_SUN:SB_MOON}catch(e){}if(thB){thB.innerHTML=ic+'<span>'+(l?'Light Mode':'Dark Mode')+'</span>';thB.setAttribute('aria-label',l?'Switch to dark mode':'Switch to light mode')}}
+function thToggle(){if(typeof toggleTheme==='function')toggleTheme();else{var n=H.getAttribute('data-theme')==='light'?'dark':'light';H.setAttribute('data-theme',n);try{localStorage.setItem('ie_theme',n)}catch(e){}}thSync()}
+if(thB)thB.onclick=thToggle;
+try{new MutationObserver(thSync).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+thSync();
+window.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&(e.key==='L'||e.key==='l')){e.preventDefault();e.stopImmediatePropagation();thToggle()}},true);
 var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing<small>SELECT A WORKSPACE</small></div><div class="gw-b"></div><div class="gw-f">&uarr;&darr; Select &nbsp; Enter Open &nbsp; Esc Close &nbsp; Type letter to jump</div></div>');
 gw.onclick=function(e){if(e.target===gw)closeGw()};
 KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+esc(k[1])+'</span>';b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
@@ -26424,7 +26487,7 @@ e.preventDefault();var n=f[i+1];n.focus();if(n.select&&n.type!=='checkbox'&&n.ty
 var kbOn=false,kbEl=mk('div','iepcKb','<div class="kb-box"><div class="kb-h"><b>Shortcut Guide</b><input data-noenter="1" id="iepcKbQ" placeholder="Search... (jaise: invoice, export, save)" autocomplete="off"><button class="kb-x" type="button" id="iepcKbX">&#10005;</button></div><div class="kb-b" id="iepcKbB"></div><div class="kb-f">Esc band karo &nbsp;&middot;&nbsp; Ctrl+/ kisi bhi time khulta hai &nbsp;&middot;&nbsp; Button par bhi key-chip likha hota hai</div></div>');
 function kbRows(){
 var cur=curId(),out=[];
-var glob=[['F1','Gateway (menu)'],['F2 - F12','Dashboard, Customers, New Invoice, Sales Register, Journal, Inventory, Purchase Bills, Reports, Analytics, Settings, Backup'],['Esc','Gateway / popup band'],['Enter','Agla field'],['Ctrl+K','Search everything'],['Ctrl+/','Ye Shortcut Guide'],['Ctrl+Enter','Popup me Save'],['Ctrl+S','Save (invoice par Draft)'],['Ctrl+N','Naya banao (page ke hisab se)'],['Ctrl+E','Excel / CSV export'],['Ctrl+Shift+E','PDF export'],['Ctrl+P','Print / Preview'],['Ctrl+Shift+S','Share'],['Alt+M','Dark / Light'],['Alt+X','Menu chhupao']];
+var glob=[['F1','Gateway (menu)'],['F2 - F12','Dashboard, Customers, New Invoice, Sales Register, Journal, Inventory, Purchase Bills, Reports, Analytics, Settings, Backup'],['Esc','Gateway / popup band'],['Enter','Agla field'],['Ctrl+K','Search everything'],['Ctrl+/','Ye Shortcut Guide'],['Ctrl+Shift+L','Dark / Light mode badlo'],['Ctrl+Enter','Popup me Save'],['Ctrl+S','Save (invoice par Draft)'],['Ctrl+N','Naya banao (page ke hisab se)'],['Ctrl+E','Excel / CSV export'],['Ctrl+Shift+E','PDF export'],['Ctrl+P','Print / Preview'],['Ctrl+Shift+S','Share'],['Alt+M','Dark / Light'],['Alt+X','Menu chhupao']];
 out.push({id:'_g',t:'Har jagah (Global)',r:glob.map(function(x){return [x[1],x[0]]})});
 var nav=[].slice.call(document.querySelectorAll('.nav button[data-kb]')).map(function(b){var n=b.querySelector('.nl');return [(n?n.textContent:b.textContent).trim(),b.getAttribute('data-kb')]}).filter(function(x){return x[0]});
 if(nav.length)out.push({id:'_n',t:'Page kholne ke liye (Alt + letter)',r:nav});
