@@ -26440,6 +26440,13 @@ html.iepc[data-theme="light"] #iepcGw .gw-i{color:var(--text-main)}
 html.iepc[data-theme="light"] #iepcGw .gw-i u{border-bottom:0}
 html.iepc[data-theme="light"] #iepcGw .gw-i.on{color:#1a1204;background:#ffc42e;border:0;box-shadow:none}
 html.iepc #iepcGw .gw-f{grid-column:1/3}
+/* ---- Vouchers (List of Voucher Types) : reuses the Gateway screen ---- */
+html.iepc #iepcGw.vt .gw-mb{width:410px}
+html.iepc #iepcGw .gw-i kbd{float:right;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.3px;color:var(--gold);background:rgba(232,201,135,.10);border:1px solid rgba(232,201,135,.32);border-bottom-width:2px;border-radius:5px;padding:1px 7px;margin-top:1px}
+html.iepc #iepcGw .gw-i.on kbd{color:#5a3500;background:rgba(255,255,255,.55);border-color:rgba(90,53,0,.35)}
+html.iepc[data-theme="light"] #iepcGw .gw-i kbd{color:#7a5200;background:rgba(154,107,18,.08);border-color:rgba(154,107,18,.32)}
+html.iepc[data-theme="light"] #iepcGw .gw-i.on kbd{color:#5a3500;background:rgba(255,255,255,.6);border-color:rgba(90,53,0,.35)}
+
 @media(max-width:820px){html.iepc #iepcGw .gw-box{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}html.iepc #iepcGw .gw-l{border-right:0;border-bottom:1px solid var(--gw-ln)}html.iepc #iepcGw .gw-f{grid-column:1}html.iepc #iepcGw .gw-m{padding-top:20px}}
 </style>
 <script id="iepcJs">
@@ -26452,17 +26459,57 @@ function btn(p){return $('.nav button[data-page="'+p+'"]')}
 function lab(p,d){var b=btn(p),n=b&&b.querySelector('.nl');return n&&n.textContent.trim()?n.textContent.trim():d}
 function ok(p){var b=btn(p);return !!b&&b.style.display!=='none'}
 var GROUPS=[
+['TRANSACTIONS',[['__vt','Vouchers','Vouchers',1]]],
 ['MASTERS',[['customers','Customers'],['inventory','Inventory'],['vendors','Vendors'],['acctLedgers','Ledgers']]],
-['VOUCHERS',[['invoice','Sales Invoice'],['purchaseBills','Purchase Bills'],['purchaseOrders','Purchase Orders'],['bosCreate','Bill of Supply'],['cashCreate','Cash Memo'],['journal','Journal'],['acctVouchers','Vouchers']]],
-['REPORTS',[['dashboard','Dashboard'],['history','Sales Register'],['bosHistory','BOS Register'],['cashHistory','Cash Register'],['acctReports','Reports'],['acctGst','GST'],['analytics','Analytics'],['acctRecon','Reconciliation'],['acctPdc','PDC']]],
-['UTILITIES',[['documents','Documents'],['chequePrint','Cheque Print'],['chats','Chats'],['search','Search'],['settings','Settings'],['backup','Backup / Restore']]]
+['REGISTERS',[['history','Sales Register'],['bosHistory','BOS Register'],['cashHistory','Cash Register'],['purchaseBills','Purchase Register','Purchase Register'],['purchaseOrders','Purchase Order Register','Purchase Order Register'],['acctVouchers','Voucher Register','Voucher Register'],['journal','Payment Journal','Payment Journal'],['documents','Document Register','Document Register']]],
+['REPORTS',[['dashboard','Dashboard'],['acctReports','Reports'],['acctGst','GST'],['analytics','Analytics'],['acctRecon','Reconciliation'],['acctPdc','PDC']]],
+['UTILITIES',[['chequePrint','Cheque Print'],['chats','Chats'],['search','Search'],['settings','Settings'],['backup','Backup / Restore']]]
+];
+/* ---- Tally-style "List of Voucher Types" (opens from Gateway > Vouchers, or Alt+A anywhere) ---- */
+function goP(p){var b=btn(p);if(b)b.click();else if(typeof showPage==='function')showPage(p)}
+function tip(m){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:9999;background:#4338ca;color:#fff;padding:9px 18px;border-radius:10px;font-weight:600;font-size:13px;box-shadow:0 12px 30px -10px rgba(0,0,0,.6)';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
+function acc(t,e){goP('acctVouchers');if(typeof window.acctOpenVoucher==='function')window.acctOpenVoucher(t,e);else tip('Accounting voucher abhi available nahi hai')}
+function note(t){goP('acctVouchers');if(typeof window.acctOpenNote==='function')window.acctOpenNote(t);else tip('Note voucher abhi available nahi hai')}
+function dn(t){goP('documents');try{if(typeof DOC_TYPES!=='undefined'&&!DOC_TYPES[t]){tip('Ye document type is version me nahi hai');return}docNew(t)}catch(e){tip('Document nahi khul paya')}}
+function ed(p,m){goP(p);try{if(typeof window[m]==='function')window[m]();else tip('Ye voucher abhi available nahi hai')}catch(e){tip('Voucher nahi khul paya')}}
+var VTG=[
+['ACCOUNTING VOUCHERS',[
+{p:'v-contra',t:'Contra',kb:'F4',fk:'F4',pg:'acctVouchers',fn:function(){acc('Contra')}},
+{p:'v-pay',t:'Payment',kb:'F5',fk:'F5',pg:'acctVouchers',fn:function(){acc('Payment')}},
+{p:'v-rcpt',t:'Receipt',kb:'F6',fk:'F6',pg:'acctVouchers',fn:function(){acc('Receipt')}},
+{p:'v-jrnl',t:'Journal',kb:'F7',fk:'F7',pg:'acctVouchers',fn:function(){acc('Journal')}},
+{p:'v-exp',t:'Expense Voucher',pg:'acctVouchers',fn:function(){acc('Payment',true)}},
+{p:'v-cn',t:'Credit Note (Sales Return)',pg:'acctVouchers',fn:function(){note('Credit Note')}},
+{p:'v-dn',t:'Debit Note (Purchase Return)',pg:'acctVouchers',fn:function(){note('Debit Note')}},
+{p:'v-cr',t:'Customer Receipt (against bill)',pg:'journal',fn:function(){ed('journal','openCustReceipt')}}
+]],
+['SALES VOUCHERS',[
+{p:'s-inv',t:'Sales Invoice',kb:'F8',fk:'F8',pg:'invoice',fn:function(){goP('invoice')}},
+{p:'s-bos',t:'Bill of Supply',pg:'bosCreate',fn:function(){goP('bosCreate')}},
+{p:'s-cash',t:'Cash Memo',pg:'cashCreate',fn:function(){goP('cashCreate')}},
+{p:'s-qt',t:'Quotation',pg:'documents',fn:function(){dn('quotation')}},
+{p:'s-pi',t:'Proforma Invoice',pg:'documents',fn:function(){dn('proforma')}},
+{p:'s-so',t:'Sales Order',pg:'documents',fn:function(){dn('salesorder')}},
+{p:'s-dc',t:'Delivery Challan',pg:'documents',fn:function(){dn('challan')}}
+]],
+['PURCHASE VOUCHERS',[
+{p:'p-pb',t:'Purchase Bill',kb:'F9',fk:'F9',pg:'purchaseBills',fn:function(){ed('purchaseBills','openPBModal')}},
+{p:'p-po',t:'Purchase Order',pg:'purchaseOrders',fn:function(){ed('purchaseOrders','openPOModal')}}
+]],
+['OTHER DOCUMENTS',[
+{p:'d-wo',t:'Work Order',pg:'documents',fn:function(){dn('workorder')}},
+{p:'d-ps',t:'Packing Slip',pg:'documents',fn:function(){dn('packingslip')}},
+{p:'d-gp',t:'Gate Pass',pg:'documents',fn:function(){dn('gatepass')}},
+{p:'d-sl',t:'Salary Slip',pg:'documents',fn:function(){dn('salaryslip')}},
+{p:'d-rr',t:'Rent Receipt',pg:'documents',fn:function(){dn('rentreceipt')}}
+]]
 ];
 var KEYS=[['F1','Gateway',null],['F2','Dashboard','dashboard'],['F3','Customers','customers'],['F4','New Invoice','invoice'],['F5','Sales Register','history'],['F6','Journal','journal'],['F7','Inventory','inventory'],['F8','Purchase Bills','purchaseBills'],['F9','Reports','acctReports'],['F10','Analytics','analytics'],['F11','Settings','settings'],['F12','Backup','backup']];
-var items=[],sel=0,gwOpen=false,hadModal=false;
+var items=[],sel=0,gwOpen=false,hadModal=false,mode='gw';
 function mk(tag,id,html){var d=document.createElement(tag);d.id=id;d.innerHTML=html;document.body.appendChild(d);return d}
 var top=mk('div','iepcTop','<span class="lg"><i>IE</i>IE BILLING</span><span id="iepcTitle">Gateway of IE Billing</span><span class="rt"><button type="button" id="iepcTh" title="Dark / Light mode (Ctrl+Shift+L)"></button><span id="iepcClk"></span></span>');
 var bar=mk('div','iepcBar','<div class="hd">QUICK KEYS</div>');
-var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span><kbd>Ctrl+Shift+L</kbd>Theme</span><span class="r">IE BILLING &middot; PC EDITION</span>');
+var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>Alt+A</kbd>Vouchers</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span><kbd>Ctrl+Shift+L</kbd>Theme</span><span class="r">IE BILLING &middot; PC EDITION</span>');
 var thB=$('#iepcTh');
 function thSync(){var l=H.getAttribute('data-theme')==='light',ic='';try{ic=l?SB_SUN:SB_MOON}catch(e){}if(typeof ic!=='string')ic='';if(thB){thB.innerHTML=ic+'<span>'+(l?'Light Mode':'Dark Mode')+'</span>';thB.setAttribute('aria-label',l?'Switch to dark mode':'Switch to light mode')}}
 function thToggle(){if(typeof toggleTheme==='function')toggleTheme();else{var n=H.getAttribute('data-theme')==='light'?'dark':'light';H.setAttribute('data-theme',n);try{localStorage.setItem('ie_theme',n)}catch(e){}}thSync()}
@@ -26470,18 +26517,20 @@ if(thB)thB.onclick=thToggle;
 try{new MutationObserver(thSync).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
 thSync();
 window.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&(e.key==='L'||e.key==='l')){e.preventDefault();e.stopImmediatePropagation();thToggle()}},true);
-var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-l"><div class="gw-r1"><div><small>Current Period</small><b id="gwPer"></b></div><div class="rt"><small>Current Date</small><b id="gwDate"></b></div></div><div class="gw-r2"><small>Name of Company</small><small class="rt">Date of Last Entry</small></div><div class="gw-r3"><b id="gwCo"></b><b class="rt" id="gwLast"></b></div></div><div class="gw-m"><div class="gw-mb"><div class="gw-h">Gateway of IE Billing</div><div class="gw-b"></div></div></div><div class="gw-f">&uarr;&darr;&larr;&rarr; Select &nbsp; Enter Open &nbsp; Esc Back &nbsp; Type letter to jump</div></div>');
+var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-l"><div class="gw-r1"><div><small>Current Period</small><b id="gwPer"></b></div><div class="rt"><small>Current Date</small><b id="gwDate"></b></div></div><div class="gw-r2"><small>Name of Company</small><small class="rt">Date of Last Entry</small></div><div class="gw-r3"><b id="gwCo"></b><b class="rt" id="gwLast"></b></div></div><div class="gw-m"><div class="gw-mb"><div class="gw-h" id="gwHd">Gateway of IE Billing</div><div class="gw-b"></div></div></div><div class="gw-f">&uarr;&darr;&larr;&rarr; Select &nbsp; Enter Open &nbsp; Esc Back &nbsp; Type letter to jump &nbsp; F4-F9 direct (Vouchers)</div></div>');
 
 KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+esc(k[1])+'</span>';b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
 var sp=document.createElement('div');sp.className='sp';bar.appendChild(sp);
-[['Ctrl+/','Shortcuts'],['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+k[1]+'</span>';b.onclick=function(){k[0]==='Esc'?toggle():k[0]==='Ctrl+/'?openKb():run('search')};bar.appendChild(b)});
+[['Alt+A','Vouchers'],['Ctrl+/','Shortcuts'],['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+k[1]+'</span>';b.onclick=function(){k[0]==='Esc'?toggle():k[0]==='Ctrl+/'?openKb():k[0]==='Alt+A'?openVt():run('search')};bar.appendChild(b)});
+function nz(x){if(!Array.isArray(x))return x;return{p:x[0],t:x[2]||lab(x[0],x[1]),pg:x[0]==='__vt'?'':x[0],vt:x[0]==='__vt',pri:x[3]}}
 function build(){var b=$('.gw-b',gw);b.innerHTML='';items=[];
-GROUPS.forEach(function(g){var ps=g[1].filter(function(x){return ok(x[0])});if(!ps.length)return;
+(mode==='vt'?VTG:GROUPS).forEach(function(g){var ps=g[1].map(nz).filter(function(x){return !x.pg||ok(x.pg)});if(!ps.length)return;
 var card=document.createElement('div');card.className='gw-grp';var gi=b.children.length,firstI=items.length;var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];card.appendChild(h);b.appendChild(card);
-ps.forEach(function(x){var i=items.length,t=lab(x[0],x[1]),d=document.createElement('div');d.className='gw-i';
-d.innerHTML='<u>'+esc(t.charAt(0))+'</u>'+esc(t.slice(1));
-d.onclick=function(){run(x[0])};d.onmouseenter=function(){mark(i)};
-card.appendChild(d);items.push({p:x[0],t:t,el:d,g:gi,r:i-firstI})})})}
+ps.forEach(function(x){var i=items.length,t=x.t,d=document.createElement('div');d.className='gw-i';
+d.innerHTML=(x.kb?'<kbd>'+esc(x.kb)+'</kbd>':'')+'<u>'+esc(t.charAt(0))+'</u>'+esc(t.slice(1));
+d.onclick=function(){act(x)};d.onmouseenter=function(){mark(i)};
+card.appendChild(d);items.push({p:x.p,t:t,el:d,g:gi,r:i-firstI,pri:x.pri,x:x})})})}
+function act(x){if(x.vt){openVt();return}if(x.fn){closeGw();try{x.fn()}catch(e){tip('Ye voucher abhi nahi khul paya')}setTimeout(title,60);return}run(x.p)}
 function mark(i){if(!items.length)return;sel=(i+items.length)%items.length;items.forEach(function(it,j){it.el.classList.toggle('on',j===sel)});try{items[sel].el.scrollIntoView({block:'nearest'})}catch(e){}}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function dfm(d){return d.getDate()+'-'+MON[d.getMonth()]+'-'+d.getFullYear()}
@@ -26491,12 +26540,13 @@ try{var y=+fyForDate(d).slice(0,4);per='1-Apr-'+y+' to 31-Mar-'+(y+1)}catch(e){}
 try{[db.invoices,db.purchaseBills,db.purchaseOrders].forEach(function(a){(a||[]).forEach(function(x){var s=x&&x.date?String(x.date).slice(0,10):'';if(/^\d{4}-\d{2}-\d{2}$/.test(s)&&s>mx)mx=s})});if(mx)last=dfm(new Date(mx+'T00:00:00'))}catch(e){}
 function set(i,v){var el=$(i,gw);if(el)el.textContent=v}
 set('#gwPer',per||'-');set('#gwDate',d.toLocaleDateString('en-IN',{weekday:'long'})+', '+dfm(d));set('#gwCo',co||'-');set('#gwLast',last||'-')}
-function openGw(){gwInfo();build();gw.classList.add('on');gwOpen=true;mark(0);title()}
+function openGw(){mode='gw';gwInfo();build();gw.classList.remove('vt');var h=$('#gwHd');if(h)h.textContent='Gateway of IE Billing';gw.classList.add('on');gwOpen=true;mark(0);title()}
+function openVt(){mode='vt';gwInfo();build();gw.classList.add('vt');var h=$('#gwHd');if(h)h.textContent='List of Voucher Types';gw.classList.add('on');gwOpen=true;mark(0);title()}
 function closeGw(){gw.classList.remove('on');gwOpen=false;title()}
 function toggle(){gwOpen?closeGw():openGw()}
-function run(p){closeGw();var b=btn(p);if(b)b.click();setTimeout(title,60)}
+function run(p){if(p==='__vt'){openVt();return}closeGw();var b=btn(p);if(b)b.click();setTimeout(title,60)}
 function curId(){var pg=$('.page:not(.hidden)');return pg?pg.id:''}
-function title(){var id=curId(),t=gwOpen?'Gateway of IE Billing':(id?lab(id,id):'');var el=$('#iepcTitle');if(el)el.textContent=t||'Gateway of IE Billing';
+function title(){var id=curId(),t=gwOpen?(mode==='vt'?'List of Voucher Types':'Gateway of IE Billing'):(id?lab(id,id):'');var el=$('#iepcTitle');if(el)el.textContent=t||'Gateway of IE Billing';
 [].forEach.call(bar.querySelectorAll('button[data-p]'),function(b){var dp=b.getAttribute('data-p');b.classList.toggle('cur',gwOpen?dp==='':(dp===id&&id!==''))})}
 function clk(){var d=new Date(),el=$('#iepcClk');if(el)el.textContent=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+'  '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
 function appVis(){var a=$('#authOverlay'),c=$('#companyOverlay');return !(a&&!a.classList.contains('hidden'))&&!(c&&!c.classList.contains('hidden'))}
@@ -26504,17 +26554,19 @@ window.addEventListener('keydown',function(e){
 hadModal=!!$('.modal.show');
 if(!appVis())return;
 var k=e.key;
+if(e.altKey&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&e.code==='KeyA'){e.preventDefault();e.stopImmediatePropagation();if(!hadModal&&!kbOn&&!(gwOpen&&mode==='vt'))openVt();return}
 if(kbOn){if(k==='Escape'||(k==='/'&&e.ctrlKey)){e.preventDefault();e.stopImmediatePropagation();closeKb();return}if(/^F([1-9]|1[0-2])$/.test(k)){closeKb()}else return}
+if(gwOpen&&mode==='vt'&&/^F[4-9]$/.test(k)&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();for(var q=0;q<items.length;q++)if(items[q].x&&items[q].x.fk===k){act(items[q].x);return}return}
 if(/^F([1-9]|1[0-2])$/.test(k)&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();var m=KEYS[+k.slice(1)-1];m[2]?run(m[2]):toggle();return}
 if(!gwOpen)return;
-if(k==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeGw();return}
+if(k==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(mode==='vt')openGw();else closeGw();return}
 if(k==='ArrowDown'){e.preventDefault();e.stopImmediatePropagation();mark(sel+1);return}
 if(k==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();mark(sel-1);return}
 if(k==='ArrowRight'||k==='ArrowLeft'){e.preventDefault();e.stopImmediatePropagation();var cu=items[sel];if(!cu)return;var gs=[];items.forEach(function(it){if(gs.indexOf(it.g)<0)gs.push(it.g)});var ng=gs[(gs.indexOf(cu.g)+(k==='ArrowRight'?1:-1)+gs.length)%gs.length],cand=items.filter(function(it){return it.g===ng});mark(items.indexOf(cand[Math.min(cu.r,cand.length-1)]));return}
 if(k==='Home'){e.preventDefault();mark(0);return}
 if(k==='End'){e.preventDefault();mark(items.length-1);return}
-if(k==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(items[sel])run(items[sel].p);return}
-if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase();for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){mark(j);break}}e.preventDefault();e.stopImmediatePropagation()}
+if(k==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(items[sel])act(items[sel].x);return}
+if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase(),pj=-1,fj=-1;for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){if(fj<0)fj=j;if(pj<0&&items[j].pri&&j!==sel)pj=j}}if(fj>=0)mark(pj>=0?pj:fj);e.preventDefault();e.stopImmediatePropagation()}
 },true);
 document.addEventListener('keydown',function(e){
 if(e.defaultPrevented||!appVis())return;
@@ -26532,7 +26584,7 @@ e.preventDefault();var n=f[i+1];n.focus();if(n.select&&n.type!=='checkbox'&&n.ty
 var kbOn=false,kbEl=mk('div','iepcKb','<div class="kb-box"><div class="kb-h"><b>Shortcut Guide</b><input data-noenter="1" id="iepcKbQ" placeholder="Search... (jaise: invoice, export, save)" autocomplete="off"><button class="kb-x" type="button" id="iepcKbX">&#10005;</button></div><div class="kb-b" id="iepcKbB"></div><div class="kb-f">Esc band karo &nbsp;&middot;&nbsp; Ctrl+/ kisi bhi time khulta hai &nbsp;&middot;&nbsp; Button par bhi key-chip likha hota hai</div></div>');
 function kbRows(){
 var cur=curId(),out=[];
-var glob=[['F1','Gateway (menu)'],['F2 - F12','Dashboard, Customers, New Invoice, Sales Register, Journal, Inventory, Purchase Bills, Reports, Analytics, Settings, Backup'],['Esc','Gateway / popup band'],['Enter','Agla field'],['Ctrl+K','Search everything'],['Ctrl+/','Ye Shortcut Guide'],['Ctrl+Shift+L','Dark / Light mode badlo'],['Ctrl+Enter','Popup me Save'],['Ctrl+S','Save (invoice par Draft)'],['Ctrl+N','Naya banao (page ke hisab se)'],['Ctrl+E','Excel / CSV export'],['Ctrl+Shift+E','PDF export'],['Ctrl+P','Print / Preview'],['Ctrl+Shift+S','Share'],['Alt+M','Dark / Light'],['Alt+X','Menu chhupao']];
+var glob=[['F1','Gateway (menu)'],['Alt+A','Vouchers: naya voucher / document banao (kahin se bhi)'],['F4 - F9','Vouchers screen me: Contra, Payment, Receipt, Journal, Sales, Purchase'],['F2 - F12','Dashboard, Customers, New Invoice, Sales Register, Journal, Inventory, Purchase Bills, Reports, Analytics, Settings, Backup'],['Esc','Gateway / popup band'],['Enter','Agla field'],['Ctrl+K','Search everything'],['Ctrl+/','Ye Shortcut Guide'],['Ctrl+Shift+L','Dark / Light mode badlo'],['Ctrl+Enter','Popup me Save'],['Ctrl+S','Save (invoice par Draft)'],['Ctrl+N','Naya banao (page ke hisab se)'],['Ctrl+E','Excel / CSV export'],['Ctrl+Shift+E','PDF export'],['Ctrl+P','Print / Preview'],['Ctrl+Shift+S','Share'],['Alt+M','Dark / Light'],['Alt+X','Menu chhupao']];
 out.push({id:'_g',t:'Har jagah (Global)',r:glob.map(function(x){return [x[1],x[0]]})});
 var nav=[].slice.call(document.querySelectorAll('.nav button[data-kb]')).map(function(b){var n=b.querySelector('.nl');return [(n?n.textContent:b.textContent).trim(),b.getAttribute('data-kb')]}).filter(function(x){return x[0]});
 if(nav.length)out.push({id:'_n',t:'Page kholne ke liye (Alt + letter)',r:nav});
