@@ -26474,34 +26474,34 @@ function dn(t){goP('documents');try{if(typeof DOC_TYPES!=='undefined'&&!DOC_TYPE
 function ed(p,m){goP(p);try{if(typeof window[m]==='function')window[m]();else tip('Ye voucher abhi available nahi hai')}catch(e){tip('Voucher nahi khul paya')}}
 var VTG=[
 ['ACCOUNTING VOUCHERS',[
-{p:'v-contra',t:'Contra',kb:'F4',fk:'F4',pg:'acctVouchers',fn:function(){acc('Contra')}},
-{p:'v-pay',t:'Payment',kb:'F5',fk:'F5',pg:'acctVouchers',fn:function(){acc('Payment')}},
-{p:'v-rcpt',t:'Receipt',kb:'F6',fk:'F6',pg:'acctVouchers',fn:function(){acc('Receipt')}},
-{p:'v-jrnl',t:'Journal',kb:'F7',fk:'F7',pg:'acctVouchers',fn:function(){acc('Journal')}},
-{p:'v-exp',t:'Expense Voucher',pg:'acctVouchers',fn:function(){acc('Payment',true)}},
-{p:'v-cn',t:'Credit Note (Sales Return)',pg:'acctVouchers',fn:function(){note('Credit Note')}},
-{p:'v-dn',t:'Debit Note (Purchase Return)',pg:'acctVouchers',fn:function(){note('Debit Note')}},
-{p:'v-cr',t:'Customer Receipt (against bill)',pg:'journal',fn:function(){ed('journal','openCustReceipt')}}
+{p:'v-contra',pf:'c',t:'Contra',kb:'F4',fk:'F4',pg:'acctVouchers',fn:function(){acc('Contra')}},
+{p:'v-pay',pf:'p',t:'Payment',kb:'F5',fk:'F5',pg:'acctVouchers',fn:function(){acc('Payment')}},
+{p:'v-rcpt',pf:'r',t:'Receipt',kb:'F6',fk:'F6',pg:'acctVouchers',fn:function(){acc('Receipt')}},
+{p:'v-jrnl',pf:'j',t:'Journal',kb:'F7',fk:'F7',pg:'acctVouchers',fn:function(){acc('Journal')}},
+{p:'v-exp',pf:'x',t:'Expense Voucher',pg:'acctVouchers',fn:function(){acc('Payment',true)}},
+{p:'v-cn',pf:'e',t:'Credit Note (Sales Return)',pg:'acctVouchers',fn:function(){note('Credit Note')}},
+{p:'v-dn',pf:'d',t:'Debit Note (Purchase Return)',pg:'acctVouchers',fn:function(){note('Debit Note')}},
+{p:'v-cr',pf:'u',t:'Customer Receipt (against bill)',pg:'journal',fn:function(){ed('journal','openCustReceipt')}}
 ]],
 ['SALES VOUCHERS',[
-{p:'s-inv',t:'Sales Invoice',kb:'F8',fk:'F8',pg:'invoice',fn:function(){goP('invoice')}},
-{p:'s-bos',t:'Bill of Supply',pg:'bosCreate',fn:function(){goP('bosCreate')}},
-{p:'s-cash',t:'Cash Memo',pg:'cashCreate',fn:function(){goP('cashCreate')}},
-{p:'s-qt',t:'Quotation',pg:'documents',fn:function(){dn('quotation')}},
-{p:'s-pi',t:'Proforma Invoice',pg:'documents',fn:function(){dn('proforma')}},
-{p:'s-so',t:'Sales Order',pg:'documents',fn:function(){dn('salesorder')}},
-{p:'s-dc',t:'Delivery Challan',pg:'documents',fn:function(){dn('challan')}}
+{p:'s-inv',pf:'s',t:'Sales Invoice',kb:'F8',fk:'F8',pg:'invoice',fn:function(){goP('invoice')}},
+{p:'s-bos',pf:'b',t:'Bill of Supply',pg:'bosCreate',fn:function(){goP('bosCreate')}},
+{p:'s-cash',pf:'m',t:'Cash Memo',pg:'cashCreate',fn:function(){goP('cashCreate')}},
+{p:'s-qt',pf:'q',t:'Quotation',pg:'documents',fn:function(){dn('quotation')}},
+{p:'s-pi',pf:'f',t:'Proforma Invoice',pg:'documents',fn:function(){dn('proforma')}},
+{p:'s-so',pf:'l',t:'Sales Order',pg:'documents',fn:function(){dn('salesorder')}},
+{p:'s-dc',pf:'v',t:'Delivery Challan',pg:'documents',fn:function(){dn('challan')}}
 ]],
 ['PURCHASE VOUCHERS',[
-{p:'p-pb',t:'Purchase Bill',kb:'F9',fk:'F9',pg:'purchaseBills',fn:function(){ed('purchaseBills','openPBModal')}},
-{p:'p-po',t:'Purchase Order',pg:'purchaseOrders',fn:function(){ed('purchaseOrders','openPOModal')}}
+{p:'p-pb',pf:'h',t:'Purchase Bill',kb:'F9',fk:'F9',pg:'purchaseBills',fn:function(){ed('purchaseBills','openPBModal')}},
+{p:'p-po',pf:'o',t:'Purchase Order',pg:'purchaseOrders',fn:function(){ed('purchaseOrders','openPOModal')}}
 ]],
 ['OTHER DOCUMENTS',[
-{p:'d-wo',t:'Work Order',pg:'documents',fn:function(){dn('workorder')}},
-{p:'d-ps',t:'Packing Slip',pg:'documents',fn:function(){dn('packingslip')}},
-{p:'d-gp',t:'Gate Pass',pg:'documents',fn:function(){dn('gatepass')}},
-{p:'d-sl',t:'Salary Slip',pg:'documents',fn:function(){dn('salaryslip')}},
-{p:'d-rr',t:'Rent Receipt',pg:'documents',fn:function(){dn('rentreceipt')}}
+{p:'d-wo',pf:'w',t:'Work Order',pg:'documents',fn:function(){dn('workorder')}},
+{p:'d-ps',pf:'k',t:'Packing Slip',pg:'documents',fn:function(){dn('packingslip')}},
+{p:'d-gp',pf:'g',t:'Gate Pass',pg:'documents',fn:function(){dn('gatepass')}},
+{p:'d-sl',pf:'y',t:'Salary Slip',pg:'documents',fn:function(){dn('salaryslip')}},
+{p:'d-rr',pf:'t',t:'Rent Receipt',pg:'documents',fn:function(){dn('rentreceipt')}}
 ]]
 ];
 var KEYS=[['F1','Gateway',null],['F2','Dashboard','dashboard'],['F3','Customers','customers'],['F4','New Invoice','invoice'],['F5','Sales Register','history'],['F6','Journal','journal'],['F7','Inventory','inventory'],['F8','Purchase Bills','purchaseBills'],['F9','Reports','acctReports'],['F10','Analytics','analytics'],['F11','Settings','settings'],['F12','Backup','backup']];
@@ -26517,19 +26517,25 @@ if(thB)thB.onclick=thToggle;
 try{new MutationObserver(thSync).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
 thSync();
 window.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&(e.key==='L'||e.key==='l')){e.preventDefault();e.stopImmediatePropagation();thToggle()}},true);
-var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-l"><div class="gw-r1"><div><small>Current Period</small><b id="gwPer"></b></div><div class="rt"><small>Current Date</small><b id="gwDate"></b></div></div><div class="gw-r2"><small>Name of Company</small><small class="rt">Date of Last Entry</small></div><div class="gw-r3"><b id="gwCo"></b><b class="rt" id="gwLast"></b></div></div><div class="gw-m"><div class="gw-mb"><div class="gw-h" id="gwHd">Gateway of IE Billing</div><div class="gw-b"></div></div></div><div class="gw-f">&uarr;&darr;&larr;&rarr; Select &nbsp; Enter Open &nbsp; Esc Back &nbsp; Type letter to jump &nbsp; F4-F9 direct (Vouchers)</div></div>');
+var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-l"><div class="gw-r1"><div><small>Current Period</small><b id="gwPer"></b></div><div class="rt"><small>Current Date</small><b id="gwDate"></b></div></div><div class="gw-r2"><small>Name of Company</small><small class="rt">Date of Last Entry</small></div><div class="gw-r3"><b id="gwCo"></b><b class="rt" id="gwLast"></b></div></div><div class="gw-m"><div class="gw-mb"><div class="gw-h" id="gwHd">Gateway of IE Billing</div><div class="gw-b"></div></div></div><div class="gw-f">&uarr;&darr;&larr;&rarr; Select &nbsp; Enter Open &nbsp; Esc Back &nbsp; Underlined letter = seedha open &nbsp; F4-F9 direct (Vouchers)</div></div>');
 
 KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+esc(k[1])+'</span>';b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
 var sp=document.createElement('div');sp.className='sp';bar.appendChild(sp);
 [['Alt+A','Vouchers'],['Ctrl+/','Shortcuts'],['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+k[1]+'</span>';b.onclick=function(){k[0]==='Esc'?toggle():k[0]==='Ctrl+/'?openKb():k[0]==='Alt+A'?openVt():run('search')};bar.appendChild(b)});
-function nz(x){if(!Array.isArray(x))return x;return{p:x[0],t:x[2]||lab(x[0],x[1]),pg:x[0]==='__vt'?'':x[0],vt:x[0]==='__vt',pri:x[3]}}
+var PREF={'__vt':'v',customers:'c',inventory:'i',vendors:'s',acctLedgers:'l',history:'b',bosHistory:'y',cashHistory:'m',purchaseBills:'p',purchaseOrders:'o',acctVouchers:'r',journal:'j',documents:'n',dashboard:'d',acctReports:'e',acctGst:'x',analytics:'a',acctRecon:'k',acctPdc:'t',chequePrint:'q',chats:'h',search:'f',settings:'g',backup:'u'};
+function nz(x){if(!Array.isArray(x))return x;return{p:x[0],t:x[2]||lab(x[0],x[1]),pg:x[0]==='__vt'?'':x[0],vt:x[0]==='__vt',pf:PREF[x[0]]||''}}
 function build(){var b=$('.gw-b',gw);b.innerHTML='';items=[];
-(mode==='vt'?VTG:GROUPS).forEach(function(g){var ps=g[1].map(nz).filter(function(x){return !x.pg||ok(x.pg)});if(!ps.length)return;
-var card=document.createElement('div');card.className='gw-grp';var gi=b.children.length,firstI=items.length;var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];card.appendChild(h);b.appendChild(card);
-ps.forEach(function(x){var i=items.length,t=x.t,d=document.createElement('div');d.className='gw-i';
-d.innerHTML=(x.kb?'<kbd>'+esc(x.kb)+'</kbd>':'')+'<u>'+esc(t.charAt(0))+'</u>'+esc(t.slice(1));
+var gs=[],all=[];
+(mode==='vt'?VTG:GROUPS).forEach(function(g){var ps=g[1].map(nz).filter(function(x){return !x.pg||ok(x.pg)});if(!ps.length)return;gs.push([g[0],ps]);ps.forEach(function(x){all.push(x)})});
+var used={};
+all.forEach(function(x){var p=x.pf||'';x.hk='';if(p&&x.t.toLowerCase().indexOf(p)>=0&&!used[p]){x.hk=p;used[p]=1}});
+all.forEach(function(x){if(x.hk)return;var l=x.t.toLowerCase();for(var c=0;c<l.length;c++){var ch=l.charAt(c);if(/[a-z0-9]/.test(ch)&&!used[ch]){x.hk=ch;used[ch]=1;break}}});
+all.forEach(function(x){if(x.hk)return;var p=x.pf&&!used[x.pf]?x.pf:'';if(!p){var al='abcdefghijklmnopqrstuvwxyz0123456789';for(var c=0;c<al.length;c++)if(!used[al.charAt(c)]){p=al.charAt(c);break}}if(p){x.hk=p;used[p]=1;x.ch=1}});
+gs.forEach(function(G){var card=document.createElement('div');card.className='gw-grp';var gi=b.children.length,firstI=items.length;var h=document.createElement('div');h.className='gw-g';h.textContent=G[0];card.appendChild(h);b.appendChild(card);
+G[1].forEach(function(x){var i=items.length,t=x.t,k=(x.hk&&!x.ch)?t.toLowerCase().indexOf(x.hk):-1,d=document.createElement('div');d.className='gw-i';
+d.innerHTML=(x.kb||x.ch?'<kbd>'+esc(x.kb||x.hk.toUpperCase())+'</kbd>':'')+(k<0?esc(t):esc(t.slice(0,k))+'<u>'+esc(t.charAt(k))+'</u>'+esc(t.slice(k+1)));
 d.onclick=function(){act(x)};d.onmouseenter=function(){mark(i)};
-card.appendChild(d);items.push({p:x.p,t:t,el:d,g:gi,r:i-firstI,pri:x.pri,x:x})})})}
+card.appendChild(d);items.push({p:x.p,t:t,el:d,g:gi,r:i-firstI,hk:x.hk,x:x})})})}
 function act(x){if(x.vt){openVt();return}if(x.fn){closeGw();try{x.fn()}catch(e){tip('Ye voucher abhi nahi khul paya')}setTimeout(title,60);return}run(x.p)}
 function mark(i){if(!items.length)return;sel=(i+items.length)%items.length;items.forEach(function(it,j){it.el.classList.toggle('on',j===sel)});try{items[sel].el.scrollIntoView({block:'nearest'})}catch(e){}}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -26566,7 +26572,7 @@ if(k==='ArrowRight'||k==='ArrowLeft'){e.preventDefault();e.stopImmediatePropagat
 if(k==='Home'){e.preventDefault();mark(0);return}
 if(k==='End'){e.preventDefault();mark(items.length-1);return}
 if(k==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(items[sel])act(items[sel].x);return}
-if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase(),pj=-1,fj=-1;for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){if(fj<0)fj=j;if(pj<0&&items[j].pri&&j!==sel)pj=j}}if(fj>=0)mark(pj>=0?pj:fj);e.preventDefault();e.stopImmediatePropagation()}
+if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase();for(var n=0;n<items.length;n++)if(items[n].hk===c){mark(n);act(items[n].x);break}e.preventDefault();e.stopImmediatePropagation()}
 },true);
 document.addEventListener('keydown',function(e){
 if(e.defaultPrevented||!appVis())return;
