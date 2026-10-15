@@ -26405,6 +26405,20 @@ html.iepc[data-theme="light"] #iepcKb .kb-t.cur{color:#4338ca}
 html.iepc[data-theme="light"] #iepcKb .kb-t.cur:after{color:#6d28d9}
 html.iepc[data-theme="light"] #iepcKb .kb-r:hover{background:rgba(99,102,241,.10)}
 html.iepc[data-theme="light"] #iepcKb .kb-r kbd{color:#7a5200;background:linear-gradient(180deg,#fff8e2,#f6e9c3);border-color:rgba(154,107,18,.35)}
+
+/* ---- Gateway = full page (not popup) ---- */
+html.iepc #iepcGw.on{display:block;position:fixed;left:0;top:38px;right:212px;bottom:30px;z-index:880;background:radial-gradient(1100px 620px at 12% -8%,rgba(99,102,241,.20),transparent 60%),radial-gradient(900px 560px at 100% 105%,rgba(168,85,247,.14),transparent 60%),#070a12;animation:iepcIn .16s ease-out}
+html.iepc #iepcGw .gw-box{width:100%;max-width:none;max-height:none;height:100%;border:0;border-radius:0;background:none;box-shadow:none;display:flex;flex-direction:column;overflow:hidden}
+html.iepc #iepcGw .gw-h{align-items:flex-start;gap:4px;padding:26px 28px 12px;font-size:26px;font-weight:800;letter-spacing:.2px;text-transform:none;color:var(--text-main);background:none}
+html.iepc #iepcGw .gw-h small{font-size:11px;letter-spacing:2px}
+html.iepc #iepcGw .gw-b{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;align-content:start;padding:8px 28px 22px;overflow-y:auto}
+html.iepc #iepcGw .gw-grp{border:1px solid var(--border-color);border-radius:14px;padding:4px 8px 10px;background:linear-gradient(180deg,rgba(24,31,56,.88),rgba(14,19,35,.88));box-shadow:0 18px 40px -26px rgba(0,0,0,.7)}
+html.iepc #iepcGw .gw-g{padding:12px 10px 8px}
+html.iepc #iepcGw .gw-i{font-size:14px;padding:8px 12px}
+html.iepc[data-theme="light"] #iepcGw.on{background:radial-gradient(1100px 620px at 12% -8%,rgba(99,102,241,.13),transparent 60%),radial-gradient(900px 560px at 100% 105%,rgba(168,85,247,.09),transparent 60%),#eef0f8}
+html.iepc[data-theme="light"] #iepcGw .gw-box{background:none;box-shadow:none}
+html.iepc[data-theme="light"] #iepcGw .gw-h{background:none}
+html.iepc[data-theme="light"] #iepcGw .gw-grp{background:var(--ix-card);box-shadow:var(--ix-card-sh)}
 </style>
 <script id="iepcJs">
 (function(){
@@ -26428,24 +26442,24 @@ var top=mk('div','iepcTop','<span class="lg"><i>IE</i>IE BILLING</span><span id=
 var bar=mk('div','iepcBar','<div class="hd">QUICK KEYS</div>');
 var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span><kbd>Ctrl+Shift+L</kbd>Theme</span><span class="r">IE BILLING &middot; PC EDITION</span>');
 var thB=$('#iepcTh');
-function thSync(){var l=H.getAttribute('data-theme')==='light',ic='';try{ic=l?SB_SUN:SB_MOON}catch(e){}if(thB){thB.innerHTML=ic+'<span>'+(l?'Light Mode':'Dark Mode')+'</span>';thB.setAttribute('aria-label',l?'Switch to dark mode':'Switch to light mode')}}
+function thSync(){var l=H.getAttribute('data-theme')==='light',ic='';try{ic=l?SB_SUN:SB_MOON}catch(e){}if(typeof ic!=='string')ic='';if(thB){thB.innerHTML=ic+'<span>'+(l?'Light Mode':'Dark Mode')+'</span>';thB.setAttribute('aria-label',l?'Switch to dark mode':'Switch to light mode')}}
 function thToggle(){if(typeof toggleTheme==='function')toggleTheme();else{var n=H.getAttribute('data-theme')==='light'?'dark':'light';H.setAttribute('data-theme',n);try{localStorage.setItem('ie_theme',n)}catch(e){}}thSync()}
 if(thB)thB.onclick=thToggle;
 try{new MutationObserver(thSync).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
 thSync();
 window.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&(e.key==='L'||e.key==='l')){e.preventDefault();e.stopImmediatePropagation();thToggle()}},true);
-var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing<small>SELECT A WORKSPACE</small></div><div class="gw-b"></div><div class="gw-f">&uarr;&darr; Select &nbsp; Enter Open &nbsp; Esc Close &nbsp; Type letter to jump</div></div>');
-gw.onclick=function(e){if(e.target===gw)closeGw()};
+var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing<small>SELECT A WORKSPACE</small></div><div class="gw-b"></div><div class="gw-f">&uarr;&darr;&larr;&rarr; Select &nbsp; Enter Open &nbsp; Esc Back &nbsp; Type letter to jump</div></div>');
+
 KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+esc(k[1])+'</span>';b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
 var sp=document.createElement('div');sp.className='sp';bar.appendChild(sp);
 [['Ctrl+/','Shortcuts'],['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+k[1]+'</span>';b.onclick=function(){k[0]==='Esc'?toggle():k[0]==='Ctrl+/'?openKb():run('search')};bar.appendChild(b)});
 function build(){var b=$('.gw-b',gw);b.innerHTML='';items=[];
 GROUPS.forEach(function(g){var ps=g[1].filter(function(x){return ok(x[0])});if(!ps.length)return;
-var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];b.appendChild(h);
+var card=document.createElement('div');card.className='gw-grp';var gi=b.children.length,firstI=items.length;var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];card.appendChild(h);b.appendChild(card);
 ps.forEach(function(x){var i=items.length,t=lab(x[0],x[1]),d=document.createElement('div');d.className='gw-i';
 d.innerHTML='<u>'+esc(t.charAt(0))+'</u>'+esc(t.slice(1));
 d.onclick=function(){run(x[0])};d.onmouseenter=function(){mark(i)};
-b.appendChild(d);items.push({p:x[0],t:t,el:d})})})}
+card.appendChild(d);items.push({p:x[0],t:t,el:d,g:gi,r:i-firstI})})})}
 function mark(i){if(!items.length)return;sel=(i+items.length)%items.length;items.forEach(function(it,j){it.el.classList.toggle('on',j===sel)});try{items[sel].el.scrollIntoView({block:'nearest'})}catch(e){}}
 function openGw(){build();gw.classList.add('on');gwOpen=true;mark(0);title()}
 function closeGw(){gw.classList.remove('on');gwOpen=false;title()}
@@ -26453,7 +26467,7 @@ function toggle(){gwOpen?closeGw():openGw()}
 function run(p){closeGw();var b=btn(p);if(b)b.click();setTimeout(title,60)}
 function curId(){var pg=$('.page:not(.hidden)');return pg?pg.id:''}
 function title(){var id=curId(),t=gwOpen?'Gateway of IE Billing':(id?lab(id,id):'');var el=$('#iepcTitle');if(el)el.textContent=t||'Gateway of IE Billing';
-[].forEach.call(bar.querySelectorAll('button[data-p]'),function(b){b.classList.toggle('cur',!gwOpen&&b.getAttribute('data-p')===id&&id!=='')})}
+[].forEach.call(bar.querySelectorAll('button[data-p]'),function(b){var dp=b.getAttribute('data-p');b.classList.toggle('cur',gwOpen?dp==='':(dp===id&&id!==''))})}
 function clk(){var d=new Date(),el=$('#iepcClk');if(el)el.textContent=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+'  '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
 function appVis(){var a=$('#authOverlay'),c=$('#companyOverlay');return !(a&&!a.classList.contains('hidden'))&&!(c&&!c.classList.contains('hidden'))}
 window.addEventListener('keydown',function(e){
@@ -26466,6 +26480,7 @@ if(!gwOpen)return;
 if(k==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeGw();return}
 if(k==='ArrowDown'){e.preventDefault();e.stopImmediatePropagation();mark(sel+1);return}
 if(k==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();mark(sel-1);return}
+if(k==='ArrowRight'||k==='ArrowLeft'){e.preventDefault();e.stopImmediatePropagation();var cu=items[sel];if(!cu)return;var gs=[];items.forEach(function(it){if(gs.indexOf(it.g)<0)gs.push(it.g)});var ng=gs[(gs.indexOf(cu.g)+(k==='ArrowRight'?1:-1)+gs.length)%gs.length],cand=items.filter(function(it){return it.g===ng});mark(items.indexOf(cand[Math.min(cu.r,cand.length-1)]));return}
 if(k==='Home'){e.preventDefault();mark(0);return}
 if(k==='End'){e.preventDefault();mark(items.length-1);return}
 if(k==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(items[sel])run(items[sel].p);return}
