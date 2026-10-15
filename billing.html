@@ -26271,5 +26271,113 @@ lockNow();paint();
 })();
 </script>
 
+<!-- IE PC MODE (Tally-style) : active only in desktop .exe (IEPC) or ?pc=1 -->
+<style id="iepcCss">
+html.iepc,html.iepc[data-theme]{--bg-dark:#e9f0f3;--bg-card:#fff;--bg-card-hover:#f3f8fa;--border-color:#8fa9b3;--primary:#1d5c70;--primary-hover:#144656;--primary-glow:transparent;--text-main:#0a2a35;--text-muted:#35525d;--text-dim:#5d7882;--success:#1b7a3d;--danger:#b3261e;--muted:#35525d;--sidebar-bg:#cfe0e6}
+html.iepc body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;background:#e9f0f3!important}
+html.iepc *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.iepc .sidebar,html.iepc .hamburger,html.iepc .menu-btn,html.iepc .bottom-nav,html.iepc .mobile-nav{display:none!important}
+html.iepc .app{display:block}
+html.iepc .main{padding:38px 208px 34px 14px!important;margin:0!important;max-width:none!important}
+html.iepc .page{max-width:none}
+html.iepc .card,html.iepc .btn,html.iepc button,html.iepc input,html.iepc select,html.iepc textarea,html.iepc .modalbox,html.iepc table{border-radius:0!important}
+html.iepc .card{box-shadow:none!important;border:1px solid var(--border-color)}
+html.iepc table th{background:#1d5c70!important;color:#fff!important;padding:5px 8px;font-weight:600}
+html.iepc table td{padding:4px 8px}
+html.iepc table tr:hover td{background:#fff3c4}
+html.iepc input:focus,html.iepc select:focus,html.iepc textarea:focus{background:#fff3c4!important;outline:2px solid #e0a100!important;outline-offset:-1px;border-color:#e0a100!important}
+#iepcTop,#iepcBar,#iepcSt,#iepcGw{display:none}
+html.iepc #iepcTop{display:flex;position:fixed;left:0;right:0;top:0;height:28px;z-index:900;background:#123f4e;color:#fff;font-size:12px;align-items:center;padding:0 12px;justify-content:space-between}
+#iepcTop b{letter-spacing:.5px}#iepcTop #iepcTitle{font-weight:600;color:#ffd77a}
+html.iepc #iepcBar{display:flex;flex-direction:column;position:fixed;right:0;top:28px;bottom:24px;width:196px;z-index:900;background:#cfe0e6;border-left:1px solid #7f9aa5;overflow-y:auto}
+#iepcBar button{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid #a9bfc8;padding:7px 10px;font-size:12.5px;color:#0a2a35;cursor:pointer}
+#iepcBar button b{display:inline-block;min-width:34px;color:#144656}
+#iepcBar button:hover{background:#ffc247}
+#iepcBar button.cur{background:#1d5c70;color:#fff}#iepcBar button.cur b{color:#ffd77a}
+#iepcBar .sp{flex:1}
+html.iepc #iepcSt{display:flex;position:fixed;left:0;right:0;bottom:0;height:24px;z-index:900;background:#123f4e;color:#cfe6ee;font-size:11.5px;align-items:center;gap:18px;padding:0 12px}
+#iepcGw.on{display:flex;position:fixed;inset:0;z-index:9500;background:rgba(10,42,53,.55);align-items:center;justify-content:center}
+#iepcGw .gw-box{width:400px;max-width:92vw;max-height:84vh;display:flex;flex-direction:column;background:#fff;border:1px solid #123f4e;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+#iepcGw .gw-h{background:#1d5c70;color:#fff;text-align:center;padding:9px;font-weight:700;font-size:14px}
+#iepcGw .gw-b{overflow-y:auto;padding:6px 0}
+#iepcGw .gw-g{color:#1d5c70;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 18px 2px}
+#iepcGw .gw-i{padding:5px 26px;cursor:pointer;color:#0a2a35;font-size:14px}
+#iepcGw .gw-i u{text-decoration:underline;font-weight:700}
+#iepcGw .gw-i.on{background:#ffc247;font-weight:600}
+#iepcGw .gw-f{border-top:1px solid #a9bfc8;padding:5px 10px;font-size:11px;color:#35525d;text-align:center}
+</style>
+<script id="iepcJs">
+(function(){
+if(!(/IEPC/.test(navigator.userAgent)||/[?&]pc=1/.test(location.search)))return;
+var H=document.documentElement;H.classList.add('iepc');H.setAttribute('data-theme','light');
+var $=function(s,r){return(r||document).querySelector(s)};
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function btn(p){return $('.nav button[data-page="'+p+'"]')}
+function lab(p,d){var b=btn(p),n=b&&b.querySelector('.nl');return n&&n.textContent.trim()?n.textContent.trim():d}
+function ok(p){var b=btn(p);return !!b&&b.style.display!=='none'}
+var GROUPS=[
+['MASTERS',[['customers','Customers'],['inventory','Inventory'],['vendors','Vendors'],['acctLedgers','Ledgers']]],
+['VOUCHERS',[['invoice','Sales Invoice'],['purchaseBills','Purchase Bills'],['purchaseOrders','Purchase Orders'],['bosCreate','Bill of Supply'],['cashCreate','Cash Memo'],['journal','Journal'],['acctVouchers','Vouchers']]],
+['REPORTS',[['dashboard','Dashboard'],['history','Sales Register'],['bosHistory','BOS Register'],['cashHistory','Cash Register'],['acctReports','Reports'],['acctGst','GST'],['analytics','Analytics'],['acctRecon','Reconciliation'],['acctPdc','PDC']]],
+['UTILITIES',[['documents','Documents'],['chequePrint','Cheque Print'],['chats','Chats'],['search','Search'],['settings','Settings'],['backup','Backup / Restore']]]
+];
+var KEYS=[['F1','Gateway',null],['F2','Dashboard','dashboard'],['F3','Customers','customers'],['F4','New Invoice','invoice'],['F5','Sales Register','history'],['F6','Journal','journal'],['F7','Inventory','inventory'],['F8','Purchase Bills','purchaseBills'],['F9','Reports','acctReports'],['F10','Analytics','analytics'],['F11','Settings','settings'],['F12','Backup','backup']];
+var items=[],sel=0,gwOpen=false,hadModal=false;
+function mk(tag,id,html){var d=document.createElement(tag);d.id=id;d.innerHTML=html;document.body.appendChild(d);return d}
+var top=mk('div','iepcTop','<b>IE BILLING</b><span id="iepcTitle">Gateway of IE Billing</span><span id="iepcClk"></span>');
+var bar=mk('div','iepcBar','');
+var st=mk('div','iepcSt','<span>Esc: Gateway</span><span>Enter: Next Field</span><span>Ctrl+K: Search</span><span>F1-F12: Quick Go</span>');
+var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing</div><div class="gw-b"></div><div class="gw-f">&uarr;&darr; Select &nbsp; Enter Open &nbsp; Esc Close &nbsp; Type letter to jump</div></div>');
+gw.onclick=function(e){if(e.target===gw)closeGw()};
+KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<b>'+k[0]+':</b> '+esc(k[1]);b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
+var sp=document.createElement('div');sp.className='sp';bar.appendChild(sp);
+[['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<b>'+k[0]+'</b> '+k[1];b.onclick=function(){k[0]==='Esc'?toggle():run('search')};bar.appendChild(b)});
+function build(){var b=$('.gw-b',gw);b.innerHTML='';items=[];
+GROUPS.forEach(function(g){var ps=g[1].filter(function(x){return ok(x[0])});if(!ps.length)return;
+var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];b.appendChild(h);
+ps.forEach(function(x){var i=items.length,t=lab(x[0],x[1]),d=document.createElement('div');d.className='gw-i';
+d.innerHTML='<u>'+esc(t.charAt(0))+'</u>'+esc(t.slice(1));
+d.onclick=function(){run(x[0])};d.onmouseenter=function(){mark(i)};
+b.appendChild(d);items.push({p:x[0],t:t,el:d})})})}
+function mark(i){if(!items.length)return;sel=(i+items.length)%items.length;items.forEach(function(it,j){it.el.classList.toggle('on',j===sel)});try{items[sel].el.scrollIntoView({block:'nearest'})}catch(e){}}
+function openGw(){build();gw.classList.add('on');gwOpen=true;mark(0);title()}
+function closeGw(){gw.classList.remove('on');gwOpen=false;title()}
+function toggle(){gwOpen?closeGw():openGw()}
+function run(p){closeGw();var b=btn(p);if(b)b.click();setTimeout(title,60)}
+function curId(){var pg=$('.page:not(.hidden)');return pg?pg.id:''}
+function title(){var id=curId(),t=gwOpen?'Gateway of IE Billing':(id?lab(id,id):'');var el=$('#iepcTitle');if(el)el.textContent=t||'Gateway of IE Billing';
+[].forEach.call(bar.querySelectorAll('button[data-p]'),function(b){b.classList.toggle('cur',!gwOpen&&b.getAttribute('data-p')===id&&id!=='')})}
+function clk(){var d=new Date(),el=$('#iepcClk');if(el)el.textContent=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+'  '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
+function appVis(){var a=$('#authOverlay'),c=$('#companyOverlay');return !(a&&!a.classList.contains('hidden'))&&!(c&&!c.classList.contains('hidden'))}
+document.addEventListener('keydown',function(e){
+hadModal=!!$('.modal.show');
+if(!appVis())return;
+var k=e.key;
+if(/^F([1-9]|1[0-2])$/.test(k)&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){e.preventDefault();e.stopPropagation();var m=KEYS[+k.slice(1)-1];m[2]?run(m[2]):toggle();return}
+if(!gwOpen)return;
+if(k==='Escape'){e.preventDefault();e.stopPropagation();closeGw();return}
+if(k==='ArrowDown'){e.preventDefault();e.stopPropagation();mark(sel+1);return}
+if(k==='ArrowUp'){e.preventDefault();e.stopPropagation();mark(sel-1);return}
+if(k==='Home'){e.preventDefault();mark(0);return}
+if(k==='End'){e.preventDefault();mark(items.length-1);return}
+if(k==='Enter'){e.preventDefault();e.stopPropagation();if(items[sel])run(items[sel].p);return}
+if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase();for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){mark(j);break}}e.preventDefault();e.stopPropagation()}
+},true);
+document.addEventListener('keydown',function(e){
+if(e.defaultPrevented||!appVis())return;
+if(e.key==='Escape'){if(!hadModal&&!gwOpen)openGw();return}
+if(e.key!=='Enter'||gwOpen||e.shiftKey||e.ctrlKey||e.altKey)return;
+var t=e.target;if(!t||!/^(INPUT|SELECT)$/.test(t.tagName))return;
+if(/^(checkbox|radio|button|submit|file|hidden)$/.test(t.type)||t.id==='sbSearch'||t.hasAttribute('data-noenter'))return;
+var root=t.closest('.modalbox')||t.closest('.page')||document;
+var f=[].slice.call(root.querySelectorAll('input,select,textarea')).filter(function(x){return x.offsetParent!==null&&!x.disabled&&!x.readOnly&&x.type!=='hidden'&&x.tabIndex!==-1&&x.type!=='file'});
+var i=f.indexOf(t);if(i<0||i>=f.length-1)return;
+e.preventDefault();var n=f[i+1];n.focus();if(n.select&&n.type!=='checkbox'&&n.type!=='radio'){try{n.select()}catch(x){}}
+});
+clk();setInterval(clk,30000);setInterval(title,700);
+var tries=0,shown=false,iv=setInterval(function(){tries++;if(appVis()&&!shown&&$('.nav button')){shown=true;clearInterval(iv);setTimeout(openGw,400)}if(tries>150)clearInterval(iv)},400);
+})();
+</script>
+
 </body>
 </html>
