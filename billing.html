@@ -26273,43 +26273,87 @@ lockNow();paint();
 
 <!-- IE PC MODE (Tally-style) : active only in desktop .exe (IEPC) or ?pc=1 -->
 <style id="iepcCss">
-html.iepc,html.iepc[data-theme]{--bg-dark:#e9f0f3;--bg-card:#fff;--bg-card-hover:#f3f8fa;--border-color:#8fa9b3;--primary:#1d5c70;--primary-hover:#144656;--primary-glow:transparent;--text-main:#0a2a35;--text-muted:#35525d;--text-dim:#5d7882;--success:#1b7a3d;--danger:#b3261e;--muted:#35525d;--sidebar-bg:#cfe0e6}
-html.iepc body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;background:#e9f0f3!important}
+html.iepc,html.iepc[data-theme]{--bg-dark:#070a12;--bg-card:rgba(17,23,41,.82);--bg-card-hover:rgba(26,34,60,.9);--border-color:rgba(148,163,255,.14);--border-focus:#818cf8;--primary:#6366f1;--primary-hover:#7c7ff5;--primary-glow:rgba(99,102,241,.35);--text-main:#eef0fa;--text-muted:#a4abc4;--text-dim:#707894;--muted:#a4abc4;--sidebar-bg:#0a0f1d;--gold:#e8c987;--gold2:#c9a35a;--cyan:#22d3ee}
+html.iepc body{font-family:"Plus Jakarta Sans","Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;background:radial-gradient(1100px 620px at 12% -8%,rgba(99,102,241,.20),transparent 60%),radial-gradient(900px 560px at 100% 105%,rgba(168,85,247,.14),transparent 60%),#070a12!important;font-variant-numeric:tabular-nums;color:var(--text-main)}
 html.iepc *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-html.iepc .sidebar,html.iepc .hamburger,html.iepc .menu-btn,html.iepc .bottom-nav,html.iepc .mobile-nav{display:none!important}
+html.iepc #sbToggle,html.iepc #sidebarOverlay,html.iepc .mobile-header,html.iepc .sidebar,html.iepc .hamburger,html.iepc .menu-btn,html.iepc .bottom-nav,html.iepc .mobile-nav{display:none!important}
 html.iepc .app{display:block}
-html.iepc .main{padding:38px 208px 34px 14px!important;margin:0!important;max-width:none!important}
+html.iepc .main{padding:52px 224px 40px 20px!important;margin:0!important;max-width:none!important}
 html.iepc .page{max-width:none}
-html.iepc .card,html.iepc .btn,html.iepc button,html.iepc input,html.iepc select,html.iepc textarea,html.iepc .modalbox,html.iepc table{border-radius:0!important}
-html.iepc .card{box-shadow:none!important;border:1px solid var(--border-color)}
-html.iepc table th{background:#1d5c70!important;color:#fff!important;padding:5px 8px;font-weight:600}
-html.iepc table td{padding:4px 8px}
-html.iepc table tr:hover td{background:#fff3c4}
-html.iepc input:focus,html.iepc select:focus,html.iepc textarea:focus{background:#fff3c4!important;outline:2px solid #e0a100!important;outline-offset:-1px;border-color:#e0a100!important}
+html.iepc .card{border-radius:14px!important;border:1px solid var(--border-color)!important;background:linear-gradient(180deg,rgba(24,31,56,.88),rgba(14,19,35,.88))!important;box-shadow:0 18px 40px -22px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.05)!important}
+html.iepc .btn,html.iepc button{border-radius:9px}
+html.iepc input,html.iepc select,html.iepc textarea{border-radius:9px!important;background:rgba(8,12,24,.72)!important;border:1px solid rgba(148,163,255,.16)!important;color:var(--text-main)!important;transition:box-shadow .15s,border-color .15s,background .15s}
+html.iepc input::placeholder,html.iepc textarea::placeholder{color:#5d6584}
+html.iepc input:focus,html.iepc select:focus,html.iepc textarea:focus{background:rgba(99,102,241,.13)!important;border-color:var(--gold)!important;outline:0!important;box-shadow:0 0 0 3px rgba(232,201,135,.16),0 0 22px -4px rgba(232,201,135,.32)!important}
+html.iepc table{border-radius:12px;border-collapse:separate;border-spacing:0}
+html.iepc table th{background:linear-gradient(180deg,#1b2347,#141a36)!important;color:var(--gold)!important;padding:9px 10px;font-weight:700;font-size:11px;letter-spacing:.9px;text-transform:uppercase;border-bottom:1px solid rgba(232,201,135,.28)!important}
+html.iepc table td{padding:7px 10px;border-bottom:1px solid rgba(148,163,255,.08)}
+html.iepc table tbody tr:nth-child(even) td{background:rgba(99,102,241,.035)}
+html.iepc table tr:hover td{background:rgba(99,102,241,.16)!important}
+html.iepc ::-webkit-scrollbar{width:9px;height:9px}
+html.iepc ::-webkit-scrollbar-thumb{background:rgba(129,140,248,.28);border-radius:9px}
+html.iepc ::-webkit-scrollbar-thumb:hover{background:rgba(129,140,248,.5)}
+html.iepc ::selection{background:rgba(232,201,135,.35)}
+html.iepc .page .btn[data-kb]::after{content:attr(data-kb);margin-left:7px;font:700 10px/1 'Plus Jakarta Sans',ui-monospace,Consolas,monospace;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.16);color:inherit;opacity:.85;white-space:nowrap}
+#iepcKb{display:none}
+#iepcKb.on{display:flex;position:fixed;inset:0;z-index:9600;background:radial-gradient(800px 480px at 50% 25%,rgba(99,102,241,.25),transparent 70%),rgba(4,6,14,.82);align-items:center;justify-content:center;animation:iepcIn .16s ease-out}
+#iepcKb .kb-box{width:980px;max-width:94vw;height:82vh;display:flex;flex-direction:column;border-radius:20px;border:1px solid transparent;background:linear-gradient(180deg,#131a35,#0b1022) padding-box,linear-gradient(135deg,rgba(129,140,248,.9),rgba(232,201,135,.45) 45%,rgba(168,85,247,.7)) border-box;box-shadow:0 50px 110px -30px rgba(0,0,0,.95),0 0 80px -20px rgba(99,102,241,.5);overflow:hidden}
+#iepcKb .kb-h{display:flex;align-items:center;gap:16px;padding:16px 22px;background:linear-gradient(180deg,rgba(99,102,241,.22),transparent)}
+#iepcKb .kb-h b{font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+#iepcKb .kb-h input{flex:1;height:38px;padding:0 14px;font-size:13px}
+#iepcKb .kb-x{width:34px;height:34px;border-radius:10px;border:1px solid rgba(148,163,255,.25);background:rgba(255,255,255,.05);color:#dfe3f7;cursor:pointer}
+#iepcKb .kb-b{flex:1;overflow-y:auto;padding:4px 22px 18px;columns:2;column-gap:34px}
+#iepcKb .kb-g{break-inside:avoid;margin:10px 0 14px}
+#iepcKb .kb-t{font-size:10.5px;font-weight:800;letter-spacing:2px;color:var(--gold);padding:6px 0;border-bottom:1px solid rgba(232,201,135,.25);margin-bottom:4px;text-transform:uppercase}
+#iepcKb .kb-t.cur{color:#fff}#iepcKb .kb-t.cur:after{content:"  - IS PAGE PAR";color:#a78bfa;letter-spacing:1.4px}
+#iepcKb .kb-r{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 6px;border-radius:8px;font-size:13px;color:#d6daf0}
+#iepcKb .kb-r:hover{background:rgba(99,102,241,.16)}
+#iepcKb .kb-r kbd{font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.3px;color:var(--gold);background:linear-gradient(180deg,#1b2342,#121834);border:1px solid rgba(232,201,135,.3);border-bottom-width:2px;border-radius:6px;padding:3px 8px;white-space:nowrap}
+#iepcKb .kb-f{border-top:1px solid rgba(148,163,255,.14);padding:9px 14px;font-size:11px;color:#7f88ad;text-align:center;background:rgba(0,0,0,.18)}
+#iepcKb .kb-none{padding:30px;text-align:center;color:#7f88ad;column-span:all}
+.iepc-cohint{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin:22px auto 0;padding:10px 18px;max-width:760px;border-radius:14px;font-size:12px;color:#aab2d3;background:rgba(10,14,30,.72);border:1px solid rgba(148,163,255,.2)}
+.iepc-cohint kbd{font-family:inherit;font-size:10.5px;font-weight:700;color:#e8c987;background:linear-gradient(180deg,#1b2342,#121834);border:1px solid rgba(232,201,135,.3);border-bottom-width:2px;border-radius:6px;padding:2px 7px;margin-right:6px}
+html.iepc #coGrid .co-card{position:relative}
+html.iepc #coGrid .co-card.iepc-sel{outline:2px solid #e8c987;outline-offset:3px;box-shadow:0 0 0 6px rgba(232,201,135,.14),0 24px 50px -18px rgba(99,102,241,.7)!important}
+html.iepc #coGrid .iepc-n{position:absolute;right:14px;bottom:14px;z-index:3;font-style:normal;min-width:24px;height:24px;padding:0 6px;display:grid;place-items:center;border-radius:7px;font-size:11px;font-weight:800;color:#1a1204;background:linear-gradient(180deg,#f3dba3,#d8b46a);box-shadow:0 4px 12px -2px rgba(0,0,0,.5)}
+html.iepc #iepcTop,html.iepc #iepcBar,html.iepc #iepcSt{display:flex}
+html.iepc.iepc-co #iepcBar,html.iepc.iepc-co #iepcTop #iepcTitle{display:none}
 #iepcTop,#iepcBar,#iepcSt,#iepcGw{display:none}
-html.iepc #iepcTop{display:flex;position:fixed;left:0;right:0;top:0;height:28px;z-index:900;background:#123f4e;color:#fff;font-size:12px;align-items:center;padding:0 12px;justify-content:space-between}
-#iepcTop b{letter-spacing:.5px}#iepcTop #iepcTitle{font-weight:600;color:#ffd77a}
-html.iepc #iepcBar{display:flex;flex-direction:column;position:fixed;right:0;top:28px;bottom:24px;width:196px;z-index:900;background:#cfe0e6;border-left:1px solid #7f9aa5;overflow-y:auto}
-#iepcBar button{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid #a9bfc8;padding:7px 10px;font-size:12.5px;color:#0a2a35;cursor:pointer}
-#iepcBar button b{display:inline-block;min-width:34px;color:#144656}
-#iepcBar button:hover{background:#ffc247}
-#iepcBar button.cur{background:#1d5c70;color:#fff}#iepcBar button.cur b{color:#ffd77a}
+html.iepc #iepcTop{display:flex;position:fixed;left:0;right:0;top:0;height:38px;z-index:900;align-items:center;padding:0 16px;justify-content:space-between;color:#dfe3f7;font-size:12px;background:linear-gradient(180deg,#0e1430,#090d1d);box-shadow:0 10px 30px -12px rgba(0,0,0,.8)}
+html.iepc #iepcTop:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,#6366f1 18%,#a78bfa 50%,#22d3ee 82%,transparent)}
+#iepcTop .lg{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:2.4px;font-size:12px;color:#fff}
+#iepcTop .lg i{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;font-style:normal;letter-spacing:0;font-size:11px;font-weight:800;color:#fff;background:linear-gradient(135deg,#5b4de6,#a43be0);box-shadow:0 0 0 1px rgba(255,255,255,.18) inset,0 4px 14px -2px rgba(124,92,246,.7)}
+#iepcTop #iepcTitle{position:absolute;left:50%;transform:translateX(-50%);font-weight:700;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);text-shadow:0 0 18px rgba(232,201,135,.35)}
+#iepcTop #iepcClk{color:#9aa3c7;font-size:11.5px;letter-spacing:.4px}
+html.iepc #iepcBar{display:flex;flex-direction:column;position:fixed;right:0;top:38px;bottom:30px;width:212px;z-index:900;padding:10px 10px;gap:3px;background:linear-gradient(180deg,#0c1226,#080c18);border-left:1px solid rgba(148,163,255,.14);overflow-y:auto}
+#iepcBar .hd{font-size:10px;font-weight:700;letter-spacing:2px;color:#6e769a;padding:4px 8px 8px}
+#iepcBar button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;border-radius:10px;padding:7px 8px;font-size:12.5px;font-weight:500;color:#c4cae6;cursor:pointer;position:relative;transition:background .12s,transform .12s}
+#iepcBar button kbd{display:inline-block;min-width:38px;text-align:center;font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.4px;color:var(--gold);background:linear-gradient(180deg,#1b2342,#121834);border:1px solid rgba(232,201,135,.3);border-bottom-width:2px;border-radius:6px;padding:2px 5px}
+#iepcBar button:hover{background:rgba(99,102,241,.14);border-color:rgba(129,140,248,.28);transform:translateX(-2px)}
+#iepcBar button.cur{color:#fff;font-weight:700;background:linear-gradient(90deg,rgba(99,102,241,.55),rgba(139,92,246,.22));border-color:rgba(167,139,250,.55);box-shadow:0 8px 22px -10px rgba(99,102,241,.8)}
+#iepcBar button.cur:before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--gold),#a78bfa)}
+#iepcBar button.cur kbd{color:#1a1204;background:linear-gradient(180deg,#f3dba3,#d8b46a);border-color:#f6e2ae}
 #iepcBar .sp{flex:1}
-html.iepc #iepcSt{display:flex;position:fixed;left:0;right:0;bottom:0;height:24px;z-index:900;background:#123f4e;color:#cfe6ee;font-size:11.5px;align-items:center;gap:18px;padding:0 12px}
-#iepcGw.on{display:flex;position:fixed;inset:0;z-index:9500;background:rgba(10,42,53,.55);align-items:center;justify-content:center}
-#iepcGw .gw-box{width:400px;max-width:92vw;max-height:84vh;display:flex;flex-direction:column;background:#fff;border:1px solid #123f4e;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-#iepcGw .gw-h{background:#1d5c70;color:#fff;text-align:center;padding:9px;font-weight:700;font-size:14px}
-#iepcGw .gw-b{overflow-y:auto;padding:6px 0}
-#iepcGw .gw-g{color:#1d5c70;font-size:11px;font-weight:700;letter-spacing:1px;padding:8px 18px 2px}
-#iepcGw .gw-i{padding:5px 26px;cursor:pointer;color:#0a2a35;font-size:14px}
-#iepcGw .gw-i u{text-decoration:underline;font-weight:700}
-#iepcGw .gw-i.on{background:#ffc247;font-weight:600}
-#iepcGw .gw-f{border-top:1px solid #a9bfc8;padding:5px 10px;font-size:11px;color:#35525d;text-align:center}
+html.iepc #iepcSt{display:flex;position:fixed;left:0;right:0;bottom:0;height:30px;z-index:900;align-items:center;gap:22px;padding:0 16px;font-size:11.5px;color:#98a1c6;background:linear-gradient(0deg,#080b17,#0c1226);border-top:1px solid rgba(148,163,255,.14)}
+#iepcSt kbd{font-family:inherit;font-size:10px;font-weight:700;color:var(--gold);background:rgba(232,201,135,.08);border:1px solid rgba(232,201,135,.28);border-radius:5px;padding:1px 6px;margin-right:6px}
+#iepcSt .r{margin-left:auto;color:#6e769a;letter-spacing:.8px}
+#iepcGw.on{display:flex;position:fixed;inset:0;z-index:9500;background:radial-gradient(700px 420px at 50% 30%,rgba(99,102,241,.25),transparent 70%),rgba(4,6,14,.78);align-items:center;justify-content:center;animation:iepcIn .16s ease-out}
+@keyframes iepcIn{from{opacity:0}to{opacity:1}}
+#iepcGw .gw-box{width:460px;max-width:92vw;max-height:84vh;display:flex;flex-direction:column;border-radius:20px;border:1px solid transparent;background:linear-gradient(180deg,#131a35,#0b1022) padding-box,linear-gradient(135deg,rgba(129,140,248,.9),rgba(232,201,135,.45) 45%,rgba(168,85,247,.7)) border-box;box-shadow:0 50px 110px -30px rgba(0,0,0,.95),0 0 80px -20px rgba(99,102,241,.5);overflow:hidden}
+#iepcGw .gw-h{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 16px 12px;font-weight:800;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);background:linear-gradient(180deg,rgba(99,102,241,.22),transparent)}
+#iepcGw .gw-h small{font-size:10.5px;font-weight:500;letter-spacing:1.6px;color:#7f88ad}
+#iepcGw .gw-b{overflow-y:auto;padding:4px 12px 10px}
+#iepcGw .gw-g{color:#7f88ad;font-size:10px;font-weight:800;letter-spacing:2.2px;padding:12px 12px 4px;display:flex;align-items:center;gap:10px}
+#iepcGw .gw-g:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(148,163,255,.28),transparent)}
+#iepcGw .gw-i{padding:7px 14px;margin:1px 0;border-radius:10px;cursor:pointer;color:#d6daf0;font-size:14px;font-weight:500;border:1px solid transparent}
+#iepcGw .gw-i u{text-decoration:none;font-weight:800;color:var(--gold);border-bottom:2px solid rgba(232,201,135,.6)}
+#iepcGw .gw-i.on{color:#fff;font-weight:700;background:linear-gradient(90deg,rgba(99,102,241,.6),rgba(139,92,246,.2));border-color:rgba(167,139,250,.55);box-shadow:0 10px 26px -12px rgba(99,102,241,.9)}
+#iepcGw .gw-f{border-top:1px solid rgba(148,163,255,.14);padding:9px 12px;font-size:11px;letter-spacing:.4px;color:#7f88ad;text-align:center;background:rgba(0,0,0,.18)}
 </style>
 <script id="iepcJs">
 (function(){
 if(!(/IEPC/.test(navigator.userAgent)||/[?&]pc=1/.test(location.search)))return;
-var H=document.documentElement;H.classList.add('iepc');H.setAttribute('data-theme','light');
+var H=document.documentElement;H.classList.add('iepc');H.setAttribute('data-theme','dark');try{new MutationObserver(function(){if(H.getAttribute('data-theme')!=='dark')H.setAttribute('data-theme','dark')}).observe(H,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
 var $=function(s,r){return(r||document).querySelector(s)};
 function esc(s){return String(s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
 function btn(p){return $('.nav button[data-page="'+p+'"]')}
@@ -26324,14 +26368,14 @@ var GROUPS=[
 var KEYS=[['F1','Gateway',null],['F2','Dashboard','dashboard'],['F3','Customers','customers'],['F4','New Invoice','invoice'],['F5','Sales Register','history'],['F6','Journal','journal'],['F7','Inventory','inventory'],['F8','Purchase Bills','purchaseBills'],['F9','Reports','acctReports'],['F10','Analytics','analytics'],['F11','Settings','settings'],['F12','Backup','backup']];
 var items=[],sel=0,gwOpen=false,hadModal=false;
 function mk(tag,id,html){var d=document.createElement(tag);d.id=id;d.innerHTML=html;document.body.appendChild(d);return d}
-var top=mk('div','iepcTop','<b>IE BILLING</b><span id="iepcTitle">Gateway of IE Billing</span><span id="iepcClk"></span>');
-var bar=mk('div','iepcBar','');
-var st=mk('div','iepcSt','<span>Esc: Gateway</span><span>Enter: Next Field</span><span>Ctrl+K: Search</span><span>F1-F12: Quick Go</span>');
-var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing</div><div class="gw-b"></div><div class="gw-f">&uarr;&darr; Select &nbsp; Enter Open &nbsp; Esc Close &nbsp; Type letter to jump</div></div>');
+var top=mk('div','iepcTop','<span class="lg"><i>IE</i>IE BILLING</span><span id="iepcTitle">Gateway of IE Billing</span><span id="iepcClk"></span>');
+var bar=mk('div','iepcBar','<div class="hd">QUICK KEYS</div>');
+var st=mk('div','iepcSt','<span><kbd>Esc</kbd>Gateway</span><span><kbd>Enter</kbd>Next Field</span><span><kbd>Ctrl+K</kbd>Search</span><span><kbd>F1-F12</kbd>Quick Go</span><span><kbd>Ctrl+/</kbd>All Shortcuts</span><span class="r">IE BILLING &middot; PC EDITION</span>');
+var gw=mk('div','iepcGw','<div class="gw-box"><div class="gw-h">Gateway of IE Billing<small>SELECT A WORKSPACE</small></div><div class="gw-b"></div><div class="gw-f">&uarr;&darr; Select &nbsp; Enter Open &nbsp; Esc Close &nbsp; Type letter to jump</div></div>');
 gw.onclick=function(e){if(e.target===gw)closeGw()};
-KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<b>'+k[0]+':</b> '+esc(k[1]);b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
+KEYS.forEach(function(k){var b=document.createElement('button');b.setAttribute('data-p',k[2]||'');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+esc(k[1])+'</span>';b.onclick=function(){k[2]?run(k[2]):toggle()};bar.appendChild(b)});
 var sp=document.createElement('div');sp.className='sp';bar.appendChild(sp);
-[['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<b>'+k[0]+'</b> '+k[1];b.onclick=function(){k[0]==='Esc'?toggle():run('search')};bar.appendChild(b)});
+[['Ctrl+/','Shortcuts'],['Ctrl+K','Search'],['Esc','Gateway']].forEach(function(k){var b=document.createElement('button');b.innerHTML='<kbd>'+k[0]+'</kbd><span>'+k[1]+'</span>';b.onclick=function(){k[0]==='Esc'?toggle():k[0]==='Ctrl+/'?openKb():run('search')};bar.appendChild(b)});
 function build(){var b=$('.gw-b',gw);b.innerHTML='';items=[];
 GROUPS.forEach(function(g){var ps=g[1].filter(function(x){return ok(x[0])});if(!ps.length)return;
 var h=document.createElement('div');h.className='gw-g';h.textContent=g[0];b.appendChild(h);
@@ -26349,19 +26393,20 @@ function title(){var id=curId(),t=gwOpen?'Gateway of IE Billing':(id?lab(id,id):
 [].forEach.call(bar.querySelectorAll('button[data-p]'),function(b){b.classList.toggle('cur',!gwOpen&&b.getAttribute('data-p')===id&&id!=='')})}
 function clk(){var d=new Date(),el=$('#iepcClk');if(el)el.textContent=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+'  '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
 function appVis(){var a=$('#authOverlay'),c=$('#companyOverlay');return !(a&&!a.classList.contains('hidden'))&&!(c&&!c.classList.contains('hidden'))}
-document.addEventListener('keydown',function(e){
+window.addEventListener('keydown',function(e){
 hadModal=!!$('.modal.show');
 if(!appVis())return;
 var k=e.key;
-if(/^F([1-9]|1[0-2])$/.test(k)&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){e.preventDefault();e.stopPropagation();var m=KEYS[+k.slice(1)-1];m[2]?run(m[2]):toggle();return}
+if(kbOn){if(k==='Escape'||(k==='/'&&e.ctrlKey)){e.preventDefault();e.stopImmediatePropagation();closeKb();return}if(/^F([1-9]|1[0-2])$/.test(k)){closeKb()}else return}
+if(/^F([1-9]|1[0-2])$/.test(k)&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();var m=KEYS[+k.slice(1)-1];m[2]?run(m[2]):toggle();return}
 if(!gwOpen)return;
-if(k==='Escape'){e.preventDefault();e.stopPropagation();closeGw();return}
-if(k==='ArrowDown'){e.preventDefault();e.stopPropagation();mark(sel+1);return}
-if(k==='ArrowUp'){e.preventDefault();e.stopPropagation();mark(sel-1);return}
+if(k==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeGw();return}
+if(k==='ArrowDown'){e.preventDefault();e.stopImmediatePropagation();mark(sel+1);return}
+if(k==='ArrowUp'){e.preventDefault();e.stopImmediatePropagation();mark(sel-1);return}
 if(k==='Home'){e.preventDefault();mark(0);return}
 if(k==='End'){e.preventDefault();mark(items.length-1);return}
-if(k==='Enter'){e.preventDefault();e.stopPropagation();if(items[sel])run(items[sel].p);return}
-if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase();for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){mark(j);break}}e.preventDefault();e.stopPropagation()}
+if(k==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(items[sel])run(items[sel].p);return}
+if(k.length===1&&!e.ctrlKey&&!e.altKey&&!e.metaKey){var c=k.toLowerCase();for(var n=1;n<=items.length;n++){var j=(sel+n)%items.length;if(items[j].t.charAt(0).toLowerCase()===c){mark(j);break}}e.preventDefault();e.stopImmediatePropagation()}
 },true);
 document.addEventListener('keydown',function(e){
 if(e.defaultPrevented||!appVis())return;
@@ -26374,6 +26419,182 @@ var f=[].slice.call(root.querySelectorAll('input,select,textarea')).filter(funct
 var i=f.indexOf(t);if(i<0||i>=f.length-1)return;
 e.preventDefault();var n=f[i+1];n.focus();if(n.select&&n.type!=='checkbox'&&n.type!=='radio'){try{n.select()}catch(x){}}
 });
+
+
+var kbOn=false,kbEl=mk('div','iepcKb','<div class="kb-box"><div class="kb-h"><b>Shortcut Guide</b><input data-noenter="1" id="iepcKbQ" placeholder="Search... (jaise: invoice, export, save)" autocomplete="off"><button class="kb-x" type="button" id="iepcKbX">&#10005;</button></div><div class="kb-b" id="iepcKbB"></div><div class="kb-f">Esc band karo &nbsp;&middot;&nbsp; Ctrl+/ kisi bhi time khulta hai &nbsp;&middot;&nbsp; Button par bhi key-chip likha hota hai</div></div>');
+function kbRows(){
+var cur=curId(),out=[];
+var glob=[['F1','Gateway (menu)'],['F2 - F12','Dashboard, Customers, New Invoice, Sales Register, Journal, Inventory, Purchase Bills, Reports, Analytics, Settings, Backup'],['Esc','Gateway / popup band'],['Enter','Agla field'],['Ctrl+K','Search everything'],['Ctrl+/','Ye Shortcut Guide'],['Ctrl+Enter','Popup me Save'],['Ctrl+S','Save (invoice par Draft)'],['Ctrl+N','Naya banao (page ke hisab se)'],['Ctrl+E','Excel / CSV export'],['Ctrl+Shift+E','PDF export'],['Ctrl+P','Print / Preview'],['Ctrl+Shift+S','Share'],['Alt+M','Dark / Light'],['Alt+X','Menu chhupao']];
+out.push({id:'_g',t:'Har jagah (Global)',r:glob.map(function(x){return [x[1],x[0]]})});
+var nav=[].slice.call(document.querySelectorAll('.nav button[data-kb]')).map(function(b){var n=b.querySelector('.nl');return [(n?n.textContent:b.textContent).trim(),b.getAttribute('data-kb')]}).filter(function(x){return x[0]});
+if(nav.length)out.push({id:'_n',t:'Page kholne ke liye (Alt + letter)',r:nav});
+var order=[],map={};SC.forEach(function(c){var id=c[0].slice(1);if(!map[id]){map[id]=[];order.push(id)}map[id].push([c[6]||LBL[c[1]]||c[1],c[2]])});
+order.sort(function(a,b){return a===cur?-1:b===cur?1:0});
+order.forEach(function(id){out.push({id:id,t:lab(id,id),r:map[id],cur:id===cur})});
+for(var q=0;q<out.length;q++)if(out[q].cur){out.unshift(out.splice(q,1)[0]);break}
+return out}
+function kbDraw(q){q=(q||'').toLowerCase().trim();var h='',n=0;
+kbRows().forEach(function(g){var rs=g.r.filter(function(x){return !q||(x[0]+' '+x[1]+' '+g.t).toLowerCase().indexOf(q)>=0});if(!rs.length)return;n++;
+h+='<div class="kb-g"><div class="kb-t'+(g.cur?' cur':'')+'">'+esc(g.t)+'</div>'+rs.map(function(x){return '<div class="kb-r"><span>'+esc(x[0])+'</span><kbd>'+esc(x[1]).split('+').join(' + ')+'</kbd></div>'}).join('')+'</div>'});
+$('#iepcKbB').innerHTML=h||'<div class="kb-none">Kuch nahi mila</div>'}
+function openKb(){if(gwOpen)closeGw();kbOn=true;kbEl.classList.add('on');var i=$('#iepcKbQ');i.value='';kbDraw('');setTimeout(function(){i.focus()},30)}
+function closeKb(){kbOn=false;kbEl.classList.remove('on')}
+$('#iepcKbQ').oninput=function(){kbDraw(this.value)};$('#iepcKbX').onclick=closeKb;kbEl.onclick=function(e){if(e.target===kbEl)closeKb()};
+
+/* ---- Choose Company keys ---- */
+var coSel=0,coHint=null;
+function coVis(){var o=$('#companyOverlay');return !!o&&!o.classList.contains('hidden')}
+function coFormOn(){var f=$('#coFormModal');return !!f&&!f.classList.contains('hidden')}
+function coCards(){return [].slice.call(document.querySelectorAll('#coGrid .co-card'))}
+function coMark(sc){var cs=coCards();if(!cs.length)return;if(coSel>=cs.length)coSel=cs.length-1;if(coSel<0)coSel=0;
+cs.forEach(function(c,i){c.classList.toggle('iepc-sel',i===coSel);var n=c.classList.contains('new')?'N':(i<9?String(i+1):''),el=c.querySelector('.iepc-n');if(!n){if(el)el.remove()}else if(!el){el=document.createElement('i');el.className='iepc-n';c.appendChild(el);el.textContent=n}else if(el.textContent!==n)el.textContent=n});
+if(sc){try{cs[coSel].scrollIntoView({block:'nearest'})}catch(e){}}}
+function coTick(){var on=coVis();H.classList.toggle('iepc-co',on);if(!on)return;
+if(!coHint){var w=$('#companyOverlay .co-wrap');if(w){coHint=document.createElement('div');coHint.className='iepc-cohint';coHint.innerHTML='<span><kbd>&larr; &rarr; &uarr; &darr;</kbd>Select</span><span><kbd>Enter</kbd>Open</span><span><kbd>1-9</kbd>Seedha kholo</span><span><kbd>N</kbd>Nayi company</span><span><kbd>E</kbd>Edit</span>';w.appendChild(coHint)}}
+coMark(false)}
+setInterval(coTick,400);
+window.addEventListener('keydown',function(e){
+if(!coVis())return;var k=e.key,ctl=e.ctrlKey||e.metaKey;
+if(coFormOn()){
+if(ctl&&k==='Enter'){e.preventDefault();e.stopImmediatePropagation();var sb=$('#coSubmitBtn');if(sb)sb.click();return}
+if(k==='Escape'){e.preventDefault();e.stopImmediatePropagation();if(window.coCloseForm)window.coCloseForm();return}
+if(k==='Enter'&&!e.shiftKey&&e.target&&/^(INPUT|SELECT)$/.test(e.target.tagName)&&!/^(button|submit|checkbox|radio)$/.test(e.target.type)){
+var f=[].slice.call($('#coFormModal').querySelectorAll('input,select,textarea')).filter(function(x){return x.offsetParent!==null&&!x.disabled&&!x.readOnly&&x.type!=='hidden'});var i=f.indexOf(e.target);
+if(i>=0&&i<f.length-1){e.preventDefault();e.stopImmediatePropagation();var n=f[i+1];n.focus();try{n.select()}catch(z){}}}
+return}
+var cs=coCards();if(!cs.length||/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||''))return;
+var cols=1;for(var i2=1;i2<cs.length;i2++){if(cs[i2].offsetTop===cs[0].offsetTop)cols++;else break}
+var kl=k.toLowerCase(),used=true;
+if(k==='ArrowRight')coSel=Math.min(cs.length-1,coSel+1);
+else if(k==='ArrowLeft')coSel=Math.max(0,coSel-1);
+else if(k==='ArrowDown')coSel=Math.min(cs.length-1,coSel+cols);
+else if(k==='ArrowUp')coSel=Math.max(0,coSel-cols);
+else if(k==='Home')coSel=0;else if(k==='End')coSel=cs.length-1;
+else if(k==='Enter'){cs[coSel].click()}
+else if(/^[1-9]$/.test(k)&&!ctl){var t=cs[+k-1];if(t&&!t.classList.contains('new')){coSel=+k-1;t.click()}}
+else if(kl==='n'&&!e.altKey){if(window.coOpenForm)window.coOpenForm()}
+else if(kl==='e'&&!e.altKey){var ed=cs[coSel].querySelector('.co-card-act-btn:not(.danger)');if(ed)ed.click()}
+else used=false;
+if(used){e.preventDefault();e.stopImmediatePropagation();coMark(true)}
+},true);
+/* ---- PC shortcuts: every button ---- */
+var SC=[
+['#invoice','finalizeInvoice()','Ctrl+Enter','Enter',1,0],
+['#invoice','openPreviewModal()','Ctrl+P','p',1,0],
+['#invoice','openOutputModal()','Ctrl+E','e',1,0],
+['#invoice','openThermalPreview()','Ctrl+Shift+P','p',1,1],
+['#invoice','holdBill()','Ctrl+H','h',1,0],
+['#invoice','heldOpen()','Ctrl+Shift+H','h',1,1],
+['#invoice','splitOpen()','Ctrl+Shift+Y','y',1,1],
+['#invoice','openVoiceInvoice()','Ctrl+Shift+V','v',1,1],
+['#invoice','duplicateLastRow()','Ctrl+D','d',1,0],
+['#invoice','addRow()','Ctrl+I','i',1,0],
+['#invoice','openCustomerModal()','Ctrl+Shift+N','n',1,1],
+['#invoice','openPaymentModal','Ctrl+R','r',1,0],
+['#customers','openCustomerModal()','Ctrl+N','n',1,0],
+['#inventory','openItemModal()','Ctrl+N','n',1,0],
+['#vendors','openVendorModal()','Ctrl+N','n',1,0],
+['#dashboard','newInvoice()','Ctrl+N','n',1,0,'New Invoice'],
+['#analytics','analyticsExportExcel','Ctrl+E','e',1,0,'Export Excel'],
+['#analytics','analyticsExportPDF','Ctrl+Shift+E','e',1,1,'Export PDF'],
+['#analytics',"analyticsPreset('thisMonth')",'Ctrl+1','1',1,0,'This Month'],
+['#analytics',"analyticsPreset('lastMonth')",'Ctrl+2','2',1,0,'Last Month'],
+['#analytics',"analyticsPreset('thisQuarter')",'Ctrl+3','3',1,0,'This Quarter'],
+['#analytics',"analyticsPreset('thisFY')",'Ctrl+4','4',1,0,'This FY'],
+['#analytics',"analyticsPreset('lastFY')",'Ctrl+5','5',1,0,'Last FY'],
+['#analytics',"analyticsPreset('all')",'Ctrl+6','6',1,0,'All Time'],
+['#documents',"docNew('quotation')",'Ctrl+1','1',1,0,'New Quotation'],
+['#documents',"docNew('challan')",'Ctrl+2','2',1,0,'New Delivery Challan'],
+['#documents',"docNew('proforma')",'Ctrl+3','3',1,0,'New Proforma'],
+['#documents',"docNew('salesorder')",'Ctrl+4','4',1,0,'New Sales Order'],
+['#documents',"docNew('workorder')",'Ctrl+5','5',1,0,'New Work Order'],
+['#documents',"docNew('packingslip')",'Ctrl+6','6',1,0,'New Packing Slip'],
+['#documents',"docNew('gatepass')",'Ctrl+7','7',1,0,'New Gate Pass'],
+['#documents',"docNew('salaryslip')",'Ctrl+8','8',1,0,'New Salary Slip'],
+['#documents',"docNew('rentreceipt')",'Ctrl+9','9',1,0,'New Rent Receipt'],
+['#documents','docSave()','Ctrl+Enter','Enter',1,0,'Save Document'],
+['#documents','docPreviewOpen()','Ctrl+P','p',1,0,'Preview'],
+['#documents','docPrintOpen()','Ctrl+E','e',1,0,'Print / PDF'],
+['#documents','docPrintOpen(undefined','Ctrl+Shift+S','s',1,1,'Share'],
+['#history','exportHistoryExcel','Ctrl+E','e',1,0,'Export Excel'],
+['#history','exportHistoryPDF','Ctrl+Shift+E','e',1,1,'Export PDF'],
+['#history','openBulkExport','Ctrl+B','b',1,0,'Bulk Export PDF'],
+['#history','toggleTrash','Ctrl+Shift+D','d',1,1,'Deleted Bills'],
+['#history','toggleDuplicates','Ctrl+Shift+U','u',1,1,'Duplicate Invoices'],
+['#acctVouchers',"acctOpenVoucher('Payment')",'Ctrl+1','1',1,0,'+ Payment'],
+['#acctVouchers',"acctOpenVoucher('Receipt')",'Ctrl+2','2',1,0,'+ Receipt'],
+['#acctVouchers',"acctOpenVoucher('Journal')",'Ctrl+3','3',1,0,'+ Journal'],
+['#acctVouchers',"acctOpenVoucher('Contra')",'Ctrl+4','4',1,0,'+ Contra'],
+['#acctVouchers',"acctOpenVoucher('Payment',",'Ctrl+5','5',1,0,'+ Expense'],
+['#acctVouchers',"acctOpenNote('Credit Note')",'Ctrl+6','6',1,0,'+ Credit Note'],
+['#acctVouchers',"acctOpenNote('Debit Note')",'Ctrl+7','7',1,0,'+ Debit Note'],
+['#acctVouchers','acctOpenNumbering','Ctrl+8','8',1,0,'Numbering'],
+['#acctLedgers','acctOpenLedger()','Ctrl+N','n',1,0,'+ Ledger'],
+['#acctLedgers','acctOpenGroup()','Ctrl+Shift+N','n',1,1,'+ Group'],
+['#acctLedgers',"acctTab('l')",'Ctrl+1','1',1,0,'Ledgers tab'],
+['#acctLedgers',"acctTab('g')",'Ctrl+2','2',1,0,'Chart of Accounts tab'],
+['#acctReports','acctRepPrint','Ctrl+P','p',1,0,'Print'],
+['#acctReports','acctRepShare','Ctrl+Shift+S','s',1,1,'Share PDF'],
+['#acctReports','acctRepCSV','Ctrl+E','e',1,0,'Export CSV'],
+['#acctReports','acctRepStockItems','Ctrl+Shift+I','i',1,1,'Closing stock from items'],
+['#acctRecon','acctReconAll(true)','Ctrl+Enter','Enter',1,0,'Clear shown entries'],
+['#acctRecon','acctReconAll(false)','Ctrl+Shift+Enter','Enter',1,1,'Unclear shown entries'],
+['#acctPdc','acctPdcAdd','Ctrl+N','n',1,0,'+ Add Cheque'],
+['#acctGst','acctGstRange(-1)','Ctrl+1','1',1,0,'Pichla mahina'],
+['#acctGst','acctGstRange(0)','Ctrl+2','2',1,0,'Is mahina'],
+['#acctGst','acctGstCSV','Ctrl+E','e',1,0,'GST CSV'],
+['#acctGst','acctGstPrint','Ctrl+P','p',1,0,'GST Print'],
+['#invAdv','invCSV','Ctrl+E','e',1,0,'CSV'],
+['#invAdv','invPrint','Ctrl+P','p',1,0,'Print'],
+['#acctExt','exCSV','Ctrl+E','e',1,0,'CSV'],
+['#acctExt','exPrint','Ctrl+P','p',1,0,'Print'],
+['#journal',"setJournalTab('due')",'Ctrl+1','1',1,0,'Journal: Baaki'],
+['#journal',"setJournalTab('cust')",'Ctrl+2','2',1,0,'Journal: Customers'],
+['#journal',"setJournalTab('invoice')",'Ctrl+3','3',1,0,'Journal: All Invoices'],
+['#journal',"setJournalTab('receipt')",'Ctrl+4','4',1,0,'Journal: Receipts'],
+['#journal','openCustReceipt()','Ctrl+N','n',1,0,'+ Customer Receipt'],
+['#customers','exportCustomerExcel','Ctrl+E','e',1,0,'Export Excel'],
+['#customers','exportCustomerPDF','Ctrl+Shift+E','e',1,1,'Export PDF'],
+['#inventory','scanInventoryLookup','Ctrl+Shift+K','k',1,1,'Scan Item'],
+['#inventory','clearInventoryFilters','Ctrl+Shift+C','c',1,1,'Clear filters'],
+['#purchaseOrders','openPOModal','Ctrl+N','n',1,0,'+ New Purchase Order'],
+['#purchaseOrders','exportPOExcel','Ctrl+E','e',1,0,'Export Excel'],
+['#purchaseOrders','exportPOPDF','Ctrl+Shift+E','e',1,1,'Export PDF'],
+['#purchaseOrders','poClearFilters','Ctrl+Shift+C','c',1,1,'Clear filters'],
+['#purchaseBills','openPBModal','Ctrl+N','n',1,0,'+ New Purchase Bill'],
+['#purchaseBills','exportPBExcel','Ctrl+E','e',1,0,'Export Excel'],
+['#purchaseBills','exportPBPDF','Ctrl+Shift+E','e',1,1,'Export PDF'],
+['#purchaseBills','pbClearFilters','Ctrl+Shift+C','c',1,1,'Clear filters'],
+['#chequePrint','chequePrintNow','Ctrl+P','p',1,0,'Print Cheque'],
+['#chequePrint','chequeSaveCalib','Ctrl+Enter','Enter',1,0,'Save layout'],
+['#chequePrint','chequeResetCalib','Ctrl+Shift+R','r',1,1,'Reset layout'],
+['#search','broadcastOpenCompose','Ctrl+N','n',1,0,'+ New Broadcast'],
+['#search','connectQrShowMine','Ctrl+Shift+M','m',1,1,'My QR'],
+['#profile','saveProfileDetails','Ctrl+Enter','Enter',1,0,'Save changes'],
+['#settings','saveSettings()','Ctrl+Enter','Enter',1,0,'Save Configuration'],
+['#backup','backupJSON','Ctrl+B','b',1,0,'Complete Backup'],
+['#backup','importJSON','Ctrl+Shift+I','i',1,1,'Validate & Import'],
+['#backup','backupCustomers','Ctrl+1','1',1,0,'Export Customers'],
+['#backup','backupInventory','Ctrl+2','2',1,0,'Export Inventory'],
+['#backup','backupInvoices','Ctrl+3','3',1,0,'Export Invoices'],
+['#backup','backupDocuments','Ctrl+4','4',1,0,'Export Documents']
+];
+var LBL={'finalizeInvoice()':'Invoice: Finalize','openPreviewModal()':'Invoice: Preview','openOutputModal()':'Invoice: Save / Share','openThermalPreview()':'Invoice: Thermal Preview','holdBill()':'Invoice: Hold','heldOpen()':'Invoice: Held list','splitOpen()':'Invoice: Split Pay','openVoiceInvoice()':'Invoice: Voice Add Items','duplicateLastRow()':'Invoice: Duplicate Last Item','addRow()':'Invoice: Add Item','openCustomerModal()':'New Customer','openPaymentModal':'Invoice: Payment / Receipt','openItemModal()':'Inventory: New Item','openVendorModal()':'Vendors: New Vendor'};
+function vis(e){return e&&e.offsetParent!==null&&!e.disabled}
+function find(c){var pg=$(c[0]);if(!pg||pg.classList.contains('hidden'))return null;var bs=pg.querySelectorAll('button[onclick*="'+c[1]+'"]');for(var i=0;i<bs.length;i++)if(vis(bs[i]))return bs[i];return null}
+function badge(){SC.forEach(function(c){var b=find(c);if(b&&!b.getAttribute('data-kb'))b.setAttribute('data-kb',c[2])})}
+function modalSave(){var ms=document.querySelectorAll('.modal.show');if(!ms.length)return false;var m=ms[ms.length-1],bs=[].slice.call(m.querySelectorAll('.modalbox .btn.success,.modalbox .btn.primary')).filter(vis);if(!bs.length)return false;bs[bs.length-1].click();return true}
+window.addEventListener('keydown',function(e){
+if(!appVis()||gwOpen||kbOn)return;
+if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+var k=e.key,kl=k.toLowerCase();
+if(k==='/'||k==='?'){e.preventDefault();e.stopImmediatePropagation();kbOn?closeKb():openKb();return}
+if(k==='Enter'&&!e.shiftKey){if(modalSave()){e.preventDefault();e.stopImmediatePropagation();return}}
+if($('.modal.show'))return;
+var want=kl,wsh=!!e.shiftKey;if(kl==='s'&&!wsh&&$('#invoice')&&$('#invoice').classList.contains('hidden')){want='enter'}
+for(var i=0;i<SC.length;i++){var c=SC[i];if(c[3].toLowerCase()!==want||wsh!==!!c[5])continue;var b=find(c);if(b){e.preventDefault();e.stopImmediatePropagation();b.click();if(c[1]==='addRow()'||c[1]==='duplicateLastRow()')setTimeout(function(){var l=document.querySelectorAll('#invoice input[placeholder^="Type item name"]');if(l.length){var x=l[l.length-1];x.focus();try{x.select()}catch(z){}}},80);return}}
+},true);
+setInterval(badge,1200);
 clk();setInterval(clk,30000);setInterval(title,700);
 var tries=0,shown=false,iv=setInterval(function(){tries++;if(appVis()&&!shown&&$('.nav button')){shown=true;clearInterval(iv);setTimeout(openGw,400)}if(tries>150)clearInterval(iv)},400);
 })();
