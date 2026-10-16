@@ -25582,7 +25582,7 @@ html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvet
 .t6pg:last-child{page-break-after:auto;break-after:auto}
 .t6j{text-align:center;font-size:10px;margin:0 0 3px}
 .t6tt{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3px}
-.t6tt b{font-size:17px;margin:0 auto;position:relative;left:28px}.t6tt i{font-size:10px;font-style:italic;text-transform:uppercase}
+.t6tt b{font-size:17px;margin:0 auto;position:relative;left:28px}.t6tt i{font-size:10px;font-style:italic;text-transform:uppercase;position:relative;top:-4px;left:-8px}
 .t6box{border:1px solid #000;flex:1;display:flex;flex-direction:column;min-height:0}
 .t6hd{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #000}
 .t6hl>div{padding:4px 6px;border-bottom:1px solid #000}.t6hl>div:last-child{border-bottom:0}
@@ -25955,7 +25955,7 @@ function t6InvoiceBuild(inv,copy,opts){
  function pageHtml(prows,p,last,np,tax){
   var showTx=(tax===undefined)?last:tax;
   return '<div class="t6pg t6v'+t6Variant()+'">'+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
-  +'<div class="t6tt"><i></i><b>'+esc(title)+(p?' (Continued)':'')+'</b><i>'+esc(copy)+'</i></div><div class="t6box">'
+  +'<div class="t6tt"><i></i><b>'+esc(title)+(p?' (Continued)':'')+'</b><i>( '+esc(copy)+' )</i></div><div class="t6box">'
   +(p===0?headHtml:'<div class="t6cont"><span>'+esc(title)+' No. '+esc(inv.invoiceNumber||'')+'</span><span>Page '+(p+1)+' of '+np+'</span></div>')
   +'<div class="t6itw">'+vl+'<table class="t6it">'+cg+'<thead>'+thead+'</thead><tbody>'+prows.map(function(r){return r.html}).join('')+(showTx?tx:'')+'</tbody></table></div>'
   +(last?'<table class="t6tot">'+cg+'<tr><td></td><td class="r">Total</td><td></td><td class="r n">'+esc(qtxt)+'</td><td></td><td></td><td></td><td class="r n">&#8377; '+money(t.grand)+'</td></tr></table>':'')
@@ -26173,7 +26173,7 @@ function t6DocBuild(d,copy){
  function pageHtml(prows,p,last,np,tax){
   var showTx=(tax===undefined)?last:tax;
   return '<div class="t6pg t6v'+t6Variant()+'">'+T6TB+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
-  +'<div class="t6tt"><i></i><b>'+esc(T.label)+(p?' (Continued)':'')+'</b><i>'+esc(copy)+'</i></div>'
+  +'<div class="t6tt"><i></i><b>'+esc(T.label)+(p?' (Continued)':'')+'</b><i>( '+esc(copy)+' )</i></div>'
   +(p===0&&kind==='proforma'?'<div class="t6j">This is not a tax invoice</div>':'')
   +'<div class="t6box">'
   +(p===0?headHtml:'<div class="t6cont"><span>'+esc(T.label)+' No. '+esc(no)+'</span><span>Page '+(p+1)+' of '+np+'</span></div>')
