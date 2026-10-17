@@ -25601,6 +25601,7 @@ return `
 html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;width:100%}
 .t6pg{width:100%;min-height:276mm;display:flex;flex-direction:column;font-size:11px;line-height:1.3;color:#000;background:#fff;page-break-after:always;break-after:page}
 .t6pg:last-child{page-break-after:auto;break-after:auto}
+.t6pg{position:relative;isolation:isolate}.t6wm{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;z-index:-1;pointer-events:none}
 .t6j{text-align:center;font-size:10px;margin:0 0 3px}
 .t6tt{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3px}
 .t6tt b{font-size:17px;margin:0 auto;position:relative;left:28px}.t6tt i{font-size:10px;font-style:italic;text-transform:uppercase;position:relative;top:-4px;left:-8px}
@@ -25620,7 +25621,7 @@ html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvet
 table.t6it{width:100%;border-collapse:collapse;table-layout:fixed}
 .t6it th{border-bottom:1px solid #000;padding:4px 3px;font-size:10.5px;text-align:center;font-weight:700;white-space:nowrap}
 .t6it th.s{line-height:1.05;padding-top:2px;padding-bottom:2px}
-${(typeof t7On==='function'&&t7On())?'.t6it th{font-weight:400}':''}
+.t6it th{font-weight:400}
 .t6it th:first-child,.t6it td:first-child{border-left:0}
 .t6it td{padding:1px 4px;line-height:1.2;vertical-align:top;font-size:11px;overflow-wrap:anywhere}
 .t6it td.c{text-align:center}.t6it td.r{text-align:right}
@@ -25763,6 +25764,7 @@ function t6CustHtml(k){
   h+='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">⚙️ Theme '+(t7On()?'7':'6')+' — Customize</div><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6CloseCustomize()">✕</button></div>'
    +'<div class="sub" style="margin-top:6px;font-size:12px">Document chuno — har document ki apni alag setting hoti hai.</div>';
   if(t7On()&&typeof t7SqOn==='function'){var sqo=t7SqOn();h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border:1px solid var(--border-color);border-radius:12px"><div><b style="font-size:14px">Tally Squeeze (sab documents)</b><div class="sub" style="margin-top:2px;font-size:12px">ON: Seller / Buyer / Consignee limit se zyada bhare (Seller 7, Buyer/Consignee 6 lines) tabhi text upar-neeche se thoda dabega. Limit ke andar kuch nahi badlega.</div></div><button type="button" class="btn '+(sqo?'success':'muted')+'" style="min-width:76px" onclick="t7SqToggle()">'+(sqo?'ON':'OFF')+'</button></div>'}
+  h+=t6WmHtml();
   T6_DOCS.forEach(function(x){
    var tags=[];if(x[2].indexOf('thin')>=0)tags.push(t6Get(x[0],'thin')?'Thin':'Normal lines');if(x[2].indexOf('large')>=0)tags.push(t6Get(x[0],'large')?'Bada text':'Chhota text');if(x[2].indexOf('qr')>=0&&t6Get(x[0],'qr'))tags.push('QR');
    h+='<button type="button" class="btn muted" style="display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin-top:10px;text-align:left;padding:12px 14px" onclick="t6OpenCustomize(\''+x[0]+'\')"><span><b style="font-size:14px">'+x[1]+'</b><span class="sub" style="display:block;margin-top:2px;font-size:11px">'+tags.join(' · ')+'</span></span><span style="font-size:18px">›</span></button>';
@@ -25786,6 +25788,47 @@ function t6OpenCustomize(k){
  m.style.display='flex';
 }
 function t6CloseCustomize(){var m=document.getElementById('t6CustModal');if(m)m.style.display='none'}
+/* ===== Watermark (Theme 6 + 7): db.settings.t6wm = {on,img,op,sz,dx,dy}. Page ke beech me, text ke peeche; letterhead upar hi rehta hai ===== */
+function t6WmCfg(){var s=db.settings=db.settings||{};var c=s.t6wm=s.t6wm||{};
+ if(typeof c.on!=='boolean')c.on=false;if(typeof c.img!=='string')c.img='';
+ if(typeof c.op!=='number')c.op=15;if(typeof c.sz!=='number')c.sz=60;if(typeof c.dx!=='number')c.dx=0;if(typeof c.dy!=='number')c.dy=0;return c}
+function t6Wm(){try{var c=t6WmCfg();if(!c.on||!c.img)return '';
+ return '<div class="t6wm"><img src="'+c.img+'" alt="" style="position:absolute;left:calc(50% + '+c.dx+'%);top:calc(50% + '+c.dy+'%);width:'+c.sz+'%;height:auto;transform:translate(-50%,-50%);opacity:'+(c.op/100)+'"></div>'}catch(e){return ''}}
+function t6WmSave(){try{saveDB()}catch(e){}if(typeof t6OpenCustomize==='function')t6OpenCustomize()}
+function t6WmToggle(){var c=t6WmCfg();if(!c.on&&!c.img){alert('Pehle watermark ki image chuno.');return}c.on=!c.on;t6WmSave()}
+function t6WmSet(f,v){var c=t6WmCfg();v=parseFloat(v);if(isNaN(v))return;c[f]=f==='op'?Math.max(2,Math.min(100,v)):Math.max(10,Math.min(150,v));t6WmSave()}
+function t6WmNudge(a,b){var c=t6WmCfg();c.dx=Math.max(-50,Math.min(50,+(c.dx+a).toFixed(1)));c.dy=Math.max(-50,Math.min(50,+(c.dy+b).toFixed(1)));t6WmSave()}
+function t6WmReset(){var c=t6WmCfg();c.dx=0;c.dy=0;t6WmSave()}
+function t6WmClear(){var c=t6WmCfg();c.img='';c.on=false;t6WmSave()}
+function t6WmFile(inp){
+ var f=inp.files&&inp.files[0];if(!f)return;
+ var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
+  var mw=1200,sc=Math.min(1,mw/im.width),cv=document.createElement('canvas');cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+  var cx=cv.getContext('2d');cx.drawImage(im,0,0,cv.width,cv.height);var c=t6WmCfg();
+  try{c.img=cv.toDataURL(f.type==='image/png'?'image/png':'image/jpeg',.85)}catch(e){c.img=r.result}
+  c.on=true;t6WmSave()};im.src=r.result};r.readAsDataURL(f);
+}
+function t6WmHtml(){
+ var c=t6WmCfg(),btn='min-height:36px;padding:6px 12px',sl='width:100%;margin-top:4px';
+ var h='<div style="margin-top:14px;padding:12px 14px;border:1px solid var(--border-color);border-radius:12px">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><b style="font-size:14px">Watermark (sab documents)</b><div class="sub" style="margin-top:2px;font-size:12px">Image page ke beech me, text ke peeche aayegi. Letterhead upar hi rahega.</div></div><button type="button" class="btn '+(c.on?'success':'muted')+'" style="min-width:76px" onclick="t6WmToggle()">'+(c.on?'ON':'OFF')+'</button></div>'
+  +'<div style="display:flex;align-items:center;gap:10px;margin-top:12px">'
+  +(c.img?'<img src="'+c.img+'" alt="" style="width:54px;height:54px;object-fit:contain;border:1px solid var(--border-color);border-radius:8px;background:#fff">':'')
+  +'<label class="btn muted" style="'+btn+';cursor:pointer">'+(c.img?'Image badlo':'Image chuno (PNG/JPG)')+'<input type="file" accept="image/*" style="display:none" onchange="t6WmFile(this)"></label>'
+  +(c.img?'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmClear()">Clear</button>':'')+'</div>';
+ if(c.img){
+  h+='<div style="margin-top:12px;font-size:12px">Opacity: <b>'+c.op+'%</b><input type="range" min="2" max="100" step="1" value="'+c.op+'" style="'+sl+'" onchange="t6WmSet(\'op\',this.value)"></div>'
+   +'<div style="margin-top:10px;font-size:12px">Size: <b>'+c.sz+'%</b> (page ki chaudai ka)<input type="range" min="10" max="150" step="1" value="'+c.sz+'" style="'+sl+'" onchange="t6WmSet(\'sz\',this.value)"></div>'
+   +'<div style="margin-top:12px;font-size:12px">Position (beech se):</div>'
+   +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">'
+   +'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmNudge(-2,0)">◀</button>'
+   +'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmNudge(2,0)">▶</button>'
+   +'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmNudge(0,-2)">▲</button>'
+   +'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmNudge(0,2)">▼</button>'
+   +'<button type="button" class="btn muted" style="'+btn+'" onclick="t6WmReset()">Reset</button></div>';
+ }
+ return h+'</div>';
+}
 function t6Plan(rows,taxPx,hsnRows){
  /* heights in px (A4 box ~1000px usable); rows[].l is the estimated row height */
  var BG=t6IsBig(),BUD=1000,HEAD=BG?345:300,CONT=BG?34:30,TH=BG?28:24,TOT=BG?28:24,NOTE=BG?19:17,foot=(BG?390:335)+15*Math.max(0,hsnRows-3),pages=[],i=0,n=rows.length,first=true,j;
@@ -25985,7 +26028,7 @@ function t6InvoiceBuild(inv,copy,opts){
  var T6CMP='<style>.t6it td{padding-top:1px!important;padding-bottom:1px!important}.t6it th{padding-top:2px!important;padding-bottom:2px!important}.t6hl>div{padding-top:2px!important;padding-bottom:2px!important}.t6hr>div{padding-top:1px!important;padding-bottom:1px!important}.t6hr>div:not(.e){min-height:30px!important}.t6hr>div.w:not(.e){min-height:44px!important}.t6aw{padding-top:2px!important;padding-bottom:2px!important}.t6tw{padding-top:2px!important;padding-bottom:2px!important}.t6ts th,.t6ts td{padding-top:1px!important;padding-bottom:1px!important}.t6tot td{padding-top:2px!important;padding-bottom:2px!important}.t6j,.t6tt{margin-bottom:1px!important}.t6ft{margin-top:2px!important}</style>';
  function pageHtml(prows,p,last,np,tax){
   var showTx=(tax===undefined)?last:tax;
-  return '<div class="t6pg t6v'+t6Variant()+'">'+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
+  return '<div class="t6pg t6v'+t6Variant()+'">'+t6Wm()+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
   +t7Top()+'<div class="t6tt"><i></i><b>'+esc(title)+(p?' (Continued)':'')+'</b><i>( '+esc(copy)+' )</i></div><div class="t6box">'
   +(p===0?headHtml:'<div class="t6cont"><span>'+esc(title)+' No. '+esc(inv.invoiceNumber||'')+'</span><span>Page '+(p+1)+' of '+np+'</span></div>')
   +'<div class="t6itw">'+vl+'<table class="t6it">'+cg+'<thead>'+thead+'</thead><tbody>'+prows.map(function(r){return r.html}).join('')+(showTx?tx:'')+'</tbody></table></div>'
@@ -26331,7 +26374,7 @@ function t6DocBuild(d,copy){
   :'<tr><td></td><td class="r">Total Quantity</td><td></td><td class="r n">'+esc(qtxt)+'</td><td></td></tr>';
  function pageHtml(prows,p,last,np,tax){
   var showTx=(tax===undefined)?last:tax;
-  return '<div class="t6pg t6v'+t6Variant()+'">'+T6TB+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
+  return '<div class="t6pg t6v'+t6Variant()+'">'+t6Wm()+T6TB+(cmp?T6CMP:'')+(CW.f<1?'<style>.t6it td.n,.t6tot td.n{font-size:'+CW.sz+'px}</style>':'')
   +t7Top()+'<div class="t6tt"><i></i><b>'+esc(T.label)+(p?' (Continued)':'')+'</b><i>( '+esc(copy)+' )</i></div>'
   +(p===0&&kind==='proforma'?'<div class="t6j">This is not a tax invoice</div>':'')
   +'<div class="t6box">'
