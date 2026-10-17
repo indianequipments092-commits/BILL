@@ -26014,8 +26014,8 @@ function t7Cfg(){var s=db.settings=db.settings||{};var c=s.t7=s.t7||{};
  if(c.on===undefined)c.on=false;if(!c.design)c.design='blank';if(!c.h)c.h=4;if(!c.color)c.color='#0b3d6e';if(!c.font)c.font='Arial';if(c.bg===undefined)c.bg='';if(!c.bgFit)c.bgFit='cover';if(!c.art)c.art='none';if(c.dx===undefined)c.dx=0;if(c.dy===undefined)c.dy=0;return c}
 function t7Hide(){return t7On()&&!!t7Cfg().on}
 function t7Top(){return t7Hide()?t7Block():''}
-/* ===== Tally Squeeze (Theme 7): Seller / Buyer / Consignee block limit se zyada bhare to pehle line-spacing tight, phir vertical squash (min 0.70). Real height naap kar, block ki jagah bhi utni hi kam hoti hai (gap nahi). db.settings.t7.sq ===== */
-var T7_SQ_MEMO={},T7_SQ_MIN=.70,T7_SQ_LH='1.12';
+/* ===== Tally Squeeze (Theme 7): Seller / Buyer / Consignee block limit se zyada bhare to pehle line-spacing tight, phir vertical squash (min 0.35, hamesha block me fit). Real height naap kar, block ki jagah bhi utni hi kam hoti hai (gap nahi). db.settings.t7.sq ===== */
+var T7_SQ_MEMO={},T7_SQ_MIN=.35,T7_SQ_LH='1.12';
 function t7SqOn(){return t7On()&&!!t7Cfg().sq}
 function t7SqToggle(){var c=t7Cfg();c.sq=!c.sq;t7Save();if(typeof t6OpenCustomize==='function')t6OpenCustomize()}
 function t7Sq(block,n){
