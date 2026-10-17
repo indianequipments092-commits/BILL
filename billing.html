@@ -25631,8 +25631,9 @@ table.t6it{width:100%;border-collapse:collapse;table-layout:fixed}
 table.t6tot{width:100%;border-collapse:collapse;table-layout:fixed;border-top:1px solid #000}.t6tot td{border-left:1px solid #000;border-bottom:1px solid #000;font-weight:700;padding:3px 4px;font-size:11px}.t6tot td:first-child{border-left:0}.t6tot td.r{text-align:right}
 .t6aw{display:flex;justify-content:space-between;padding:4px 6px;border-bottom:1px solid #000}.t6aw small{font-size:10px}.t6aw b{font-size:12px;display:block}
 table.t6ts{width:100%;border-collapse:separate;border-spacing:0;font-size:10.5px}
+.t6ts tr:nth-child(2) th:first-child{border-left:1px solid #000}
 .t6ts th,.t6ts td{border-left:1px solid #000;border-bottom:1px solid #000;padding:2px 4px}.t6ts th:first-child,.t6ts td:first-child{border-left:0}
-.t6ts th{text-align:center;font-weight:700}.t6ts td.r{text-align:right}.t6ts tr.t td{font-weight:700}
+.t6ts th{text-align:right;font-weight:700}.t6ts th[colspan]{text-align:center}.t6ts tr:first-child th:first-child{text-align:left}.t6ts td.r{text-align:right}.t6ts tr.t td{font-weight:700}
 .t6tw{padding:3px 6px;border-bottom:1px solid #000}.t6tw b{font-size:11.5px}
 .t6bt{display:grid;grid-template-columns:3fr 2fr;break-inside:avoid;page-break-inside:avoid}.t6bt>div{padding:5px 6px;min-height:104px}
 .t6bt>div+div{border-left:1px solid #000;display:flex;flex-direction:column;justify-content:space-between}
@@ -25933,7 +25934,7 @@ function t6InvoiceBuild(inv,copy,opts){
  var sum='';
  if(!bos){
   var T=0,CG=0,SG=0,IG=0,TX=0;
-  sum='<table class="t6ts"><tr><th rowspan="2">HSN/SAC</th><th rowspan="2">Taxable Value</th>'+(same?'<th colspan="2">Central Tax</th><th colspan="2">State Tax</th>':'<th colspan="2">Integrated Tax</th>')+'<th rowspan="2">Total Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th>'+(same?'<th>Rate</th><th>Amount</th>':'')+'</tr>';
+  sum='<table class="t6ts"><tr><th rowspan="2">HSN/SAC</th><th rowspan="2">Taxable<br>Value</th>'+(same?'<th colspan="2">Central Tax</th><th colspan="2">State Tax</th>':'<th colspan="2">Integrated Tax</th>')+'<th rowspan="2">Total<br>Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th>'+(same?'<th>Rate</th><th>Amount</th>':'')+'</tr>';
   hk.forEach(function(k){var h=byHsn[k],tx2=h.cg+h.sg+h.ig;T+=h.t;CG+=h.cg;SG+=h.sg;IG+=h.ig;TX+=tx2;
    sum+='<tr><td>'+esc(h.hsn)+'</td><td class="r">'+money(h.t)+'</td>'+(same?'<td class="r">'+h.g/2+'%</td><td class="r">'+money(h.cg)+'</td><td class="r">'+h.g/2+'%</td><td class="r">'+money(h.sg)+'</td>':'<td class="r">'+h.g+'%</td><td class="r">'+money(h.ig)+'</td>')+'<td class="r">'+money(tx2)+'</td></tr>'});
   sum+='<tr class="t"><td style="text-align:right">Total</td><td class="r">'+money(T)+'</td>'+(same?'<td></td><td class="r">'+money(CG)+'</td><td></td><td class="r">'+money(SG)+'</td>':'<td></td><td class="r">'+money(IG)+'</td>')+'<td class="r">'+money(TX)+'</td></tr></table><div class="t6tw">Tax Amount (in words) : <b>'+t6Words(TX)+'</b></div>';
@@ -26246,7 +26247,7 @@ function t6DocBuild(d,copy){
  var sum='';
  if(taxed){
   var TT=0,CG=0,SG=0,IG=0,TX=0;
-  sum='<table class="t6ts"><tr><th rowspan="2">HSN/SAC</th><th rowspan="2">Taxable Value</th>'+(same?'<th colspan="2">Central Tax</th><th colspan="2">State Tax</th>':'<th colspan="2">Integrated Tax</th>')+'<th rowspan="2">Total Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th>'+(same?'<th>Rate</th><th>Amount</th>':'')+'</tr>';
+  sum='<table class="t6ts"><tr><th rowspan="2">HSN/SAC</th><th rowspan="2">Taxable<br>Value</th>'+(same?'<th colspan="2">Central Tax</th><th colspan="2">State Tax</th>':'<th colspan="2">Integrated Tax</th>')+'<th rowspan="2">Total<br>Tax Amount</th></tr><tr><th>Rate</th><th>Amount</th>'+(same?'<th>Rate</th><th>Amount</th>':'')+'</tr>';
   hk.forEach(function(k){var h=byHsn[k],tx2=h.cg+h.sg+h.ig;TT+=h.t;CG+=h.cg;SG+=h.sg;IG+=h.ig;TX+=tx2;
    sum+='<tr><td>'+esc(h.hsn)+'</td><td class="r">'+money(h.t)+'</td>'+(same?'<td class="r">'+h.g/2+'%</td><td class="r">'+money(h.cg)+'</td><td class="r">'+h.g/2+'%</td><td class="r">'+money(h.sg)+'</td>':'<td class="r">'+h.g+'%</td><td class="r">'+money(h.ig)+'</td>')+'<td class="r">'+money(tx2)+'</td></tr>'});
   sum+='<tr class="t"><td style="text-align:right">Total</td><td class="r">'+money(TT)+'</td>'+(same?'<td></td><td class="r">'+money(CG)+'</td><td></td><td class="r">'+money(SG)+'</td>':'<td></td><td class="r">'+money(IG)+'</td>')+'<td class="r">'+money(TX)+'</td></tr></table><div class="t6tw">Tax Amount (in words) : <b>'+t6Words(TX)+'</b></div>';
