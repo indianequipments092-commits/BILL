@@ -25689,9 +25689,9 @@ function getPrintStylesTheme6(){
 }
 function t6Variant(){return (t6IsThin()?1:0)+(t6IsBig()?2:0)}
 /* ===== Theme 6 settings are now PER DOCUMENT: db.settings.t6Docs[key] = {thin,large,qr,cons,lr,mv}. Old single settings (t6Thin, t6Large ...) are copied into a document the first time it is changed, and until then they are the fallback. ===== */
-var T6_DEF={thin:false,large:true,qr:false,cons:true,lr:true,mv:true,logo:false};
+var T6_DEF={thin:false,large:true,qr:false,cons:true,lr:true,mv:true,logo:false,sell:false};
 var T6_LEG={thin:'t6Thin',large:'t6Large',qr:'t6Qr',cons:'t6Cons',lr:'t6Lr',mv:'t6Mv'};
-var T6_FIELDS=['thin','large','qr','cons','lr','mv','logo'];
+var T6_FIELDS=['thin','large','qr','cons','lr','mv','logo','sell'];
 var T6_F={
  thin:['Border / Line Thin','ON: sab lines bahut patli. OFF: abhi wali normal lines.'],
  large:['Normal Text Size','ON: text kafi bada. OFF: normal size (pehle jaisa).'],
@@ -25699,22 +25699,23 @@ var T6_F={
  cons:['Consignee (Ship to)','ON: Buyer ke neeche Consignee / Ship to bhi dikhega. OFF: sirf main party dikhegi.'],
  lr:['Bill of Lading/LR-RR No.','ON: document mein dikhega. OFF: nahi dikhega.'],
  mv:['Motor Vehicle No.','ON: document mein dikhega. OFF: nahi dikhega.'],
+ sell:['Seller Details (Theme 7)','ON: Letterhead ON hone par bhi bill me Seller (company naam, address, GSTIN, State, Phone, Email) dikhega. OFF: letterhead ON me seller hat jayega. Letterhead OFF ho to ye hamesha dikhta hai.'],
  logo:['Add Logo','ON: Company ka logo (Settings mein upload) upar company ke naam ke bagal mein aayega. OFF: logo nahi.']
 };
 var T6_DOCS=[
- ['invoice','Tax Invoice',['thin','large','qr','cons','lr','mv','logo']],
- ['bos','Bill of Supply',['thin','large','qr','cons','lr','mv']],
- ['cashmemo','Cash Memo (Without GST)',['thin','large','qr','cons','lr','mv']],
- ['cashmemogst','Cash Memo (With GST)',['thin','large','qr','cons','lr','mv']],
- ['quotation','Quotation',['thin','large','qr','cons']],
- ['proforma','Proforma Invoice',['thin','large','qr','cons']],
- ['salesorder','Sales Order',['thin','large','cons']],
- ['challan','Delivery Challan',['thin','large','cons','lr','mv']],
- ['po','Purchase Order',['thin','large']],
- ['pb','Purchase Bill',['thin','large']],
- ['workorder','Work Order',['thin','large','cons']],
- ['gatepass','Gate Pass',['thin','large','cons','mv']],
- ['packingslip','Packing Slip',['thin','large','cons','lr','mv']]
+ ['invoice','Tax Invoice',['thin','large','qr','cons','lr','mv','logo','sell']],
+ ['bos','Bill of Supply',['thin','large','qr','cons','lr','mv','sell']],
+ ['cashmemo','Cash Memo (Without GST)',['thin','large','qr','cons','lr','mv','sell']],
+ ['cashmemogst','Cash Memo (With GST)',['thin','large','qr','cons','lr','mv','sell']],
+ ['quotation','Quotation',['thin','large','qr','cons','sell']],
+ ['proforma','Proforma Invoice',['thin','large','qr','cons','sell']],
+ ['salesorder','Sales Order',['thin','large','cons','sell']],
+ ['challan','Delivery Challan',['thin','large','cons','lr','mv','sell']],
+ ['po','Purchase Order',['thin','large','sell']],
+ ['pb','Purchase Bill',['thin','large','sell']],
+ ['workorder','Work Order',['thin','large','cons','sell']],
+ ['gatepass','Gate Pass',['thin','large','cons','mv','sell']],
+ ['packingslip','Packing Slip',['thin','large','cons','lr','mv','sell']]
 ];
 function t6Key(){return window.__t6ck||window.__t6ft||'invoice'}
 function t6Get(k,f){
@@ -25755,6 +25756,7 @@ function t6CustHtml(k){
  }else{
   h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6OpenCustomize()">‹ Back</button><div style="font-size:15px;font-weight:800;flex:1;text-align:center">'+d[1]+'</div><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6CloseCustomize()">✕</button></div>';
   d[2].forEach(function(f){
+   if(f==='sell'&&!t7On())return;
    var on=t6Get(k,f);
    h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px"><div><b style="font-size:14px">'+T6_F[f][0]+'</b><div class="sub" style="margin-top:2px;font-size:12px">'+T6_F[f][1]+'</div></div>'
     +'<button type="button" class="btn '+(on?'success':'muted')+'" style="min-width:76px" onclick="t6Set(\''+k+'\',\''+f+'\')">'+(on?'ON':'OFF')+'</button></div>';
@@ -25945,7 +25947,7 @@ function t6InvoiceBuild(inv,copy,opts){
   +cell('Reference No. &amp; Date.',esc(inv.supplierRef||''))+cell('Other References',esc(inv.otherRef||''))+cell('Buyer\'s Order No.',esc(inv.buyerOrderNo||''))+cell('Dated',esc(t6Date(inv.buyerOrderDate)))
   +cell('Dispatch Doc No.',esc(inv.dispatchDocNo||''))+cell('Delivery Note Date',esc(t6Date(inv.deliveryNoteDate)))+cell('Dispatched through',esc(inv.transport||''))+cell('Destination',esc(inv.destination||cu.city||''))
   +(t6IsLr()&&t6IsMv()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''))+cell('Motor Vehicle No.',esc(inv.vehicleNo||'')):t6IsLr()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''),0,1):t6IsMv()?cell('Motor Vehicle No.',esc(inv.vehicleNo||''),0,1):'')+cell('Terms of Delivery',esc(inv.termsOfDelivery||''),1);
- var headHtml='<div class="t6hd"><div class="t6hl">'+(t7Hide()?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>';
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>';
  var cm=[[],[],[],[],[],[],[]];
  items.forEach(function(r,i){var ds=Number(r.disc||0),q=rowIsAlt(r)?rowPQty(r,r.qty):(r.qty+' '+(r.unit||'Nos'));
   cm[0].push([String(i+1),0,0]);cm[1].push([String(r.hsn||''),0,0]);cm[2].push([String(q),1,0]);cm[3].push([money(r.rate),0,0]);cm[4].push([String(rowPUnit(r,r.unit||'Nos')),0,0]);cm[5].push([ds>0?ds+' %':'',0,0]);cm[6].push([money(r.taxable),1,0])});
@@ -26236,7 +26238,7 @@ function t6DocBuild(d,copy){
  else C=[['Delivery Challan No.',no],['Dated',dateStr],['Purpose',d.purpose],['Buyer\'s Order No. &amp; Date',poTxt],['Invoice No.',d.invoiceNo],['E-Way Bill No.',d.ewayBill],['Dispatched through',d.transporter],['Motor Vehicle No.',d.vehicleNo],['Bill of Lading/LR-RR No.',d.lrNo],['Driver Name &amp; Contact',[d.driverName,d.driverContact].filter(Boolean).join(', ')],['Destination',dest]];
  C=C.filter(function(c){return !(c[0]==='Bill of Lading/LR-RR No.'&&!t6IsLr())&&!(c[0]==='Motor Vehicle No.'&&!t6IsMv())});
  var right=C.map(function(c,i){return cell(c[0],esc(c[1]||''),0,(i===C.length-1&&C.length%2===1)?1:0)}).join('')+(d.srcRef?cell('Against',esc(d.srcRef),0,1):'');
- var headHtml='<div class="t6hd"><div class="t6hl">'+(t7Hide()?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>'
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>'
   +((kind==='quotation'&&(String(d.subject||'').trim()||String(d.intro||'').trim()))?'<div class="t6tw">'+(String(d.subject||'').trim()?'Subject : <b>'+esc(d.subject)+'</b>':'')+(String(d.intro||'').trim()?'<div style="margin-top:2px">'+esc(d.intro).replace(/\n/g,'<br>')+'</div>':'')+'</div>':'');
  /* columns */
  var big=t6IsBig(),H,def;
