@@ -26015,7 +26015,7 @@ function t7Cfg(){var s=db.settings=db.settings||{};var c=s.t7=s.t7||{};
 function t7Hide(){return t7On()&&!!t7Cfg().on}
 function t7Top(){return t7Hide()?t7Block():''}
 /* ===== Tally Squeeze (Theme 7): Seller / Buyer / Consignee block limit se zyada bhare to pehle line-spacing tight, phir vertical squash (min 0.35, hamesha block me fit). Real height naap kar, block ki jagah bhi utni hi kam hoti hai (gap nahi). db.settings.t7.sq ===== */
-var T7_SQ_MEMO={},T7_SQ_MIN=.35,T7_SQ_LH='1.12';
+var T7_SQ_MEMO={},T7_SQ_MIN=.35,T7_SQ_FIX=.80,T7_SQ_LH='1.12';
 function t7SqOn(){return t7On()&&!!t7Cfg().sq}
 function t7SqToggle(){var c=t7Cfg();c.sq=!c.sq;t7Save();if(typeof t6OpenCustomize==='function')t6OpenCustomize()}
 function t7Sq(block,n){
@@ -26035,9 +26035,8 @@ function t7Sq(block,n){
   sr.innerHTML='<style>'+getPrintStylesTheme6()+'\n.t6pg{min-height:0!important}</style><div style="all:initial;display:block;width:733px;box-sizing:border-box;font-family:'+fi.stack+';color:#000"><div class="t6pg t6v'+t6Variant()+'"><div class="t6box"><div class="t6hd"><div class="t6hl"><div><div id="r">'+ref+'</div></div><div><div id="a">'+inner+'</div></div><div><div id="b" style="line-height:'+T7_SQ_LH+'">'+inner+'</div></div></div><div class="t6hr"></div></div></div></div></div>';
   var H=function(id){var e=sr.getElementById(id);return e?e.getBoundingClientRect().height:0};
   var lim=H('r'),h1=H('a'),h2=H('b'),out=block;
-  if(lim>0&&h1>lim+.5){
-   if(h2<=lim+.5)out='<div><div style="line-height:'+T7_SQ_LH+'">'+inner+'</div></div>';
-   else{var k=Math.max(T7_SQ_MIN,lim/h2);out='<div><div class="t6sq" style="height:'+(Math.ceil(h2*k)+1)+'px;overflow:hidden"><div style="transform:scaleY('+k.toFixed(3)+');transform-origin:0 0;line-height:'+T7_SQ_LH+'">'+inner+'</div></div></div>'}
+  if(lim>0&&h2>0){
+   {var k=Math.max(T7_SQ_MIN,Math.min(T7_SQ_FIX,h2>lim+.5?lim/h2:1));out='<div><div class="t6sq" style="height:'+(Math.ceil(h2*k)+1)+'px;overflow:hidden"><div style="transform:scaleY('+k.toFixed(3)+');transform-origin:0 0;line-height:'+T7_SQ_LH+'">'+inner+'</div></div></div>'}
   }
   if(Object.keys(T7_SQ_MEMO).length>300)T7_SQ_MEMO={};
   T7_SQ_MEMO[key]=out;return out;
