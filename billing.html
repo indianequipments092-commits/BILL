@@ -25749,6 +25749,7 @@ function t6CustHtml(k){
  if(!d){
   h+='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">⚙️ Theme '+(t7On()?'7':'6')+' — Customize</div><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6CloseCustomize()">✕</button></div>'
    +'<div class="sub" style="margin-top:6px;font-size:12px">Document chuno — har document ki apni alag setting hoti hai.</div>';
+  if(t7On()&&typeof t7SqOn==='function'){var sqo=t7SqOn();h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border:1px solid var(--border-color);border-radius:12px"><div><b style="font-size:14px">Tally Squeeze (sab documents)</b><div class="sub" style="margin-top:2px;font-size:12px">ON: Seller / Buyer / Consignee limit se zyada bhare (Seller 7, Buyer/Consignee 6 lines) tabhi text upar-neeche se thoda dabega. Limit ke andar kuch nahi badlega.</div></div><button type="button" class="btn '+(sqo?'success':'muted')+'" style="min-width:76px" onclick="t7SqToggle()">'+(sqo?'ON':'OFF')+'</button></div>'}
   T6_DOCS.forEach(function(x){
    var tags=[];if(x[2].indexOf('thin')>=0)tags.push(t6Get(x[0],'thin')?'Thin':'Normal lines');if(x[2].indexOf('large')>=0)tags.push(t6Get(x[0],'large')?'Bada text':'Chhota text');if(x[2].indexOf('qr')>=0&&t6Get(x[0],'qr'))tags.push('QR');
    h+='<button type="button" class="btn muted" style="display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin-top:10px;text-align:left;padding:12px 14px" onclick="t6OpenCustomize(\''+x[0]+'\')"><span><b style="font-size:14px">'+x[1]+'</b><span class="sub" style="display:block;margin-top:2px;font-size:11px">'+tags.join(' · ')+'</span></span><span style="font-size:18px">›</span></button>';
@@ -25947,7 +25948,7 @@ function t6InvoiceBuild(inv,copy,opts){
   +cell('Reference No. &amp; Date.',esc(inv.supplierRef||''))+cell('Other References',esc(inv.otherRef||''))+cell('Buyer\'s Order No.',esc(inv.buyerOrderNo||''))+cell('Dated',esc(t6Date(inv.buyerOrderDate)))
   +cell('Dispatch Doc No.',esc(inv.dispatchDocNo||''))+cell('Delivery Note Date',esc(t6Date(inv.deliveryNoteDate)))+cell('Dispatched through',esc(inv.transport||''))+cell('Destination',esc(inv.destination||cu.city||''))
   +(t6IsLr()&&t6IsMv()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''))+cell('Motor Vehicle No.',esc(inv.vehicleNo||'')):t6IsLr()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''),0,1):t6IsMv()?cell('Motor Vehicle No.',esc(inv.vehicleNo||''),0,1):'')+cell('Terms of Delivery',esc(inv.termsOfDelivery||''),1);
- var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>';
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>';
  var cm=[[],[],[],[],[],[],[]];
  items.forEach(function(r,i){var ds=Number(r.disc||0),q=rowIsAlt(r)?rowPQty(r,r.qty):(r.qty+' '+(r.unit||'Nos'));
   cm[0].push([String(i+1),0,0]);cm[1].push([String(r.hsn||''),0,0]);cm[2].push([String(q),1,0]);cm[3].push([money(r.rate),0,0]);cm[4].push([String(rowPUnit(r,r.unit||'Nos')),0,0]);cm[5].push([ds>0?ds+' %':'',0,0]);cm[6].push([money(r.taxable),1,0])});
@@ -26004,6 +26005,36 @@ function t7Cfg(){var s=db.settings=db.settings||{};var c=s.t7=s.t7||{};
  if(c.on===undefined)c.on=false;if(!c.design)c.design='blank';if(!c.h)c.h=4;if(!c.color)c.color='#0b3d6e';if(!c.font)c.font='Arial';if(c.bg===undefined)c.bg='';if(!c.bgFit)c.bgFit='cover';if(!c.art)c.art='none';if(c.dx===undefined)c.dx=0;if(c.dy===undefined)c.dy=0;return c}
 function t7Hide(){return t7On()&&!!t7Cfg().on}
 function t7Top(){return t7Hide()?t7Block():''}
+/* ===== Tally Squeeze (Theme 7): Seller / Buyer / Consignee block limit se zyada bhare to pehle line-spacing tight, phir halka vertical squash (min 0.82). Real height naap kar, block ki jagah bhi utni hi kam hoti hai (gap nahi). db.settings.t7.sq ===== */
+var T7_SQ_MEMO={},T7_SQ_MIN=.82,T7_SQ_LH='1.12';
+function t7SqOn(){return t7On()&&!!t7Cfg().sq}
+function t7SqToggle(){var c=t7Cfg();c.sq=!c.sq;t7Save();if(typeof t6OpenCustomize==='function')t6OpenCustomize()}
+function t7Sq(block,n){
+ if(!block||!t7SqOn())return block;
+ var m=/^<div>([\s\S]*)<\/div>$/.exec(block);if(!m)return block;
+ var inner=m[1],host=null;
+ try{
+  if(typeof document==='undefined'||!document.body||!document.body.attachShadow||typeof getPrintStylesTheme6!=='function')return block;
+  var fi=(typeof t6FontInfo==='function')?t6FontInfo():{stack:'Arial,Helvetica,sans-serif'};
+  var key=[n,fi.stack,window.__t6ck||'',t6Get(null,'thin'),t6Get(null,'large')].join('|')+'|'+inner;
+  if(T7_SQ_MEMO[key])return T7_SQ_MEMO[key];
+  host=document.createElement('div');host.setAttribute('aria-hidden','true');
+  host.style.cssText='position:fixed;left:-10000px;top:0;width:733px;visibility:hidden;pointer-events:none';
+  document.body.appendChild(host);
+  var sr=host.attachShadow({mode:'open'});
+  var ref='<b class="n">Ag</b>'+new Array(n).join('<small>Ag</small>');
+  sr.innerHTML='<style>'+getPrintStylesTheme6()+'\n.t6pg{min-height:0!important}</style><div style="all:initial;display:block;width:733px;box-sizing:border-box;font-family:'+fi.stack+';color:#000"><div class="t6pg t6v'+t6Variant()+'"><div class="t6box"><div class="t6hd"><div class="t6hl"><div><div id="r">'+ref+'</div></div><div><div id="a">'+inner+'</div></div><div><div id="b" style="line-height:'+T7_SQ_LH+'">'+inner+'</div></div></div><div class="t6hr"></div></div></div></div></div>';
+  var H=function(id){var e=sr.getElementById(id);return e?e.getBoundingClientRect().height:0};
+  var lim=H('r'),h1=H('a'),h2=H('b'),out=block;
+  if(lim>0&&h1>lim+.5){
+   if(h2<=lim+.5)out='<div><div style="line-height:'+T7_SQ_LH+'">'+inner+'</div></div>';
+   else{var k=Math.max(T7_SQ_MIN,lim/h2);out='<div><div class="t6sq" style="height:'+(Math.ceil(h2*k)+1)+'px;overflow:hidden"><div style="transform:scaleY('+k.toFixed(3)+');transform-origin:0 0;line-height:'+T7_SQ_LH+'">'+inner+'</div></div></div>'}
+  }
+  if(Object.keys(T7_SQ_MEMO).length>300)T7_SQ_MEMO={};
+  T7_SQ_MEMO[key]=out;return out;
+ }catch(e){return block}
+ finally{if(host&&host.parentNode)host.parentNode.removeChild(host)}
+}
 function t7Tint(hex,a){var m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return 'rgba(0,0,0,'+a+')';var n=parseInt(m[1],16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
 function t7Dark(hex,f){var m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return '#000';var n=parseInt(m[1],16),r=Math.round((n>>16&255)*f),g=Math.round((n>>8&255)*f),b=Math.round((n&255)*f);return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
 function t7Block(design,hh){
@@ -26238,7 +26269,7 @@ function t6DocBuild(d,copy){
  else C=[['Delivery Challan No.',no],['Dated',dateStr],['Purpose',d.purpose],['Buyer\'s Order No. &amp; Date',poTxt],['Invoice No.',d.invoiceNo],['E-Way Bill No.',d.ewayBill],['Dispatched through',d.transporter],['Motor Vehicle No.',d.vehicleNo],['Bill of Lading/LR-RR No.',d.lrNo],['Driver Name &amp; Contact',[d.driverName,d.driverContact].filter(Boolean).join(', ')],['Destination',dest]];
  C=C.filter(function(c){return !(c[0]==='Bill of Lading/LR-RR No.'&&!t6IsLr())&&!(c[0]==='Motor Vehicle No.'&&!t6IsMv())});
  var right=C.map(function(c,i){return cell(c[0],esc(c[1]||''),0,(i===C.length-1&&C.length%2===1)?1:0)}).join('')+(d.srcRef?cell('Against',esc(d.srcRef),0,1):'');
- var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':seller)+buyer+(t6IsCons()?cons:'')+'</div><div class="t6hr">'+right+'</div></div>'
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>'
   +((kind==='quotation'&&(String(d.subject||'').trim()||String(d.intro||'').trim()))?'<div class="t6tw">'+(String(d.subject||'').trim()?'Subject : <b>'+esc(d.subject)+'</b>':'')+(String(d.intro||'').trim()?'<div style="margin-top:2px">'+esc(d.intro).replace(/\n/g,'<br>')+'</div>':'')+'</div>':'');
  /* columns */
  var big=t6IsBig(),H,def;
