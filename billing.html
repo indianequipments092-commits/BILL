@@ -25957,7 +25957,7 @@ function t6InvoiceBuild(inv,copy,opts){
   +cell('Reference No. &amp; Date.',esc(inv.supplierRef||''))+cell('Other References',esc(inv.otherRef||''))+cell('Buyer\'s Order No.',esc(inv.buyerOrderNo||''))+cell('Dated',esc(t6Date(inv.buyerOrderDate)))
   +cell('Dispatch Doc No.',esc(inv.dispatchDocNo||''))+cell('Delivery Note Date',esc(t6Date(inv.deliveryNoteDate)))+cell('Dispatched through',esc(inv.transport||''))+cell('Destination',esc(inv.destination||cu.city||''))
   +(t6IsLr()&&t6IsMv()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''))+cell('Motor Vehicle No.',esc(inv.vehicleNo||'')):t6IsLr()?cell('Bill of Lading/LR-RR No.',esc(inv.lrNo||''),0,1):t6IsMv()?cell('Motor Vehicle No.',esc(inv.vehicleNo||''),0,1):'')+cell('Terms of Delivery',esc(inv.termsOfDelivery||''),1);
- var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>';
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7,1))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>';
  var cm=[[],[],[],[],[],[],[]];
  items.forEach(function(r,i){var ds=Number(r.disc||0),q=rowIsAlt(r)?rowPQty(r,r.qty):(r.qty+' '+(r.unit||'Nos'));
   cm[0].push([String(i+1),0,0]);cm[1].push([String(r.hsn||''),0,0]);cm[2].push([String(q),1,0]);cm[3].push([money(r.rate),0,0]);cm[4].push([String(rowPUnit(r,r.unit||'Nos')),0,0]);cm[5].push([ds>0?ds+' %':'',0,0]);cm[6].push([money(r.taxable),1,0])});
@@ -26018,7 +26018,7 @@ function t7Top(){return t7Hide()?t7Block():''}
 var T7_SQ_MEMO={},T7_SQ_MIN=.35,T7_SQ_FIX=.65,T7_SQ_LH='1.12';
 function t7SqOn(){return t7On()&&!!t7Cfg().sq}
 function t7SqToggle(){var c=t7Cfg();c.sq=!c.sq;t7Save();if(typeof t6OpenCustomize==='function')t6OpenCustomize()}
-function t7Sq(block,n){
+function t7Sq(block,n,keepName){
  if(!block||!t7SqOn())return block;
  var m=/^<div>([\s\S]*)<\/div>$/.exec(block);if(!m)return block;
  var inner=m[1],host=null;
@@ -26036,8 +26036,8 @@ function t7Sq(block,n){
   var H=function(id){var e=sr.getElementById(id);return e?e.getBoundingClientRect().height:0};
   var lim=H('r'),h1=H('a'),h2=H('b'),out=block;
   if(lim>0&&h2>0){
-   {var k=T7_SQ_FIX,nb=sr.getElementById('b').querySelector('b.n'),hn=nb?nb.getBoundingClientRect().height:0;
-   var inn2=inner.replace('<b class="n">','<b class="n" style="display:block;transform:scaleY('+(1/k).toFixed(4)+');transform-origin:0 0;margin-bottom:'+(hn*(1/k-1)).toFixed(2)+'px">');
+   {var k=T7_SQ_FIX,nb=sr.getElementById('b').querySelector('b.n'),hn=(nb&&keepName)?nb.getBoundingClientRect().height:0;
+   var inn2=!keepName?inner:inner.replace('<b class="n">','<b class="n" style="display:block;transform:scaleY('+(1/k).toFixed(4)+');transform-origin:0 0;margin-bottom:'+(hn*(1/k-1)).toFixed(2)+'px">');
    out='<div><div class="t6sq" style="height:'+(Math.ceil(h2*k+hn*(1-k))+1)+'px;overflow:hidden"><div style="transform:scaleY('+k.toFixed(3)+');transform-origin:0 0;line-height:'+T7_SQ_LH+'">'+inn2+'</div></div></div>'}
   }
   if(Object.keys(T7_SQ_MEMO).length>300)T7_SQ_MEMO={};
@@ -26279,7 +26279,7 @@ function t6DocBuild(d,copy){
  else C=[['Delivery Challan No.',no],['Dated',dateStr],['Purpose',d.purpose],['Buyer\'s Order No. &amp; Date',poTxt],['Invoice No.',d.invoiceNo],['E-Way Bill No.',d.ewayBill],['Dispatched through',d.transporter],['Motor Vehicle No.',d.vehicleNo],['Bill of Lading/LR-RR No.',d.lrNo],['Driver Name &amp; Contact',[d.driverName,d.driverContact].filter(Boolean).join(', ')],['Destination',dest]];
  C=C.filter(function(c){return !(c[0]==='Bill of Lading/LR-RR No.'&&!t6IsLr())&&!(c[0]==='Motor Vehicle No.'&&!t6IsMv())});
  var right=C.map(function(c,i){return cell(c[0],esc(c[1]||''),0,(i===C.length-1&&C.length%2===1)?1:0)}).join('')+(d.srcRef?cell('Against',esc(d.srcRef),0,1):'');
- var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>'
+ var headHtml='<div class="t6hd"><div class="t6hl">'+((t7Hide()&&!t6Get(null,'sell'))?'':t7Sq(seller,7,1))+t7Sq(buyer,6)+(t6IsCons()?t7Sq(cons,6):'')+'</div><div class="t6hr">'+right+'</div></div>'
   +((kind==='quotation'&&(String(d.subject||'').trim()||String(d.intro||'').trim()))?'<div class="t6tw">'+(String(d.subject||'').trim()?'Subject : <b>'+esc(d.subject)+'</b>':'')+(String(d.intro||'').trim()?'<div style="margin-top:2px">'+esc(d.intro).replace(/\n/g,'<br>')+'</div>':'')+'</div>':'');
  /* columns */
  var big=t6IsBig(),H,def;
