@@ -1788,6 +1788,15 @@ const m=document.getElementById('authMsg');
 m.textContent=text||'';
 m.className='auth-msg'+(text?(ok?' ok':' err'):'');
 }
+/* TEMP DEBUG (login network error ka asli kaaran dikhane ke liye) — kaaran mil jaye to authDiagProbe aur uski call hata dena */
+function authDiagProbe(e){
+ var out=['DEBUG: '+(e&&e.name||'')+' | '+(e&&e.message||'')+' | online='+navigator.onLine+' | origin='+location.origin];
+ function t(p,ms){return Promise.race([p,new Promise(function(_,r){setTimeout(function(){r(new Error('timeout '+ms+'ms'))},ms)})])}
+ var a=t(fetch(SUPABASE_URL+'/auth/v1/health',{headers:{apikey:SUPABASE_ANON_KEY}}).then(function(r){return 'supabase HTTP '+r.status}),8000).catch(function(x){return 'supabase FAIL '+(x&&x.message)});
+ var b=t(fetch('https://www.gstatic.com/generate_204',{mode:'no-cors'}).then(function(){return 'gstatic OK'}),8000).catch(function(x){return 'gstatic FAIL '+(x&&x.message)});
+ var c=t(fetch('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/package.json',{mode:'no-cors'}).then(function(){return 'jsdelivr OK'}),8000).catch(function(x){return 'jsdelivr FAIL '+(x&&x.message)});
+ Promise.all([a,b,c]).then(function(r){var m=document.getElementById('authMsg');if(m)m.textContent=m.textContent+'  ['+out.concat(r).join(' ; ')+']'});
+}
 function authFriendlyError(e){
 const m=(e&&e.message||'').toLowerCase();
 if(m.includes('invalid login credentials')) return 'Email ya password galat hai.';
@@ -1797,7 +1806,7 @@ if(m.includes('unable to validate email')||m.includes('invalid email')) return '
 if(m.includes('email not confirmed')) return 'Pehle apna email confirm karo (inbox me link aaya hoga).';
 if(m.includes('rate limit')||m.includes('too many requests')) return 'Bahut zyada attempts ho gaye. Thodi der baad try karo.';
 if(m.includes('user is disabled')||m.includes('user banned')) return 'Ye account disable kar diya gaya hai.';
-if(m.includes('failed to fetch')||m.includes('network')) return 'Internet connection check karo aur dobara try karo.';
+if(m.includes('failed to fetch')||m.includes('network')){ try{authDiagProbe(e)}catch(x){} return 'Internet connection check karo aur dobara try karo.'; }
 if(m.includes('popup closed')||m.includes('cancelled')) return 'Google sign-in popup band ho gaya. Dobara try karo.';
 return e&&e.message?e.message:'Kuch error aaya, dobara try karo.';
 }
