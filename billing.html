@@ -260,6 +260,18 @@ td:has(> button.btn) > .btn{flex:0 0 auto}
   box-shadow:0 25px 60px rgba(0,0,0,0.55);border-radius:2px;
 }
 .preview-hint{font-size:11px;color:var(--text-dim);margin-top:4px}
+.pv-arrow,.pv-pill{display:none}
+.pv-on .pv-arrow{display:flex}.pv-on .pv-pill{display:flex}
+.pv-arrow{position:absolute;top:52%;z-index:6;width:42px;height:42px;margin-top:-21px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;color:#fff;padding:0;
+ background:linear-gradient(145deg,rgba(99,102,241,.62),rgba(30,27,75,.62));border:1px solid rgba(255,255,255,.28);box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .15s,opacity .15s}
+.pv-arrow:active{transform:scale(.88)}.pv-arrow[disabled]{opacity:.2;pointer-events:none}
+.pv-arrow svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.pv-l{left:6px}.pv-r{right:6px}
+.pv-pill{position:absolute;top:78px;left:50%;transform:translateX(-50%);z-index:6;align-items:center;gap:8px;padding:6px 8px 6px 14px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;
+ background:rgba(15,18,38,.72);border:1px solid rgba(165,180,252,.45);box-shadow:0 6px 18px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.pv-pill i{font-style:normal;font-weight:600;font-size:11px;color:#a5b4fc}
+.pv-pill button{border:0;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;color:#1e1b4b;background:linear-gradient(135deg,#fde68a,#f59e0b);cursor:pointer}
+@media print{.pv-arrow,.pv-pill{display:none!important}}
 
 
 .invoice{
@@ -9272,6 +9284,9 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
 
 <!-- ===== Documents: A4 Preview ===== -->
 <div class="preview-modal" id="docPreviewModal">
+  <button class="pv-arrow pv-l" id="pvLdoc" onclick="pvNav('doc',-1)" aria-label="Pichla theme"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="pv-arrow pv-r" id="pvRdoc" onclick="pvNav('doc',1)" aria-label="Agla theme"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <div class="pv-pill" id="pvPdoc"></div>
   <div class="preview-toolbar">
     <div class="left"><h3 id="docPreviewTitle">Preview</h3></div>
     <div class="right">
@@ -9302,6 +9317,9 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
   <div id="dcBody"></div>
 </div></div>
 <div class="preview-modal" id="previewModal">
+  <button class="pv-arrow pv-l" id="pvLinv" onclick="pvNav('inv',-1)" aria-label="Pichla theme"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="pv-arrow pv-r" id="pvRinv" onclick="pvNav('inv',1)" aria-label="Agla theme"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <div class="pv-pill" id="pvPinv"></div>
   <div class="preview-toolbar">
     <div class="left">
       <h3 id="previewTitle">Invoice Preview — A4</h3>
@@ -12823,17 +12841,18 @@ syncForm(); ensureInvoiceHeaderData(); recalc();
 const canvas=document.getElementById('previewCanvas');
 if(!canvas) return;
 canvas.onload=previewFrameLoaded;
-canvas.srcdoc=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=794"><style>${icBakeColorIntoCss(invPrintStyles())}html{-webkit-text-size-adjust:100%;text-size-adjust:100%}${t6PreviewCss()}</style></head><body>${buildPrintDocument(current,'ORIGINAL FOR RECIPIENT')}</body></html>`;
+PV.inv=null;canvas.srcdoc=pvInvHtml();
 const title=document.getElementById('previewTitle');
 if(title) title.textContent=`${current.invoiceNumber} — A4 Preview`;
 try{const tw=document.getElementById('thermalW'); if(tw) tw.value=String((db.settings&&db.settings.thermalWidth)||58);}catch(e){}
-document.getElementById('previewModal').classList.add('show');
+document.getElementById('previewModal').classList.add('show','pv-on');
+pvArrows('inv');
 document.body.style.overflow='hidden';
 zoomReset();
 }
 function closePreviewModal(){
 const m=document.getElementById('previewModal');
-if(m) m.classList.remove('show');
+if(m) m.classList.remove('show','pv-on');
 chatPreviewInvoice=null;
 document.body.style.overflow='';
 }
@@ -13064,9 +13083,9 @@ if(!current){alert('No invoice open.');return;}
 syncForm(); ensureInvoiceHeaderData(); recalc();
 const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
-w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(current.invoiceNumber)}</title>
+w.document.write(pvWith(PV.inv,function(){return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(current.invoiceNumber)}</title>
 <style>${invPrintStyles()}</style></head>
-<body>${buildPrintDocument(current,'ORIGINAL FOR RECIPIENT')}</body></html>`);
+<body>${buildPrintDocument(current,'ORIGINAL FOR RECIPIENT')}</body></html>`}));
 w.document.close();
 setTimeout(()=>{ try{w.focus();w.print();}catch(e){} },600);
 }
@@ -19428,6 +19447,19 @@ if(combined) docOpenWindow(docFullHTML(d,copies));
 else copies.forEach((c,i)=>setTimeout(()=>docOpenWindow(docFullHTML(d,[c])),i*700));
 }
 let docPrevDoc=null, docPrevZoom=1, docPrevH=1123;
+var PV={inv:null,doc:null};
+function pvEff(k){var d=db.settings||{};return PV[k]||String(d.docTheme||'2')}
+function pvWith(th,fn){var st=db.settings=db.settings||{},o=st.docTheme;if(th)st.docTheme=th;try{return fn()}finally{st.docTheme=o}}
+function pvInvHtml(){return pvWith(PV.inv,function(){return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=794"><style>${icBakeColorIntoCss(invPrintStyles())}html{-webkit-text-size-adjust:100%;text-size-adjust:100%}${t6PreviewCss()}</style></head><body>${buildPrintDocument(current,'ORIGINAL FOR RECIPIENT')}</body></html>`})}
+function pvArrows(k){
+ var t=pvEff(k),n=parseInt(t,10)||2,def=String((db.settings||{}).docTheme||'2'),L=document.getElementById('pvL'+k),R=document.getElementById('pvR'+k),P=document.getElementById('pvP'+k);
+ if(L)L.disabled=n<=1;if(R)R.disabled=n>=7;
+ if(P)P.innerHTML='Theme '+n+' <i>'+n+'/7'+(t===def?' · Default':'')+'</i>'+(t!==def?'<button type="button" onclick="pvMakeDefault(\''+k+'\')">Isse default banao</button>':'')}
+function pvNav(k,dir){var n=(parseInt(pvEff(k),10)||2)+dir;if(n<1||n>7)return;PV[k]=String(n);
+ if(k==='inv'){var c=document.getElementById('previewCanvas');if(c)c.srcdoc=pvInvHtml()}
+ else{var d=docPrevDoc;if(!d)return;var T=DOC_TYPES[d.type],f=id('docPrevFrame');f.srcdoc=pvWith(PV.doc,function(){return docFullHTML(d,[T.copies[0]],true)})}
+ pvArrows(k)}
+function pvMakeDefault(k){var t=pvEff(k);db.settings.docTheme=t;try{saveDB()}catch(e){}PV[k]=null;pvArrows(k);try{loadSettingsUI()}catch(e){}}
 function docPreviewOpen(docId){
 const d=docResolve(docId); if(!d) return;
 docPrevDoc=d;
@@ -19437,13 +19469,15 @@ id('docPreviewTitle').textContent=T.label+' '+d.number+' — A4 Preview';
 const f=id('docPrevFrame');
 f.onload=()=>{try{docPrevH=Math.max(1123,f.contentDocument.documentElement.scrollHeight);}catch(e){} docPrevFit();};
 f.removeAttribute('srcdoc');
+PV.doc=null;
 f.srcdoc=docFullHTML(d,[T.copies[0]],true);
-id('docPreviewModal').classList.add('show');
+id('docPreviewModal').classList.add('show','pv-on');
+pvArrows('doc');
 document.body.style.overflow='hidden';
 docPrevFit();
 }
 function docPreviewClose(){
-id('docPreviewModal').classList.remove('show');
+id('docPreviewModal').classList.remove('show','pv-on');
 document.body.style.overflow='';
 }
 function docPrevApply(){
@@ -19471,7 +19505,7 @@ db.settings=docPrevExternalSeller;
 docOpenWindow(docFullHTML(docPrevDoc,[DOC_TYPES[docPrevDoc.type].copies[0]]));
 db.settings=backup;
 }else{
-docOpenWindow(docFullHTML(docPrevDoc,[DOC_TYPES[docPrevDoc.type].copies[0]]));
+pvWith(PV.doc,function(){docOpenWindow(docFullHTML(docPrevDoc,[DOC_TYPES[docPrevDoc.type].copies[0]]))});
 }
 }
 function docPdfFromPreview(kind){
@@ -19479,7 +19513,7 @@ if(!docPrevDoc) return;
 const d=docPrevDoc, c=DOC_TYPES[d.type].copies[0];
 const backup=db.settings;
 if(docPrevExternalSeller) db.settings=docPrevExternalSeller;
-let items; try{ items=docPdfItems(d,[c],true); } finally { db.settings=backup; }
+let items; try{ items=pvWith(docPrevExternalSeller?null:PV.doc,function(){return docPdfItems(d,[c],true)}); } finally { db.settings=backup; }
 if(kind==='share') IEPDF.sharePdfs(items,function(){ navigator.share?navigator.share({title:d.number,text:DOC_TYPES[d.type].label+' '+d.number+ieCreditMsg(DOC_TYPES[d.type].label)}).catch(()=>{}):alert('Device Share not supported.'); });
 else IEPDF.savePdfs(items);
 }
