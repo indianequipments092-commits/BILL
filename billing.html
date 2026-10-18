@@ -278,6 +278,8 @@ td:has(> button.btn) > .btn{flex:0 0 auto}
 .pvr2{display:flex;gap:8px;margin-top:10px}
 .pvr2 button{flex:1;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;padding:8px 4px;font-size:11.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
 .pvr2 button span{font-size:17px;line-height:1}.pvr2 button:active{transform:scale(.94)}
+.pvr2 button.pvgold{background:linear-gradient(135deg,#fde68a,#f59e0b);color:#1e1b4b;border-color:transparent;box-shadow:0 4px 14px rgba(245,158,11,.35)}
+body.pv-share .modal{z-index:300}
 @media print{.pv-arrow,.pv-dock{display:none!important}}
 
 
@@ -19465,7 +19467,7 @@ function pvArrows(k){
  var t=pvEff(k),n=parseInt(t,10)||2,def=String((db.settings||{}).docTheme||'2'),L=document.getElementById('pvL'+k),R=document.getElementById('pvR'+k),P=document.getElementById('pvP'+k);
  if(L)L.disabled=n<=1;if(R)R.disabled=n>=7;
  var dots='';for(var i=1;i<=7;i++)dots+='<span class="pvd'+(i===n?' on':'')+'" onclick="pvGo(\''+k+'\','+i+')"></span>';
- var b='';if(n!==6&&n!==7)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7)b+=pvBtn('cust','⚙️','Customize');if(n===7)b+=pvBtn('setup','🖨️','Setup');
+ var b='';if(n!==6&&n!==7)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7)b+=pvBtn('cust','⚙️','Customize');if(n===7)b+=pvBtn('setup','🖨️','Setup');b+='<button type="button" class="pvgold" onclick="pvOpen(\'share\')"><span>📤</span>Share</button>';
  if(P)P.innerHTML='<div class="pvr1"><div class="pvd-w">'+dots+'</div><b>Theme '+n+'</b>'+(t===def?'<i>Default</i>':'<button type="button" class="pvdef" onclick="pvMakeDefault(\''+k+'\')">Isse default banao</button>')+'</div><div class="pvr2">'+b+'</div>'}
 function pvRerender(k){
  if(k==='inv'){var c=document.getElementById('previewCanvas');if(c)c.srcdoc=pvInvHtml()}
@@ -19473,7 +19475,9 @@ function pvRerender(k){
  pvArrows(k)}
 function pvGo(k,n){if(n<1||n>7)return;PV[k]=String(n);pvRerender(k)}
 function pvNav(k,dir){pvGo(k,(parseInt(pvEff(k),10)||2)+dir)}
-function pvOpen(a){window.PV_OVR=pvEff(PV_K);
+function pvOpen(a){
+ if(a==='share'){window.PV_NEXT=pvEff(PV_K);if(PV_K==='doc')docPrintOpen(window.PV_DOCID,'share');else openOutputModal();return}
+ window.PV_OVR=pvEff(PV_K);
  if(a==='col')icOpenColorModal();else if(a==='font')icOpenFontModal();else if(a==='cust')t6OpenCustomize();else if(a==='setup')t7OpenSetup()}
 function pvAfter(){window.PV_OVR=null;var m=document.getElementById(PV_K==='doc'?'docPreviewModal':'previewModal');if(m&&m.classList.contains('pv-on'))pvRerender(PV_K)}
 function pvMakeDefault(k){var t=pvEff(k);db.settings.docTheme=t;try{saveDB()}catch(e){}PV[k]=null;pvArrows(k);try{loadSettingsUI()}catch(e){}}
@@ -26230,6 +26234,13 @@ function t7OpenSetup(){
 }
 </script>
 <script id="pvdock">
+(function(){
+ function wrapOpen(n){var f=window[n];if(typeof f!=='function')return;window[n]=function(){window.PV_SHARE_TH=window.PV_NEXT||null;window.PV_NEXT=null;try{document.body.classList.toggle('pv-share',!!window.PV_SHARE_TH)}catch(e){}return f.apply(this,arguments)}}
+ wrapOpen('openOutputModal');wrapOpen('docPrintOpen');
+ ['invPdfItems','docPdfItems'].forEach(function(n){var f=window[n];if(typeof f!=='function')return;window[n]=function(){var a=arguments,t=window.PV_SHARE_TH;return t?pvWith(t,function(){return f.apply(null,a)}):f.apply(null,a)}});
+ ['docPdfFromPreview','openPreviewModal'].forEach(function(n){var f=window[n];if(typeof f!=='function')return;window[n]=function(){window.PV_SHARE_TH=null;try{document.body.classList.remove('pv-share')}catch(e){};return f.apply(this,arguments)}});
+ var dpo=window.docPreviewOpen;if(typeof dpo==='function')window.docPreviewOpen=function(){window.PV_DOCID=arguments[0];window.PV_SHARE_TH=null;return dpo.apply(this,arguments)};
+})();
 (function(){['t6CloseCustomize','t7CloseSetup','icColClose','icFtClose'].forEach(function(n){var f=window[n];if(typeof f!=='function')return;window[n]=function(){var r=f.apply(this,arguments);try{pvAfter()}catch(e){}return r}})})();
 </script>
 
