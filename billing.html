@@ -1324,20 +1324,15 @@ body.apk-nav #apkFab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-
 body.apk-nav[data-apk-page="dashboard"] #apkFab,body.apk-nav[data-apk-page="apkVoucher"] #apkFab{display:block}
 body.apk-nav #dashNewBtn{display:none}
 body.apk-nav .apk-tile.lock .al:after{content:" 🔒";font-size:11px}
-/* APK Home: bottom "Search everything" bar */
+/* APK Home: "Search everything" bar on top of Dashboard Overview */
 #apkSrch{display:none}
-body.apk-nav[data-apk-page="dashboard"] #apkSrch{display:flex}
-body.apk-nav #apkSrch{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:59;align-items:center;gap:6px;height:48px;padding:0 6px 0 4px;border-radius:16px;background:var(--sidebar-bg);border:1px solid var(--border-color);box-shadow:0 6px 22px rgba(0,0,0,.28)}
+body.apk-nav #apkSrch{display:flex;align-items:center;gap:6px;height:50px;margin:2px 0 16px;padding:0 6px 0 4px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border-color);box-shadow:0 4px 16px rgba(99,102,241,.12)}
 #apkSrch .as-main{flex:1;min-width:0;height:100%;display:flex;align-items:center;gap:10px;padding:0 8px 0 12px;background:none;border:0;color:var(--text-muted);font-family:inherit;font-size:13.5px;font-weight:600;text-align:left}
 #apkSrch .as-main svg{width:20px;height:20px;flex:none;color:#818cf8}
 #apkSrch .as-main span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #apkSrch .as-ic{flex:none;width:38px;height:38px;border-radius:12px;border:1px solid var(--border-color);background:rgba(99,102,241,.12);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 #apkSrch .as-ic:active,#apkSrch .as-main:active{transform:scale(.96)}
 #apkSrch .as-ic[hidden]{display:none}
-body.apk-nav[data-apk-page="dashboard"] .main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
-body.apk-nav[data-apk-page="dashboard"] #apkFab{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
-body.apk-nav.apk-kb #apkSrch,body.apk-nav.apk-full #apkSrch,
-body.apk-nav:has(.modal.show,.preview-modal.show,#notifPanel.show,#ieSpot.on,#bxPage,#authOverlay:not(.hidden),#companyOverlay:not(.hidden)) #apkSrch{display:none!important}
 /* APK: Search everything = full screen */
 body.apk-nav #ieSpot{padding:0;background:var(--bg-dark);backdrop-filter:none;-webkit-backdrop-filter:none}
 body.apk-nav #ieSpot .sp-panel{max-width:none;max-height:none;height:100%;border-radius:0;border-width:0}
@@ -21676,7 +21671,7 @@ R.push({t:'inv',o:o,ti:lc(o.invoiceNumber),tf:flat(o.invoiceNumber),h:h,f:flat(h
 }catch(e){}
 });
 (D.customers||[]).forEach(function(o){ var h=lc([o.name,o.gst,o.city,o.state,o.contact,o.email,o.address,o.pin].join(' ')); R.push({t:'cus',o:o,ti:lc(o.name),tf:flat(o.name),h:h,f:flat(h),dt:''}); });
-(D.items||[]).forEach(function(o){ var h=lc([o.name,o.hsn,o.barcode,o.itemCode,o.description,o.unit,o.rate].join(' ')); R.push({t:'itm',o:o,ti:lc(o.name),tf:flat(o.name),h:h,f:flat(h),dt:''}); });
+(D.items||[]).forEach(function(o){ if(o.isPremium&&o.premiumInactive) return; var h=lc([o.name,o.hsn,o.barcode,o.itemCode,o.description,o.unit,o.rate].join(' ')); R.push({t:'itm',o:o,ti:lc(o.name),tf:flat(o.name),h:h,f:flat(h),dt:''}); });
 (D.vendors||[]).forEach(function(o){ var h=lc([o.name,o.gst,o.city,o.state,o.contact,o.address].join(' ')); R.push({t:'ven',o:o,ti:lc(o.name),tf:flat(o.name),h:h,f:flat(h),dt:''}); });
 (D.purchaseOrders||[]).forEach(function(o){
 try{ var g=poTotals(o).grand; var it=(o.items||[]).map(function(i){return [i.itemName,i.hsn].join(' ');}).join(' ');
@@ -25561,7 +25556,7 @@ window.showPage=function(){var r=_sp.apply(this,arguments);try{sync()}catch(e){c
  }
  function openSpot(seed){if(!window.ieSpot)return;window.ieSpot.open(seed||'');wire()}
  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- B.insertAdjacentHTML('beforeend','<div id="apkSrch" role="search"><button type="button" class="as-main" data-a="open" aria-label="Search everything"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search everything…</span></button><button type="button" class="as-ic" data-a="mic" aria-label="Voice search" hidden>🎤</button><button type="button" class="as-ic" data-a="scan" aria-label="Scan barcode">📷</button></div>');
+ var dh=$('dashboard');if(dh)dh.insertAdjacentHTML('afterbegin','<div id="apkSrch" role="search"><button type="button" class="as-main" data-a="open" aria-label="Search everything"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search everything…</span></button><button type="button" class="as-ic" data-a="mic" aria-label="Voice search" hidden>🎤</button><button type="button" class="as-ic" data-a="scan" aria-label="Scan barcode">📷</button></div>');
  var bar=$('apkSrch');
  if(SR){var mic=bar.querySelector('[data-a="mic"]');mic.hidden=false}
  bar.addEventListener('click',function(e){
