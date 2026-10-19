@@ -1324,6 +1324,26 @@ body.apk-nav #apkFab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-
 body.apk-nav[data-apk-page="dashboard"] #apkFab,body.apk-nav[data-apk-page="apkVoucher"] #apkFab{display:block}
 body.apk-nav #dashNewBtn{display:none}
 body.apk-nav .apk-tile.lock .al:after{content:" 🔒";font-size:11px}
+/* APK Home: bottom "Search everything" bar */
+#apkSrch{display:none}
+body.apk-nav[data-apk-page="dashboard"] #apkSrch{display:flex}
+body.apk-nav #apkSrch{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:59;align-items:center;gap:6px;height:48px;padding:0 6px 0 4px;border-radius:16px;background:var(--sidebar-bg);border:1px solid var(--border-color);box-shadow:0 6px 22px rgba(0,0,0,.28)}
+#apkSrch .as-main{flex:1;min-width:0;height:100%;display:flex;align-items:center;gap:10px;padding:0 8px 0 12px;background:none;border:0;color:var(--text-muted);font-family:inherit;font-size:13.5px;font-weight:600;text-align:left}
+#apkSrch .as-main svg{width:20px;height:20px;flex:none;color:#818cf8}
+#apkSrch .as-main span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#apkSrch .as-ic{flex:none;width:38px;height:38px;border-radius:12px;border:1px solid var(--border-color);background:rgba(99,102,241,.12);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+#apkSrch .as-ic:active,#apkSrch .as-main:active{transform:scale(.96)}
+#apkSrch .as-ic[hidden]{display:none}
+body.apk-nav[data-apk-page="dashboard"] .main{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
+body.apk-nav[data-apk-page="dashboard"] #apkFab{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+body.apk-nav.apk-kb #apkSrch,body.apk-nav.apk-full #apkSrch,
+body.apk-nav:has(.modal.show,.preview-modal.show,#notifPanel.show,#ieSpot.on,#bxPage,#authOverlay:not(.hidden),#companyOverlay:not(.hidden)) #apkSrch{display:none!important}
+/* APK: Search everything = full screen */
+body.apk-nav #ieSpot{padding:0;background:var(--bg-dark);backdrop-filter:none;-webkit-backdrop-filter:none}
+body.apk-nav #ieSpot .sp-panel{max-width:none;max-height:none;height:100%;border-radius:0;border-width:0}
+body.apk-nav #ieSpot .sp-head{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+body.apk-nav #ieSpot .sp-list{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+#ieSpot .sp-recent .sp-tip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -25515,8 +25535,42 @@ window.apkSync=sync;
 window.apkTab=function(t){showPage(HUBID[t])};
 var _sp=window.showPage;
 window.showPage=function(){var r=_sp.apply(this,arguments);try{sync()}catch(e){console.warn(e)}return r};
-var hb=document.querySelector('.mobile-header .hamburger');
-if(hb)hb.insertAdjacentHTML('beforebegin','<button type="button" class="notif-bell-btn" aria-label="Search" onclick="window.ieSpot&&ieSpot.open()">🔍</button>');
+/* Home search bar (bottom) — reuses the website "Search everything" panel */
+(function(){
+ var RK=function(){var c='';try{c=currentCompanyId||''}catch(e){}return 'IE_APK_SRCH_RECENT_'+c};
+ function rget(){try{var a=JSON.parse(localStorage.getItem(RK())||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+ function radd(q){q=String(q||'').trim();if(q.length<2)return;var a=rget().filter(function(x){return x.toLowerCase()!==q.toLowerCase()});a.unshift(q);try{localStorage.setItem(RK(),JSON.stringify(a.slice(0,8)))}catch(e){}}
+ function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+ function wire(){
+  var ov=$('ieSpot');if(!ov||ov.getAttribute('data-apkw'))return;ov.setAttribute('data-apkw','1');
+  var inp=ov.querySelector('.sp-in'),lst=ov.querySelector('.sp-list'),k=ov.querySelector('.sp-head>kbd');
+  if(!inp||!lst)return;
+  if(k)k.textContent='Close';
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')radd(inp.value)});
+  lst.addEventListener('click',function(e){
+   if(e.target.closest&&e.target.closest('[data-rclr]')){e.stopPropagation();try{localStorage.removeItem(RK())}catch(x){}var r=lst.querySelector('.sp-recent');if(r)r.remove();return}
+   if(e.target.closest&&e.target.closest('.sp-row'))radd(inp.value);
+  },true);
+  function paint(){
+   if(inp.value.trim()||lst.querySelector('.sp-recent'))return;
+   var a=rget();if(!a.length)return;
+   lst.insertAdjacentHTML('afterbegin','<div class="sp-recent"><div class="sp-gh">Recent searches</div><div class="sp-tips">'+a.map(function(q){return '<button type="button" class="sp-tip" data-fill="'+esc(q)+'">🕘 '+esc(q)+'</button>'}).join('')+'<button type="button" class="sp-tip" data-rclr="1">✕ Clear</button></div></div>');
+  }
+  new MutationObserver(paint).observe(lst,{childList:true});
+  paint();
+ }
+ function openSpot(seed){if(!window.ieSpot)return;window.ieSpot.open(seed||'');wire()}
+ var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ B.insertAdjacentHTML('beforeend','<div id="apkSrch" role="search"><button type="button" class="as-main" data-a="open" aria-label="Search everything"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><span>Search everything…</span></button><button type="button" class="as-ic" data-a="mic" aria-label="Voice search" hidden>🎤</button><button type="button" class="as-ic" data-a="scan" aria-label="Scan barcode">📷</button></div>');
+ var bar=$('apkSrch');
+ if(SR){var mic=bar.querySelector('[data-a="mic"]');mic.hidden=false}
+ bar.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;var a=b.getAttribute('data-a');
+  if(a==='open')openSpot('');
+  else if(a==='scan'){if(typeof openBarcodeScanner==='function')openBarcodeScanner(function(code){openSpot(code)});else openSpot('')}
+  else if(a==='mic'&&SR){try{var r=new SR();r.lang='en-IN';r.interimResults=false;r.maxAlternatives=1;r.onresult=function(ev){var t=ev.results&&ev.results[0]&&ev.results[0][0]&&ev.results[0][0].transcript;openSpot(t||'')};r.onerror=function(){openSpot('')};r.start()}catch(x){openSpot('')}}
+ });
+})();
 
 var FULL={invoice:1,chats:1,documents:1};
 window.apkBack=function(id){if(HUB[id])return false;var t=tabOf(id);if(t==='home')return false;showPage(HUBID[t]);return true};
