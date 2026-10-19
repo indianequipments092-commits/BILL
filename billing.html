@@ -3976,7 +3976,7 @@ return `<div class="fp2-row" onclick="${click}">
     <div class="fp2-av"><div>${u.photoURL?`<img src="${esc(u.photoURL)}" alt="">`:esc(initials)}</div></div>
     <div class="fp2-info">
       <div class="fp2-name">${fp2Hi(u.name||'Unnamed',q)}${verifiedBadgeHtml(u)}</div>
-      <div class="fp2-sub"><span class="m">${fp2Hi(u.userId||'—',q)}</span>${coTxt?' · '+coTxt:''}</div>
+      <div class="fp2-sub"><span class="m">${fpIdVisible(u)?fp2Hi(u.userId||'—',q):esc(fpMaskId(u.userId))}</span>${coTxt?' · '+coTxt:''}</div>
       ${tags.length?`<div class="fp2-tags">${tags.join('')}</div>`:''}
     </div>
     ${o.nobtn?'':fpBtnState(u.uid)}
@@ -4097,9 +4097,21 @@ const t=raw.trim();
 const title=t.toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());
 return [...new Set([t,t.toLowerCase(),t.toUpperCase(),title])];
 }
+let fpSearchLog=[];
+function fpMaskId(uid){ const t=String(uid||''); if(!t) return '—'; return t.length>=7?(t.slice(0,2)+'••••'+t.slice(-4)):'••••'; }
+function fpIdVisible(u){ try{ if(!u) return false; if(currentUser&&u.uid===currentUser.uid) return true; const c=(typeof myConnections==='object'&&myConnections)?myConnections[u.uid]:null; return !!(c&&c.status==='accepted'); }catch(e){ return false; } }
+function fpShowMsg(icon,title,sub){
+const box=id('fpResults'), wrap=id('fpResultsWrap'), idle=id('fpIdle');
+if(idle) idle.style.display='none'; if(wrap) wrap.style.display='';
+if(box) box.innerHTML='<div class="fp2-empty"><div class="ic">'+icon+'</div><b>'+title+'</b>'+sub+'</div>';
+}
 function fpRunSearch(){
 const raw=(id('fpSearchInput')?.value||'').trim();
 if(!raw){ fpShowIdle(); return; }
+if(raw.replace(/\s/g,'').length<3){ ++fpSeq; fpShowMsg('✍️','Kam se kam 3 akshar type karo','Naam, company, GSTIN ya ID ke pehle 3 akshar likhte hi search chalegi.'); return; }
+const nowTs=Date.now(); fpSearchLog=fpSearchLog.filter(t=>nowTs-t<60000);
+if(fpSearchLog.length>=30){ ++fpSeq; fpShowMsg('⏳','Bahut zyada search','Thodi der ruko (1 minute), phir dobara try karo.'); return; }
+fpSearchLog.push(nowTs);
 const box=id('fpResults'), wrap=id('fpResultsWrap'), idle=id('fpIdle');
 if(!box||!wrap) return;
 if(idle) idle.style.display='none';
@@ -4110,13 +4122,13 @@ const col=fbDb.collection('publicProfiles');
 const kind=fpDetect(raw);
 const jobs=[];
 const add=(q,why)=>jobs.push(q.get().then(s=>{ const a=[]; s.forEach(d=>a.push({uid:d.id,data:d.data(),why})); return a; }));
-if(kind==='id') add(col.where('userId','==',raw).limit(5),'id');
-else if(kind==='gst') add(col.where('companyGstins','array-contains',raw.toUpperCase().replace(/\s/g,'')).limit(10),'gst');
-else if(kind==='idprefix') add(col.where('userId','>=',raw).where('userId','<=',raw+'\uf8ff').limit(15),'id');
+if(kind==='id') add(col.where('userId','==',raw).limit(1),'id');
+else if(kind==='gst') add(col.where('companyGstins','array-contains',raw.toUpperCase().replace(/\s/g,'')).limit(5),'gst');
+else if(kind==='idprefix') add(col.where('userId','>=',raw).where('userId','<=',raw+'\uf8ff').limit(5),'id');
 else{
 fpVariants(raw).forEach(v=>{
-add(col.where('name','>=',v).where('name','<=',v+'\uf8ff').limit(15),'name');
-if(raw.length>=3) add(col.where('companyNames','array-contains',v).limit(10),'company');
+add(col.where('name','>=',v).where('name','<=',v+'\uf8ff').limit(5),'name');
+if(raw.length>=3) add(col.where('companyNames','array-contains',v).limit(5),'company');
 });
 }
 const bt=id('fpBusinessTypeFilter')?.value||'';
@@ -4145,6 +4157,7 @@ fpProfileCache[u.uid]={...u,_why:undefined};
 u._score=((u.name||'').toLowerCase().startsWith(ql)?3:0)+(u._why.has('id')||u._why.has('gst')?3:0)+(u._why.has('company')?1:0);
 });
 rows.sort((a,b)=>b._score-a._score);
+rows=rows.slice(0,5);
 fpRenderResults(rows,raw);
 });
 }
@@ -4591,7 +4604,7 @@ body.innerHTML=`
       <div class="fph-stats">${blockedByThem?'':fpStatsHtml(u,isAccepted)}</div>
     </div>
     <div class="fph-name">${esc(u.name||'Unnamed')}${verifiedBadgeHtml(u)}${isAccepted?'<span class="fph-conn">Connected</span>':''}</div>
-    <div class="fph-meta">ID: ${esc(u.userId||'—')}</div>
+    <div class="fph-meta">ID: ${isAccepted?esc(u.userId||'—'):esc(fpMaskId(u.userId))}</div>
     ${(!blockedByThem&&pfLastSeenText(u))?`<div class="fph-meta">${pfLastSeenText(u)}</div>`:''}
     ${(!blockedByThem&&mutual>0)?`<div class="fph-meta">${mutual} mutual connection${mutual>1?'s':''}</div>`:''}
     <div class="fph-acts">${actionHtml}</div>
@@ -4902,7 +4915,7 @@ alert('Is invoice mein item details nahi hain. Sender se invoice dobara bhejne k
 chatMatchContext={messageId:msgId,connId:chatConnId,companyId:currentCompanyId,invoice:source.invoice,seller:source.seller,
 rows:source.invoice.items.filter(r=>r.itemId&&Number(r.qty)>0).map(r=>({
 reference:r.itemName||'',mode:'add',itemId:'',data:{name:r.itemName||'',description:r.description||'',
-rate:r.rate||0,size:r.size||'',gst:r.gst||0,unit:r.unit||'Nos',hsn:r.hsn||'',stock:0,barcode:''}
+rate:'',size:r.size||'',gst:r.gst||0,unit:r.unit||'Nos',hsn:r.hsn||'',stock:0,barcode:''}
 }))};
 id('chatMatchTitle').textContent='Accept Invoice '+(source.invoice.invoiceNumber||'')+' — Match Inventory';
 const vendor=db.vendors.find(v=>source.seller.gst&&v.gst?.toUpperCase()===source.seller.gst.toUpperCase())||
@@ -4926,7 +4939,7 @@ const row=chatMatchContext.rows[index];
 row.mode=mode; row.itemId='';
 if(mode==='add'){
 const inv=chatMatchContext.invoice.items.filter(r=>r.itemId&&Number(r.qty)>0)[index];
-row.data={name:row.reference||inv.itemName||'',description:inv.description||'',rate:inv.rate||0,
+row.data={name:row.reference||inv.itemName||'',description:inv.description||'',rate:'',
 size:inv.size||'',gst:inv.gst||0,unit:inv.unit||'Nos',hsn:inv.hsn||'',stock:0,barcode:''};
 }
 chatRenderMatchRows();
@@ -4942,7 +4955,7 @@ function chatRenderMatchRows(){
 const context=chatMatchContext, invoiceRows=context.invoice.items.filter(r=>r.itemId&&Number(r.qty)>0);
 id('chatMatchRows').innerHTML=context.rows.map((row,index)=>{
 const inv=invoiceRows[index], data=row.data;
-const field=(label,key,type='text')=>`<div><label>${label}</label><input type="${type}" ${type==='number'?'step="any"':''} value="${esc(data[key]??'')}" oninput="chatMatchField(${index},'${key}',this.value)"></div>`;
+const field=(label,key,type='text')=>`<div><label>${label}</label><input type="${type}" ${type==='number'?'step="any"':''} ${key==='rate'?'placeholder="Apna bechne ka rate daalo"':''} value="${esc(data[key]??'')}" oninput="chatMatchField(${index},'${key}',this.value)"></div>`;
 return `<div class="item-card" style="margin:12px 0;padding:12px">
       <b>#${index+1} ${esc(inv.itemName||'Item')}</b> · ${esc(inv.qty)} ${esc(inv.unit||'Nos')} @ ₹ ${money(inv.rate)} · GST ${esc(inv.gst||0)}%
       <div style="display:flex;gap:8px;margin:10px 0">
@@ -4955,7 +4968,7 @@ return `<div class="item-card" style="margin:12px 0;padding:12px">
       </select></div>`:''}
       ${row.mode==='add'||row.itemId?`<div class="grid g2" style="margin-top:8px">
         ${field('My Inventory Item Name *','name')}${field('Description','description')}
-        ${field('Sales Rate (₹)','rate','number')}${field('Size / Specification','size')}
+        ${field('My Sales Rate (₹) — apna rate','rate','number')}${field('Size / Specification','size')}
         ${field('GST %','gst','number')}${field('Unit of Measure','unit')}
         ${field('HSN / SAC','hsn')}${field('Barcode / QR','barcode')}
         ${row.mode==='add'?field('Opening Stock','stock','number'):''}
@@ -4982,6 +4995,7 @@ Number(row.data.gst)<0||Number(row.data.gst)>100||!row.data.unit?.trim()||
 row.mode==='add'&&(!Number.isFinite(Number(row.data.stock))||Number(row.data.stock)<0))){
 alert('Har item ka naam, unit, valid rate/GST aur existing item selection check karo.'); return;
 }
+if(rows.some(row=>row.mode==='add'&&!(Number(row.data.rate)>0))&&!confirm('Naye item(s) ka Sales Rate khali hai (0 save hoga). Baad mein inventory mein daaloge? Abhi aise hi accept karein?')) return;
 const mapping={vendorId,vendor,rows}, msgId=context.messageId, connId=context.connId;
 try{
 chatImportAcceptedInvoice({...m,status:'accepted',acceptedCompanyId:context.companyId},connId,true,mapping);
@@ -5045,7 +5059,7 @@ if(existing) updates.push({item:existing,settings});
 else pendingItems.push({id:itemId,...settings,stock:Number(data.stock||0),active:true});
 const billRow={itemId,itemName:settings.name,invoiceItemName:row.reference||original.itemName||'',
 description:original.description||'',hsn:original.hsn||'',qty:Number(original.qty),unit:original.unit||'Nos',
-size:original.size||'',rate:Number(original.rate),discountPercent:0,gst:Number(original.gst)};
+size:original.size||'',rate:Number(original.rate),discountPercent:Math.min(100,Math.max(0,Number(original.disc)||0)),gst:Number(original.gst)};
 if(!Number.isFinite(billRow.rate)||billRow.rate<0||!Number.isFinite(billRow.gst)||billRow.gst<0||billRow.gst>100) throw new Error('Invalid invoice amount');
 Object.assign(billRow,pbRowAmount(billRow));
 billRow.tax=+(billRow.tax||0).toFixed(2);
@@ -5065,8 +5079,9 @@ if(validateOnly) return true;
 if(!vendor) db.vendors.push(newVendor);
 pendingItems.forEach(it=>db.items.push(it));
 updates.forEach(({item,settings})=>Object.assign(item,settings));
-billItems.forEach(row=>{const item=db.items.find(it=>it.id===row.itemId); item.stock=+((Number(item.stock)||0)+row.qty).toFixed(3); item.purchaseRate=Number(row.rate);});
+billItems.forEach(row=>{const item=db.items.find(it=>it.id===row.itemId); item.stock=+((Number(item.stock)||0)+row.qty).toFixed(3);});
 db.purchaseBills.push(pb);
+billItems.forEach(row=>{ try{ refreshItemPurchaseRate(row.itemId); }catch(e){} });
 db.importedChatInvoices=db.importedChatInvoices||[];
 db.importedChatInvoices.push(sourceKey);
 delete db.pendingChatInvoiceMappings[sourceKey];
