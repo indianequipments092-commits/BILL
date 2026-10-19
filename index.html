@@ -397,6 +397,18 @@ html.dev-desktop .dl-qr.on{display:flex}
 .inst{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:none;padding:11px 16px;border-radius:99px;border:0;font:700 13px inherit;color:#fff;background:linear-gradient(135deg,var(--indigo),#7c5cf5);cursor:pointer}.inst.on{display:block}
 .foot-contact{max-width:1180px;margin:0 auto;padding:0 24px 14px;font-size:13px;color:var(--mu2);display:flex;gap:18px;flex-wrap:wrap}
 @media(max-width:700px){.tbadges{grid-template-columns:1fr}}
+/* ===== Legal modal (admin panel > settings/legal se live) ===== */
+.lg-ov{position:fixed;inset:0;z-index:1000;background:rgba(2,4,10,.72);display:none;align-items:center;justify-content:center;padding:16px}
+.lg-ov.on{display:flex}
+.lg-box{width:100%;max-width:680px;max-height:86vh;display:flex;flex-direction:column;background:var(--panel2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px;color:var(--text)}
+:root[data-theme=light] .lg-box{background:#fff}
+.lg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.lg-tabs{display:flex;gap:8px}
+.lg-tab{all:unset;box-sizing:border-box;cursor:pointer;padding:8px 14px;border-radius:10px;font-weight:700;font-size:13.5px;color:var(--mu2);border:1px solid var(--line)}
+.lg-tab.active{background:rgba(99,102,241,.16);color:var(--text);border-color:rgba(129,140,248,.5)}
+.lg-tab:focus-visible,.lg-x:focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+.lg-x{all:unset;box-sizing:border-box;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:var(--mu2)}
+.lg-body{padding:16px 18px 20px;overflow-y:auto;font-size:14px;line-height:1.65;white-space:pre-wrap;color:var(--text)}
 </style>
 <script>
 /* Pichli baar ki value turant lagao taaki page flash na kare (fresh value neeche load hoti hai) */
@@ -815,7 +827,7 @@ try{ if(localStorage.getItem('ie_paid_mode')==='1') document.documentElement.cla
     </div>
     <div><h4>PRODUCT</h4><a href="#features">Features</a><a href="#docs">Documents</a><a href="#pricing" class="paid-only">Plans</a><a href="#faq" id="footFaq" style="display:none">FAQ</a></div>
     <div><h4>ACCOUNT</h4><a href="/billing">Login</a><a href="/billing">Start Free</a></div>
-    <div><h4>GUIDE</h4><a href="/gst-invoice-kaise-banayein.html">GST Invoice Guide</a></div><div><h4>LEGAL</h4><a href="#">Privacy Policy</a><a href="#">Terms of Use</a></div>
+    <div><h4>GUIDE</h4><a href="/gst-invoice-kaise-banayein.html">GST Invoice Guide</a></div><div><h4>LEGAL</h4><a href="#privacy" data-legal="privacy">Privacy Policy</a><a href="#terms" data-legal="terms">Terms of Use</a></div>
   </div>
   <div class="foot-contact" id="footContact" hidden></div>
   <div class="foot-bottom">
@@ -1142,6 +1154,56 @@ try{var s=localStorage.getItem('ie_land_lang');if(s&&T[s])setL(s)}catch(x){}
 var dp;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;$('instBtn').classList.add('on')});
 $('instBtn').onclick=function(){if(dp){dp.prompt();dp=null;$('instBtn').classList.remove('on')}};
 window.addEventListener('appinstalled',function(){$('instBtn').classList.remove('on')});
+})();
+</script>
+
+<div class="lg-ov" id="lgOv" role="dialog" aria-modal="true" aria-label="Privacy Policy aur Terms of Use">
+  <div class="lg-box">
+    <div class="lg-head">
+      <div class="lg-tabs">
+        <button type="button" class="lg-tab" id="lgTabPrivacy">Privacy Policy</button>
+        <button type="button" class="lg-tab" id="lgTabTerms">Terms of Use</button>
+      </div>
+      <button type="button" class="lg-x" id="lgClose" aria-label="Band karein">&#10005;</button>
+    </div>
+    <div class="lg-body" id="lgBody">Loading...</div>
+  </div>
+</div>
+<script>
+/* LEGAL: admin panel (settings/legal: terms + privacy) se live, billing.html jaisa hi */
+(function(){
+  var U="https://qbrtmlrwmmgmrqmvwkfv.supabase.co";
+  var K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFicnRtbHJ3bW1nbXJxbXZ3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMTM5NTMsImV4cCI6MjEwNjU4OTk1M30._Nf0kP798K96gyaRj_Is2zUfGoFEFqASyBgkbJHqfAs";
+  var ov=document.getElementById("lgOv"), body=document.getElementById("lgBody");
+  var tp=document.getElementById("lgTabPrivacy"), tt=document.getElementById("lgTabTerms");
+  if(!ov) return;
+  var data=null, tab="privacy", failed=false, loading=false;
+  function show(){
+    tp.classList.toggle("active",tab==="privacy"); tt.classList.toggle("active",tab==="terms");
+    if(failed){ body.textContent="Load nahi ho paya. Thodi der baad dobara try karein."; return; }
+    if(!data){ body.textContent="Loading..."; return; }
+    var t=String(data[tab==="privacy"?"privacy":"terms"]||"").trim();
+    body.textContent=t||(tab==="privacy"?"Abhi Privacy Policy add nahi hui hai.":"Abhi Terms of Use add nahi hui hai.");
+    body.scrollTop=0;
+  }
+  function load(){
+    if(data||loading) return; loading=true; failed=false;
+    fetch(U+"/rest/v1/fs_documents?collection_path=eq.settings&doc_id=eq.legal&select=data",{headers:{apikey:K,Authorization:"Bearer "+K}})
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(rows){ data=(rows&&rows[0]&&rows[0].data)||{}; })
+      .catch(function(){ failed=true; })
+      .then(function(){ loading=false; show(); });
+  }
+  function open(t){ tab=t; ov.classList.add("on"); document.body.style.overflow="hidden"; show(); load(); }
+  function close(){ ov.classList.remove("on"); document.body.style.overflow=""; }
+  tp.onclick=function(){tab="privacy";show();}; tt.onclick=function(){tab="terms";show();};
+  document.getElementById("lgClose").onclick=close;
+  ov.addEventListener("click",function(e){ if(e.target===ov) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") close(); });
+  document.querySelectorAll("[data-legal]").forEach(function(a){
+    a.addEventListener("click",function(e){ e.preventDefault(); open(a.getAttribute("data-legal")); });
+  });
+  if(location.hash==="#privacy"||location.hash==="#terms") open(location.hash.slice(1));
 })();
 </script>
 </body>
