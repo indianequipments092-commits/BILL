@@ -8687,6 +8687,17 @@ var ph=document.getElementById('pfPhoto');if(ph)new MutationObserver(pf2Update).
         <div style="text-align:center;font-weight:700;margin-top:8px;font-size:13px;color:var(--text-main)">Theme 7 — Letterhead Format</div>
         <div style="text-align:center;font-size:11px;color:var(--text-muted)">Theme 6 jaisa hi, bas Setup me Letterhead ON/OFF: pre-printed letterhead paper ke liye upar company header hat kar khali jagah / chuna hua design aata hai</div>
       </div>
+      <div id="themeCard8" class="theme-pick-card" onclick="pickDocTheme('8')" style="border:2px solid var(--border-color);border-radius:10px;padding:10px;cursor:pointer;background:#fff">
+        <div style="border:1.5px solid #111;padding:5px;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff">
+          <div style="display:flex;justify-content:space-between;font-size:6px;font-weight:700;border-bottom:1px solid #111;padding-bottom:2px"><span>GSTIN</span><span>TAX INVOICE</span><span>ORIGINAL</span></div>
+          <div style="text-align:center;color:#0b4aa2;font-weight:800;font-size:11px;margin:4px 0">COMPANY NAME</div>
+          <div style="display:flex;border:1px solid #111;font-size:6px"><div style="flex:1.5;border-right:1px solid #111"><div style="background:#d9e6f4;padding:1px 3px;font-weight:700">BILL TO</div><div style="padding:3px">&nbsp;</div></div><div style="flex:1;padding:2px">Inv. No. &middot; Date</div></div>
+          <div style="display:flex;border:1px solid #111;border-top:0;font-size:6px;height:26px"><div style="background:#d9e6f4;flex:1;text-align:center;font-weight:700">Sr &middot; Item &middot; GST &middot; Total</div></div>
+          <div style="display:flex;justify-content:flex-end;background:#d9e6f4;font-size:8px;font-weight:700;padding:2px 4px;margin-top:3px">Total Amount : ₹ 0.00</div>
+        </div>
+        <div style="text-align:center;font-weight:700;margin-top:8px;font-size:13px;color:var(--text-main)">Theme 8 — Blue Tax Invoice</div>
+        <div style="text-align:center;font-size:11px;color:var(--text-muted)">Sirf Tax Invoice ke liye: light-blue headers, Bill To / Ship To, GST columns, bank + summary box, QR aur signatory. Baki documents purane look me rahenge</div>
+      </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn success" onclick="applyDocTheme()">Apply Theme</button><button class="btn muted" type="button" id="btnChangeColour" onclick="icOpenColorModal()">🎨 Change Colour</button><button class="btn muted" type="button" onclick="icOpenFontModal()">🔤 Change Font</button><button class="btn muted" type="button" id="btnT6Customize" style="display:none" onclick="t6OpenCustomize()">⚙️ Customize</button><button class="btn muted" type="button" id="btnT7Setup" style="display:none" onclick="t7OpenSetup()">🖨️ Setup</button></div>
   </div>
@@ -12916,6 +12927,7 @@ try{ previewH=Math.max(1123,c.contentDocument.documentElement.scrollHeight); }ca
 applyZoom();
 }
 function getPrintStyles(){
+if((db.settings||{}).docTheme==='8'&&!window.__t8Base){window.__t8Base=1;try{return getPrintStyles()+getPrintStylesTheme8()}finally{window.__t8Base=0}}
 if((db.settings||{}).docTheme==='1') return getPrintStylesTheme1();
 if((db.settings||{}).docTheme==='3') return getPrintStylesTheme3();
 if((db.settings||{}).docTheme==='4') return getPrintStylesTheme4();
@@ -13147,6 +13159,7 @@ return h>A4_CAP;
 finally{ ifr.remove(); }
 }
 function buildPrintDocument(inv,copy){
+if(t8Ok(inv)) return theme8InvoiceHTML(inv,copy);
 if(t6On()) return tallyInvoiceHTML(inv,copy,{});
 const allItems=inv.items.filter(r=>r.itemId);
 const FIRST_MAX=11;
@@ -13178,6 +13191,7 @@ if(e.deltaY<0)zoomIn();else zoomOut();
 });
 function invoiceHTML(inv,copy='ORIGINAL FOR RECIPIENT',opts){
 opts=opts||{};
+if(t8Ok(inv)&&!opts.legacy) return theme8InvoiceHTML(inv,copy,opts);
 if(t6On()&&!opts.legacy) return tallyInvoiceHTML(inv,copy,opts);
 if(isBos(inv)&&!opts.legacy) return bosSheetHTML(inv,copy);
 const bos=isBos(inv);
@@ -18435,11 +18449,12 @@ alert('Settings saved successfully.');
 let _pickedDocTheme=null;
 function pickDocTheme(v){
 _pickedDocTheme=v;
-const c1=id('themeCard1'), c2=id('themeCard2'), c3=id('themeCard3'), c4=id('themeCard4'), c5=id('themeCard5'), c6=id('themeCard6'), c7=id('themeCard7');
+const c1=id('themeCard1'), c2=id('themeCard2'), c3=id('themeCard3'), c4=id('themeCard4'), c5=id('themeCard5'), c6=id('themeCard6'), c7=id('themeCard7'), c8=id('themeCard8');
 if(c7) c7.style.borderColor=(v==='7')?'#0d9488':'var(--border-color)';
+if(c8) c8.style.borderColor=(v==='8')?'#0d9488':'var(--border-color)';
 const sb7=id('btnT7Setup'); if(sb7) sb7.style.display=(v==='7')?'':'none';
 if(c6) c6.style.borderColor=(v==='6')?'#0d9488':'var(--border-color)';
-const cb=id('btnChangeColour'); if(cb) cb.style.display=(v==='6'||v==='7')?'none':'';
+const cb=id('btnChangeColour'); if(cb) cb.style.display=(v==='6'||v==='7'||v==='8')?'none':'';
 const cz=id('btnT6Customize'); if(cz) cz.style.display=(v==='6'||v==='7')?'':'none';
 if(c1) c1.style.borderColor=(v==='1')?'#0d9488':'var(--border-color)';
 if(c2) c2.style.borderColor=(v==='2')?'#0d9488':'var(--border-color)';
@@ -18451,8 +18466,8 @@ function applyDocTheme(){
 const v=_pickedDocTheme||db.settings.docTheme||'2';
 db.settings.docTheme=v;
 saveDB();
-const names={'1':'Theme 1 — Premium Traditional','2':'Theme 2 — Premium/Modern','3':'Theme 3 — Ultra Premium','4':'Theme 4 — Most Advanced','5':'Theme 5 — Bold Corporate','6':'Theme 6 — Tally Format','7':'Theme 7 — Letterhead Format'};
-alert(v==='7'?'Theme applied: Theme 7 — Letterhead Format. Ye bilkul Theme 6 jaisa hai (Customize, Change Font sab same). Extra: Setup button me Letterhead ON/OFF, upar ke design, background image, size aur PDF/Print milega.':v==='6'?'Theme applied: Theme 6 — Tally Format. Ab ye 13 documents Tally format mein banenge: Tax Invoice, Bill of Supply, Cash Memo (Without GST), Cash Memo (With GST), Quotation, Proforma Invoice, Sales Order, Delivery Challan, Purchase Order, Purchase Bill, Work Order, Gate Pass aur Packing Slip. Salary Slip aur Rent Receipt purane look mein rahenge. Har document ki setting alag hai: Customize kholo aur document chuno.':'Theme applied: '+(names[v]||v)+'. Sabhi 6 documents (Invoice, Quotation, Proforma, Delivery Challan, Purchase Bill, Purchase Order) is theme mein banenge.');
+const names={'1':'Theme 1 — Premium Traditional','2':'Theme 2 — Premium/Modern','3':'Theme 3 — Ultra Premium','4':'Theme 4 — Most Advanced','5':'Theme 5 — Bold Corporate','6':'Theme 6 — Tally Format','7':'Theme 7 — Letterhead Format','8':'Theme 8 — Blue Tax Invoice'};
+alert(v==='8'?'Theme applied: Theme 8 — Blue Tax Invoice. Ye sirf Tax Invoice me lagega. Baki sab documents (Bill of Supply, Cash Memo, Quotation etc.) purane look me hi rahenge.':v==='7'?'Theme applied: Theme 7 — Letterhead Format. Ye bilkul Theme 6 jaisa hai (Customize, Change Font sab same). Extra: Setup button me Letterhead ON/OFF, upar ke design, background image, size aur PDF/Print milega.':v==='6'?'Theme applied: Theme 6 — Tally Format. Ab ye 13 documents Tally format mein banenge: Tax Invoice, Bill of Supply, Cash Memo (Without GST), Cash Memo (With GST), Quotation, Proforma Invoice, Sales Order, Delivery Challan, Purchase Order, Purchase Bill, Work Order, Gate Pass aur Packing Slip. Salary Slip aur Rent Receipt purane look mein rahenge. Har document ki setting alag hai: Customize kholo aur document chuno.':'Theme applied: '+(names[v]||v)+'. Sabhi 6 documents (Invoice, Quotation, Proforma, Delivery Challan, Purchase Bill, Purchase Order) is theme mein banenge.');
 }
 function loadSettingsUI(){
 let s=db.settings||DEFAULT_SETTINGS;
@@ -19495,15 +19510,15 @@ function pvBtn(a,ic,lb){return '<button type="button" onclick="pvOpen(\''+a+'\')
 function pvArrows(k){
  PV_K=k;
  var t=pvEff(k),n=parseInt(t,10)||2,def=String((db.settings||{}).docTheme||'2'),L=document.getElementById('pvL'+k),R=document.getElementById('pvR'+k),P=document.getElementById('pvP'+k);
- if(L)L.disabled=n<=1;if(R)R.disabled=n>=7;
- var dots='';for(var i=1;i<=7;i++)dots+='<span class="pvd'+(i===n?' on':'')+'" onclick="pvGo(\''+k+'\','+i+')"></span>';
- var b='';if(n!==6&&n!==7)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7)b+=pvBtn('cust','⚙️','Customize');if(n===7)b+=pvBtn('setup','🖨️','Setup');b+='<button type="button" class="pvgold" onclick="pvOpen(\'share\')"><span>📤</span>Share</button>';
+ if(L)L.disabled=n<=1;if(R)R.disabled=n>=8;
+ var dots='';for(var i=1;i<=8;i++)dots+='<span class="pvd'+(i===n?' on':'')+'" onclick="pvGo(\''+k+'\','+i+')"></span>';
+ var b='';if(n!==6&&n!==7&&n!==8)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7)b+=pvBtn('cust','⚙️','Customize');if(n===7)b+=pvBtn('setup','🖨️','Setup');b+='<button type="button" class="pvgold" onclick="pvOpen(\'share\')"><span>📤</span>Share</button>';
  if(P)P.innerHTML='<div class="pvr1"><div class="pvd-w">'+dots+'</div><b>Theme '+n+'</b>'+(t===def?'<i>Default</i>':'<button type="button" class="pvdef" onclick="pvMakeDefault(\''+k+'\')">Isse default banao</button>')+'</div><div class="pvr2">'+b+'</div>'}
 function pvRerender(k){
  if(k==='inv'){var c=document.getElementById('previewCanvas');if(c)c.srcdoc=pvInvHtml()}
  else{var d=docPrevDoc;if(!d)return;var T=DOC_TYPES[d.type],f=id('docPrevFrame');f.srcdoc=pvWith(PV.doc,function(){return docFullHTML(d,[T.copies[0]],true)})}
  pvArrows(k)}
-function pvGo(k,n){if(n<1||n>7)return;PV[k]=String(n);pvRerender(k)}
+function pvGo(k,n){if(n<1||n>8)return;PV[k]=String(n);pvRerender(k)}
 function pvNav(k,dir){pvGo(k,(parseInt(pvEff(k),10)||2)+dir)}
 function pvOpen(a){
  if(a==='share'){window.PV_NEXT=pvEff(PV_K);if(PV_K==='doc')docPrintOpen(window.PV_DOCID,'share');else openOutputModal();return}
@@ -26167,6 +26182,118 @@ function t6InvoiceBuild(inv,copy,opts){
  if(!plan)plan=t6Plan(rows,taxLines*(t6IsBig()?23:19),bos?0:hk.length);
  var np=plan.length;
  return plan.map(function(pg,p){return pageHtml(pg.rows,p,pg.last,np,pg.tax)}).join('');
+}
+</script>
+
+<script id="theme8">
+/* ===== THEME 8 = Tax Invoice only (blue-header "DEMO PRIME TRADERS" style). Baki sab documents purane look me ===== */
+function t8On(){return String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'')==='8'}
+function t8Ok(inv){return t8On()&&!!inv&&!isBos(inv)&&!isCash(inv)}
+function getPrintStylesTheme8(){return `
+@page{size:A4 portrait;margin:8mm}
+.t8pg{width:100%;min-height:1040px;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11px;border:1.5px solid #111;padding:0 6px;background:#fff;box-sizing:border-box}
+.t8pg *{box-sizing:border-box}
+.t8top{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:10.5px;padding:9px 0 8px;border-bottom:1.5px solid #111}
+.t8top .c{font-size:13px}
+.t8hd{display:flex;align-items:center;position:relative;min-height:92px;padding:10px 0}
+.t8hd img{position:absolute;left:6px;top:10px;max-width:70px;max-height:70px;object-fit:contain}
+.t8co{flex:1;text-align:center;padding:0 80px}
+.t8co h1{margin:0 0 8px;color:#0b4aa2;font-size:25px;letter-spacing:.3px;line-height:1.15}
+.t8co p{margin:2px 0;font-size:11px;line-height:1.35}
+.t8in{display:flex;border-top:1.5px solid #111;border-bottom:1.5px solid #111}
+.t8in .l{flex:1.55;border-right:1.5px solid #111}.t8in .r{flex:1}
+.t8sec{background:#d9e6f4;font-weight:700;padding:6px 9px;border-bottom:1.5px solid #111;font-size:11.5px}
+.t8sec.b2{border-top:1.5px solid #111}
+.t8ad{padding:7px 9px;line-height:1.55;font-size:11px}
+.t8kv{display:flex;padding:6px 7px;border-bottom:1px solid #ddd;font-size:11px}
+.t8kv b{width:46%}.t8kv i{width:8%;font-style:normal}.t8kv span{flex:1;overflow-wrap:anywhere}
+.t8itw{flex:1;display:flex;margin-top:10px}
+table.t8it{width:100%;height:100%;border-collapse:collapse;font-size:11px;border:1.5px solid #111}
+.t8it thead{display:table-header-group}
+.t8it th{background:#d9e6f4;border:1px solid #111;padding:7px 3px;font-weight:700;font-size:11px}
+.t8it td{border-left:1px solid #111;border-right:1px solid #111;padding:5px 4px;text-align:center;vertical-align:middle}
+.t8it tr{break-inside:avoid;page-break-inside:avoid}
+.t8it td.n{text-align:left;font-weight:700;padding-left:9px}
+.t8it td.sh,.t8it td.tt{background:#d9e6f4}.t8it td.tt{font-weight:700}
+.t8it .sub{display:block;font-weight:400;font-style:italic;font-size:9.5px;color:#4b5563}
+.t8it .dc{display:block;color:#d62839;font-size:9.5px;font-weight:700;margin-top:2px}
+.t8it tr.fill td{height:100%;padding:0}
+.t8it tr.st td{border-top:1.5px solid #111;border-bottom:0;font-weight:700;padding:9px 4px;background:#fff}
+.t8it tr.st td.sh,.t8it tr.st td.tt{background:#d9e6f4}
+.t8end{break-inside:avoid;page-break-inside:avoid}
+.t8bk{display:flex;margin-top:11px;border:1.5px solid #111}
+.t8bk .a{flex:1.55;border-right:1.5px solid #111}.t8bk .b{flex:1}
+.t8bk .hd2{display:flex;background:#d9e6f4;border-bottom:1.5px solid #111;font-weight:700;font-size:11.5px}
+.t8bk .hd2 div{padding:6px 9px;flex:1;text-align:center}.t8bk .hd2 div:first-child{flex:1.35;border-right:1.5px solid #111}
+.t8sm{display:flex;justify-content:space-between;padding:7px 14px;font-size:11.5px;border-bottom:1px solid #eee}
+.t8sm span:first-child{margin-left:auto;margin-right:18px}
+.t8wd{background:#f3f3f3;padding:7px 9px;border-top:1.5px solid #111}
+.t8wd small{font-weight:700;font-size:10px}.t8wd div{font-weight:700;font-size:12.5px;margin-top:5px}
+.t8gt{display:flex;background:#d9e6f4;height:56px;align-items:center}
+.t8gt .x{flex:1.35;text-align:right;padding-right:14px;font-size:18px;font-weight:700;border-right:1.5px solid #111;line-height:56px}
+.t8gt .y{flex:1;text-align:center;font-size:20px;font-weight:700}
+.t8ft{display:flex;border:1.5px solid #111;border-top:0;min-height:130px}
+.t8ft>div{padding:7px 9px}
+.t8ft .dc2{flex:1.55;font-size:10px;line-height:1.5;border-right:1.5px solid #111}
+.t8ft .qr{width:168px;border-right:1.5px solid #111;text-align:center;font-weight:700;font-size:9.5px}
+.t8ft .qr img{width:88px;height:88px;margin-top:6px}
+.t8ft .sg{flex:1.4;text-align:center;font-weight:700;font-size:12px;display:flex;flex-direction:column}
+.t8ft .sg .pen{flex:1;display:flex;align-items:center;justify-content:center;min-height:56px}
+.t8ft .sg .pen img{max-height:54px;max-width:100%}
+.t8ft .sg .ln{border-top:1.5px solid #111;padding-top:8px}
+.t8th{text-align:center;letter-spacing:3px;font-weight:700;font-size:12px;padding:12px 0 10px}
+`}
+function theme8InvoiceHTML(inv,copy){
+ copy=copy||'ORIGINAL FOR RECIPIENT';
+ var s=db.settings||{},t=inv.totals||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,subTotal:0,discount:0,roundOff:0,grand:0},cu=inv.customer||{};
+ var ext=!!(typeof chatPreviewInvoice!=='undefined'&&chatPreviewInvoice&&chatPreviewInvoice.external&&chatPreviewInvoice.seller===s);
+ var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else same=String(inv.companyState||'').trim().toLowerCase()===String(cu.state||'').trim().toLowerCase();
+ var items=(inv.items||[]).filter(function(r){return r.itemId});
+ var qsum=0,units={};
+ var rows=items.map(function(r,i){
+  var name=String(r.itemName||'').trim(),d=String(r.description||'').trim(),sz=r.size?('Size: '+r.size):'';
+  var sub=[(name&&d&&name.toLowerCase()!==d.toLowerCase())?d:'',sz].filter(Boolean).join(' | ');
+  var q=rowIsAlt(r)?rowPQty(r,r.qty):(r.qty+' '+(r.unit||'Nos'));
+  var u=rowPUnit(r,r.unit||'Nos');units[u]=1;qsum+=rowIsAlt(r)?Number(rowBaseQty(r)||0):Number(r.qty||0);
+  var tax=Number(r.cgst||0)+Number(r.sgst||0)+Number(r.igst||0),ds=Number(r.disc||0),tx=Number(r.taxable||0);
+  return '<tr><td>'+(i+1)+'</td><td class="n">'+esc(name||d)+(sub?'<span class="sub">'+esc(sub)+'</span>':'')+'</td><td>'+esc(r.hsn||'')+'</td><td>'+esc(q)+'</td><td>'+money(r.rate)+(ds>0?'<span class="dc">(-) '+ds+'% Disc</span>':'')+'</td><td class="sh">'+money(tx)+'</td><td>'+(r.gst!==''&&r.gst!=null?esc(r.gst)+'%':'')+'</td><td>'+money(tax)+'</td><td class="tt">'+money(tx+tax)+'</td></tr>';
+ }).join('');
+ var ul=Object.keys(units),qtxt=ul.length===1?String(parseFloat(qsum.toFixed(3))):'';
+ var addr=String(s.address||'').split('\n').filter(Boolean).join(', ');
+ var cuAd=esc(cu.address||'').replace(/\n/g,', ')+(cu.city?', '+esc(cu.city):'')+(cu.pin?' – '+esc(cu.pin):'');
+ var stNm=function(){var sc=cu.stateCode||(typeof stateCodeFor==='function'?stateCodeFor(cu.state):'');return esc(cu.state||'—')+(sc?'-'+esc(sc):'')};
+ var cuNm=cu.name||'—';
+ var shipLines=String(inv.shipTo||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);
+ var bill='<b>Name:</b> '+esc(cuNm)+'<br><b>Address:</b> '+cuAd+'<br><b>State:</b> '+stNm()+'<br><b>GSTIN:</b> '+esc(cu.gst||'—');
+ var ship=shipLines.length?'<b>Name:</b> '+esc(shipLines[0])+(shipLines.length>1?'<br><b>Address:</b> '+shipLines.slice(1).map(esc).join(', '):'')+'<br><b>State:</b> '+stNm()
+  :'<b>Name:</b> '+esc(cuNm)+'<br><b>Address:</b> '+cuAd+'<br><b>State:</b> '+stNm();
+ function kv(l,v){return '<div class="t8kv"><b>'+l+'</b><i>:</i><span>'+(v||'')+'</span></div>'}
+ var ref=[inv.supplierRef,inv.otherRef].filter(Boolean).join(' / ');
+ var right=kv('Inv. No.',esc(inv.invoiceNumber||''))+kv('Inv. Date',esc(t6Date(inv.date)))+kv('Payment Mode',esc(inv.payment||''))+kv('E-Way Bill No.',esc(inv.ewayBill||''))+kv('Buyer\'s Order No',esc(inv.buyerOrderNo||''))+kv('Vehicle Number',esc(inv.vehicleNo||''))+kv('Delivery Note',esc(inv.deliveryNote||''))+kv('Ref. No. &amp; Date',esc(ref))+kv('Dispatched through',esc(inv.transport||''))+kv('Terms Of Delivery',esc(inv.termsOfDelivery||''));
+ var hasQr=docPlanAllows('qr')&&!!s.upiId;
+ var qr=hasQr?'<div class="qr">SCAN TO PAY<br><img src="'+qrImageUrl(upiLinkFor(inv),160)+'" alt="UPI QR"></div>':'';
+ var bankHtml=s.bankName?'<b>Bank Name:</b> '+esc(s.bankName)+'<br><b>Account No:</b> <b style="font-size:12.5px">'+esc(s.accNo||'')+'</b><br><b>IFSC Code:</b> '+esc(s.ifsc||'')+(s.upiId?'<br><b>UPI ID:</b> '+esc(s.upiId):''):'<span style="color:#e11d48">Bank details not set — please add them in Settings</span>';
+ var sm='';
+ if(same){sm+='<div class="t8sm"><span>CGST Amt. :</span><span>'+money(t.cgst)+'</span></div><div class="t8sm"><span>SGST Amt. :</span><span>'+money(t.sgst)+'</span></div>'}
+ else sm+='<div class="t8sm"><span>IGST Amt. :</span><span>'+money(t.igst)+'</span></div>';
+ if(Number(t.discount)>0)sm+='<div class="t8sm"><span>Discount :</span><span>-'+money(t.discount)+'</span></div>';
+ sm+='<div class="t8sm" style="border:0"><span>Round off :</span><span>'+money(t.roundOff||0)+'</span></div>';
+ var sub=t.subTotal!==undefined?Number(t.subTotal):Number(t.taxable||0)+Number(t.tax||0);
+ var logo=s.logo?'<img src="'+s.logo+'" alt="">':'';
+ return '<style>'+getPrintStylesTheme8()+'</style><div class="t8pg">'
+ +'<div class="t8top"><span>GSTIN : '+esc(ext?(s.gstin||'—'):(s.gstin||''))+'</span><span class="c">TAX INVOICE</span><span>'+esc(copy)+'</span></div>'
+ +'<div class="t8hd">'+logo+'<div class="t8co"><h1>'+esc(s.company||'')+'</h1><p>'+esc(addr)+'</p>'+(s.phone?'<p>Contact No. : '+esc(s.phone)+'</p>':'')+'</div></div>'
+ +'<div class="t8in"><div class="l"><div class="t8sec">BILL TO</div><div class="t8ad">'+bill+'</div><div class="t8sec b2">SHIPP TO</div><div class="t8ad" style="min-height:84px">'+ship+'</div></div><div class="r">'+right+'</div></div>'
+ +'<div class="t8itw"><table class="t8it"><colgroup><col style="width:5%"><col><col style="width:10%"><col style="width:10%"><col style="width:11%"><col style="width:12%"><col style="width:7%"><col style="width:10%"><col style="width:12%"></colgroup>'
+ +'<thead><tr><th rowspan="2">Sr</th><th rowspan="2" style="text-align:left;padding-left:9px">Goods &amp; Service Description</th><th rowspan="2">HSN</th><th rowspan="2">Quantity</th><th rowspan="2">Rate</th><th rowspan="2">Taxable</th><th colspan="2">GST</th><th rowspan="2">Total</th></tr><tr><th>%</th><th>Amt.</th></tr></thead>'
+ +'<tbody>'+rows+'<tr class="fill"><td></td><td></td><td></td><td></td><td></td><td class="sh"></td><td></td><td></td><td class="tt"></td></tr>'
+ +'<tr class="st"><td colspan="3" style="text-align:right;padding-right:9px">Sub-Total:</td><td>'+qtxt+'</td><td></td><td class="sh">'+money(t.taxable)+'</td><td></td><td>'+money(t.tax)+'</td><td class="tt">'+money(sub)+'</td></tr></tbody></table></div>'
+ +'<div class="t8end"><div class="t8bk"><div class="a"><div class="hd2" style="display:block;padding:6px 9px;text-align:left">OUR BANK DETAILS</div><div class="t8ad" style="line-height:1.65;padding:8px 10px">'+bankHtml+'</div>'
+ +'<div class="t8wd"><small>INVOICE TOTAL IN WORD</small><div>'+esc(amountInWords(t.grand))+'</div></div></div>'
+ +'<div class="b"><div class="hd2"><div>SUMMERY</div><div>AMOUNT</div></div>'+sm+'<div class="t8gt"><div class="x">Total Amount :</div><div class="y">₹ '+money(t.grand)+'</div></div></div></div>'
+ +'<div class="t8ft"><div class="dc2"><b>DECLARATION</b><br>We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.<br><b>E. &amp; O.E.</b></div>'+qr
+ +'<div class="sg"><span>For, '+esc(s.company||'')+'</span><div class="pen">'+(s.stamp?'<img src="'+s.stamp+'" alt="">':'')+'</div><div class="ln">Authorised Signatory</div></div></div>'
+ +'<div class="t8th">THANK YOU FOR BUSINESS WITH US!</div></div></div>';
 }
 </script>
 
