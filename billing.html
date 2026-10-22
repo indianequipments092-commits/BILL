@@ -11668,45 +11668,58 @@ const K=slipKit(dots,est), x=K.x, px=K.px;
 const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>9&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
 
 /* 1. Header */
+const coName=String(S.company||'').toUpperCase();
+let logoCv=null;
 if(thermalLogoOn()){
 const logo=await slipLoadImg(S.logo);
 if(logo){
-const mh=px(80), mw=Math.min(K.CW*0.5,px(190)), sc=Math.min(mh/logo.height,mw/logo.width,3), lw=Math.max(8,Math.round(logo.width*sc)), lh=Math.max(8,Math.round(logo.height*sc));
+const mh=px(46), mw=px(150), sc=Math.min(mh/logo.height,mw/logo.width,3), lw=Math.max(8,Math.round(logo.width*sc)), lh=Math.max(8,Math.round(logo.height*sc));
 const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); slipDither(tc);
-x.drawImage(tc,Math.round((dots-lw)/2),K.y); K.y+=lh+px(6);
+logoCv={cv:tc,w:lw,h:lh};
 }
 }
-K.center(String(S.company||'').toUpperCase(),29,800,3);
-if(S.address) K.center(String(S.address).replace(/\n/g,', '),17.5,500,2);
-if(S.phone) K.center('Ph: '+S.phone,17.5,600,1);
+K.f(25,800); const nameW=coName?Math.ceil(x.measureText(coName).width):0;
+if(logoCv&&coName&&nameW+logoCv.w+px(10)<=K.CW){
+const sx=K.L+Math.round((K.CW-(logoCv.w+px(10)+nameW))/2), rowH=Math.max(logoCv.h,px(31));
+x.drawImage(logoCv.cv,sx,K.y+Math.round((rowH-logoCv.h)/2));
+x.textAlign='left'; x.fillText(coName,sx+logoCv.w+px(10),K.y+Math.round((rowH-px(25))/2));
+K.y+=rowH+px(4);
+} else {
+if(logoCv){ x.drawImage(logoCv.cv,Math.round((dots-logoCv.w)/2),K.y); K.y+=logoCv.h+px(4); }
+if(coName) K.center(coName,25,800,3);
+}
+if(S.address) K.center(String(S.address).replace(/\n/g,', '),16,500,2);
+if(S.phone) K.center('Ph: '+S.phone,16,600,1);
+if(S.gstin){ K.center('GSTIN: '+S.gstin,16,800,1); K.center('Composition taxable person, not eligible to collect tax on supplies',13,500,1); }
 K.y+=px(2); K.rule('double');
 const title=invTitle(inv,true);
-K.band(wide?46:42,(y,h)=>{ const fs=wide?25:23; K.f(fs,800); x.textAlign='center'; try{x.letterSpacing=px(2.5)+'px';}catch(e){} x.fillText(title,K.dots/2+px(1),y+(h-px(fs))/2-px(1)); try{x.letterSpacing='0px';}catch(e){} });
+K.band(wide?42:38,(y,h)=>{ const fs=wide?23:21; K.f(fs,800); x.textAlign='center'; try{x.letterSpacing=px(2.5)+'px';}catch(e){} x.fillText(title,K.dots/2+px(1),y+(h-px(fs))/2-px(1)); try{x.letterSpacing='0px';}catch(e){} });
 
 /* 2. Bill info */
 const tm=slipTime12(inv);
-K.row('Bill No.',inv.invoiceNumber||'-',19.5,500,800,2);
-K.row('Date',slipDate(inv.date)+(tm?'  '+tm:''),19.5,500,800,2);
+K.row('Bill No.',inv.invoiceNumber||'-',17.5,500,800,2);
+K.row('Date',slipDate(inv.date)+(tm?'  '+tm:''),17.5,500,800,2);
 const paid=paidAmount(inv), bal=balanceDue(inv), pays=(inv.payments||[]).filter(p=>Number(p.amount)>0);
-K.row('Payment',paid>0?paymentModesOf(inv):'Credit',19.5,500,800,4);
+K.row('Payment',paid>0?paymentModesOf(inv):'Credit',17.5,500,800,4);
 K.rule('dash');
-K.left('CUSTOMER',15,800,0);
-K.left(cu.name||'Cash Sale',22,800,0);
-if(cu.contact) K.left('Mobile: '+cu.contact,18,500,0);
+K.left('CUSTOMER',14,800,0);
+K.left(cu.name||'Cash Sale',20,800,0);
+if(cu.contact) K.left('Mobile: '+cu.contact,16.5,500,0);
 K.y+=px(3); K.rule('dash');
 
 /* 3. Items */
 let qtySum=0, saved=Number(t.discount)||0;
 const gap=px(6), num=px(3);
-const wN=Math.round(K.CW*0.06), wA=Math.round(K.CW*0.22), wR=Math.round(K.CW*0.17), wQ=Math.round(K.CW*0.17);
-const xI=K.L+wN, amtR=K.R, rateR=K.R-wA, qtyR=rateR-wR, wI=qtyR-wQ-gap-xI;
+const hasMrp=wide&&items.some(r=>Number(r.mrp)>Number(r.rate||0)+0.005);
+const wN=Math.round(K.CW*0.06), wA=Math.round(K.CW*0.20), wR=Math.round(K.CW*0.16), wQ=Math.round(K.CW*0.14), wM=hasMrp?Math.round(K.CW*0.16):0;
+const xI=K.L+wN, amtR=K.R, rateR=K.R-wA, qtyR=rateR-wR, mrpR=qtyR-wQ, wI=(hasMrp?mrpR-wM:qtyR)-gap-xI;
 const cell=(s,right,n,wt,mw)=>{ fit(s,mw-num,n,wt); x.textAlign='right'; x.fillText(String(s),right-num,K.y); };
 if(wide){
-K.f(15,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',xI,K.y);
-x.textAlign='right'; x.fillText('QTY',qtyR-num,K.y); x.fillText('RATE',rateR-num,K.y); x.fillText('AMT',amtR-num,K.y);
-K.y+=px(15*1.3);
+K.f(14,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',xI,K.y);
+x.textAlign='right'; x.fillText('QTY',qtyR-num,K.y); if(hasMrp) x.fillText('MRP',mrpR-num,K.y); x.fillText('RATE',rateR-num,K.y); x.fillText('AMT',amtR-num,K.y);
+K.y+=px(14*1.3);
 } else {
-K.row('ITEM','Qty x Rate = Amt',14,800,800,1);
+K.row('ITEM','Qty x Rate = Amt',13.5,800,800,1);
 }
 K.rule('solid');
 items.forEach((r,i)=>{
@@ -11714,45 +11727,56 @@ const q=Number(r.qty)||0; qtySum+=q;
 try{ const bq=(typeof rowApplyBase==='function')?rowApplyBase(r):q; const gross=bq*(Number(r.rate)||0), net=Number(r.amount)||0; if(gross-net>0.005) saved+=gross-net; }catch(e){}
 const qtxt=slipFmtQty(q)+(r.unit?' '+r.unit:''), rtxt=slipInr(r.rate), atxt=slipInr(r.amount);
 if(wide){
-K.f(18,700); const ls=K.wrap(itemText(r),wI), lh=px(18*1.25);
-K.f(17,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
-K.f(18,700); x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
-cell(qtxt,qtyR,17,600,wQ); cell(rtxt,rateR,17,500,wR); cell(atxt,amtR,17.5,800,wA);
-K.y+=Math.max(1,ls.length)*lh+px(7);
+K.f(17,700); const ls=K.wrap(itemText(r),wI), lh=px(17*1.25);
+K.f(16,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
+K.f(17,700); x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
+cell(qtxt,qtyR,16,600,wQ); if(hasMrp) cell(Number(r.mrp)>0?slipInr(r.mrp):'-',mrpR,16,500,wM); cell(rtxt,rateR,16,500,wR); cell(atxt,amtR,16.5,800,wA);
+K.y+=Math.max(1,ls.length)*lh+px(5);
 } else {
-K.f(20,800); const pre=(i+1)+'. ', iw=Math.ceil(x.measureText(pre).width);
-const ls=K.wrap(itemText(r),K.CW-iw); K.f(20,800); x.textAlign='left';
-ls.forEach((l,j)=>{ if(j===0) x.fillText(pre,K.L,K.y); x.fillText(l,K.L+iw,K.y); K.y+=px(20*1.25); });
-K.row('   '+qtxt+' x '+rtxt,'= '+atxt,18,500,800,6);
+K.f(18,800); const pre=(i+1)+'. ', iw=Math.ceil(x.measureText(pre).width);
+const ls=K.wrap(itemText(r),K.CW-iw); K.f(18,800); x.textAlign='left';
+ls.forEach((l,j)=>{ if(j===0) x.fillText(pre,K.L,K.y); x.fillText(l,K.L+iw,K.y); K.y+=px(18*1.25); });
+K.f(16,500); x.textAlign='left'; x.fillText('   '+qtxt+' x '+rtxt,K.L,K.y);
+K.f(19,800); x.textAlign='right'; x.fillText('= '+atxt,K.R,K.y);
+K.y+=px(19*1.3)+px(5);
 }
 });
 K.rule('dash');
-K.row('Items: '+items.length,'Total Qty: '+slipFmtQty(qtySum),16.5,600,600,3);
+K.row('Items: '+items.length,'Total Qty: '+slipFmtQty(qtySum),15.5,600,600,3);
 
 /* 4. Totals */
-K.row('Subtotal',slipInr(t.subTotal!=null?t.subTotal:(Number(t.grand||0)+Number(t.discount||0)-Number(t.roundOff||0))),19,500,700,1);
-if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),19,500,700,1);
-if(Number(t.roundOff)) K.row('Round off',(Number(t.roundOff)>0?'+ ':'- ')+slipInr(Math.abs(t.roundOff)),19,500,700,1);
-K.y+=px(4);
+K.row('Subtotal',slipInr(t.subTotal!=null?t.subTotal:(Number(t.grand||0)+Number(t.discount||0)-Number(t.roundOff||0))),17.5,500,700,1);
+if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),17.5,500,700,1);
+if(Number(t.roundOff)) K.row('Round off',(Number(t.roundOff)>0?'+ ':'- ')+slipInr(Math.abs(t.roundOff)),17.5,500,700,1);
+K.y+=px(3);
 const gt=Number(t.grand||0), gtxt='₹ '+slipInr(gt);
-K.band(wide?74:70,(y,h)=>{
-K.f(15,800); x.textAlign='center'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText('GRAND TOTAL',K.dots/2+px(1),y+px(7)); try{x.letterSpacing='0px';}catch(e){}
-const fs=fit(gtxt,K.CW-px(16),36,800); x.textAlign='center'; x.fillText(gtxt,K.dots/2,y+h-px(fs)-px(7));
+K.band(wide?68:64,(y,h)=>{
+K.f(14,800); x.textAlign='center'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText('GRAND TOTAL',K.dots/2+px(1),y+px(6)); try{x.letterSpacing='0px';}catch(e){}
+const fs=fit(gtxt,K.CW-px(16),33,800); x.textAlign='center'; x.fillText(gtxt,K.dots/2,y+h-px(fs)-px(6));
 });
-try{ const wd=amountInWords(gt); if(wd) K.left(wd,16.5,500,3,'italic'); }catch(e){}
+try{ const wd=amountInWords(gt); if(wd) K.left(wd,15,500,3,'italic'); }catch(e){}
 
 /* 5. Payment */
 if(pays.length>1){
-K.left('PAYMENT BREAKDOWN',15,800,1);
-pays.forEach(p=>K.row(p.mode||'Cash',slipInr(p.amount),18.5,500,700,1));
+K.left('PAYMENT BREAKDOWN',14,800,1);
+pays.forEach(p=>K.row(p.mode||'Cash',slipInr(p.amount),17,500,700,1));
 K.y+=px(2);
 }
-if(paid>0) K.row('Paid'+(pays.length===1&&pays[0].mode?' ('+pays[0].mode+')':''),slipInr(paid),19.5,500,700,2);
-if(bal>0.005) K.row('Balance (Udhaar)',slipInr(bal),22,800,800,3);
+if(paid>0) K.row('Paid'+(pays.length===1&&pays[0].mode?' ('+pays[0].mode+')':''),slipInr(paid),18,500,700,2);
+if(bal>0.005) K.row('Balance (Udhaar)',slipInr(bal),20,800,800,3);
+if(bal>0.005&&cu&&(cu.id||cu.name)){
+try{
+const dues=(typeof customerDues==='function')?customerDues(cu):null;
+let tot=dues?Number(dues.outstanding||0):0;
+const inDb=((typeof db!=='undefined'&&db.invoices)||[]).some(xx=>xx.id===inv.id&&xx.status==='Finalized');
+if(!inDb) tot+=bal;
+if(tot>bal+0.005){ K.row('Purana Baaki',slipInr(tot-bal),17,500,700,1); K.row('Kul Baaki (Total Due)',slipInr(tot),18.5,800,800,3); }
+}catch(e){}
+}
 if(paid>0&&bal<=0.005){
-K.y+=px(2); K.f(21,800); const tx='PAID', tw=Math.ceil(x.measureText(tx).width), ck=px(20), g2=px(10), bw=tw+g2+ck+px(34), bh=px(36), bx=Math.round((K.dots-bw)/2);
+K.y+=px(2); K.f(19,800); const tx='PAID', tw=Math.ceil(x.measureText(tx).width), ck=px(18), g2=px(10), bw=tw+g2+ck+px(32), bh=px(33), bx=Math.round((K.dots-bw)/2);
 x.lineWidth=px(2.2); K.rr(bx,K.y,bw,bh,px(8)); x.stroke();
-const sx=bx+px(17); x.textAlign='left'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText(tx,sx,K.y+(bh-px(21))/2-px(1)); try{x.letterSpacing='0px';}catch(e){}
+const sx=bx+px(17); x.textAlign='left'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText(tx,sx,K.y+(bh-px(19))/2-px(1)); try{x.letterSpacing='0px';}catch(e){}
 const cx=sx+tw+g2+px(2), cy=K.y+bh/2; x.lineWidth=px(3.4); x.lineCap='round'; x.lineJoin='round'; x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+ck*0.36,cy+ck*0.34); x.lineTo(cx+ck,cy-ck*0.42); x.stroke(); x.lineCap='butt'; x.lineJoin='miter';
 K.y+=bh+px(8);
 }
@@ -11764,31 +11788,31 @@ try{
 const q='upi://pay?pa='+S.upiId+'&pn='+encodeURIComponent(String(S.company||'Shop').replace(/[^\x20-\x7E]/g,''))+'&am='+bal.toFixed(2)+'&cu=INR';
 const qr=new window.__QRCodeEncoder(0,0); qr.addData(q); qr.make();
 const n=qr.getModuleCount(), quiet=2, target=Math.min(K.CW*0.66,px(230)), ms=Math.max(2,Math.floor(target/(n+quiet*2))), side=ms*(n+quiet*2), ox=Math.round((K.dots-side)/2);
-K.center('SCAN & PAY',20,800,1);
-K.center('₹ '+slipInr(bal),19,700,3);
+K.center('SCAN & PAY',18,800,1);
+K.center('₹ '+slipInr(bal),17.5,700,3);
 x.fillStyle='#fff'; x.fillRect(ox,K.y,side,side); x.fillStyle='#000';
 for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(qr.isDark(r,c)) x.fillRect(ox+(c+quiet)*ms,K.y+(r+quiet)*ms,ms,ms);
 K.y+=side+px(4);
-K.center(S.upiId,15,500,4);
+K.center(S.upiId,14,500,4);
 K.rule('dash');
 }catch(e){ console.warn('slip QR failed',e); }
 }
 
 /* 7. Extras */
-if(saved>0.005){ K.center('Aapne bachaye ₹ '+slipInr(saved),20,800,4); }
+if(saved>0.005){ K.center('Aapne bachaye ₹ '+slipInr(saved),18,800,4); }
 const bt=String(S.bosTerms||'').split('\n').map(s=>s.replace(/^\s*\d+[\.\)]\s*/,'').trim()).filter(Boolean);
-const terms=(bt.length?bt:['Goods once sold will not be taken back or exchanged.','Payment is due as per agreed terms.']).slice(0,3);
-terms.forEach(s=>K.left('• '+s,14,500,1));
+const terms=(bt.length?bt:['Bika hua saaman wapas ya badla nahi jayega.','Payment tay samay par karne ki kripa karein.']).slice(0,3);
+terms.forEach(s=>K.left('• '+s,13,500,1));
 K.y+=px(4);
-K.center('Dhanyavaad, phir aaiyega',21,800,5);
+K.center('Dhanyavaad, phir aaiyega',19,800,5);
 
 /* 8. Branding */
 let brand=true; try{ if(typeof ieCreditOn==='function'&&!ieCreditOn()) brand=false; }catch(e){}
 if(brand){
 K.rule('dash');
 const ms2=px(34), bc=await slipBrandMark(ms2); x.drawImage(bc,Math.round((dots-ms2)/2),K.y); K.y+=ms2+px(5);
-K.center('Powered by IE Billing',14.5,700,0);
-K.center(IE_CREDIT_URL,14.5,500,2);
+K.center('Powered by IE Billing',13.5,700,0);
+K.center(IE_CREDIT_URL,13.5,500,2);
 }
 
 /* 9. Blank space + cut line (printer feed and cut command are added by slipToEsc) */
