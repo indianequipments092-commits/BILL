@@ -11580,7 +11580,7 @@ const SLIP_FONT="'Inter','Segoe UI',Roboto,'Noto Sans','Noto Sans Devanagari',Ar
 /* ---------- Thermal Themes (Settings > Thermal Printer se default; preview me arrows se badlo) ---------- */
 const TTHEMES={
 '1':{title:'Classic',desc:'Jo abhi hai — kaala band, beech wala header, table wala hisaab',fs:1,band:'black',layout:'table',head:'center'},
-'2':{title:'Dot Bachat',desc:'Dot-matrix font wala professional look — halka print, kam thermal, saari detail same',fs:0.9,band:'text',layout:'table',head:'center',rule2:'solid',dot:true},
+'2':{title:'Dot Bachat',desc:'Dot-matrix font wala professional look — halka print, kam thermal, saari detail same',fs:0.84,band:'text',layout:'table',head:'center',rule2:'solid',dot:true},
 '3':{title:'Bada',desc:'Har item do line me, bade akshar — door se bhi padho',fs:1.14,band:'black',layout:'lines',head:'big',tall:true},
 '4':{title:'Modern',desc:'Left wala header, band ki jagah frame, dotted separators',fs:1,band:'line',layout:'table',head:'left',rule2:'dash',ruleS:true}
 };
@@ -11611,7 +11611,7 @@ const DOTFONT={
 };
 function installDotFont(x){
 const of=x.fillText.bind(x), om=x.measureText.bind(x);
-const szOf=()=>{ const m=/(\d+(?:\.\d+)?)px/.exec(x.font||''); return Math.max((m?parseFloat(m[1]):16)*0.88,12); };
+const szOf=()=>{ const m=/(\d+(?:\.\d+)?)px/.exec(x.font||''); return Math.max((m?parseFloat(m[1]):16)*0.84,11); };
 const wtOf=()=>{ const f=(x.font||'').trim(); if(/^bold/.test(f)) return 700; const m=/^(\d{3})\b/.exec(f); return m?parseInt(m[1]):400; };
 const adv=sz=>sz/7*6;
 const wdt=s=>{ const sz=szOf(); let w=0; for(const ch of String(s)){ w+=DOTFONT[ch.toUpperCase()]?adv(sz):(om(ch).width+sz/14); } return w; };
