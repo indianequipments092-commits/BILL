@@ -1485,6 +1485,18 @@ return { exists: !!data, id: self.id, data: () => (data ? data.data : undefined)
 }
 async set(obj, opts = {}) {
 let finalData = obj;
+if (opts.merge && !createFirestoreAdapter.__noMergeRpc) {
+// Fast path: merge on the server (single upload, no download of the existing row).
+const needsExisting = Object.values(obj).some(v => v && typeof v === 'object' && (v.__fsType === 'increment' || v.__fsType === 'deleteField'));
+if (!needsExisting) {
+const patch = resolveSpecialValues(obj, {});
+const { error: rpcErr } = await supabase.rpc('fs_merge_doc', { p_collection: this.collectionPath, p_doc: this.id, p_patch: patch });
+if (!rpcErr) return;
+const missing = rpcErr.code === 'PGRST202' || rpcErr.code === '42883' || rpcErr.code === '404' || /could not find the function|does not exist/i.test(rpcErr.message || '');
+if (!missing) throw rpcErr;
+createFirestoreAdapter.__noMergeRpc = true; // RPC not installed: use legacy path below
+}
+}
 if (opts.merge) {
 const existing = await this.get();
 const base = existing.data() || {};
@@ -3348,9 +3360,9 @@ const localBad=!__saveHealth.local, cloudBad=!__saveHealth.cloud && __saveHealth
 if(!localBad && !cloudBad){ if(el) el.remove(); return; }
 if(window.__shbDismissed){ if(el) el.remove(); return; }
 let msg,bg;
-if(localBad && cloudBad){ msg='❌ Data save nahi ho raha (device storage full + cloud sync fail). Abhi Backup download karo!'; bg='#b91c1c'; }
-else if(localBad){ msg='⚠️ Device storage full hai — data cloud pe save ho raha hai. Backup le lo aur purana data/photos saaf karo.'; bg='#b45309'; }
-else { msg='⚠️ Cloud sync nahi ho pa raha (internet check karo). Data abhi sirf is device pe hai — Backup le lo.'; bg='#b45309'; }
+if(localBad && cloudBad){ msg='❌ Data could not be saved (device storage full and cloud sync failing). Please download a backup now.'; bg='#b91c1c'; }
+else if(localBad){ msg='⚠️ Device storage is full. Data is being saved to the cloud. Please take a backup and clear old data or photos.'; bg='#b45309'; }
+else { msg='⚠️ Cloud sync is failing. Your data is currently saved on this device only. Please take a backup.'+(window.__lastSyncErr?' [Error: '+window.__lastSyncErr+']':''); bg='#b45309'; }
 if(!el){
 el=document.createElement('div'); el.id='saveHealthBar';
 el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;font-size:12px;line-height:1.4;color:#fff;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px))';
@@ -3400,7 +3412,7 @@ el=document.createElement('div'); el.id='ieOffPill';
 el.style.cssText='position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99998;background:#b45309;color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none';
 document.body.appendChild(el);
 }
-el.textContent='📴 Offline — net aate hi data sync hoga (v3)';
+el.textContent='📴 Offline — data will sync when the connection is restored';
 }catch(e){}
 }
 function kick(){
@@ -3441,11 +3453,11 @@ const __settle=(ok,e)=>{
 if(__done) return; __done=true;
 __fsInFlight=false;
 if(ok){ saveHealthSet('cloud',true); if(__ver===__fsVer&&!__fsQueued) iePendSet(__cid,false); }
-else{ console.warn('Firestore save failed',e); saveHealthSet('cloud',false); }
+else{ console.warn('Firestore save failed',e); window.__lastSyncErr=String((e&&(e.message||e.code||e.details))||e||'').slice(0,140); saveHealthSet('cloud',false); }
 if(__fsQueued){ __fsQueued=false; clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,ok?300:__fsRetryDelay()); }
 else if(!ok){ clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,__fsRetryDelay()); }
 };
-setTimeout(()=>__settle(false,new Error('sync timeout 30s')),30000);
+setTimeout(()=>__settle(false,new Error('sync timeout 90s')),90000);
 try{
 fbDb.collection('users').doc(__uid).collection('companies').doc(__cid)
 .set({data:JSON.stringify(__db),updatedAt:Date.now()},{merge:true})
@@ -3470,7 +3482,7 @@ const rawBefore=localStorage.getItem(KEY+'_'+cid);
 if(!rawBefore) continue;
 const locDb=ieLocalDb(cid);
 if(!locDb) continue;
-await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 30s')),30000))]);
+await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 90s')),90000))]);
 if(localStorage.getItem(KEY+'_'+cid)===rawBefore) iePendSet(cid,false);
 }catch(e){ console.warn('pending flush failed for',cid,e); }
 }
