@@ -9475,12 +9475,20 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
 .tp-stepper .tp-n{min-width:38px;text-align:center;font-size:10.5px;font-weight:700;line-height:1.15;opacity:.85}
 .tp-stepper .tp-n b{display:block;font-size:14px;opacity:1}
 .tp-print{flex:1;min-height:48px;border:none;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px -8px rgba(99,102,241,.75);letter-spacing:.2px}
+.tp-sumbar{display:flex;align-items:stretch;background:rgba(140,150,180,.10);border:1px solid rgba(140,150,180,.28);border-radius:14px;overflow:hidden;max-width:100%}
+.tp-sumcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:8px 15px;min-width:0}
+.tp-sumcell+.tp-sumcell{border-left:1px solid rgba(140,150,180,.25)}
+.tp-sumcell .tp-sl{font-size:9px;font-weight:800;letter-spacing:1.1px;opacity:.55;line-height:1.2}
+.tp-sumcell .tp-sv{font-size:15px;font-weight:800;white-space:nowrap;line-height:1.25}
+.tp-sumcell .tp-sv.tp-cust{font-size:13.5px;max-width:140px;overflow:hidden;text-overflow:ellipsis}
 [data-theme="light"] #thermalPreviewModal{background:#edf0f5;color:#131a29}
 [data-theme="light"] .tp-card{background:#fff;border-color:rgba(20,30,60,.08);box-shadow:0 12px 28px -16px rgba(30,41,82,.30)}
 [data-theme="light"] .tp-themerow{border-top-color:rgba(20,30,60,.08)}
 [data-theme="light"] #thermalPrevStage{background:radial-gradient(ellipse at 50% 24%,#ffffff 0%,#e4e9f0 80%)}
 [data-theme="light"] #thermalPreviewModal .tp-actions{background:rgba(255,255,255,.96);border-top:1px solid rgba(20,30,60,.10)}
 [data-theme="light"] #thermalPrevPaper{box-shadow:0 18px 44px rgba(30,41,82,.22),0 3px 12px rgba(30,41,82,.14)}
+[data-theme="light"] .tp-sumbar{background:#fff;border-color:rgba(20,30,60,.10);box-shadow:0 8px 20px -10px rgba(30,41,82,.28)}
+[data-theme="light"] .tp-sumcell+.tp-sumcell{border-left-color:rgba(20,30,60,.09)}
 </style>
 <div class="preview-modal" id="thermalPreviewModal">
   <div class="tp-head">
@@ -12186,14 +12194,15 @@ if(chips){
 const t=inv.totals||{}, gt=Number(t.grand||0); let paid=0, bal=gt; try{ paid=paidAmount(inv); bal=balanceDue(inv); }catch(e){}
 const cust=(inv.customer&&inv.customer.name)||'Cash Sale';
 let st, stBg;
-if(gt>0&&bal<=0.005){ st='✓ PAID'; stBg='background:rgba(16,185,129,.16);color:#10b981;border:1px solid rgba(16,185,129,.45)'; }
-else if(paid>0){ st='Balance ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.14);color:#d97706;border:1px solid rgba(245,158,11,.45)'; }
-else if(gt>0){ st='Udhaar ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.14);color:#d97706;border:1px solid rgba(245,158,11,.45)'; }
-else { st='Khali bill'; stBg='background:rgba(148,163,184,.14);color:#94a3b8;border:1px solid rgba(148,163,184,.4)'; }
-const chip='display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;';
-chips.innerHTML='<span style="'+chip+'background:var(--primary,#6366f1);color:#fff;font-size:15px">Total ₹ '+slipInr(gt)+'</span>'
-+'<span style="'+chip+'background:rgba(127,140,170,.16);color:inherit;border:1px solid rgba(140,150,180,.35)">👤 '+String(cust).replace(/</g,'')+'</span>'
-+'<span style="'+chip+stBg+'">'+st+'</span>';
+if(gt>0&&bal<=0.005){ st='✓ PAID'; stBg='background:rgba(16,185,129,.14);color:#059669'; }
+else if(paid>0){ st='Balance ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.13);color:#d97706'; }
+else if(gt>0){ st='Udhaar ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.13);color:#d97706'; }
+else { st='Khali bill'; stBg='background:rgba(148,163,184,.13);color:#64748b'; }
+chips.innerHTML='<div class="tp-sumbar">'
++'<div class="tp-sumcell"><span class="tp-sl">TOTAL</span><span class="tp-sv" style="color:var(--primary,#6366f1)">₹ '+slipInr(gt)+'</span></div>'
++'<div class="tp-sumcell"><span class="tp-sl">CUSTOMER</span><span class="tp-sv tp-cust">'+String(cust).replace(/</g,'')+'</span></div>'
++'<div class="tp-sumcell" style="'+stBg+'"><span class="tp-sl">STATUS</span><span class="tp-sv" style="font-size:13.5px">'+st+'</span></div>'
++'</div>';
 }
 thermalCopySync();
 }
