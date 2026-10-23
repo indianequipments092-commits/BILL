@@ -11579,10 +11579,10 @@ x.putImageData(im,0,0);
 const SLIP_FONT="'Inter','Segoe UI',Roboto,'Noto Sans','Noto Sans Devanagari',Arial,sans-serif";
 /* ---------- Thermal Themes (Settings > Thermal Printer se default; preview me arrows se badlo) ---------- */
 const TTHEMES={
-'1':{title:'Classic',desc:'Jo abhi hai — sabke liye sahi, santulit design',fs:1,band:'black'},
-'2':{title:'Bachat',desc:'Sabse kam kagaz — chhote akshar, ghata hua design',fs:0.88,band:'black'},
-'3':{title:'Bada',desc:'Bade-mote akshar — padhne me sabse aaram',fs:1.14,band:'black'},
-'4':{title:'Modern',desc:'Saaf look — kaale band ki jagah sirf line wali frame',fs:1,band:'line'}
+'1':{title:'Classic',desc:'Jo abhi hai — kaala band, beech wala header, table wala hisaab',fs:1,band:'black',layout:'table',head:'center'},
+'2':{title:'Bachat',desc:'Band ki jagah sirf line, kasaa hua design — sabse kam kagaz',fs:0.88,band:'text',layout:'table',head:'center',rule2:'solid',compact:true},
+'3':{title:'Bada',desc:'Har item do line me, bade akshar — door se bhi padho',fs:1.14,band:'black',layout:'lines',head:'big',tall:true},
+'4':{title:'Modern',desc:'Left wala header, band ki jagah frame, dotted separators',fs:1,band:'line',layout:'table',head:'left',rule2:'dash',ruleS:true}
 };
 let thermalThemeOvr=null;
 function tThemeKey(){ return String(thermalThemeOvr||(typeof db!=='undefined'&&db.settings&&db.settings.thermalTheme)||'1'); }
@@ -11620,7 +11620,7 @@ else if(kind==='double'){ x.lineWidth=px(2.6); x.beginPath(); x.moveTo(L,K.y+px(
 else { x.lineWidth=px(2); x.beginPath(); x.moveTo(L,K.y+px(2)); x.lineTo(R,K.y+px(2)); x.stroke(); K.y+=px(8); }
 };
 K.rr=(a,b,w,h,r)=>{ x.beginPath(); x.moveTo(a+r,b); x.lineTo(a+w-r,b); x.quadraticCurveTo(a+w,b,a+w,b+r); x.lineTo(a+w,b+h-r); x.quadraticCurveTo(a+w,b+h,a+w-r,b+h); x.lineTo(a+r,b+h); x.quadraticCurveTo(a,b+h,a,b+h-r); x.lineTo(a,b+r); x.quadraticCurveTo(a,b,a+r,b); x.closePath(); };
-K.band=(h,fn)=>{ const lineB=(typeof tTheme==='function'&&tTheme().band==='line'); K.rr(L,K.y,CW,px(h),px(7)); if(lineB){ x.strokeStyle='#000'; x.lineWidth=px(2.4); x.stroke(); x.fillStyle='#000'; } else { x.fillStyle='#000'; x.fill(); x.fillStyle='#fff'; } fn(K.y,px(h)); x.fillStyle='#000'; x.strokeStyle='#000'; K.y+=px(h)+px(9); };
+K.band=(h,fn)=>{ const bm=(typeof tTheme==='function')?tTheme().band:'black'; K.rr(L,K.y,CW,px(h),px(7)); if(bm==='line'){ x.strokeStyle='#000'; x.lineWidth=px(2.4); x.stroke(); x.fillStyle='#000'; } else if(bm==='text'){ x.fillStyle='#000'; } else { x.fillStyle='#000'; x.fill(); x.fillStyle='#fff'; } fn(K.y,px(h)); if(bm==='text'){ x.fillStyle='#000'; x.fillRect(L,K.y+px(h)+px(2),CW,px(1.8)); } x.fillStyle='#000'; x.strokeStyle='#000'; K.y+=px(h)+px(9); };
 K.done=()=>{ const o=document.createElement('canvas'); o.width=dots; o.height=Math.max(8,Math.min(cv.height,K.y+px(10))); const c2=o.getContext('2d'); c2.fillStyle='#fff'; c2.fillRect(0,0,o.width,o.height); c2.drawImage(cv,0,0); return o; };
 return K;
 }
@@ -11739,6 +11739,8 @@ const itemText=r=>[r.itemName,r.size,r.description].map(s=>String(s==null?'':s).
 let est=2600; items.forEach(r=>{ est+=(Math.ceil(itemText(r).length/16)+2)*30; });
 const K=slipKit(dots,est), x=K.x, px=K.px;
 const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>9&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
+const TH=tTheme();
+if(TH.ruleS){ const _r=K.rule; K.rule=kd=>_r(kd==='solid'?'dash':kd); }
 
 /* 1. Header */
 const coName=String(S.company||'').toUpperCase();
@@ -11751,20 +11753,32 @@ const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=t
 logoCv={cv:tc,w:lw,h:lh};
 }
 }
-K.f(25,800); const nameW=coName?Math.ceil(x.measureText(coName).width):0;
-if(logoCv&&coName&&nameW+logoCv.w+px(10)<=K.CW){
-const sx=K.L+Math.round((K.CW-(logoCv.w+px(10)+nameW))/2), rowH=Math.max(logoCv.h,px(31));
+const nameFs=(TH.head==='big')?30:25;
+K.f(nameFs,800); const nameW=coName?Math.ceil(x.measureText(coName).width):0;
+if(TH.head==='left'){
+const topY=K.y; let tx=K.L, lh2=0;
+if(logoCv){ const dw=Math.round(logoCv.w*1.2), dh=Math.round(logoCv.h*1.2); x.drawImage(logoCv.cv,K.L,topY,dw,dh); tx=K.L+dw+px(12); lh2=dh; }
+if(coName){ fit(coName,K.R-tx,nameFs,800); x.textAlign='left'; x.fillText(coName,tx,topY+px(3)); }
+K.y=topY+Math.max(lh2,px(nameFs*1.3))+px(5);
+if(S.address) K.left(String(S.address).replace(/\n/g,', '),15.5,500,2);
+if(S.phone) K.left('Ph: '+S.phone,15.5,600,1);
+if(S.gstin){ K.left('GSTIN: '+S.gstin,15.5,800,1); K.left('Composition taxable person, not eligible to collect tax on supplies',12.5,500,1); }
+} else if(logoCv&&coName&&nameW+logoCv.w+px(10)<=K.CW){
+const sx=K.L+Math.round((K.CW-(logoCv.w+px(10)+nameW))/2), rowH=Math.max(logoCv.h,px(nameFs*1.24));
 x.drawImage(logoCv.cv,sx,K.y+Math.round((rowH-logoCv.h)/2));
-x.textAlign='left'; x.fillText(coName,sx+logoCv.w+px(10),K.y+Math.round((rowH-px(25))/2));
+x.textAlign='left'; x.fillText(coName,sx+logoCv.w+px(10),K.y+Math.round((rowH-px(nameFs))/2));
 K.y+=rowH+px(4);
-} else {
-if(logoCv){ x.drawImage(logoCv.cv,Math.round((dots-logoCv.w)/2),K.y); K.y+=logoCv.h+px(4); }
-if(coName) K.center(coName,25,800,3);
-}
 if(S.address) K.center(String(S.address).replace(/\n/g,', '),16,500,2);
 if(S.phone) K.center('Ph: '+S.phone,16,600,1);
 if(S.gstin){ K.center('GSTIN: '+S.gstin,16,800,1); K.center('Composition taxable person, not eligible to collect tax on supplies',13,500,1); }
-K.y+=px(2); K.rule('double');
+} else {
+if(logoCv){ x.drawImage(logoCv.cv,Math.round((dots-logoCv.w)/2),K.y); K.y+=logoCv.h+px(4); }
+if(coName) K.center(coName,nameFs,800,3);
+if(S.address) K.center(String(S.address).replace(/\n/g,', '),16,500,2);
+if(S.phone) K.center('Ph: '+S.phone,16,600,1);
+if(S.gstin){ K.center('GSTIN: '+S.gstin,16,800,1); K.center('Composition taxable person, not eligible to collect tax on supplies',13,500,1); }
+}
+K.y+=px(2); K.rule(TH.rule2||'double');
 const title=invTitle(inv,true);
 K.band(wide?42:38,(y,h)=>{ const fs=wide?23:21; K.f(fs,800); x.textAlign='center'; try{x.letterSpacing=px(2.5)+'px';}catch(e){} x.fillText(title,K.dots/2+px(1),y+(h-px(fs))/2-px(1)); try{x.letterSpacing='0px';}catch(e){} });
 
@@ -11787,6 +11801,22 @@ const hasMrp=wide&&items.some(r=>Number(r.mrp)>Number(r.rate||0)+0.005);
 const wN=Math.round(K.CW*0.06), wA=Math.round(K.CW*0.20), wR=Math.round(K.CW*0.16), wQ=Math.round(K.CW*0.14), wM=hasMrp?Math.round(K.CW*0.16):0;
 const xI=K.L+wN, amtR=K.R, rateR=K.R-wA, qtyR=rateR-wR, mrpR=qtyR-wQ, wI=(hasMrp?mrpR-wM:qtyR)-gap-xI;
 const cell=(s,right,n,wt,mw)=>{ fit(s,mw-num,n,wt); x.textAlign='right'; x.fillText(String(s),right-num,K.y); };
+if(TH.layout==='lines'){
+K.rule('dash');
+items.forEach((r,i)=>{
+const q=Number(r.qty)||0; qtySum+=q;
+try{ const bq=(typeof rowApplyBase==='function')?rowApplyBase(r):q; const gross=bq*(Number(r.rate)||0), net=Number(r.amount)||0; if(gross-net>0.005) saved+=gross-net; }catch(e){}
+const qtxt=slipFmtQty(q)+(r.unit?' '+r.unit:''), rtxt=slipInr(r.rate), atxt=slipInr(r.amount);
+const nmL=[r.itemName,r.size].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' '), dsL=String(r.description||'').trim();
+K.f(18,800); x.textAlign='left';
+K.wrap((i+1)+'. '+nmL,K.CW).forEach(l=>{ x.fillText(l,K.L,K.y); K.y+=px(18*1.25); });
+if(dsL){ K.f(14,500); K.wrap(dsL,K.CW).forEach(l=>{ x.fillText(l,K.L,K.y); K.y+=px(14*1.3); }); }
+if(Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13.5,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),K.L,K.y); K.y+=px(13.5*1.3); }
+K.f(16.5,600); x.textAlign='left'; x.fillText(qtxt+' x '+rtxt,K.L,K.y);
+K.f(19.5,800); x.textAlign='right'; x.fillText('= '+atxt,K.R,K.y);
+K.y+=px(19.5*1.35)+px(6);
+});
+} else {
 if(wide){
 K.f(14,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',xI,K.y);
 x.textAlign='right'; x.fillText('QTY',qtyR-num,K.y); if(hasMrp) x.fillText('MRP',mrpR-num,K.y); x.fillText('RATE',rateR-num,K.y); x.fillText('AMT',amtR-num,K.y);
@@ -11822,6 +11852,7 @@ K.f(14.5,800); x.fillText(atxt,K.R,base);
 K.y=Math.max(yy,base+px(14.5*1.25))+px(4);
 }
 });
+}
 K.rule('dash');
 K.row('Items: '+items.length,'Total Qty: '+slipFmtQty(qtySum),15.5,600,600,3);
 
@@ -11831,7 +11862,7 @@ if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),17.5,500,700,1)
 if(Number(t.roundOff)) K.row('Round off',(Number(t.roundOff)>0?'+ ':'- ')+slipInr(Math.abs(t.roundOff)),17.5,500,700,1);
 K.y+=px(3);
 const gt=Number(t.grand||0), gtxt='₹ '+slipInr(gt);
-K.band(wide?68:64,(y,h)=>{
+K.band(TH.tall?(wide?82:78):(wide?68:64),(y,h)=>{
 K.f(14,800); x.textAlign='center'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText('GRAND TOTAL',K.dots/2+px(1),y+px(6)); try{x.letterSpacing='0px';}catch(e){}
 const fs=fit(gtxt,K.CW-px(16),33,800); x.textAlign='center'; x.fillText(gtxt,K.dots/2,y+h-px(fs)-px(6));
 });
@@ -11883,9 +11914,9 @@ K.rule('dash');
 if(saved>0.005){ K.center('Aapne bachaye ₹ '+slipInr(saved),18,800,4); }
 const bt=String(S.bosTerms||'').split('\n').map(s=>s.replace(/^\s*\d+[\.\)]\s*/,'').trim()).filter(Boolean);
 const terms=(bt.length?bt:['Bika hua saaman wapas ya badla nahi jayega.','Payment tay samay par karne ki kripa karein.']).slice(0,3);
-terms.forEach(s=>K.left('• '+s,13,500,1));
+terms.forEach(s=>K.left('• '+s,TH.compact?12:13,500,TH.compact?0:1));
 K.y+=px(4);
-K.center('Dhanyavaad, phir aaiyega',19,800,5);
+K.center('Dhanyavaad, phir aaiyega',TH.compact?16:19,800,TH.compact?3:5);
 
 /* 8. Branding */
 let brand=true; try{ if(typeof ieCreditOn==='function'&&!ieCreditOn()) brand=false; }catch(e){}
