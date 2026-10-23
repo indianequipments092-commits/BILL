@@ -3668,6 +3668,41 @@ submitBtn.textContent='Save & Continue';
 return;
 }
 if(editId){
+const __formSet={company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+let __base=null, __baseOpen=false;
+if(currentCompanyId===editId && typeof db!=='undefined' && db){ __base=db; __baseOpen=true; }
+if(!__base){ try{ __base=ieLocalDb(editId); }catch(e){} }
+if(__base){
+__base.settings={...(__base.settings||{}),...__formSet};
+userProfile.companies=userProfile.companies||{};
+userProfile.companies[editId]={name,gstin,businessType};
+syncCompanySearchFields();
+try{
+if(__baseOpen){ saveDB(); }
+else{ localStorage.setItem(KEY+'_'+editId,JSON.stringify(__base)); iePendSet(editId,true); }
+}catch(e){}
+if(__baseOpen){
+if(typeof loadSettingsUI==='function') loadSettingsUI();
+if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile();
+}
+coCloseForm();
+if(typeof renderCompanyGrid==='function') renderCompanyGrid();
+if(typeof loadProfileUI==='function') loadProfileUI();
+try{ toast(navigator.onLine?'\u2713 Company save ho gayi':'\u2713 Save ho gaya (phone me) — net aate hi sync hoga'); }catch(e){}
+(async()=>{
+try{
+if(!__baseOpen){
+const __ref2=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId);
+let __finalDb=__base;
+try{ const __snap2=await __ref2.get(); if(__snap2.exists && __snap2.data() && __snap2.data().data){ const __cp=normalizeDB(JSON.parse(__snap2.data().data)); __cp.settings={...(__cp.settings||{}),...__formSet}; __finalDb=__cp; } }catch(e){}
+await __ref2.set({data:JSON.stringify(__finalDb),updatedAt:Date.now()},{merge:true});
+try{ const __now=ieLocalDb(editId); if(__now && JSON.stringify(__now.settings||{})===JSON.stringify(__base.settings||{})) iePendSet(editId,false); }catch(e){}
+}
+userDocRef(currentUser.uid).set({companies:userProfile.companies,companyNames:userProfile.companyNames,companyGstins:userProfile.companyGstins},{merge:true}).then(()=>syncPublicProfileDoc()).catch(()=>{});
+}catch(e){ console.warn('company cloud sync pending (background)',e); }
+})();
+return;
+}
 const ref=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId);
 const __m2=document.getElementById('coFormMsg');
 __m2.textContent='Save ho raha hai…'; __m2.className='auth-msg';
@@ -3675,7 +3710,6 @@ const __withTo=(p,ms,msg)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>r
 (async()=>{
 try{
 let parsed=null;
-try{ const __loc=ieLocalDb(editId); if(__loc && (currentCompanyId===editId || (typeof iePendGet==='function' && iePendGet(editId)))) parsed=__loc; }catch(e){}
 if(!parsed){
 const snap=await __withTo(ref.get(),15000,'Company ka data load hone me time zyada lag gaya — net check karke dobara try karo.');
 if(snap.exists && snap.data() && snap.data().data){ try{ parsed=normalizeDB(JSON.parse(snap.data().data)); }catch(e){} }
