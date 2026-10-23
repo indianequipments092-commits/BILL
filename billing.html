@@ -11872,15 +11872,17 @@ x.textAlign='right'; x.fillText('QTY',qtyR-cNum,K.y); x.fillText('RATE',rateR-cN
 K.y+=px(14*1.3); K.rule('solid');
 items.forEach((r,i)=>{
 qtySum+=Number(r.qty)||0;
-const rowTop=K.y;
+const rowTop=K.y, nm=[r.itemName,r.size].map(v=>String(v==null?'':v).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim();
 K.f(16,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
-K.f(17,700); const ls=K.wrap(r.itemName||'',wI), lh=px(17*1.25);
+K.f(17,700); const ls=K.wrap(nm,wI), lh=px(17*1.25);
 x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
 cell(slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''),qtyR,15.5,600,wQ);
 cell(slipInr(r.rate),rateR,15.5,500,wR);
 if(hasGst) cell(Number(r.gst)>0?String(r.gst)+'%':'-',gstR,15,500,wG);
 cell(slipInr(r.amount),amtR,16,800,wA);
-K.y=rowTop+Math.max(1,ls.length)*lh+px(4);
+let adv=Math.max(1,ls.length)*lh;
+if(ds){ const dN=(TH.dot||TH.pack)?12:14, dA=TH.pack?1.35:(TH.dot?1.15:1.3); K.f(dN,500); const dl=K.wrap(ds,wI); x.textAlign='left'; dl.forEach((l,j)=>x.fillText(l,xI,rowTop+adv+j*px(dN*dA))); adv+=dl.length*px(dN*dA); }
+K.y=rowTop+adv+px(4);
 if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13.5,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),xI,K.y); K.y+=px(13.5*1.3); }
 });
 } else {
@@ -11889,10 +11891,11 @@ x.textAlign='right'; x.fillText('QTY',K.L+K.CW*0.50,K.y); x.fillText('RATE',K.L+
 K.y+=px(13*1.3); K.rule('solid');
 items.forEach((r,i)=>{
 qtySum+=Number(r.qty)||0;
-const base=K.y, ix=K.L+K.CW*0.07, iw=K.CW*0.40;
+const base=K.y, ix=K.L+K.CW*0.07, iw=K.CW*0.40, nm=[r.itemName,r.size].map(v=>String(v==null?'':v).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim();
 K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
 let endY=base;
-K.wrap(r.itemName||'',iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(14.5*1.25); });
+K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(14.5*1.25); });
+if(ds){ const dN=(TH.dot||TH.pack)?10.5:12.5, dA=(TH.dot||TH.pack)?1.45:1.3; K.f(dN,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(dN*dA); }); }
 K.f(13,500); x.textAlign='right'; x.fillText(slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''),K.L+K.CW*0.50,base);
 x.fillText(slipInr(r.rate),K.L+K.CW*0.66,base);
 if(hasGst) x.fillText(Number(r.gst)>0?String(r.gst)+'%':'-',K.L+K.CW*0.81,base);
