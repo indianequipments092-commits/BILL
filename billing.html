@@ -3338,6 +3338,7 @@ const __saveHealth={local:true,cloud:true,cloudFails:0};
 function saveHealthSet(kind,ok){
 __saveHealth[kind]=ok;
 if(kind==='cloud') __saveHealth.cloudFails=ok?0:__saveHealth.cloudFails+1;
+if(ok) window.__shbDismissed=false;
 saveHealthRender();
 }
 function saveHealthRender(){
@@ -3345,6 +3346,7 @@ if(!document.body) return;
 let el=document.getElementById('saveHealthBar');
 const localBad=!__saveHealth.local, cloudBad=!__saveHealth.cloud && __saveHealth.cloudFails>=2;
 if(!localBad && !cloudBad){ if(el) el.remove(); return; }
+if(window.__shbDismissed){ if(el) el.remove(); return; }
 let msg,bg;
 if(localBad && cloudBad){ msg='❌ Data save nahi ho raha (device storage full + cloud sync fail). Abhi Backup download karo!'; bg='#b91c1c'; }
 else if(localBad){ msg='⚠️ Device storage full hai — data cloud pe save ho raha hai. Backup le lo aur purana data/photos saaf karo.'; bg='#b45309'; }
@@ -3355,7 +3357,7 @@ el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;font-size:12
 document.body.appendChild(el);
 }
 el.style.background=bg;
-el.innerHTML='<span class="shb-msg"></span><span style="display:flex;gap:6px;flex-shrink:0"><button type="button" style="border:0;border-radius:6px;padding:5px 9px;font-size:12px;font-weight:600;background:#fff;color:#111" onclick="backupJSON()">Backup</button><button type="button" aria-label="Close" style="border:0;border-radius:6px;padding:5px 8px;font-size:12px;background:rgba(255,255,255,.25);color:#fff" onclick="this.closest(\'#saveHealthBar\').remove()">✕</button></span>';
+el.innerHTML='<span class="shb-msg"></span><span style="display:flex;gap:6px;flex-shrink:0"><button type="button" style="border:0;border-radius:6px;padding:5px 9px;font-size:12px;font-weight:600;background:#fff;color:#111" onclick="backupJSON()">Backup</button><button type="button" aria-label="Close" style="border:0;border-radius:6px;padding:5px 8px;font-size:12px;background:rgba(255,255,255,.25);color:#fff" onclick="window.__shbDismissed=true;this.closest(\'#saveHealthBar\').remove()">✕</button></span>';
 el.querySelector('.shb-msg').textContent=msg;
 }
 function iePendKey(id){ return 'ie_pending_'+id; }
@@ -3419,6 +3421,8 @@ document.addEventListener('visibilitychange',function(){ if(!document.hidden) ki
 let fsRetryTimer=null;
 let fsSaveTimer=null;
 let __fsVer=0;
+let __fsInFlight=false, __fsQueued=false;
+function __fsRetryDelay(){ return __saveHealth.cloudFails<=1?2000:__saveHealth.cloudFails===2?5000:__saveHealth.cloudFails===3?10000:20000; }
 function fsScheduleSave(){
 if(!currentUser||!currentCompanyId) return;
 if(window.__coLoading) return;
@@ -3428,17 +3432,26 @@ clearTimeout(fsSaveTimer);
 fsSaveTimer=setTimeout(()=>{
 if(navigator.onLine===false) return;
 if(!__db) return;
+if(__fsInFlight){ __fsQueued=true; return; }
+__fsInFlight=true;
 geminiKeyMigrate();
-fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(__cid)
+const __uid=currentUser.uid;
+let __done=false;
+const __settle=(ok,e)=>{
+if(__done) return; __done=true;
+__fsInFlight=false;
+if(ok){ saveHealthSet('cloud',true); if(__ver===__fsVer&&!__fsQueued) iePendSet(__cid,false); }
+else{ console.warn('Firestore save failed',e); saveHealthSet('cloud',false); }
+if(__fsQueued){ __fsQueued=false; clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,ok?300:__fsRetryDelay()); }
+else if(!ok){ clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,__fsRetryDelay()); }
+};
+setTimeout(()=>__settle(false,new Error('sync timeout 30s')),30000);
+try{
+fbDb.collection('users').doc(__uid).collection('companies').doc(__cid)
 .set({data:JSON.stringify(__db),updatedAt:Date.now()},{merge:true})
-.then(()=>{ saveHealthSet('cloud',true); if(__ver===__fsVer) iePendSet(__cid,false); })
-.catch(e=>{
-console.warn('Firestore save failed',e);
-saveHealthSet('cloud',false);
-clearTimeout(fsRetryTimer);
-const __rd=__saveHealth.cloudFails<=1?2000:__saveHealth.cloudFails===2?5000:__saveHealth.cloudFails===3?10000:20000;
-fsRetryTimer=setTimeout(fsScheduleSave,__rd);
-});
+.then(()=>__settle(true))
+.catch(e=>__settle(false,e));
+}catch(e){ __settle(false,e); }
 },250);
 }
 async function ieFlushPendingOthers(){
@@ -3457,7 +3470,7 @@ const rawBefore=localStorage.getItem(KEY+'_'+cid);
 if(!rawBefore) continue;
 const locDb=ieLocalDb(cid);
 if(!locDb) continue;
-await fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true});
+await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 30s')),30000))]);
 if(localStorage.getItem(KEY+'_'+cid)===rawBefore) iePendSet(cid,false);
 }catch(e){ console.warn('pending flush failed for',cid,e); }
 }
@@ -11887,19 +11900,21 @@ if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13.5,600); x.textAli
 });
 } else {
 K.f(13,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',K.L+K.CW*0.07,K.y);
-x.textAlign='right'; x.fillText('QTY',K.L+K.CW*0.50,K.y); x.fillText('RATE',K.L+K.CW*0.66,K.y); if(hasGst) x.fillText('GST%',K.L+K.CW*0.81,K.y); x.fillText('AMT',K.R,K.y);
+x.textAlign='right'; x.fillText('QTY',K.L+K.CW*0.50,K.y); x.fillText('RATE',K.L+K.CW*0.68,K.y); if(hasGst) x.fillText('GST%',K.L+K.CW*0.79,K.y); x.fillText('AMT',K.R,K.y);
 K.y+=px(13*1.3); K.rule('solid');
 items.forEach((r,i)=>{
 qtySum+=Number(r.qty)||0;
-const base=K.y, ix=K.L+K.CW*0.07, iw=K.CW*0.40, nm=[r.itemName,r.size].map(v=>String(v==null?'':v).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim();
+const base=K.y, ix=K.L+K.CW*0.07, iw=K.CW*0.31, nm=[r.itemName,r.size].map(v=>String(v==null?'':v).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim();
 K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
 let endY=base;
 K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(14.5*1.25); });
 if(ds){ const dN=(TH.dot||TH.pack)?10.5:12.5, dA=(TH.dot||TH.pack)?1.45:1.3; K.f(dN,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(dN*dA); }); }
-K.f(13,500); x.textAlign='right'; x.fillText(slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''),K.L+K.CW*0.50,base);
-x.fillText(slipInr(r.rate),K.L+K.CW*0.66,base);
-if(hasGst) x.fillText(Number(r.gst)>0?String(r.gst)+'%':'-',K.L+K.CW*0.81,base);
-K.f(14.5,800); x.fillText(slipInr(r.amount),K.R,base);
+const qT=slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''), rT=slipInr(r.rate), gT=Number(r.gst)>0?String(r.gst)+'%':'-', aT=slipInr(r.amount);
+x.textAlign='right';
+fit(qT,K.CW*0.12,12.5,500); x.fillText(qT,K.L+K.CW*0.50,base);
+fit(rT,K.CW*0.16,12.5,500); x.fillText(rT,K.L+K.CW*0.68,base);
+if(hasGst){ fit(gT,K.CW*0.09,12.5,500); x.fillText(gT,K.L+K.CW*0.79,base); }
+fit(aT,K.CW*0.19,13.5,800); x.fillText(aT,K.R,base);
 K.y=Math.max(endY,base+px(14.5*1.25))+px(3);
 if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),ix,K.y); K.y+=px(13*1.3); }
 });
