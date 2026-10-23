@@ -6399,7 +6399,7 @@ return true;
 }
 (function(){
 const _so=fbAuth.signOut;
-fbAuth.signOut=function(){ ieOfflineUserClear(); return _so.apply(fbAuth,arguments); };
+fbAuth.signOut=function(){ window.__ieManualOut=true; setTimeout(()=>{ window.__ieManualOut=false; },5000); ieOfflineUserClear(); return _so.apply(fbAuth,arguments); };
 })();
 (function(){
 function go(){ try{ if(navigator.onLine===false) ieTryOfflineLogin(); }catch(e){} }
@@ -6408,6 +6408,10 @@ setTimeout(function(){ try{ if(!currentUser && navigator.onLine!==false) ieTryOf
 })();
 fbAuth.onAuthStateChanged(user=>{
 if(!user && currentUser && currentUser._offline) return;
+if(!user && !window.__ieManualOut && (currentUser || _authBootedUid || ieOfflineUserGet())){
+if(ieTryOfflineLogin(true)){ try{ toast('\u26a0\ufe0f Session expire ho gaya — tum abhi offline mode me ho. Data bilkul safe hai; net sahi hone par sync ke liye ek baar dobara login kar lena.','#b45309'); }catch(e){} return; }
+}
+if(!user && window.__ieManualOut) window.__ieManualOut=false;
 if(!user && ieTryOfflineLogin()) return;
 if(user){
 if(_authBootedUid===user.uid && !(currentUser&&currentUser._offline&&!currentCompanyId)){ currentUser=user; return; }
