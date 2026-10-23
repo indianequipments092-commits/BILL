@@ -11719,7 +11719,9 @@ K.f(14,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',xI,K
 x.textAlign='right'; x.fillText('QTY',qtyR-num,K.y); if(hasMrp) x.fillText('MRP',mrpR-num,K.y); x.fillText('RATE',rateR-num,K.y); x.fillText('AMT',amtR-num,K.y);
 K.y+=px(14*1.3);
 } else {
-K.row('ITEM','Qty x Rate = Amt',13.5,800,800,1);
+K.f(13,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',K.L+K.CW*0.07,K.y);
+x.textAlign='right'; x.fillText('QTY',K.L+K.CW*0.63,K.y); x.fillText('RATE',K.L+K.CW*0.81,K.y); x.fillText('AMT',K.R,K.y);
+K.y+=px(13*1.3);
 }
 K.rule('solid');
 items.forEach((r,i)=>{
@@ -11727,20 +11729,24 @@ const q=Number(r.qty)||0; qtySum+=q;
 try{ const bq=(typeof rowApplyBase==='function')?rowApplyBase(r):q; const gross=bq*(Number(r.rate)||0), net=Number(r.amount)||0; if(gross-net>0.005) saved+=gross-net; }catch(e){}
 const qtxt=slipFmtQty(q)+(r.unit?' '+r.unit:''), rtxt=slipInr(r.rate), atxt=slipInr(r.amount);
 if(wide){
-K.f(17,700); const ls=K.wrap(itemText(r),wI), lh=px(17*1.25);
+const nmW=[r.itemName,r.size].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' '), dsW=String(r.description||'').trim(), rowTop=K.y;
+K.f(17,700); const ls=K.wrap(nmW,wI), lh=px(17*1.25);
 K.f(16,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
 K.f(17,700); x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
+let adv=Math.max(1,ls.length)*lh;
+if(dsW){ K.f(14,500); const dl=K.wrap(dsW,wI); x.textAlign='left'; dl.forEach((l,j)=>x.fillText(l,xI,rowTop+adv+j*px(14*1.3))); adv+=dl.length*px(14*1.3); }
 cell(qtxt,qtyR,16,600,wQ); if(hasMrp) cell(Number(r.mrp)>0?slipInr(r.mrp):'-',mrpR,16,500,wM); cell(rtxt,rateR,16,500,wR); cell(atxt,amtR,16.5,800,wA);
-K.y+=Math.max(1,ls.length)*lh+px(5);
+K.y+=adv+px(5);
 } else {
-const nm=[r.itemName,r.size].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim();
-K.f(16,800); const pre=(i+1)+'. ', iw=Math.ceil(x.measureText(pre).width);
-const ls=K.wrap(nm,K.CW-iw); K.f(16,800); x.textAlign='left';
-ls.forEach((l,j)=>{ if(j===0) x.fillText(pre,K.L,K.y); x.fillText(l,K.L+iw,K.y); K.y+=px(16*1.25); });
-if(ds){ K.f(13,500); x.textAlign='left'; K.wrap(ds,K.CW-iw).forEach(l=>{ x.fillText(l,K.L+iw,K.y); K.y+=px(13*1.3); }); }
-K.f(14.5,500); x.textAlign='left'; x.fillText('   '+qtxt+' x '+rtxt,K.L,K.y);
-K.f(17,800); x.textAlign='right'; x.fillText('= '+atxt,K.R,K.y);
-K.y+=px(17*1.3)+px(4);
+const base=K.y, nm=[r.itemName,r.size].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim(), ix=K.L+K.CW*0.07, iw=K.CW*0.53;
+let yy=base;
+K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
+K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(14.5*1.25); });
+if(ds){ K.f(12.5,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(12.5*1.3); }); }
+K.f(13,500); x.textAlign='right'; x.fillText(qtxt,K.L+K.CW*0.63,base);
+x.fillText(rtxt,K.L+K.CW*0.81,base);
+K.f(14.5,800); x.fillText(atxt,K.R,base);
+K.y=Math.max(yy,base+px(14.5*1.25))+px(4);
 }
 });
 K.rule('dash');
