@@ -3404,12 +3404,13 @@ pill();
 if(!navigator.onLine) return;
 try{ supabaseClient.auth.getSession(); }catch(e){}
 if(currentUser&&currentCompanyId&&iePendGet(currentCompanyId)){ __saveHealth.cloudFails=0; fsScheduleSave(); }
+try{ if(typeof ieFlushPendingOthers==='function') ieFlushPendingOthers(); }catch(e){}
 }catch(e){}
 }
 window.addEventListener('online',function(){ setTimeout(kick,300); });
 window.addEventListener('offline',pill);
 document.addEventListener('DOMContentLoaded',pill);
-setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} },15000);
+setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} try{ if(navigator.onLine&&typeof ieFlushPendingOthers==='function') ieFlushPendingOthers(); }catch(e){} },15000);
 document.addEventListener('visibilitychange',function(){ if(!document.hidden) kick(); });
 })();
 let fsRetryTimer=null;
@@ -3436,6 +3437,29 @@ const __rd=__saveHealth.cloudFails<=1?2000:__saveHealth.cloudFails===2?5000:__sa
 fsRetryTimer=setTimeout(fsScheduleSave,__rd);
 });
 },250);
+}
+async function ieFlushPendingOthers(){
+if(!currentUser||!currentUser.uid) return;
+if(navigator.onLine===false) return;
+if(window.__coLoading||window.__pendFlushBusy) return;
+let ids=[];
+try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.indexOf('ie_pending_')===0) ids.push(k.slice('ie_pending_'.length)); } }catch(e){ return; }
+ids=ids.filter(function(cid){ return cid&&cid!==currentCompanyId&&iePendGet(cid); });
+if(!ids.length) return;
+window.__pendFlushBusy=true;
+try{
+for(const cid of ids){
+try{
+const rawBefore=localStorage.getItem(KEY+'_'+cid);
+if(!rawBefore) continue;
+const locDb=ieLocalDb(cid);
+if(!locDb) continue;
+await fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true});
+if(localStorage.getItem(KEY+'_'+cid)===rawBefore) iePendSet(cid,false);
+}catch(e){ console.warn('pending flush failed for',cid,e); }
+}
+}catch(e){}
+window.__pendFlushBusy=false;
 }
 let userProfile=null;
 let currentCompanyId=null;
@@ -11764,6 +11788,7 @@ async function thermalImageCanvas(inv,w,ss){
 if(tTheme().tw&&document.fonts&&document.fonts.load){ try{ await Promise.all([document.fonts.load('400 16px "IE Typewriter"'),document.fonts.load('700 16px "IE Typewriter"')]); }catch(e){} }
 if(isBos(inv)) return thermalBosCanvas(inv,w,ss);
 const dots=(w===80?576:384)*(ss||1), S=db.settings||{}, bos=isBos(inv), t=inv.totals||{}, cu=inv.customer||{};
+const TH=tTheme();
 const items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0);
 const K=slipKit(dots,1500+items.length*190), x=K.x, px=K.px;
 const logo=await slipLoadImg(S.logo);
