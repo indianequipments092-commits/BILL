@@ -11678,16 +11678,16 @@ const slipInr=n=>Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,ma
 function slipDate(d){ d=String(d||''); return /^\d{4}-\d{2}-\d{2}/.test(d)?d.slice(0,10).split('-').reverse().join('-'):d; }
 /* ---------- Premium image slip ---------- */
 async function thermalImageSlip(inv,w){ return slipToEsc(await thermalImageCanvas(inv,w)); }
-async function thermalImageCanvas(inv,w){
+async function thermalImageCanvas(inv,w,ss){
 if(tTheme().tw&&document.fonts&&document.fonts.load){ try{ await Promise.all([document.fonts.load('400 16px "IE Typewriter"'),document.fonts.load('700 16px "IE Typewriter"')]); }catch(e){} }
-if(isBos(inv)) return thermalBosCanvas(inv,w);
-const dots=w===80?576:384, S=db.settings||{}, bos=isBos(inv), t=inv.totals||{}, cu=inv.customer||{};
+if(isBos(inv)) return thermalBosCanvas(inv,w,ss);
+const dots=(w===80?576:384)*(ss||1), S=db.settings||{}, bos=isBos(inv), t=inv.totals||{}, cu=inv.customer||{};
 const items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0);
 const K=slipKit(dots,1500+items.length*190), x=K.x, px=K.px;
 const logo=await slipLoadImg(S.logo);
 if(logo){
 const mh=px(80), mw=Math.min(K.CW*0.5,px(190)), sc=Math.min(mh/logo.height,mw/logo.width,3), lw=Math.max(8,Math.round(logo.width*sc)), lh=Math.max(8,Math.round(logo.height*sc));
-const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); slipDither(tc);
+const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); if(!ss) slipDither(tc);
 x.drawImage(tc,Math.round((dots-lw)/2),K.y); K.y+=lh+px(6);
 }
 K.center(String(S.company||'').toUpperCase(),29,800,3);
@@ -11774,18 +11774,18 @@ const p=t.split(':'), h=Number(p[0])||0, m=String(p[1]||'00').slice(0,2);
 return (h%12||12)+':'+m+' '+(h>=12?'PM':'AM');
 }
 function slipFmtQty(n){ return String(+Number(n||0).toFixed(3)); }
-async function slipBrandMark(size){
+async function slipBrandMark(size,noDither){
 const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
 const c=cv.getContext('2d'); c.fillStyle='#fff'; c.fillRect(0,0,size,size);
 const im=await slipLoadImg('/icon-192.png');
-if(im&&im.width>8){ c.drawImage(im,0,0,size,size); slipDither(cv); return cv; }
+if(im&&im.width>8){ c.drawImage(im,0,0,size,size); if(!noDither) slipDither(cv); return cv; }
 c.fillStyle='#000'; const r=size*0.2; c.beginPath(); c.moveTo(r,0); c.lineTo(size-r,0); c.quadraticCurveTo(size,0,size,r); c.lineTo(size,size-r); c.quadraticCurveTo(size,size,size-r,size); c.lineTo(r,size); c.quadraticCurveTo(0,size,0,size-r); c.lineTo(0,r); c.quadraticCurveTo(0,0,r,0); c.closePath(); c.fill();
 c.fillStyle='#fff'; c.font='800 '+Math.round(size*0.5)+'px '+SLIP_FONT; c.textAlign='center'; c.textBaseline='middle'; c.fillText('IE',size/2,size/2+size*0.03);
 return cv;
 }
-async function thermalBosCanvas(inv,w){
+async function thermalBosCanvas(inv,w,ss){
 if(tTheme().tw&&document.fonts&&document.fonts.load){ try{ await Promise.all([document.fonts.load('400 16px "IE Typewriter"'),document.fonts.load('700 16px "IE Typewriter"')]); }catch(e){} }
-const wide=(w===80), dots=wide?576:384, S=db.settings||{}, t=inv.totals||{}, cu=inv.customer||{};
+const wide=(w===80), dots=(wide?576:384)*(ss||1), S=db.settings||{}, t=inv.totals||{}, cu=inv.customer||{};
 const items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0);
 const itemText=r=>[r.itemName,r.size,r.description].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' ');
 let est=2600; items.forEach(r=>{ est+=(Math.ceil(itemText(r).length/16)+2)*30; });
@@ -11801,7 +11801,7 @@ if(thermalLogoOn()){
 const logo=await slipLoadImg(S.logo);
 if(logo){
 const mh=px(46), mw=px(150), sc=Math.min(mh/logo.height,mw/logo.width,3), lw=Math.max(8,Math.round(logo.width*sc)), lh=Math.max(8,Math.round(logo.height*sc));
-const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); slipDither(tc);
+const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); if(!ss) slipDither(tc);
 logoCv={cv:tc,w:lw,h:lh};
 }
 }
@@ -11974,7 +11974,7 @@ K.center('Dhanyavaad, phir aaiyega',(TH.dot||TH.pack)?16.5:(TH.compact?16:19),80
 let brand=true; try{ if(typeof ieCreditOn==='function'&&!ieCreditOn()) brand=false; }catch(e){}
 if(brand){
 K.rule('dash');
-const ms2=px((TH.dot||TH.pack)?28:34), bc=await slipBrandMark(ms2); x.drawImage(bc,Math.round((dots-ms2)/2),K.y); K.y+=ms2+px((TH.dot||TH.pack)?3:5);
+const ms2=px((TH.dot||TH.pack)?28:34), bc=await slipBrandMark(ms2,!!ss); x.drawImage(bc,Math.round((dots-ms2)/2),K.y); K.y+=ms2+px((TH.dot||TH.pack)?3:5);
 K.center('Powered by IE Billing',13.5,700,0);
 K.center(IE_CREDIT_URL,13.5,500,2);
 }
@@ -12104,7 +12104,7 @@ const inv=thermalPrevInvoice(), msg=document.getElementById('thermalPrevMsg'), c
 if(!inv||!cv) return;
 if(msg) msg.textContent='Slip ban rahi hai...';
 try{
-const src=await thermalImageCanvas(inv,w);
+const src=await thermalImageCanvas(inv,w,w===80?2:3);
 cv.width=src.width; cv.height=src.height; cv.getContext('2d').drawImage(src,0,0);
 const baseW=Math.min(src.width,Math.round(window.innerWidth-24));
 cv.style.width=Math.round(baseW*thermalPrevZoom)+'px';
