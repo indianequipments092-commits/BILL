@@ -11146,7 +11146,7 @@ openEditor(btn);
 }
 function openBosHistory(btn){ histMode='bos'; histBosKind='bos'; histLock=true; showPage('history',btn); }
 function openCashEditor(btn){
-if(!current || current.status==='Finalized' || !isCash(current)){
+if(!current || current.status==='Finalized' || !isCash(current) || (gstOn()?isBos(current):!isBos(current))){
 current=blankInvoice(); current.bosTitle='CASH MEMO';
 if(gstOn()){ current.companyState=db.settings.state||'GUJARAT'; current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState); } else current.docType='bos';
 current.invoiceNumber=nextDocNo(current);
@@ -12191,11 +12191,13 @@ chatPreviewInvoice=null; thermalThemeOvr=null; document.body.style.overflow='';
 }
 async function thermalPrevRender(v){
 const w=Number(v)===80?80:58; try{ thermalSetW(w); }catch(e){}
+const __tpSeq=(window.__tpSeq=(window.__tpSeq||0)+1);
 const inv=thermalPrevInvoice(), msg=document.getElementById('thermalPrevMsg'), cv=document.getElementById('thermalPrevCanvas');
 if(!inv||!cv) return;
 if(msg) msg.textContent='Slip ban rahi hai...';
 try{
 const src=await thermalImageCanvas(inv,w,w===80?2:3);
+if(__tpSeq!==window.__tpSeq) return;
 cv.width=src.width; cv.height=src.height; cv.getContext('2d').drawImage(src,0,0);
 const baseW=Math.min(src.width,Math.round(window.innerWidth-24));
 cv.style.width=Math.round(baseW*thermalPrevZoom)+'px';
@@ -12205,7 +12207,7 @@ const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.r
 if(msg){ const cm=(src.height*w/src.width/10).toFixed(1), nIt=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).length; msg.textContent=w+'mm preview  •  Paper ≈ '+cm+' cm  •  Items: '+nIt; }
 try{ thermalPrevMeta(inv,w); }catch(e){}
 try{ thermalThemeBarSync(); }catch(e){}
-}catch(e){ console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi.'; }
+}catch(e){ if(__tpSeq!==window.__tpSeq) return; console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi.'; }
 }
 function thermalSeg(w){
 const sel=document.getElementById('thermalW'); if(sel) sel.value=String(w);
