@@ -11860,16 +11860,47 @@ K.left(cu.name||'Cash Sale',22,800,0);
 if(cu.contact) K.left('Ph: '+cu.contact,18,500,0);
 if(!bos&&cu.gst) K.left('GSTIN: '+cu.gst,18,600,0);
 K.y+=px(TH.pack?1:3); K.rule('dash');
-K.row('ITEM','AMOUNT (₹)',15,800,800,1); K.rule('solid');
+const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>9&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
+const hasGst=items.some(r=>Number(r.gst)>0), cGap=px(6), cNum=px(3);
+const cell=(s,right,n,wt,mw)=>{ fit(s,mw-cNum,n,wt); x.textAlign='right'; x.fillText(String(s),right-cNum,K.y); };
 let qtySum=0;
+if(w===80){
+const wN=Math.round(K.CW*0.06), wA=Math.round(K.CW*0.19), wG=hasGst?Math.round(K.CW*0.11):0, wR=Math.round(K.CW*0.17), wQ=Math.round(K.CW*0.15);
+const xI=K.L+wN, amtR=K.R, gstR=amtR-wA, rateR=gstR-wG, qtyR=rateR-wR, wI=qtyR-wQ-cGap-xI;
+K.f(14,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',xI,K.y);
+x.textAlign='right'; x.fillText('QTY',qtyR-cNum,K.y); x.fillText('RATE',rateR-cNum,K.y); if(hasGst) x.fillText('GST%',gstR-cNum,K.y); x.fillText('AMT',amtR-cNum,K.y);
+K.y+=px(14*1.3); K.rule('solid');
 items.forEach((r,i)=>{
 qtySum+=Number(r.qty)||0;
-K.f(21.5,800); const pre=(i+1)+'. ', iw=Math.ceil(x.measureText(pre).width);
-const ls=K.wrap(r.itemName||'',K.CW-iw);
-x.textAlign='left'; ls.forEach((l,j)=>{ if(j===0) x.fillText(pre,K.L,K.y); x.fillText(l,K.L+iw,K.y); K.y+=px(21.5*1.25); });
-const g=Number(r.gst)||0;
-K.row('   '+r.qty+' '+(r.unit||'')+' × '+slipInr(r.rate)+((!bos&&g>0)?'   GST '+g+'%':'')+((isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005)?'   MRP '+slipInr(r.mrp):''),slipInr(r.amount),18.5,500,800,5);
+const rowTop=K.y;
+K.f(16,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
+K.f(17,700); const ls=K.wrap(r.itemName||'',wI), lh=px(17*1.25);
+x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
+cell(slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''),qtyR,15.5,600,wQ);
+cell(slipInr(r.rate),rateR,15.5,500,wR);
+if(hasGst) cell(Number(r.gst)>0?String(r.gst)+'%':'-',gstR,15,500,wG);
+cell(slipInr(r.amount),amtR,16,800,wA);
+K.y=rowTop+Math.max(1,ls.length)*lh+px(4);
+if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13.5,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),xI,K.y); K.y+=px(13.5*1.3); }
 });
+} else {
+K.f(13,800); x.textAlign='left'; x.fillText('#',K.L,K.y); x.fillText('ITEM',K.L+K.CW*0.07,K.y);
+x.textAlign='right'; x.fillText('QTY',K.L+K.CW*0.50,K.y); x.fillText('RATE',K.L+K.CW*0.66,K.y); if(hasGst) x.fillText('GST%',K.L+K.CW*0.81,K.y); x.fillText('AMT',K.R,K.y);
+K.y+=px(13*1.3); K.rule('solid');
+items.forEach((r,i)=>{
+qtySum+=Number(r.qty)||0;
+const base=K.y, ix=K.L+K.CW*0.07, iw=K.CW*0.40;
+K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
+let endY=base;
+K.wrap(r.itemName||'',iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(14.5*1.25); });
+K.f(13,500); x.textAlign='right'; x.fillText(slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''),K.L+K.CW*0.50,base);
+x.fillText(slipInr(r.rate),K.L+K.CW*0.66,base);
+if(hasGst) x.fillText(Number(r.gst)>0?String(r.gst)+'%':'-',K.L+K.CW*0.81,base);
+K.f(14.5,800); x.fillText(slipInr(r.amount),K.R,base);
+K.y=Math.max(endY,base+px(14.5*1.25))+px(3);
+if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),ix,K.y); K.y+=px(13*1.3); }
+});
+}
 K.rule('dash');
 K.row('Items: '+items.length,'Total Qty: '+qtySum,16.5,600,600,3);
 if(!bos){
