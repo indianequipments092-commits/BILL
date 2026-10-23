@@ -3530,6 +3530,7 @@ const editing=!!editId;
 document.getElementById('coFormTitle').textContent=editing?'Edit Company':'Create Company';
 document.getElementById('coEditId').value=editId||'';
 document.getElementById('coSubmitBtn').textContent=editing?'Save Changes':'Save & Continue';
+const __sb0=document.getElementById('coSubmitBtn'); if(__sb0) __sb0.disabled=false;
 document.getElementById('coFormMsg').textContent='';
 document.getElementById('coName').value='';
 document.getElementById('coGstin').value='';
@@ -3557,38 +3558,44 @@ const quick=(userProfile.companies&&userProfile.companies[editId])||{};
 document.getElementById('coName').value=quick.name||'';
 document.getElementById('coGstin').value=quick.gstin||'';
 document.getElementById('coBusinessType').value=quick.businessType||'';
+const __tok=(window.__coFormTok=(window.__coFormTok||0)+1);
+window.__coFormReady=false;
+const __btn=document.getElementById('coSubmitBtn');
+const __fldIds=['coName','coGstin','coFirmType','coOwnerName','coOwnerNick','coAddress','coState','coPhone','coEmail','coEmail2','coPrefix','coBankName','coAccName','coAccNo','coIfsc','coPan','coUpiId'];
+const __setF=(idd,v)=>{ const el=document.getElementById(idd); if(el) el.value=v||''; };
+const __fillFrom=(s)=>{ __setF('coName',s.company||quick.name); __setF('coGstin',s.gstin||quick.gstin); __setF('coFirmType',s.firmType); __setF('coOwnerName',s.ownerName); __setF('coOwnerNick',s.ownerNick); __setF('coAddress',s.address); __setF('coState',s.state); __setF('coPhone',s.phone); __setF('coEmail',s.email); __setF('coEmail2',s.email2); coShowEmail2(!!s.email2); __setF('coPrefix',s.prefix||'IE'); __setF('coBankName',s.bankName); __setF('coAccName',s.accName); __setF('coAccNo',s.accNo); __setF('coIfsc',s.ifsc); __setF('coPan',s.pan); __setF('coUpiId',s.upiId); };
+const __snapVals={};
+const __takeSnap=()=>{ __fldIds.forEach(idd=>{ const el=document.getElementById(idd); __snapVals[idd]=el?el.value:null; }); };
+const __failMsg=()=>{ if(__localUsed) return; const m=document.getElementById('coFormMsg'); if(m){ m.textContent='Details load nahi ho payi — net check karke form band karke dobara kholo. (Khali save rokne ke liye Save band hai)'; m.className='auth-msg err'; } };
+let __localUsed=false;
+try{ const __loc=ieLocalDb(editId); if(__loc&&__loc.settings){ __fillFrom(__loc.settings); __localUsed=true; } }catch(e){}
+if(__localUsed){ window.__coFormReady=true; __takeSnap(); if(__btn){ __btn.disabled=false; __btn.textContent='Save Changes'; } }
+else if(__btn){ __btn.disabled=true; __btn.textContent='Details load ho rahi hain…'; }
 fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId).get().then(snap=>{
+if(window.__coFormTok!==__tok) return;
 if(snap.exists && snap.data() && snap.data().data){
 try{
 const parsed=JSON.parse(snap.data().data);
 const s=parsed.settings||{};
-document.getElementById('coName').value=s.company||quick.name||'';
-document.getElementById('coGstin').value=s.gstin||quick.gstin||'';
-document.getElementById('coFirmType').value=s.firmType||'';
-document.getElementById('coOwnerName').value=s.ownerName||'';
-document.getElementById('coOwnerNick').value=s.ownerNick||'';
-document.getElementById('coAddress').value=s.address||'';
-document.getElementById('coState').value=s.state||'';
-document.getElementById('coPhone').value=s.phone||'';
-document.getElementById('coEmail').value=s.email||'';
-document.getElementById('coEmail2').value=s.email2||'';
-coShowEmail2(!!s.email2);
-document.getElementById('coPrefix').value=s.prefix||'IE';
-document.getElementById('coBankName').value=s.bankName||'';
-document.getElementById('coAccName').value=s.accName||'';
-document.getElementById('coAccNo').value=s.accNo||'';
-document.getElementById('coIfsc').value=s.ifsc||'';
-document.getElementById('coPan').value=s.pan||'';
-document.getElementById('coUpiId').value=s.upiId||'';
-}catch(e){ console.warn('edit prefill parse failed',e); }
+if(!__localUsed){ __fillFrom(s); }
+else{
+const F2=(idd,v)=>{ const el=document.getElementById(idd); if(!el) return; if(el.value===(__snapVals[idd]||'') || el.value==='') el.value=v||''; };
+F2('coName',s.company||quick.name); F2('coGstin',s.gstin||quick.gstin); F2('coFirmType',s.firmType); F2('coOwnerName',s.ownerName); F2('coOwnerNick',s.ownerNick); F2('coAddress',s.address); F2('coState',s.state); F2('coPhone',s.phone); F2('coEmail',s.email);
+{ const el=document.getElementById('coEmail2'); if(el && (el.value===(__snapVals['coEmail2']||'') || el.value==='')){ el.value=s.email2||''; coShowEmail2(!!s.email2); } }
+F2('coPrefix',s.prefix||'IE'); F2('coBankName',s.bankName); F2('coAccName',s.accName); F2('coAccNo',s.accNo); F2('coIfsc',s.ifsc); F2('coPan',s.pan); F2('coUpiId',s.upiId);
 }
-}).catch(e=>console.warn('edit prefill fetch failed',e));
+window.__coFormReady=true;
+if(__btn && __btn.disabled){ __btn.disabled=false; __btn.textContent='Save Changes'; }
+}catch(e){ console.warn('edit prefill parse failed',e); __failMsg(); }
+}else{ __failMsg(); }
+}).catch(e=>{ console.warn('edit prefill fetch failed',e); if(window.__coFormTok===__tok) __failMsg(); });
 }
 }
 function coCloseForm(){
 document.getElementById('coFormModal').classList.add('hidden');
 }
 async function coSubmitForm(){
+if(document.getElementById('coEditId').value && window.__coFormReady===false){ const __m=document.getElementById('coFormMsg'); if(__m){ __m.textContent='Details abhi load nahi hui hain — thoda ruko, ya net check karke form band karke dobara kholo. Khali save rok diya gaya hai.'; __m.className='auth-msg err'; } return; }
 const g=(document.getElementById('coGstin').value||'').trim().toUpperCase();
 const eid=document.getElementById('coEditId').value;
 if(g && validateGSTIN(g).status==='valid'){
@@ -3674,7 +3681,8 @@ return userDocRef(currentUser.uid).set({companies:userProfile.companies,companyN
 });
 }).then(()=>{
 if(currentCompanyId===editId && typeof db!=='undefined' && db && db.settings){
-db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix,firmType,ownerName,ownerNick,email2};
+db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+try{ saveDB(); }catch(e){}
 if(typeof loadSettingsUI==='function') loadSettingsUI();
 if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile();
 }
