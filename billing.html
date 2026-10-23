@@ -12183,6 +12183,7 @@ if(sel) sel.value=String(w);
 const t=document.getElementById('thermalPrevTitle'); if(t) t.textContent=(current.invoiceNumber||'Bill')+' — Thermal Preview';
 document.getElementById('thermalPreviewModal').classList.add('show');
 document.body.style.overflow='hidden';
+{const pv=document.getElementById('thermalPrevCanvas'); if(pv){ pv.width=0; pv.height=0; } thermalPrevCanvasEl=null;}
 thermalPrevRender(w);
 }
 function closeThermalPreview(){
@@ -12207,7 +12208,7 @@ const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.r
 if(msg){ const cm=(src.height*w/src.width/10).toFixed(1), nIt=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).length; msg.textContent=w+'mm preview  •  Paper ≈ '+cm+' cm  •  Items: '+nIt; }
 try{ thermalPrevMeta(inv,w); }catch(e){}
 try{ thermalThemeBarSync(); }catch(e){}
-}catch(e){ if(__tpSeq!==window.__tpSeq) return; console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi. ('+((e&&e.message)||e)+')'; }
+}catch(e){ if(__tpSeq!==window.__tpSeq) return; console.warn('thermal preview failed',e); if(cv){ cv.width=0; cv.height=0; } thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi. ('+((e&&e.message)||e)+')'; const __pb=document.getElementById('thermalPrevBar'); if(__pb) __pb.textContent='\u26A0\uFE0F Slip error: '+((e&&e.message)||e); }
 }
 function thermalSeg(w){
 const sel=document.getElementById('thermalW'); if(sel) sel.value=String(w);
