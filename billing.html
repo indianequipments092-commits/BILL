@@ -9431,16 +9431,25 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
   <div class="preview-toolbar">
     <div class="left"><h3 id="thermalPrevTitle">Thermal Preview</h3></div>
     <div class="right" style="flex-wrap:wrap;justify-content:flex-end;gap:6px">
-      <select id="thermalW" onchange="thermalPrevRender(this.value)" style="min-height:36px;padding:0 6px"><option value="58">58mm</option><option value="80">80mm</option></select>
+      <select id="thermalW" onchange="thermalPrevRender(this.value)" style="display:none"><option value="58">58mm</option><option value="80">80mm</option></select>
+      <div style="display:flex;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
+        <button id="thermalSeg58" onclick="thermalSeg(58)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">58mm</button>
+        <button id="thermalSeg80" onclick="thermalSeg(80)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">80mm</button>
+      </div>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
+        <button onclick="thermalZoom(-0.25)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer;padding:5px 10px">−</button>
+        <span id="thermalZoomLbl" style="min-width:42px;text-align:center;color:#e2e8f0;font-weight:700;font-size:12.5px">100%</span>
+        <button onclick="thermalZoom(0.25)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer;padding:5px 10px">+</button>
+      </div>
       <button class="btn muted" onclick="thermalShare()" style="min-height:36px;padding:8px 12px">📤 Share</button>
       <button class="btn muted" onclick="openThermalCustomize()" style="min-height:36px;padding:8px 12px">⚙ Customize</button>
-      <button class="btn muted" onclick="thermalPrint()" style="min-height:36px;padding:8px 12px">🖨 Print</button>
-      <button class="btn primary" onclick="closeThermalPreview()" style="min-height:36px;padding:8px 12px">Close</button>
+      <button class="btn primary" onclick="thermalPrint()" style="min-height:38px;padding:9px 20px;font-weight:800;font-size:14.5px">🖨 Print</button>
+      <button class="btn muted" onclick="closeThermalPreview()" style="min-height:36px;padding:8px 12px">Close</button>
     </div>
   </div>
-  <div class="preview-stage" id="thermalPrevStage" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 0 40px">
-    <div id="thermalPrevPaper" style="margin:0 auto;background:#fff;box-shadow:0 25px 60px rgba(0,0,0,0.55);border-radius:2px;width:max-content;max-width:100%">
-      <canvas id="thermalPrevCanvas" style="display:block;max-width:100%;height:auto"></canvas>
+  <div class="preview-stage" id="thermalPrevStage" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:20px 12px 44px;display:flex;flex-direction:column;justify-content:flex-start">
+    <div id="thermalPrevPaper" style="margin:0 auto;background:#fff;box-shadow:0 25px 60px rgba(0,0,0,0.55),0 4px 18px rgba(0,0,0,0.5);outline:1px solid rgba(0,0,0,0.08);border-radius:2px;width:max-content">
+      <canvas id="thermalPrevCanvas" ondblclick="thermalZoomToggle()" style="display:block;max-width:none;height:auto;transition:width .3s ease"></canvas>
     </div>
     <div id="thermalPrevMsg" style="text-align:center;color:#9ca3af;font-size:13px;padding:12px"></div>
   </div>
@@ -11922,6 +11931,7 @@ if(useNative) prNote('Slip print ho rahi hai',true);
 }
 /* ---------- Thermal Preview screen (Share + Print) ---------- */
 let thermalPrevCanvasEl=null;
+let thermalPrevZoom=1;
 function thermalPrevInvoice(){ let inv=null; try{inv=chatPreviewInvoice;}catch(e){} if(!inv){try{inv=current;}catch(e){}} return inv; }
 function openThermalPreview(){
 if(!current){alert('Pehle invoice create/open karo.');return;}
@@ -11946,10 +11956,38 @@ if(msg) msg.textContent='Slip ban rahi hai...';
 try{
 const src=await thermalImageCanvas(inv,w);
 cv.width=src.width; cv.height=src.height; cv.getContext('2d').drawImage(src,0,0);
-cv.style.width=Math.min(src.width,Math.round(window.innerWidth-24))+'px';
+const baseW=Math.min(src.width,Math.round(window.innerWidth-24));
+cv.style.width=Math.round(baseW*thermalPrevZoom)+'px';
 thermalPrevCanvasEl=cv;
-if(msg) msg.textContent=w+'mm slip preview';
+thermalSegSync(w);
+const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.round(thermalPrevZoom*100)+'%';
+if(msg){ const cm=(src.height*w/src.width/10).toFixed(1), nIt=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).length; msg.textContent=w+'mm preview  •  Paper ≈ '+cm+' cm  •  Items: '+nIt; }
 }catch(e){ console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi.'; }
+}
+function thermalSeg(w){
+const sel=document.getElementById('thermalW'); if(sel) sel.value=String(w);
+thermalPrevRender(w);
+}
+function thermalSegSync(w){
+[58,80].forEach(v=>{
+const b=document.getElementById('thermalSeg'+v); if(!b) return;
+if(v===w){ b.style.background='var(--primary,#6366f1)'; b.style.color='#fff'; }
+else{ b.style.background='transparent'; b.style.color='#cbd5e1'; }
+});
+}
+function thermalZoomApply(){
+const cv=thermalPrevCanvasEl; if(!cv||!cv.width) return;
+const baseW=Math.min(cv.width,Math.round(window.innerWidth-24));
+cv.style.width=Math.round(baseW*thermalPrevZoom)+'px';
+const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.round(thermalPrevZoom*100)+'%';
+}
+function thermalZoom(d){
+thermalPrevZoom=Math.min(2,Math.max(0.5,Math.round((thermalPrevZoom+d)*100)/100));
+thermalZoomApply();
+}
+function thermalZoomToggle(){
+thermalPrevZoom=thermalPrevZoom>1.05?1:1.6;
+thermalZoomApply();
 }
 async function thermalShare(){
 const cv=thermalPrevCanvasEl; if(!cv){ alert('Pehle preview ban jane do.'); return; }
