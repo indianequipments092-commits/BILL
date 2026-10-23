@@ -12207,7 +12207,7 @@ const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.r
 if(msg){ const cm=(src.height*w/src.width/10).toFixed(1), nIt=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).length; msg.textContent=w+'mm preview  •  Paper ≈ '+cm+' cm  •  Items: '+nIt; }
 try{ thermalPrevMeta(inv,w); }catch(e){}
 try{ thermalThemeBarSync(); }catch(e){}
-}catch(e){ if(__tpSeq!==window.__tpSeq) return; console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi.'; }
+}catch(e){ if(__tpSeq!==window.__tpSeq) return; console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi. ('+((e&&e.message)||e)+')'; }
 }
 function thermalSeg(w){
 const sel=document.getElementById('thermalW'); if(sel) sel.value=String(w);
