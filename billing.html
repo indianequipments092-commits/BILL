@@ -3853,6 +3853,7 @@ if(opened) return; opened=true;
 currentCompanyId=companyId;
 db=loadedDb;
 window.__coLoading=false;
+setTimeout(()=>{ try{ ieAutoShrinkAssets(); }catch(e){} },1200);
 showAppRoot();
 renderUserChipAndProfile();
 runSafeBoot();
@@ -19301,11 +19302,59 @@ const m=id('pfVisMsg'); if(m){ m.textContent='Visibility saved: '+(vis==='public
 const m=id('pfVisMsg'); if(m){ m.textContent=e.message||'Save failed'; m.className='auth-msg err'; }
 });
 }
+function ieShrinkDataUrl(src,maxDim,quality){
+return new Promise((resolve)=>{
+try{
+if(typeof src!=='string'||src.indexOf('data:image/')!==0){ resolve(null); return; }
+const img=new Image();
+img.onload=()=>{
+try{
+let w=img.width||0, h=img.height||0;
+if(!w||!h){ resolve(null); return; }
+const sc=Math.min(1,(maxDim||512)/Math.max(w,h));
+w=Math.max(1,Math.round(w*sc)); h=Math.max(1,Math.round(h*sc));
+const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+const cx=cv.getContext('2d');
+cx.fillStyle='#ffffff'; cx.fillRect(0,0,w,h);
+cx.drawImage(img,0,0,w,h);
+let out=null;
+try{ out=cv.toDataURL('image/jpeg',quality||0.87); }catch(e){}
+if(!out){ try{ out=cv.toDataURL('image/png'); }catch(e){} }
+resolve(out&&out.indexOf('data:image/')===0?out:null);
+}catch(e){ resolve(null); }
+};
+img.onerror=()=>resolve(null);
+img.src=src;
+}catch(e){ resolve(null); }
+});
+}
+async function ieAutoShrinkAssets(){
+try{
+if(!db||!db.settings) return;
+const cid=currentCompanyId;
+if(cid){ window.__ieShrinkDone=window.__ieShrinkDone||{}; if(window.__ieShrinkDone[cid]) return; window.__ieShrinkDone[cid]=true; }
+let changed=false;
+for(const key of ['logo','stamp']){
+const v=db.settings[key];
+if(typeof v==='string'&&v.length>180000){
+const out=await ieShrinkDataUrl(v,512,0.87);
+if(out&&out.length<v.length){ db.settings[key]=out; changed=true; }
+}
+}
+if(changed){ try{ saveDB(); }catch(e){} }
+}catch(e){}
+}
 function loadImage(input,key){
 let f=input.files?.[0]; if(!f) return;
-if(f.size>2*1024*1024){alert('Image too large (max 2MB).');return;}
+if(f.size>10*1024*1024){alert('Image too large (max 10MB).');return;}
 let r=new FileReader();
-r.onload=()=>{db.settings[key]=r.result;saveDB();alert('Asset loaded successfully.');};
+r.onload=()=>{
+const raw=String(r.result||'');
+ieShrinkDataUrl(raw,512,0.87).then(out=>{
+db.settings[key]=(out&&out.length<raw.length)?out:raw;
+saveDB(); alert('Asset loaded successfully.');
+});
+};
 r.onerror=()=>alert('Failed to load image.');
 r.readAsDataURL(f);
 }
