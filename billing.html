@@ -9427,40 +9427,65 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
 </div>
 
 <!-- ===== THERMAL PREVIEW MODAL ===== -->
+<style>
+#thermalPreviewModal{background:#070b14;color:#e5e9f2}
+#thermalPreviewModal .tp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 6px;flex-shrink:0}
+#thermalPreviewModal .tp-head h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:.2px;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-x{width:36px;height:36px;flex-shrink:0;border-radius:12px;border:1px solid rgba(140,150,180,.28);background:rgba(140,150,180,.12);color:inherit;font-size:14px;cursor:pointer}
+#thermalPreviewModal .tp-view{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:2px 12px 10px;flex-shrink:0}
+.tp-pill{display:flex;align-items:center;background:rgba(140,150,180,.12);border:1px solid rgba(140,150,180,.25);border-radius:999px;padding:3px;gap:2px}
+.tp-pill button{min-height:30px;padding:5px 13px;border-radius:999px;border:none;background:transparent;color:inherit;opacity:.72;font-weight:700;font-size:13px;cursor:pointer}
+.tp-pill button.tp-on{background:var(--primary,#6366f1);color:#fff;opacity:1}
+#thermalZoomLbl{min-width:44px;text-align:center;font-weight:700;font-size:12.5px}
+#thermalPrevBar{flex-shrink:0;text-align:center;padding:7px 14px;font-size:12.8px;line-height:1.5;background:rgba(99,102,241,.10);border-top:1px solid rgba(140,150,180,.16);border-bottom:1px solid rgba(140,150,180,.16)}
+#thermalPrevStage{background:radial-gradient(ellipse at 50% 28%,#101a30 0%,#070b14 76%)}
+#thermalPreviewModal .tp-actions{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(10,15,28,.94);border-top:1px solid rgba(140,150,180,.18)}
+.tp-icobtn{width:42px;height:42px;flex-shrink:0;border-radius:13px;border:1px solid rgba(140,150,180,.28);background:rgba(140,150,180,.12);color:inherit;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.tp-stepper{display:flex;align-items:center;gap:1px;background:rgba(140,150,180,.12);border:1px solid rgba(140,150,180,.25);border-radius:13px;padding:3px}
+.tp-stepper button{width:29px;height:34px;border:none;border-radius:9px;background:transparent;color:inherit;font-size:16px;font-weight:800;cursor:pointer}
+.tp-stepper .tp-n{min-width:38px;text-align:center;font-size:10.5px;font-weight:700;line-height:1.15;opacity:.85}
+.tp-stepper .tp-n b{display:block;font-size:14px;opacity:1}
+.tp-print{flex:1;min-height:46px;border:none;border-radius:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px -8px rgba(99,102,241,.75);letter-spacing:.2px}
+[data-theme="light"] #thermalPreviewModal{background:#edf0f5;color:#131a29}
+[data-theme="light"] #thermalPrevStage{background:radial-gradient(ellipse at 50% 28%,#ffffff 0%,#e5eaf1 78%)}
+[data-theme="light"] #thermalPreviewModal .tp-actions{background:rgba(255,255,255,.96);border-top:1px solid rgba(20,30,60,.10)}
+[data-theme="light"] #thermalPrevPaper{box-shadow:0 18px 44px rgba(30,41,82,.22),0 3px 12px rgba(30,41,82,.14)}
+</style>
 <div class="preview-modal" id="thermalPreviewModal">
-  <div class="preview-toolbar">
-    <div class="left"><h3 id="thermalPrevTitle">Thermal Preview</h3></div>
-    <div class="right" style="flex-wrap:wrap;justify-content:flex-end;gap:6px">
-      <select id="thermalW" onchange="thermalPrevRender(this.value)" style="display:none"><option value="58">58mm</option><option value="80">80mm</option></select>
-      <div style="display:flex;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
-        <button id="thermalSeg58" onclick="thermalSeg(58)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">58mm</button>
-        <button id="thermalSeg80" onclick="thermalSeg(80)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">80mm</button>
-      </div>
-      <div style="display:flex;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
-        <button onclick="thermalZoom(-0.25)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer;padding:5px 10px">−</button>
-        <span id="thermalZoomLbl" style="min-width:42px;text-align:center;color:#e2e8f0;font-weight:700;font-size:12.5px">100%</span>
-        <button onclick="thermalZoom(0.25)" style="min-height:30px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer;padding:5px 10px">+</button>
-      </div>
-      <button class="btn muted" onclick="thermalShare()" style="min-height:36px;padding:8px 12px">📤 Share</button>
-      <button class="btn muted" onclick="openThermalCustomize()" style="min-height:36px;padding:8px 12px">⚙ Customize</button>
-      <div style="display:flex;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
-        <span style="color:#9ca3af;font-size:12px;font-weight:700;padding:0 2px 0 8px">Copy</span>
-        <button id="thermalCopy1" onclick="thermalCopySet(1)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">1</button>
-        <button id="thermalCopy2" onclick="thermalCopySet(2)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">2</button>
-        <button id="thermalCopy3" onclick="thermalCopySet(3)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">3</button>
-      </div>
-      <button class="btn muted" onclick="thermalPrevTest()" style="min-height:36px;padding:8px 12px">🧪 Test</button>
-      <button class="btn primary" onclick="thermalPrint()" style="min-height:38px;padding:9px 20px;font-weight:800;font-size:14.5px">🖨 Print</button>
-      <button class="btn muted" onclick="closeThermalPreview()" style="min-height:36px;padding:8px 12px">Close</button>
+  <div class="tp-head">
+    <h3 id="thermalPrevTitle">Thermal Preview</h3>
+    <button class="tp-x" onclick="closeThermalPreview()" aria-label="Close">✕</button>
+  </div>
+  <div class="tp-view">
+    <select id="thermalW" onchange="thermalPrevRender(this.value)" style="display:none"><option value="58">58mm</option><option value="80">80mm</option></select>
+    <div class="tp-pill">
+      <button id="thermalSeg58" onclick="thermalSeg(58)">58mm</button>
+      <button id="thermalSeg80" onclick="thermalSeg(80)">80mm</button>
+    </div>
+    <div class="tp-pill">
+      <button onclick="thermalZoom(-0.25)" aria-label="Zoom out">−</button>
+      <span id="thermalZoomLbl">100%</span>
+      <button onclick="thermalZoom(0.25)" aria-label="Zoom in">+</button>
     </div>
   </div>
-  <div id="thermalPrevBar" style="display:none;padding:10px 14px;background:rgba(99,102,241,.08);border-bottom:1px solid var(--border-color);font-size:13px;color:#cbd5e1;line-height:1.55"></div>
+  <div id="thermalPrevBar" style="display:none"></div>
   <div class="preview-stage" id="thermalPrevStage" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:20px 12px 44px;display:flex;flex-direction:column;justify-content:flex-start">
     <div id="thermalPrevPaper" style="margin:0 auto;background:#fff;box-shadow:0 25px 60px rgba(0,0,0,0.55),0 4px 18px rgba(0,0,0,0.5);outline:1px solid rgba(0,0,0,0.08);border-radius:2px;width:max-content">
       <canvas id="thermalPrevCanvas" ondblclick="thermalZoomToggle()" style="display:block;max-width:none;height:auto;transition:width .3s ease"></canvas>
     </div>
     <div id="thermalPrevChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 8px 0;max-width:600px;margin:0 auto"></div>
     <div id="thermalPrevMsg" style="text-align:center;color:#9ca3af;font-size:13px;padding:12px"></div>
+  </div>
+  <div class="tp-actions">
+    <button class="tp-icobtn" onclick="thermalShare()" title="Share" aria-label="Share">📤</button>
+    <button class="tp-icobtn" onclick="thermalPrevTest()" title="Test print" aria-label="Test print">🧪</button>
+    <button class="tp-icobtn" onclick="openThermalCustomize()" title="Customize" aria-label="Customize">⚙</button>
+    <div class="tp-stepper">
+      <button onclick="thermalCopyStep(-1)" aria-label="Copies kam karo">−</button>
+      <span class="tp-n">Copy<b id="thermalCopyLbl">1</b></span>
+      <button onclick="thermalCopyStep(1)" aria-label="Copies badhao">+</button>
+    </div>
+    <button class="tp-print" onclick="thermalPrint()">🖨 Print</button>
   </div>
 </div>
 <!-- Thermal customize panel. NOTE FOR ANY AI / DEVELOPER: all user-facing text must be Professional English (never Hinglish). -->
@@ -11984,8 +12009,7 @@ thermalPrevRender(w);
 function thermalSegSync(w){
 [58,80].forEach(v=>{
 const b=document.getElementById('thermalSeg'+v); if(!b) return;
-if(v===w){ b.style.background='var(--primary,#6366f1)'; b.style.color='#fff'; }
-else{ b.style.background='transparent'; b.style.color='#cbd5e1'; }
+b.classList.toggle('tp-on',v===w);
 });
 }
 function thermalZoomApply(){
@@ -12004,7 +12028,8 @@ thermalZoomApply();
 }
 let thermalCopies=1;
 function thermalCopySet(n){ thermalCopies=Math.max(1,Math.min(3,Number(n)||1)); thermalCopySync(); }
-function thermalCopySync(){ [1,2,3].forEach(v=>{ const b=document.getElementById('thermalCopy'+v); if(!b) return; if(v===thermalCopies){ b.style.background='var(--primary,#6366f1)'; b.style.color='#fff'; } else { b.style.background='transparent'; b.style.color='#cbd5e1'; } }); }
+function thermalCopyStep(d){ thermalCopySet(thermalCopies+(Number(d)||0)); }
+function thermalCopySync(){ const l=document.getElementById('thermalCopyLbl'); if(l) l.textContent=String(thermalCopies); }
 function thermalGotoPrinter(){ closeThermalPreview(); try{ showPage('settings'); }catch(e){} setTimeout(()=>{ try{ const els=document.querySelectorAll('.section-title'); for(const el of els){ if(/Thermal Printer/.test(el.textContent)){ el.scrollIntoView({behavior:'smooth',block:'start'}); break; } } }catch(e){} },120); }
 async function thermalPrevTest(){
 const c=prCfg();
@@ -12031,13 +12056,13 @@ if(chips){
 const t=inv.totals||{}, gt=Number(t.grand||0); let paid=0, bal=gt; try{ paid=paidAmount(inv); bal=balanceDue(inv); }catch(e){}
 const cust=(inv.customer&&inv.customer.name)||'Cash Sale';
 let st, stBg;
-if(gt>0&&bal<=0.005){ st='✓ PAID'; stBg='background:rgba(16,185,129,.18);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)'; }
-else if(paid>0){ st='Balance ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.4)'; }
-else if(gt>0){ st='Udhaar ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.4)'; }
-else { st='Khali bill'; stBg='background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.35)'; }
+if(gt>0&&bal<=0.005){ st='✓ PAID'; stBg='background:rgba(16,185,129,.16);color:#10b981;border:1px solid rgba(16,185,129,.45)'; }
+else if(paid>0){ st='Balance ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.14);color:#d97706;border:1px solid rgba(245,158,11,.45)'; }
+else if(gt>0){ st='Udhaar ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.14);color:#d97706;border:1px solid rgba(245,158,11,.45)'; }
+else { st='Khali bill'; stBg='background:rgba(148,163,184,.14);color:#94a3b8;border:1px solid rgba(148,163,184,.4)'; }
 const chip='display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;';
 chips.innerHTML='<span style="'+chip+'background:var(--primary,#6366f1);color:#fff;font-size:15px">Total ₹ '+slipInr(gt)+'</span>'
-+'<span style="'+chip+'background:rgba(255,255,255,.07);color:#e2e8f0;border:1px solid rgba(255,255,255,.12)">👤 '+String(cust).replace(/</g,'')+'</span>'
++'<span style="'+chip+'background:rgba(127,140,170,.16);color:inherit;border:1px solid rgba(140,150,180,.35)">👤 '+String(cust).replace(/</g,'')+'</span>'
 +'<span style="'+chip+stBg+'">'+st+'</span>';
 }
 thermalCopySync();
