@@ -11794,7 +11794,7 @@ K.f(21.5,800); const pre=(i+1)+'. ', iw=Math.ceil(x.measureText(pre).width);
 const ls=K.wrap(r.itemName||'',K.CW-iw);
 x.textAlign='left'; ls.forEach((l,j)=>{ if(j===0) x.fillText(pre,K.L,K.y); x.fillText(l,K.L+iw,K.y); K.y+=px(21.5*1.25); });
 const g=Number(r.gst)||0;
-K.row('   '+r.qty+' '+(r.unit||'')+' × '+slipInr(r.rate)+((!bos&&g>0)?'   GST '+g+'%':''),slipInr(r.amount),18.5,500,800,5);
+K.row('   '+r.qty+' '+(r.unit||'')+' × '+slipInr(r.rate)+((!bos&&g>0)?'   GST '+g+'%':'')+((isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005)?'   MRP '+slipInr(r.mrp):''),slipInr(r.amount),18.5,500,800,5);
 });
 K.rule('dash');
 K.row('Items: '+items.length,'Total Qty: '+qtySum,16.5,600,600,3);
@@ -11817,6 +11817,15 @@ try{ const wd=amountInWords(gt); if(wd) K.left(wd,16.5,500,3,'italic'); }catch(e
 const paid=paidAmount(inv), bal=balanceDue(inv);
 if(paid>0) K.row('Paid ('+paymentModesOf(inv)+')',slipInr(paid),19.5,500,700,2);
 if(bal>0&&paid>0) K.row('Balance Due',slipInr(bal),22,800,800,3);
+if(isCash(inv)&&bal>0.005&&cu&&(cu.id||cu.name)){
+try{
+const dues=(typeof customerDues==='function')?customerDues(cu):null;
+let tot=dues?Number(dues.outstanding||0):0;
+const inDb=((typeof db!=='undefined'&&db.invoices)||[]).some(function(xx){return xx.id===inv.id&&xx.status==='Finalized'});
+if(!inDb) tot+=bal;
+if(tot>bal+0.005){ K.row('Purana Baaki',slipInr(tot-bal),17,500,700,TH.pack?0:1); K.row('Kul Baaki (Total Due)',slipInr(tot),18.5,800,800,TH.pack?2:3); }
+}catch(e){}
+}
 if(paid>0&&bal<=0.005){
 K.y+=px(TH.pack?1:2); K.f(19,800); const tx='PAID IN FULL', tw=Math.ceil(x.measureText(tx).width)+px(34), bh=px(32), bx=Math.round((K.dots-tw)/2);
 x.lineWidth=px(2.2); K.rr(bx,K.y,tw,bh,px(8)); x.stroke(); x.textAlign='center'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText(tx,K.dots/2+px(1),K.y+(bh-px(19))/2-px(1)); try{x.letterSpacing='0px';}catch(e){} K.y+=bh+px(TH.pack?5:8);
@@ -13355,7 +13364,7 @@ function persistInvoice(){
 if(!current) return;
 if(!__holdSave){ delete current.held; delete current.heldAt; }
 recalc();
-if(isBos(current)){ try{bosAutoSaveCustomer();}catch(e){console.warn('bosAutoSaveCustomer',e);} }
+if(isBos(current)||isCash(current)){ try{bosAutoSaveCustomer();}catch(e){console.warn('bosAutoSaveCustomer',e);} }
 current.updatedAt=new Date().toISOString();
 let old=db.invoices.find(x=>x.id===current.id);
 if(old && JSON.stringify(old)!==JSON.stringify(current)){
@@ -13376,9 +13385,10 @@ function hsHasItems(inv){return !!inv&&(inv.items||[]).some(function(r){return r
 function heldList(){return (db&&db.invoices||[]).filter(function(x){return x.held&&x.status==='Draft'})}
 function heldRefresh(){try{
  var bos=isBos(current);
- var b=id('heldBtn'); if(b){ b.textContent='📋 Held ('+heldList().length+')'; b.style.display=bos?'':'none'; }
- var tp=id('thermalPrevBtn'); if(tp) tp.style.display=bos?'':'none';
- var open=!!current&&current.status!=='Finalized'&&bos;
+ var feat=bos||(!!current&&isCash(current));
+ var b=id('heldBtn'); if(b){ b.textContent='📋 Held ('+heldList().length+')'; b.style.display=feat?'':'none'; }
+ var tp=id('thermalPrevBtn'); if(tp) tp.style.display=feat?'':'none';
+ var open=!!current&&current.status!=='Finalized'&&feat;
  var h=id('holdBtn'); if(h) h.style.display=open?'':'none';
  var pr=id('payRecBtn'); if(pr) pr.style.display=(!!current&&current.status==='Finalized')?'':'none';
  var s=id('splitBtn'); if(s){ s.style.display=open?'':'none'; var n=(current&&current.splitPlan||[]).length; s.textContent=n?'💳 Split ✔ ('+n+')':'💳 Split Pay'; }
@@ -28081,7 +28091,7 @@ if(typeof _p==='function')window.populateCustomerSelect=populateCustomerSelect=f
 var refDoc=null,refUser=null;
 function g(i){return document.getElementById(i)}
 function bos(){return typeof isBos==='function'&&isBos(current)}
-function isCashSale(){if(!current||!bos())return false;var e=g('custName');var n=e?e.value:((current.customer&&current.customer.name)||'');return /^cash sale$/i.test(String(n).trim())}
+function isCashSale(){if(!current||!(bos()||(typeof isCash==='function'&&isCash(current))))return false;var e=g('custName');var n=e?e.value:((current.customer&&current.customer.name)||'');return /^cash sale$/i.test(String(n).trim())}
 function hasMore(){return ['deliveryNote','deliveryNoteDate','supplierRef','otherRef','invDispatchNo'].some(function(i){var e=g(i);return e&&String(e.value||'').trim()})}
 function refOpen(){return refUser!==null?refUser:hasMore()}
 function refSync(){
@@ -28098,7 +28108,7 @@ function cashSync(){
  var cs=isCashSale();
  var cw=g('consWrap');if(cw)cw.style.display=cs?'none':'';
  if(cs&&current.consSame===false){current.consSame=true;try{consRender()}catch(e){}}
- var wb=g('walkInBtn');if(wb&&bos())wb.style.display=cs?'none':'';
+ var wb=g('walkInBtn');if(wb&&(bos()||(typeof isCash==='function'&&isCash(current))))wb.style.display=cs?'none':'';
  var mw=g('cashMobWrap');if(mw)mw.style.display=cs?'':'none';
  var m=g('cashMobile');
  if(cs&&m&&document.activeElement!==m){var d=String((current.customer&&current.customer.contact)||'').replace(/\D/g,'').slice(0,10);if(m.value!==d)m.value=d}
