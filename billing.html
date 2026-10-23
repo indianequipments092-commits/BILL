@@ -9445,33 +9445,40 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
 <!-- ===== THERMAL PREVIEW MODAL ===== -->
 <style>
 #thermalPreviewModal{background:#070b14;color:#e5e9f2}
-#thermalThemeBar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 12px 8px;flex-shrink:0;font-size:13px}
+#thermalPreviewModal .tp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px;flex-shrink:0}
+#thermalPreviewModal .tp-head h3{margin:0;font-size:16.5px;font-weight:800;letter-spacing:.2px;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-x{width:34px;height:34px;flex-shrink:0;border-radius:50%;border:1px solid rgba(140,150,180,.25);background:rgba(140,150,180,.10);color:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.tp-card{flex-shrink:0;margin:0 12px 12px;background:rgba(255,255,255,.045);border:1px solid rgba(140,150,180,.20);border-radius:18px;padding:11px 12px;box-shadow:0 12px 28px -16px rgba(0,0,0,.6)}
+#thermalPreviewModal .tp-view{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:0}
+.tp-pill{display:flex;align-items:center;background:rgba(140,150,180,.13);border:1px solid rgba(140,150,180,.22);border-radius:999px;padding:3px;gap:2px}
+.tp-pill.tp-seg{flex:1;min-width:150px}
+.tp-pill.tp-seg button{flex:1}
+.tp-pill button{min-height:32px;padding:5px 14px;border-radius:999px;border:none;background:transparent;color:inherit;opacity:.72;font-weight:700;font-size:13.5px;cursor:pointer;transition:all .18s ease}
+.tp-pill button.tp-on{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;opacity:1;box-shadow:0 4px 12px -4px rgba(99,102,241,.85)}
+#thermalZoomLbl{min-width:46px;text-align:center;font-weight:700;font-size:12.5px}
+.tp-themerow{display:flex;align-items:center;gap:4px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(140,150,180,.16)}
+#thermalThemeBar{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;font-size:13px}
 #thermalThemeBar .tp-dot{width:8px;height:8px;border-radius:99px;background:rgba(140,150,180,.4);cursor:pointer;transition:all .25s ease}
 #thermalThemeBar .tp-dot.on{width:20px;background:var(--primary,#6366f1)}
 #thermalThemeBar .tp-defbtn{border:1px solid var(--primary,#6366f1);color:var(--primary,#6366f1);background:transparent;border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;cursor:pointer}
-.tp-arrow{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid rgba(140,150,180,.32);background:rgba(16,22,40,.55);color:#fff;font-size:23px;line-height:1;z-index:6;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:0}
-.tp-arrow-l{left:10px}
-.tp-arrow-r{right:10px}
-[data-theme="light"] .tp-arrow{background:rgba(255,255,255,.82);color:#131a29}
-#thermalPreviewModal .tp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 6px;flex-shrink:0}
-#thermalPreviewModal .tp-head h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:.2px;color:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tp-x{width:36px;height:36px;flex-shrink:0;border-radius:12px;border:1px solid rgba(140,150,180,.28);background:rgba(140,150,180,.12);color:inherit;font-size:14px;cursor:pointer}
-#thermalPreviewModal .tp-view{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:2px 12px 10px;flex-shrink:0}
-.tp-pill{display:flex;align-items:center;background:rgba(140,150,180,.12);border:1px solid rgba(140,150,180,.25);border-radius:999px;padding:3px;gap:2px}
-.tp-pill button{min-height:30px;padding:5px 13px;border-radius:999px;border:none;background:transparent;color:inherit;opacity:.72;font-weight:700;font-size:13px;cursor:pointer}
-.tp-pill button.tp-on{background:var(--primary,#6366f1);color:#fff;opacity:1}
-#thermalZoomLbl{min-width:44px;text-align:center;font-weight:700;font-size:12.5px}
-#thermalPrevBar{flex-shrink:0;text-align:center;padding:7px 14px;font-size:12.8px;line-height:1.5;background:rgba(99,102,241,.10);border-top:1px solid rgba(140,150,180,.16);border-bottom:1px solid rgba(140,150,180,.16)}
-#thermalPrevStage{background:radial-gradient(ellipse at 50% 28%,#101a30 0%,#070b14 76%)}
-#thermalPreviewModal .tp-actions{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(10,15,28,.94);border-top:1px solid rgba(140,150,180,.18)}
-.tp-icobtn{width:42px;height:42px;flex-shrink:0;border-radius:13px;border:1px solid rgba(140,150,180,.28);background:rgba(140,150,180,.12);color:inherit;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-.tp-stepper{display:flex;align-items:center;gap:1px;background:rgba(140,150,180,.12);border:1px solid rgba(140,150,180,.25);border-radius:13px;padding:3px}
-.tp-stepper button{width:29px;height:34px;border:none;border-radius:9px;background:transparent;color:inherit;font-size:16px;font-weight:800;cursor:pointer}
+.tp-arrow{width:30px;height:30px;flex-shrink:0;border-radius:50%;border:1px solid rgba(140,150,180,.30);background:rgba(140,150,180,.12);color:inherit;font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.tp-arrow:disabled{cursor:default}
+#thermalPrevBar{margin-top:11px;text-align:left;padding:8px 11px;font-size:12.6px;line-height:1.55;background:rgba(99,102,241,.10);border:1px solid rgba(99,102,241,.22);border-radius:11px}
+#thermalPrevStage{background:radial-gradient(ellipse at 50% 24%,#111c33 0%,#070b14 78%)}
+#thermalPrevPaper{border-radius:3px}
+#thermalPreviewModal #thermalPrevMsg{color:#8a94a6!important}
+#thermalPreviewModal .tp-actions{flex-shrink:0;display:flex;align-items:center;gap:9px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(10,15,28,.94);border-top:1px solid rgba(140,150,180,.18)}
+.tp-icobtn{width:48px;height:48px;flex-shrink:0;border-radius:14px;border:1px solid rgba(140,150,180,.28);background:rgba(140,150,180,.12);color:inherit;font-size:16.5px;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+.tp-icobtn span{font-size:8.5px;font-weight:700;letter-spacing:.4px;opacity:.78;line-height:1}
+.tp-stepper{display:flex;align-items:center;gap:1px;background:rgba(140,150,180,.12);border:1px solid rgba(140,150,180,.25);border-radius:14px;padding:3px 4px;height:48px}
+.tp-stepper button{width:29px;height:38px;border:none;border-radius:9px;background:transparent;color:inherit;font-size:16px;font-weight:800;cursor:pointer}
 .tp-stepper .tp-n{min-width:38px;text-align:center;font-size:10.5px;font-weight:700;line-height:1.15;opacity:.85}
 .tp-stepper .tp-n b{display:block;font-size:14px;opacity:1}
-.tp-print{flex:1;min-height:46px;border:none;border-radius:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px -8px rgba(99,102,241,.75);letter-spacing:.2px}
+.tp-print{flex:1;min-height:48px;border:none;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px -8px rgba(99,102,241,.75);letter-spacing:.2px}
 [data-theme="light"] #thermalPreviewModal{background:#edf0f5;color:#131a29}
-[data-theme="light"] #thermalPrevStage{background:radial-gradient(ellipse at 50% 28%,#ffffff 0%,#e5eaf1 78%)}
+[data-theme="light"] .tp-card{background:#fff;border-color:rgba(20,30,60,.08);box-shadow:0 12px 28px -16px rgba(30,41,82,.30)}
+[data-theme="light"] .tp-themerow{border-top-color:rgba(20,30,60,.08)}
+[data-theme="light"] #thermalPrevStage{background:radial-gradient(ellipse at 50% 24%,#ffffff 0%,#e4e9f0 80%)}
 [data-theme="light"] #thermalPreviewModal .tp-actions{background:rgba(255,255,255,.96);border-top:1px solid rgba(20,30,60,.10)}
 [data-theme="light"] #thermalPrevPaper{box-shadow:0 18px 44px rgba(30,41,82,.22),0 3px 12px rgba(30,41,82,.14)}
 </style>
@@ -9480,20 +9487,26 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     <h3 id="thermalPrevTitle">Thermal Preview</h3>
     <button class="tp-x" onclick="closeThermalPreview()" aria-label="Close">✕</button>
   </div>
-  <div class="tp-view">
-    <select id="thermalW" onchange="thermalPrevRender(this.value)" style="display:none"><option value="58">58mm</option><option value="80">80mm</option></select>
-    <div class="tp-pill">
-      <button id="thermalSeg58" onclick="thermalSeg(58)">58mm</button>
-      <button id="thermalSeg80" onclick="thermalSeg(80)">80mm</button>
+  <div class="tp-card">
+    <div class="tp-view">
+      <select id="thermalW" onchange="thermalPrevRender(this.value)" style="display:none"><option value="58">58mm</option><option value="80">80mm</option></select>
+      <div class="tp-pill tp-seg">
+        <button id="thermalSeg58" onclick="thermalSeg(58)">58mm</button>
+        <button id="thermalSeg80" onclick="thermalSeg(80)">80mm</button>
+      </div>
+      <div class="tp-pill">
+        <button onclick="thermalZoom(-0.25)" aria-label="Zoom out">−</button>
+        <span id="thermalZoomLbl">100%</span>
+        <button onclick="thermalZoom(0.25)" aria-label="Zoom in">+</button>
+      </div>
     </div>
-    <div class="tp-pill">
-      <button onclick="thermalZoom(-0.25)" aria-label="Zoom out">−</button>
-      <span id="thermalZoomLbl">100%</span>
-      <button onclick="thermalZoom(0.25)" aria-label="Zoom in">+</button>
+    <div class="tp-themerow">
+      <button id="thermalThemePrev" class="tp-arrow" onclick="thermalThemeNav(-1)" aria-label="Pichla theme">‹</button>
+      <div id="thermalThemeBar"></div>
+      <button id="thermalThemeNext" class="tp-arrow" onclick="thermalThemeNav(1)" aria-label="Agla theme">›</button>
     </div>
+    <div id="thermalPrevBar" style="display:none"></div>
   </div>
-  <div id="thermalThemeBar"></div>
-  <div id="thermalPrevBar" style="display:none"></div>
   <div class="preview-stage" id="thermalPrevStage" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:20px 12px 44px;display:flex;flex-direction:column;justify-content:flex-start">
     <div id="thermalPrevPaper" style="margin:0 auto;background:#fff;box-shadow:0 25px 60px rgba(0,0,0,0.55),0 4px 18px rgba(0,0,0,0.5);outline:1px solid rgba(0,0,0,0.08);border-radius:2px;width:max-content">
       <canvas id="thermalPrevCanvas" ondblclick="thermalZoomToggle()" style="display:block;max-width:none;height:auto;transition:width .3s ease"></canvas>
@@ -9501,12 +9514,10 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     <div id="thermalPrevChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 8px 0;max-width:600px;margin:0 auto"></div>
     <div id="thermalPrevMsg" style="text-align:center;color:#9ca3af;font-size:13px;padding:12px"></div>
   </div>
-  <button id="thermalThemePrev" class="tp-arrow tp-arrow-l" onclick="thermalThemeNav(-1)" aria-label="Pichla theme">‹</button>
-  <button id="thermalThemeNext" class="tp-arrow tp-arrow-r" onclick="thermalThemeNav(1)" aria-label="Agla theme">›</button>
   <div class="tp-actions">
-    <button class="tp-icobtn" onclick="thermalShare()" title="Share" aria-label="Share">📤</button>
-    <button class="tp-icobtn" onclick="thermalPrevTest()" title="Test print" aria-label="Test print">🧪</button>
-    <button class="tp-icobtn" onclick="openThermalCustomize()" title="Customize" aria-label="Customize">⚙</button>
+    <button class="tp-icobtn" onclick="thermalShare()" title="Share" aria-label="Share">📤<span>SHARE</span></button>
+    <button class="tp-icobtn" onclick="thermalPrevTest()" title="Test print" aria-label="Test print">🧪<span>TEST</span></button>
+    <button class="tp-icobtn" onclick="openThermalCustomize()" title="Customize" aria-label="Customize">⚙<span>DESIGN</span></button>
     <div class="tp-stepper">
       <button onclick="thermalCopyStep(-1)" aria-label="Copies kam karo">−</button>
       <span class="tp-n">Copy<b id="thermalCopyLbl">1</b></span>
