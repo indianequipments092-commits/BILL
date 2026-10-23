@@ -3406,10 +3406,11 @@ try{ supabaseClient.auth.getSession(); }catch(e){}
 if(currentUser&&currentCompanyId&&iePendGet(currentCompanyId)){ __saveHealth.cloudFails=0; fsScheduleSave(); }
 }catch(e){}
 }
-window.addEventListener('online',function(){ setTimeout(kick,800); });
+window.addEventListener('online',function(){ setTimeout(kick,300); });
 window.addEventListener('offline',pill);
 document.addEventListener('DOMContentLoaded',pill);
-setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} },30000);
+setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} },15000);
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) kick(); });
 })();
 let fsRetryTimer=null;
 let fsSaveTimer=null;
@@ -3431,9 +3432,10 @@ fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(__cid)
 console.warn('Firestore save failed',e);
 saveHealthSet('cloud',false);
 clearTimeout(fsRetryTimer);
-if(__saveHealth.cloudFails<4) fsRetryTimer=setTimeout(fsScheduleSave,8000);
+const __rd=__saveHealth.cloudFails<=1?2000:__saveHealth.cloudFails===2?5000:__saveHealth.cloudFails===3?10000:20000;
+fsRetryTimer=setTimeout(fsScheduleSave,__rd);
 });
-},800);
+},250);
 }
 let userProfile=null;
 let currentCompanyId=null;
