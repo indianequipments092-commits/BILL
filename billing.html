@@ -11866,7 +11866,7 @@ const dots=(w===80?576:384)*(ss||1), S=db.settings||{}, bos=isBos(inv), t=inv.to
 const TH=tTheme();
 const items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0);
 const K=slipKit(dots,1500+items.length*190), x=K.x, px=K.px;
-const logo=await slipLoadImg(S.logo);
+const logo=thermalLogoOn()?await slipLoadImg(S.logo):null;
 if(logo){
 const mh=px(80), mw=Math.min(K.CW*0.5,px(190)), sc=Math.min(mh/logo.height,mw/logo.width,3), lw=Math.max(8,Math.round(logo.width*sc)), lh=Math.max(8,Math.round(logo.height*sc));
 const tc=document.createElement('canvas'); tc.width=lw; tc.height=lh; const tx=tc.getContext('2d'); tx.fillStyle='#fff'; tx.fillRect(0,0,lw,lh); tx.drawImage(logo,0,0,lw,lh); if(!ss) slipDither(tc);
