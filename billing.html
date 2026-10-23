@@ -3602,7 +3602,7 @@ if(g && validateGSTIN(g).status==='valid'){
 const prev=eid?String(((userProfile.companies||{})[eid]||{}).gstin||'').toUpperCase():'';
 if(g!==prev){
 const b=document.getElementById('coSubmitBtn'); b.disabled=true;
-const dup=await gstinDuplicateCheck(g);
+const dup=await Promise.race([gstinDuplicateCheck(g),new Promise(r=>setTimeout(()=>r(false),12000))]);
 b.disabled=false;
 if(dup){
 const m=document.getElementById('coFormMsg'); m.textContent='❌ '+GSTIN_DUP_MSG; m.className='auth-msg err';
@@ -3658,28 +3658,34 @@ return;
 }
 }
 submitBtn.disabled=true;
+submitBtn.textContent='Saving…';
 if(!editId && myCompanyCount()>=myCompanyLimit()){
 const m=document.getElementById('coFormMsg');
 m.textContent='Tumhare "'+(PLAN_LABEL[currentPlan]||currentPlan)+'" plan me sirf '+myCompanyLimit()+' company allowed hai. Aur company banane ke liye plan upgrade karo.';
 m.className='auth-msg err';
 submitBtn.disabled=false;
+submitBtn.textContent='Save & Continue';
 return;
 }
 if(editId){
 const ref=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId);
-ref.get().then(snap=>{
-let parsed=emptyDB();
-if(snap.exists && snap.data() && snap.data().data){
-try{ parsed=normalizeDB(JSON.parse(snap.data().data)); }catch(e){}
+const __m2=document.getElementById('coFormMsg');
+__m2.textContent='Save ho raha hai…'; __m2.className='auth-msg';
+const __withTo=(p,ms,msg)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(msg)),ms))]);
+(async()=>{
+try{
+let parsed=null;
+try{ const __loc=ieLocalDb(editId); if(__loc && (currentCompanyId===editId || (typeof iePendGet==='function' && iePendGet(editId)))) parsed=__loc; }catch(e){}
+if(!parsed){
+const snap=await __withTo(ref.get(),15000,'Company ka data load hone me time zyada lag gaya — net check karke dobara try karo.');
+if(snap.exists && snap.data() && snap.data().data){ try{ parsed=normalizeDB(JSON.parse(snap.data().data)); }catch(e){} }
 }
-parsed.settings={...parsed.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
-return ref.set({data:JSON.stringify(parsed),updatedAt:Date.now()},{merge:true}).then(()=>{
+if(!parsed) throw new Error('Company ka purana data nahi mila (na phone me, na cloud par) — data safety ke liye save roka gaya hai. Net ON karke form dobara kholo.');
+parsed.settings={...(parsed.settings||{}),company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+await __withTo(ref.set({data:JSON.stringify(parsed),updatedAt:Date.now()},{merge:true}),20000,'Save hone me time zyada lag gaya — net slow hai, dobara try karo.');
 userProfile.companies=userProfile.companies||{};
 userProfile.companies[editId]={name,gstin,businessType};
 syncCompanySearchFields();
-return userDocRef(currentUser.uid).set({companies:userProfile.companies,companyNames:userProfile.companyNames,companyGstins:userProfile.companyGstins},{merge:true}).then(syncPublicProfileDoc);
-});
-}).then(()=>{
 if(currentCompanyId===editId && typeof db!=='undefined' && db && db.settings){
 db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
 try{ saveDB(); }catch(e){}
@@ -3689,9 +3695,13 @@ if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile();
 coCloseForm();
 if(typeof renderCompanyGrid==='function') renderCompanyGrid();
 if(typeof loadProfileUI==='function') loadProfileUI();
-}).catch(e=>{
-const m=document.getElementById('coFormMsg'); m.textContent=e.message||'Update nahi ho paya'; m.className='auth-msg err';
-}).finally(()=>{ submitBtn.disabled=false; });
+try{ toast('\u2713 Company save ho gayi'); }catch(e){}
+userDocRef(currentUser.uid).set({companies:userProfile.companies,companyNames:userProfile.companyNames,companyGstins:userProfile.companyGstins},{merge:true}).then(()=>syncPublicProfileDoc()).catch(e=>console.warn('company index sync pending',e));
+}catch(e){
+__m2.textContent=(e&&e.message)||'Update nahi ho paya — dobara try karo'; __m2.className='auth-msg err';
+submitBtn.disabled=false; submitBtn.textContent='Save Changes';
+}
+})();
 return;
 }
 const companyId=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc().id;
@@ -3719,7 +3729,7 @@ coOpenCompany(companyId,newDb);
 .catch(e=>{
 const m=document.getElementById('coFormMsg'); m.textContent=e.message||'Company create nahi ho payi'; m.className='auth-msg err';
 })
-.finally(()=>{ submitBtn.disabled=false; });
+.finally(()=>{ submitBtn.disabled=false; submitBtn.textContent='Save & Continue'; });
 }
 function coDeleteCompany(id){
 const c=(userProfile.companies&&userProfile.companies[id])||{};
