@@ -3416,14 +3416,16 @@ let fsSaveTimer=null;
 let __fsVer=0;
 function fsScheduleSave(){
 if(!currentUser||!currentCompanyId) return;
-const __cid=currentCompanyId, __ver=++__fsVer;
+if(window.__coLoading) return;
+const __cid=currentCompanyId, __ver=++__fsVer, __db=db;
 iePendSet(__cid,true);
 clearTimeout(fsSaveTimer);
 fsSaveTimer=setTimeout(()=>{
 if(navigator.onLine===false) return;
+if(!__db) return;
 geminiKeyMigrate();
-fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(currentCompanyId)
-.set({data:JSON.stringify(db),updatedAt:Date.now()},{merge:true})
+fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(__cid)
+.set({data:JSON.stringify(__db),updatedAt:Date.now()},{merge:true})
 .then(()=>{ saveHealthSet('cloud',true); if(__ver===__fsVer) iePendSet(__cid,false); })
 .catch(e=>{
 console.warn('Firestore save failed',e);
@@ -3734,6 +3736,7 @@ if(typeof loadProfileUI==='function') loadProfileUI();
 .catch(e=>alert('Delete nahi ho paya: '+(e.message||e)));
 }
 function coOpenCompany(companyId,preloadedDb){
+window.__coLoading=true;
 let opened=false;
 const __ov=document.getElementById('companyOverlay');
 if(__ov){ if(__ov.classList.contains('co-busy')) return; __ov.classList.add('co-busy'); }
@@ -3743,6 +3746,7 @@ unbusy();
 if(opened) return; opened=true;
 currentCompanyId=companyId;
 db=loadedDb;
+window.__coLoading=false;
 showAppRoot();
 renderUserChipAndProfile();
 runSafeBoot();
@@ -3783,7 +3787,7 @@ proceed(loaded);
 if(opened) return;
 console.warn('company load failed (offline/slow?)',e);
 if(!useLocal()){
-currentCompanyId=null; unbusy();
+currentCompanyId=null; window.__coLoading=false; unbusy();
 alert('Internet nahi hai aur is device par is company ka saved data nahi mila.\n\nPehli baar net on karke company kholo.');
 }
 });
@@ -3791,7 +3795,7 @@ alert('Internet nahi hai aur is device par is company ka saved data nahi mila.\n
 const chk=fbDb.doc('adminIndex/companies/list/'+companyId).get();
 withTimeout(chk,hasLocal()?2500:6000).then(c=>{
 if(c.exists && c.data().blocked){
-unbusy();
+window.__coLoading=false; unbusy();
 alert('Ye company admin ne block kar di hai. Contact support.');
 return;
 }
