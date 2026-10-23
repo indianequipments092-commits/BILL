@@ -11611,7 +11611,7 @@ const DOTFONT={
 };
 function installDotFont(x){
 const of=x.fillText.bind(x), om=x.measureText.bind(x);
-const szOf=()=>{ const m=/(\d+(?:\.\d+)?)px/.exec(x.font||''); return Math.max((m?parseFloat(m[1]):16)*0.84,11); };
+const szOf=()=>{ const m=/(\d+(?:\.\d+)?)px/.exec(x.font||''); return Math.max((m?parseFloat(m[1]):16)*0.84,10); };
 const wtOf=()=>{ const f=(x.font||'').trim(); if(/^bold/.test(f)) return 700; const m=/^(\d{3})\b/.exec(f); return m?parseInt(m[1]):400; };
 const adv=sz=>sz/7*6;
 const wdt=s=>{ const sz=szOf(); let w=0; for(const ch of String(s)){ w+=DOTFONT[ch.toUpperCase()]?adv(sz):(om(ch).width+sz/14); } return w; };
@@ -11737,7 +11737,7 @@ if(S.upiId&&(bal>0||!(paid>0))){
 try{
 const amt=paid>0?bal:gt, q='upi://pay?pa='+S.upiId+'&pn='+encodeURIComponent(String(S.company||'Shop').replace(/[^\x20-\x7E]/g,''))+'&am='+amt.toFixed(2)+'&cu=INR';
 const qr=new window.__QRCodeEncoder(0,0); qr.addData(q); qr.make();
-const n=qr.getModuleCount(), quiet=2, target=Math.min(K.CW*0.66,px(230)), ms=Math.max(2,Math.floor(target/(n+quiet*2))), side=ms*(n+quiet*2), ox=Math.round((K.dots-side)/2);
+const n=qr.getModuleCount(), quiet=2, target=(typeof tTheme==='function'&&tTheme().dot)?Math.min(K.CW*0.55,px(190)):Math.min(K.CW*0.66,px(230)), ms=Math.max(2,Math.floor(target/(n+quiet*2))), side=ms*(n+quiet*2), ox=Math.round((K.dots-side)/2);
 K.center('SCAN & PAY (UPI)',19,800,3);
 x.fillStyle='#fff'; x.fillRect(ox,K.y,side,side); x.fillStyle='#000';
 for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(qr.isDark(r,c)) x.fillRect(ox+(c+quiet)*ms,K.y+(r+quiet)*ms,ms,ms);
@@ -11881,19 +11881,19 @@ K.f(17,700); const ls=K.wrap(nmW,wI), lh=px(17*1.25);
 K.f(16,600); x.textAlign='left'; x.fillText(String(i+1),K.L,K.y);
 K.f(17,700); x.textAlign='left'; ls.forEach((l,j)=>x.fillText(l,xI,K.y+j*lh));
 let adv=Math.max(1,ls.length)*lh;
-if(dsW){ K.f(14,500); const dl=K.wrap(dsW,wI); x.textAlign='left'; dl.forEach((l,j)=>x.fillText(l,xI,rowTop+adv+j*px(14*1.3))); adv+=dl.length*px(14*1.3); }
+if(dsW){ const dWN=TH.dot?12:14, dWA=TH.dot?1.15:1.3; K.f(dWN,500); const dl=K.wrap(dsW,wI); x.textAlign='left'; dl.forEach((l,j)=>x.fillText(l,xI,rowTop+adv+j*px(dWN*dWA))); adv+=dl.length*px(dWN*dWA); }
 cell(qtxt,qtyR,16,600,wQ); if(hasMrp) cell(Number(r.mrp)>0?slipInr(r.mrp):'-',mrpR,16,500,wM); cell(rtxt,rateR,16,500,wR); cell(atxt,amtR,16.5,800,wA);
-K.y+=adv+px(5);
+K.y+=adv+px(TH.dot?2:5);
 } else {
 const base=K.y, nm=[r.itemName,r.size].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' '), ds=String(r.description||'').trim(), ix=K.L+K.CW*0.07, iw=K.CW*0.53;
 let yy=base;
 K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
 K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(14.5*1.25); });
-if(ds){ K.f(12.5,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(12.5*1.3); }); }
+if(ds){ const dNN=TH.dot?10.5:12.5, dNA=TH.dot?1.15:1.3; K.f(dNN,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(dNN*dNA); }); }
 K.f(13,500); x.textAlign='right'; x.fillText(qtxt,K.L+K.CW*0.63,base);
 x.fillText(rtxt,K.L+K.CW*0.81,base);
 K.f(14.5,800); x.fillText(atxt,K.R,base);
-K.y=Math.max(yy,base+px(14.5*1.25))+px(4);
+K.y=Math.max(yy,base+px(14.5*1.25))+px(TH.dot?2:4);
 }
 });
 }
@@ -11904,7 +11904,7 @@ K.row('Items: '+items.length,'Total Qty: '+slipFmtQty(qtySum),15.5,600,600,3);
 K.row('Subtotal',slipInr(t.subTotal!=null?t.subTotal:(Number(t.grand||0)+Number(t.discount||0)-Number(t.roundOff||0))),17.5,500,700,1);
 if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),17.5,500,700,1);
 if(Number(t.roundOff)) K.row('Round off',(Number(t.roundOff)>0?'+ ':'- ')+slipInr(Math.abs(t.roundOff)),17.5,500,700,1);
-K.y+=px(3);
+K.y+=px(TH.dot?1:3);
 const gt=Number(t.grand||0), gtxt='₹ '+slipInr(gt);
 K.band(TH.tall?(wide?82:78):(wide?68:64),(y,h)=>{
 K.f(14,800); x.textAlign='center'; try{x.letterSpacing=px(2)+'px';}catch(e){} x.fillText('GRAND TOTAL',K.dots/2+px(1),y+px(6)); try{x.letterSpacing='0px';}catch(e){}
@@ -11943,7 +11943,7 @@ if(S.upiId&&bal>0.005){
 try{
 const q='upi://pay?pa='+S.upiId+'&pn='+encodeURIComponent(String(S.company||'Shop').replace(/[^\x20-\x7E]/g,''))+'&am='+bal.toFixed(2)+'&cu=INR';
 const qr=new window.__QRCodeEncoder(0,0); qr.addData(q); qr.make();
-const n=qr.getModuleCount(), quiet=2, target=Math.min(K.CW*0.66,px(230)), ms=Math.max(2,Math.floor(target/(n+quiet*2))), side=ms*(n+quiet*2), ox=Math.round((K.dots-side)/2);
+const n=qr.getModuleCount(), quiet=2, target=(typeof tTheme==='function'&&tTheme().dot)?Math.min(K.CW*0.55,px(190)):Math.min(K.CW*0.66,px(230)), ms=Math.max(2,Math.floor(target/(n+quiet*2))), side=ms*(n+quiet*2), ox=Math.round((K.dots-side)/2);
 K.center('SCAN & PAY',18,800,1);
 K.center('₹ '+slipInr(bal),17.5,700,3);
 x.fillStyle='#fff'; x.fillRect(ox,K.y,side,side); x.fillStyle='#000';
@@ -11960,19 +11960,19 @@ const bt=String(S.bosTerms||'').split('\n').map(s=>s.replace(/^\s*\d+[\.\)]\s*/,
 const terms=(bt.length?bt:['Bika hua saaman wapas ya badla nahi jayega.','Payment tay samay par karne ki kripa karein.']).slice(0,3);
 terms.forEach(s=>K.left('• '+s,TH.compact?12:13,500,TH.compact?0:1));
 K.y+=px(4);
-K.center('Dhanyavaad, phir aaiyega',TH.compact?16:19,800,TH.compact?3:5);
+K.center('Dhanyavaad, phir aaiyega',TH.dot?16.5:(TH.compact?16:19),800,TH.dot?3:(TH.compact?3:5));
 
 /* 8. Branding */
 let brand=true; try{ if(typeof ieCreditOn==='function'&&!ieCreditOn()) brand=false; }catch(e){}
 if(brand){
 K.rule('dash');
-const ms2=px(34), bc=await slipBrandMark(ms2); x.drawImage(bc,Math.round((dots-ms2)/2),K.y); K.y+=ms2+px(5);
+const ms2=px(TH.dot?28:34), bc=await slipBrandMark(ms2); x.drawImage(bc,Math.round((dots-ms2)/2),K.y); K.y+=ms2+px(TH.dot?3:5);
 K.center('Powered by IE Billing',13.5,700,0);
 K.center(IE_CREDIT_URL,13.5,500,2);
 }
 
 /* 9. Blank space + cut line (printer feed and cut command are added by slipToEsc) */
-K.y+=px(8); K.rule('dash'); K.y+=px(26);
+K.y+=px(TH.dot?4:8); K.rule('dash'); K.y+=px(TH.dot?18:26);
 return K.done();
 }
 
