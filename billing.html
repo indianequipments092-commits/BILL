@@ -12944,7 +12944,7 @@ r.size=it.size||''; r.gst=it.gst; r.unit=it.unit||'Nos'; r.hsn=it.hsn||'';
 } else {
 Object.assign(r,blankRow());
 }
-renderRows(); recalc();
+recalc(); renderRows();
 }
 function rowVal(i,k,v){
 if(!current||!current.items[i]) return;
@@ -27735,7 +27735,7 @@ window.ciChoose=function(itemId){
  if(!current)return;var i=slot();ciOpenIdx=i;
  var q=document.getElementById('ciQ');if(q)q.value='';ciHideDD();
  rowItem(i,itemId);var r=current.items[i];if(r&&(r.qty===''||r.qty==null))r.qty=1;
- renderRows();recalc();
+ recalc();renderRows();
  setTimeout(function(){var e=document.querySelector('#itemEditor [data-field="qty"][data-row="'+i+'"]');if(e){e.focus();try{e.select()}catch(z){}}},80)};
 window.ciScan=function(){if(!current)return;var i=slot();ciOpenIdx=i;renderRows();scanRowItem(i)};
 })();
