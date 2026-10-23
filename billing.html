@@ -3364,8 +3364,11 @@ function iePendGet(id){ try{ return !!localStorage.getItem(iePendKey(id)); }catc
 function ieLocalDb(id){ try{ const raw=localStorage.getItem(KEY+'_'+id); if(!raw) return null; return normalizeDB(JSON.parse(raw)); }catch(e){ return null; } }
 function ieOfflineUserSave(){
 try{
-if(!currentUser||!currentUser.uid||!userProfile) return;
-localStorage.setItem('ie_offline_user',JSON.stringify({uid:currentUser.uid,email:currentUser.email||'',displayName:currentUser.displayName||null,photoURL:currentUser.photoURL||null,profile:userProfile,savedAt:Date.now()}));
+if(!currentUser||!currentUser.uid) return;
+let prof=userProfile||null;
+if(!prof){ const old=ieOfflineUserGet(); if(old&&old.uid===currentUser.uid&&old.profile) prof=old.profile; }
+if(!prof) return;
+localStorage.setItem('ie_offline_user',JSON.stringify({uid:currentUser.uid,email:currentUser.email||'',displayName:currentUser.displayName||null,photoURL:currentUser.photoURL||null,profile:prof,savedAt:Date.now()}));
 }catch(e){}
 }
 function ieOfflineUserGet(){ try{ const r=localStorage.getItem('ie_offline_user'); return r?JSON.parse(r):null; }catch(e){ return null; } }
@@ -6410,8 +6413,13 @@ let _authBootedUid=null;
 function ieTryOfflineLogin(force){
 try{
 if(!force && navigator.onLine!==false) return false;
-const c=ieOfflineUserGet();
-if(!c||!c.uid||!c.profile) return false;
+let c=ieOfflineUserGet();
+if(!c||!c.uid||!c.profile){
+const bk=(typeof ieSessionBackupGet==='function')?ieSessionBackupGet():null;
+const prof=(typeof ieRescueProfileFromLocal==='function')?ieRescueProfileFromLocal():null;
+if(!bk||!bk.uid||!prof) return false;
+c={uid:bk.uid,email:bk.email||'',displayName:null,photoURL:null,profile:prof};
+}
 _authBootedUid=c.uid;
 currentUser={uid:c.uid,id:c.uid,email:c.email,displayName:c.displayName,photoURL:c.photoURL,_offline:true,getIdToken(){ return Promise.resolve(null); }};
 userProfile=c.profile;
@@ -6423,7 +6431,7 @@ return true;
 }
 (function(){
 const _so=fbAuth.signOut;
-fbAuth.signOut=function(){ window.__ieManualOut=true; setTimeout(()=>{ window.__ieManualOut=false; },5000); ieOfflineUserClear(); return _so.apply(fbAuth,arguments); };
+fbAuth.signOut=function(){ window.__ieManualOut=true; setTimeout(()=>{ window.__ieManualOut=false; },5000); ieOfflineUserClear(); try{ ieSessionBackupClear(); }catch(e){} return _so.apply(fbAuth,arguments); };
 })();
 (function(){
 function go(){ try{ if(navigator.onLine===false) ieTryOfflineLogin(); }catch(e){} }
@@ -6441,6 +6449,7 @@ if(user){
 if(_authBootedUid===user.uid && !(currentUser&&currentUser._offline&&!currentCompanyId)){ currentUser=user; return; }
 _authBootedUid=user.uid;
 currentUser=user;
+try{ ieOfflineUserSave(); }catch(e){}
 fetchMyPlan().then(()=>ensureUserProfile(user)).then(()=>{
 try{ ieOfflineUserSave(); }catch(e){}
 const proceed=()=>{
@@ -6465,7 +6474,7 @@ try{ if(!userProfile){ const c=ieOfflineUserGet(); if(c&&c.uid===user.uid&&c.pro
 showCompanyOverlay();
 });
 } else {
-if(navigator.onLine!==false) ieOfflineUserClear();
+if(window.__ieRestorePending) return;
 _authBootedUid=null;
 currentUser=null;
 userProfile=null;
@@ -6479,7 +6488,47 @@ myAdminBroadcasts=[];
 myConnections={};
 showAuthOverlay();
 }
-});</script>
+});
+/* ---------- Session backup + boot restore ---------- */
+function ieSessionBackupSave(session){
+try{
+if(!session||!session.refresh_token||!session.user||!session.user.id) return;
+localStorage.setItem('ie_session_backup',JSON.stringify({at:session.access_token||'',rt:session.refresh_token,exp:session.expires_at||0,uid:session.user.id,email:session.user.email||'',savedAt:Date.now()}));
+}catch(e){}
+}
+function ieSessionBackupGet(){ try{ const r=localStorage.getItem('ie_session_backup'); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function ieSessionBackupClear(){ try{ localStorage.removeItem('ie_session_backup'); }catch(e){} }
+function ieRescueProfileFromLocal(){
+try{
+const prof={companies:{}};
+let found=false;
+for(let i=0;i<localStorage.length;i++){
+const k=localStorage.key(i);
+if(!k||k.indexOf(KEY+'_')!==0) continue;
+const cid=k.slice((KEY+'_').length);
+if(!cid||cid==='undefined') continue;
+try{ const raw=localStorage.getItem(k); if(!raw) continue; const d=JSON.parse(raw); const nm=(d&&d.settings&&d.settings.company)||'Company'; prof.companies[cid]={name:nm}; found=true; }catch(e){}
+}
+return found?prof:null;
+}catch(e){ return null; }
+}
+(function(){
+try{ supabaseClient.auth.onAuthStateChanged(function(ev,session){ if(session&&(ev==='SIGNED_IN'||ev==='TOKEN_REFRESHED'||ev==='INITIAL_SESSION'||ev==='USER_UPDATED')) ieSessionBackupSave(session); }); }catch(e){}
+(async function(){
+try{
+if(navigator.onLine===false) return;
+const bk=ieSessionBackupGet(); if(!bk||!bk.rt||!bk.uid) return;
+let healthy=false;
+try{ const cur=await supabaseClient.auth.getSession(); const sess=cur&&cur.data?cur.data.session:null; healthy=!!(sess&&sess.user&&sess.user.id===bk.uid&&((sess.expires_at||0)*1000>Date.now()+60000)); }catch(e){}
+if(healthy) return;
+window.__ieRestorePending=true;
+let restored=false;
+try{ const r=await supabaseClient.auth.setSession({access_token:bk.at,refresh_token:bk.rt}); if(r&&r.data&&r.data.session){ restored=true; ieSessionBackupSave(r.data.session); } }catch(e){ console.warn('session restore failed',e); }
+window.__ieRestorePending=false;
+if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAuthOverlay(); }catch(e){} }
+}catch(e){ window.__ieRestorePending=false; }
+})();
+})();</script>
 
 <style>
 #planOverlay{position:fixed;inset:0;z-index:9998;background:#05070d;overflow-y:auto;-webkit-overflow-scrolling:touch}
