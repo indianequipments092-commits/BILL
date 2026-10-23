@@ -9443,14 +9443,23 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
       </div>
       <button class="btn muted" onclick="thermalShare()" style="min-height:36px;padding:8px 12px">📤 Share</button>
       <button class="btn muted" onclick="openThermalCustomize()" style="min-height:36px;padding:8px 12px">⚙ Customize</button>
+      <div style="display:flex;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px">
+        <span style="color:#9ca3af;font-size:12px;font-weight:700;padding:0 2px 0 8px">Copy</span>
+        <button id="thermalCopy1" onclick="thermalCopySet(1)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">1</button>
+        <button id="thermalCopy2" onclick="thermalCopySet(2)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">2</button>
+        <button id="thermalCopy3" onclick="thermalCopySet(3)" style="min-height:30px;padding:5px 10px;border-radius:999px;border:none;background:transparent;color:#cbd5e1;font-weight:700;font-size:13px;cursor:pointer">3</button>
+      </div>
+      <button class="btn muted" onclick="thermalPrevTest()" style="min-height:36px;padding:8px 12px">🧪 Test</button>
       <button class="btn primary" onclick="thermalPrint()" style="min-height:38px;padding:9px 20px;font-weight:800;font-size:14.5px">🖨 Print</button>
       <button class="btn muted" onclick="closeThermalPreview()" style="min-height:36px;padding:8px 12px">Close</button>
     </div>
   </div>
+  <div id="thermalPrevBar" style="display:none;padding:10px 14px;background:rgba(99,102,241,.08);border-bottom:1px solid var(--border-color);font-size:13px;color:#cbd5e1;line-height:1.55"></div>
   <div class="preview-stage" id="thermalPrevStage" style="overflow:auto;-webkit-overflow-scrolling:touch;padding:20px 12px 44px;display:flex;flex-direction:column;justify-content:flex-start">
     <div id="thermalPrevPaper" style="margin:0 auto;background:#fff;box-shadow:0 25px 60px rgba(0,0,0,0.55),0 4px 18px rgba(0,0,0,0.5);outline:1px solid rgba(0,0,0,0.08);border-radius:2px;width:max-content">
       <canvas id="thermalPrevCanvas" ondblclick="thermalZoomToggle()" style="display:block;max-width:none;height:auto;transition:width .3s ease"></canvas>
     </div>
+    <div id="thermalPrevChips" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 8px 0;max-width:600px;margin:0 auto"></div>
     <div id="thermalPrevMsg" style="text-align:center;color:#9ca3af;font-size:13px;padding:12px"></div>
   </div>
 </div>
@@ -11924,9 +11933,12 @@ try{
 bin=((useNative||isBos(inv))&&c.mode!=='text')?await thermalImageSlip(inv,w):thermalTextSlip(inv,w);
 }catch(e){ console.warn('slip build failed',e); try{ bin=thermalTextSlip(inv,w); }catch(e2){ alert('Print data banane me dikkat aayi.'); return; } }
 try{
-prNote('Slip bhej raha hoon...',true);
+const nC=useNative?Math.max(1,Math.min(3,Number(thermalCopies)||1)):1;
+for(let ci=0;ci<nC;ci++){
+prNote(nC>1?('Slip bhej raha hoon... copy '+(ci+1)+'/'+nC):'Slip bhej raha hoon...',true);
 await thermalDeliver(bin,c);
-if(useNative) prNote('Slip print ho rahi hai',true);
+}
+if(useNative) prNote(nC>1?('Slip print ho gayi — '+nC+' copies'):'Slip print ho rahi hai',true);
 }catch(e){ alert(prErr(e)); }
 }
 /* ---------- Thermal Preview screen (Share + Print) ---------- */
@@ -11962,6 +11974,7 @@ thermalPrevCanvasEl=cv;
 thermalSegSync(w);
 const zl=document.getElementById('thermalZoomLbl'); if(zl) zl.textContent=Math.round(thermalPrevZoom*100)+'%';
 if(msg){ const cm=(src.height*w/src.width/10).toFixed(1), nIt=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0).length; msg.textContent=w+'mm preview  •  Paper ≈ '+cm+' cm  •  Items: '+nIt; }
+try{ thermalPrevMeta(inv,w); }catch(e){}
 }catch(e){ console.warn('thermal preview failed',e); thermalPrevCanvasEl=null; if(msg) msg.textContent='Slip preview nahi ban payi.'; }
 }
 function thermalSeg(w){
@@ -11988,6 +12001,46 @@ thermalZoomApply();
 function thermalZoomToggle(){
 thermalPrevZoom=thermalPrevZoom>1.05?1:1.6;
 thermalZoomApply();
+}
+let thermalCopies=1;
+function thermalCopySet(n){ thermalCopies=Math.max(1,Math.min(3,Number(n)||1)); thermalCopySync(); }
+function thermalCopySync(){ [1,2,3].forEach(v=>{ const b=document.getElementById('thermalCopy'+v); if(!b) return; if(v===thermalCopies){ b.style.background='var(--primary,#6366f1)'; b.style.color='#fff'; } else { b.style.background='transparent'; b.style.color='#cbd5e1'; } }); }
+function thermalGotoPrinter(){ closeThermalPreview(); try{ showPage('settings'); }catch(e){} setTimeout(()=>{ try{ const els=document.querySelectorAll('.section-title'); for(const el of els){ if(/Thermal Printer/.test(el.textContent)){ el.scrollIntoView({behavior:'smooth',block:'start'}); break; } } }catch(e){} },120); }
+async function thermalPrevTest(){
+const c=prCfg();
+const ok=(c.type==='bluetooth'&&c.address)||(c.type==='wifi'&&c.host)||(c.type==='usb'&&c.usbKey)||c.type==='rawbt';
+if(!ok){ alert('Pehle Settings > Thermal Printer me printer chuno aur Save karo.'); return; }
+try{ prNote('Test slip bhej raha hoon...',true); const bin=(c.type==='rawbt'||c.mode==='text')?thermalTextTest(c.width):await thermalTestSlip(c.width); await thermalDeliver(bin,c); prNote('Test slip bhej di',true); }
+catch(e){ alert(prErr(e)); }
+}
+function thermalPrevMeta(inv,w){
+const bar=document.getElementById('thermalPrevBar'), chips=document.getElementById('thermalPrevChips');
+const S=db.settings||{}, c=prCfg(), nat=prNative();
+const lines=[];
+const saved=(c.type==='bluetooth'&&c.address)||(c.type==='wifi'&&c.host)||(c.type==='usb'&&c.usbKey);
+const tname={bluetooth:'Bluetooth',wifi:'WiFi',usb:'USB',rawbt:'RawBT'}[c.type]||c.type;
+if(nat&&saved) lines.push('🖨 Printer: <b>'+tname+'</b>'+(c.name?' ('+String(c.name).replace(/</g,'')+')':'')+' • Slip width: <b>'+w+'mm</b> — printer me '+w+'mm ka paper laga ho tabhi pura chhapega.');
+else if(nat&&c.type==='rawbt') lines.push('🖨 Print <b>RawBT</b> app se jayegi • Slip width: <b>'+w+'mm</b>.');
+else if(nat) lines.push('⚠ <b>Printer save nahi hai.</b> Print dabane se pehle printer chun lo. <button class="btn primary" style="min-height:30px;padding:5px 12px;margin-left:6px" onclick="thermalGotoPrinter()">Printer chuno</button>');
+else if(/Android/i.test(navigator.userAgent)) lines.push('ℹ Is browser me print <b>RawBT</b> app se jayegi • Slip width: <b>'+w+'mm</b>.');
+else lines.push('ℹ Thermal print sirf <b>Android app</b> me chalega — yahan preview aur share milega.');
+if(!S.upiId) lines.push('💡 UPI ID set nahi hai — slip pe <b>QR nahi aayega</b>. (Settings me UPI ID daalo)');
+if(isBos(inv)&&!S.gstin) lines.push('💡 GSTIN set nahi hai — slip pe composition declaration <b>nahi aayegi</b>.');
+if(bar){ if(lines.length){ bar.style.display='block'; bar.innerHTML=lines.join('<br>'); } else bar.style.display='none'; }
+if(chips){
+const t=inv.totals||{}, gt=Number(t.grand||0); let paid=0, bal=gt; try{ paid=paidAmount(inv); bal=balanceDue(inv); }catch(e){}
+const cust=(inv.customer&&inv.customer.name)||'Cash Sale';
+let st, stBg;
+if(gt>0&&bal<=0.005){ st='✓ PAID'; stBg='background:rgba(16,185,129,.18);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)'; }
+else if(paid>0){ st='Balance ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.4)'; }
+else if(gt>0){ st='Udhaar ₹ '+slipInr(bal); stBg='background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.4)'; }
+else { st='Khali bill'; stBg='background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.35)'; }
+const chip='display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;font-size:13px;font-weight:700;';
+chips.innerHTML='<span style="'+chip+'background:var(--primary,#6366f1);color:#fff;font-size:15px">Total ₹ '+slipInr(gt)+'</span>'
++'<span style="'+chip+'background:rgba(255,255,255,.07);color:#e2e8f0;border:1px solid rgba(255,255,255,.12)">👤 '+String(cust).replace(/</g,'')+'</span>'
++'<span style="'+chip+stBg+'">'+st+'</span>';
+}
+thermalCopySync();
 }
 async function thermalShare(){
 const cv=thermalPrevCanvasEl; if(!cv){ alert('Pehle preview ban jane do.'); return; }
