@@ -2474,7 +2474,7 @@ ${link}
 
 _Limited time referral perk — jitni jaldi utna fayda!_ 🚀`;
 if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){} }
-window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+waShare('https://wa.me/?text='+encodeURIComponent(text));
 }
 function rfCopyCode(code){
 navigator.clipboard?.writeText(code).then(()=>alert('📋 Code copy ho gaya: '+code)).catch(()=>alert('Code: '+code));
@@ -7287,7 +7287,7 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
    <div id="bosTitleWrap" style="display:none"><label>Cash Memo type</label><select id="cashGstSel" onchange="cashGstChange(this.value)"><option value="yes">With GST</option><option value="no">Without GST</option></select></div>
    <div><label>Date</label><input id="invDate" type="date"></div>
    <div><label>Status</label><input id="invStatus" readonly value="Draft"></div>
-   <div class="bosHide ciHid"><label>Company State</label><input id="companyState" onblur="autoStateCode(this,id('companyStateCode'))" value="GUJARAT"></div>
+   <div class="bosHide ciHid"><label>Company State</label><input id="companyState" onblur="autoStateCode(this,id('companyStateCode'))" ></div>
    <div class="bosHide ciHid"><label>Company State Code</label><input id="companyStateCode" inputmode="numeric" maxlength="2" placeholder="e.g. 24"></div>
   </div>
   <div class="grid g2" id="taxTypeRow" style="margin-top:12px">
@@ -8720,16 +8720,16 @@ var ph=document.getElementById('pfPhoto');if(ph)new MutationObserver(pf2Update).
   <div class="card" id="st-business" data-sec="business" style="order:10">
     <div class="section-title">Business details</div>
     <div class="grid g3">
-      <div><label>Company Name</label><input id="setCompany" value="ABC ENTERPRISES"></div>
-      <div><label>Full Address</label><input id="setAddress" value="Plot No.1/10, Opp.Shri Nandkishor Vadiyalay Nr. Post Office ,GIDC Nandesari, Vadodara – 391340"></div>
-      <div><label>State</label><input id="setState" onblur="autoStateCode(this,id('setStateCode'))" value="GUJARAT"></div>
+      <div><label>Company Name</label><input id="setCompany" value=""></div>
+      <div><label>Full Address</label><input id="setAddress" value=""></div>
+      <div><label>State</label><input id="setState" onblur="autoStateCode(this,id('setStateCode'))" value=""></div>
       <div><label>State Code</label><input id="setStateCode" inputmode="numeric" maxlength="2" placeholder="e.g. 24"></div>
       <div><label>GST (Invoice)</label><select id="setGstOn"><option value="0">GST OFF — sirf Bill of Supply</option><option value="1">GST ON — Invoice + Bill of Supply</option></select></div>
       <div><label>Late fee % per month (0 = off)</label><input id="setLateFee" type="number" min="0" step="0.1" inputmode="decimal"></div>
       <div><label>Late fee grace days</label><input id="setLateGrace" type="number" min="0" inputmode="numeric"></div>
-      <div><label>GSTIN</label><div style="display:flex;gap:6px;align-items:stretch"><input id="setGSTIN" value="24CNXPS9976F1ZU" oninput="gstinFieldCheck('setGSTIN')" style="text-transform:uppercase;flex:1;min-width:0"><button type="button" id="setGSTIN_vbtn" onclick="gstinVerifyUI('setGSTIN',null)" style="padding:0 14px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;min-height:38px">Verify</button></div><div id="setGSTIN_err" class="gst-msg"></div></div>
-      <div><label>Phone Number</label><input id="setPhone" value="+91 9824063863 , +91 9426781409"></div>
-      <div><label>Email Address</label><input id="setEmail" value="indianequipments09@gmail.com"></div>
+      <div><label>GSTIN</label><div style="display:flex;gap:6px;align-items:stretch"><input id="setGSTIN" value="" oninput="gstinFieldCheck('setGSTIN')" style="text-transform:uppercase;flex:1;min-width:0"><button type="button" id="setGSTIN_vbtn" onclick="gstinVerifyUI('setGSTIN',null)" style="padding:0 14px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;min-height:38px">Verify</button></div><div id="setGSTIN_err" class="gst-msg"></div></div>
+      <div><label>Phone Number</label><input id="setPhone" value=""></div>
+      <div><label>Email Address</label><input id="setEmail" value=""></div>
       </div>
   </div>
   <div class="card" id="st-docs" data-sec="docs" style="order:20">
@@ -10651,10 +10651,10 @@ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
    ====================================================================== */
 const KEY='IE_BILLING_DB_V1';
 const DEFAULT_SETTINGS={
-company:'ABC ENTERPRISES',
-address:'Plot No.1/10, Opp.Shri Nandkishor Vadiyalay Nr. Post Office ,GIDC Nandesari, Vadodara – 391340\nA/120/1, Bismillah Park, Nr. Shalimar Park, Kareliba Road, Gorwa, Vadodara-390003',
-state:'GUJARAT',stateCode:'24',gstin:'24CNXPS9976F1ZU',
-phone:'+91 9824063863 , +91 9426781409',email:'indianequipments09@gmail.com',
+company:'',
+address:'',
+state:'',stateCode:'',gstin:'',
+phone:'',email:'',
 prefix:'IE',start:1,fy:'2026-27',logo:'',stamp:'',qr:'',upiId:'',upiName:'',
 reminderEnabled:false,reminderDaysBefore:3,
 chequeCalib:{},
@@ -11198,7 +11198,7 @@ n.id=old.id; n.bosTitle='CASH MEMO'; n.date=old.date; n.payment=old.payment||'';
 n.customerId=old.customerId; n.customer=JSON.parse(JSON.stringify(old.customer||n.customer)); n.items=JSON.parse(JSON.stringify(old.items||n.items));
 if(want){ n.items.forEach(it=>{ if(it._gstPrev!=null){ it.gst=it._gstPrev; delete it._gstPrev; } }); }
 else { n.items.forEach(it=>{ if(Number(it.gst)>0 && it._gstPrev==null) it._gstPrev=Number(it.gst); }); }
-if(want){ n.companyState=db.settings.state||'GUJARAT'; n.companyStateCode=db.settings.stateCode||stateCodeFor(n.companyState); } else n.docType='bos';
+if(want){ n.companyState=db.settings.state||''; n.companyStateCode=db.settings.stateCode||stateCodeFor(n.companyState); } else n.docType='bos';
 n.invoiceNumber=nextDocNo(n); current=n; openEditor();
 }
 function bosLabel(x){return bosTitle(x)==='CASH MEMO'?'Cash Memo':'Bill of Supply'}
@@ -11250,15 +11250,49 @@ else al.innerHTML='';
 }catch(e){console.warn('dashGstStats',e);}
 }
 function inMode(x){ if(histMode!=='bos') return !isBos(x)&&!isCash(x); if(histBosKind==='bos') return isBos(x)&&!isCash(x); if(histBosKind==='cash') return isCash(x)&&(histCashGst==='all'||((histCashGst==='gst')===!isBos(x))); return isBos(x)||isCash(x); }
+function invDraftSnapshot(inv){
+if(!inv) return '';
+const cu=inv.customer||{};
+const st=(typeof db!=='undefined'&&db&&db.settings)||{};
+const items=(inv.items||[]).map(function(r){return [r.itemId||'',r.itemName||'',Number(r.qty)||0,Number(r.rate)||0,Number(r.gst)||0,Number(r.disc)||0,r.unit||'',r.size||'',r.description||''];});
+return JSON.stringify({date:inv.date||'',customer:[cu.name||'',cu.gst||'',cu.address||'',cu.city||'',cu.state||'',cu.contact||'',cu.email||''],items:items,companyState:inv.companyState||st.state||'',companyStateCode:inv.companyStateCode||st.stateCode||'',taxType:inv.taxType||'auto',discountType:inv.discountType||'amount',discountValue:Number(inv.discountValue)||0,roundOff:inv.roundOffEnabled!==false,payment:inv.payment||'',transport:inv.transport||'',notes:inv.notes||'',dueDate:inv.dueDate||''});
+}
+function invEditorDirty(){
+if(!current) return false;
+try{syncForm();}catch(e){}
+const saved=(typeof db!=='undefined'&&db&&db.invoices||[]).find(function(x){return x.id===current.id;});
+if(!saved){
+return hsHasItems(current)||!!(current.customer&&current.customer.name&&current.customer.name.trim());
+}
+return invDraftSnapshot(current)!==invDraftSnapshot(saved);
+}
+function invGuardSwitch(){
+if(!current) return false;
+if(!invEditorDirty()) return false;
+return !confirm('You have unsaved changes. Leave without saving?');
+}
+function ensureGstChoice(){
+const st=(typeof db!=='undefined'&&db&&db.settings)||{};
+if(typeof st.gstEnabled==='boolean') return;
+const on=confirm('Is dukaan par GST lagta hai?\n\nOK = GST ON — Tax Invoice banega\nCancel = GST OFF — sirf Bill of Supply banega\n(Ye setting baad me Settings me badal sakte ho.)');
+st.gstEnabled=!!on;
+try{saveDB();}catch(e){}
+}
+function waShare(url){
+if(typeof navigator!=='undefined'&&!navigator.onLine){ alert('Offline me WhatsApp share nahi hoga — net aane par dobara try karo.'); return; }
+window.open(url,'_blank');
+}
 function openBosEditor(btn){
+if(current && (current.status==='Finalized' || !isBos(current)) && invGuardSwitch()) return;
 if(!current || current.status==='Finalized' || !isBos(current)){ current=blankInvoice(); current.docType='bos'; current.invoiceNumber=nextBosNo(); }
 openEditor(btn);
 }
 function openBosHistory(btn){ histMode='bos'; histBosKind='bos'; histLock=true; showPage('history',btn); }
 function openCashEditor(btn){
+if(current && (current.status==='Finalized' || !isCash(current) || (gstOn()?isBos(current):!isBos(current))) && invGuardSwitch()) return;
 if(!current || current.status==='Finalized' || !isCash(current) || (gstOn()?isBos(current):!isBos(current))){
 current=blankInvoice(); current.bosTitle='CASH MEMO';
-if(gstOn()){ current.companyState=db.settings.state||'GUJARAT'; current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState); } else current.docType='bos';
+if(gstOn()){ current.companyState=db.settings.state||''; current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState); } else current.docType='bos';
 current.invoiceNumber=nextDocNo(current);
 }
 openEditor(btn);
@@ -11301,7 +11335,7 @@ items:[blankRow()],
 payment:'',transport:'',notes:'',
 deliveryNote:'',supplierRef:'',otherRef:'',
 buyerOrderNo:'',buyerOrderDate:'',deliveryNoteDate:'',destination:'',dispatchDocNo:'',vehicleNo:'',lrNo:'',termsOfDelivery:'',shipTo:'',consSame:true,consignee:{customerId:'',name:'',gst:'',address:'',city:'',state:'',stateCode:'',pin:'',contact:''},dueDate:'',
-companyState:db.settings.state||'GUJARAT',companyStateCode:db.settings.stateCode||'',taxType:'auto',
+companyState:db.settings.state||'',companyStateCode:db.settings.stateCode||'',taxType:'auto',
 discountType:'amount',discountValue:0,roundOffEnabled:true,
 payments:[],
 versions:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
@@ -11449,7 +11483,7 @@ if(id==='invAdv'&&typeof invRender==='function')invRender();
 if(id==='acctExt'&&typeof exRender==='function')exRender();
 }
 function blankInvoice(){var o=__blankInvoice0();try{var __n=new Date();o.time=String(__n.getHours()).padStart(2,'0')+':'+String(__n.getMinutes()).padStart(2,'0');}catch(e){}try{var st=db.settings||{},n=Number(st.defDueDays||0);if(n>0&&o.date){var d=new Date(o.date+'T00:00:00');d.setDate(d.getDate()+n);o.dueDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}if(st.defRoundOff===false)o.roundOffEnabled=false;}catch(e){}return o}
-function newInvoice(btn){if(!gstOn()){current=null;openBosEditor(btn);return;}current=blankInvoice();current.companyState=db.settings.state||'GUJARAT';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
+function newInvoice(btn){if(typeof (db&&db.settings||{}).gstEnabled!=='boolean' && !((db&&db.invoices||[]).some(function(x){return !isBos(x);}))) ensureGstChoice();if(!gstOn()){current=null;openBosEditor(btn);return;}if(current && invGuardSwitch()) return;current=blankInvoice();current.companyState=db.settings.state||'';current.companyStateCode=db.settings.stateCode||stateCodeFor(current.companyState);if(!current.invoiceNumber)current.invoiceNumber=nextNo();openEditor(btn)}
 function openEditor(btn){
 if(!btn && (isBos(current)||isCash(current))) btn=document.querySelector('.nav button[data-page="'+(isCash(current)?'cashCreate':'bosCreate')+'"]');
 showPage('invoice',btn);
@@ -11463,7 +11497,9 @@ if(h) h.textContent=current.status==='Finalized'?'Edit '+__dn+' (Controlled)':'C
 bindInvoice();renderRows();recalc();try{heldRefresh();}catch(e){}
 }
 function openInvoiceEditor(btn){
+if(typeof (db&&db.settings||{}).gstEnabled!=='boolean' && !((db&&db.invoices||[]).some(function(x){return !isBos(x);}))) ensureGstChoice();
 if(!gstOn()){ openBosEditor(btn); return; }
+if(current && (current.status==='Finalized' || isBos(current) || isCash(current)) && invGuardSwitch()) return;
 if(!current || current.status==='Finalized' || isBos(current) || isCash(current)) current=blankInvoice();
 openEditor(btn);
 }
@@ -11476,7 +11512,7 @@ if(!current.items) current.items=[blankRow()];
 id('invNo').value=current.invoiceNumber||'';
 id('invDate').value=current.date||'';
 id('invStatus').value=current.status||'Draft';
-id('companyState').value=current.companyState||db.settings.state||'GUJARAT';
+id('companyState').value=current.companyState||db.settings.state||'';
 id('companyStateCode').value=current.companyStateCode||db.settings.stateCode||'';
 id('taxType').value=current.taxType||'auto';
 id('custName').value=current.customer.name||'';
@@ -11588,7 +11624,7 @@ function dcText(){
 const d=(id('dcDate')||{}).value||dcToday(), r=dcData(d), c=(db.settings&&db.settings.company)||'';
 return c+' — Day Close '+d+'\nBikri: Rs '+money(r.total)+' ('+r.bills.length+' bill)\nCash: Rs '+money(r.modes.Cash)+'\nUPI: Rs '+money(r.modes.UPI)+'\nBank: Rs '+money(r.modes.Bank)+'\nCheque: Rs '+money(r.modes.Cheque)+'\nKul Collection: Rs '+money(r.coll)+'\nUdhaar: Rs '+money(r.udhaar);
 }
-function dcWhatsApp(){ window.open('https://wa.me/?text='+encodeURIComponent(dcText()),'_blank'); }
+function dcWhatsApp(){ waShare('https://wa.me/?text='+encodeURIComponent(dcText())); }
 function dcPrint(){
 const w=window.open('','_blank'); if(!w){alert('Popup block hai, allow karo.');return;}
 w.document.write('<html><head><title>Day Close</title><style>body{font:14px Arial;padding:16px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:6px;text-align:left}.right{text-align:right}</style></head><body><h2>'+esc((db.settings&&db.settings.company)||'')+' — Day Close '+esc((id('dcDate')||{}).value||'')+'</h2>'+(id('dcBody')?id('dcBody').innerHTML:'')+'</body></html>');
@@ -11897,8 +11933,8 @@ K.left(cu.name||'Cash Sale',22,800,0);
 if(cu.contact) K.left('Ph: '+cu.contact,18,500,0);
 if(!bos&&cu.gst) K.left('GSTIN: '+cu.gst,18,600,0);
 K.y+=px(TH.pack?1:3); K.rule('dash');
-const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>9&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
-const hasGst=items.some(r=>Number(r.gst)>0), cGap=px(6), cNum=px(3);
+const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>8&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
+const hasGst=items.some(r=>Number(r.gst)>0), cGap=px(6), cNum=px(6);
 const cell=(s,right,n,wt,mw)=>{ fit(s,mw-cNum,n,wt); x.textAlign='right'; x.fillText(String(s),right-cNum,K.y); };
 let qtySum=0;
 if(w===80){
@@ -11935,10 +11971,10 @@ K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(14.5*1.25); });
 if(ds){ const dN=(TH.dot||TH.pack)?10.5:12.5, dA=(TH.dot||TH.pack)?1.45:1.3; K.f(dN,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,endY); endY+=px(dN*dA); }); }
 const qT=slipFmtQty(Number(r.qty)||0)+(r.unit?' '+r.unit:''), rT=slipInr(r.rate), gT=Number(r.gst)>0?String(r.gst)+'%':'-', aT=slipInr(r.amount);
 x.textAlign='right';
-fit(qT,K.CW*0.12,12.5,500); x.fillText(qT,K.L+K.CW*0.50,base);
-fit(rT,K.CW*0.16,12.5,500); x.fillText(rT,K.L+K.CW*0.68,base);
-if(hasGst){ fit(gT,K.CW*0.09,12.5,500); x.fillText(gT,K.L+K.CW*0.79,base); }
-fit(aT,K.CW*0.19,13.5,800); x.fillText(aT,K.R,base);
+fit(qT,K.CW*0.12-px(4),12.5,500); x.fillText(qT,K.L+K.CW*0.50,base);
+fit(rT,K.CW*0.16-px(4),12.5,500); x.fillText(rT,K.L+K.CW*0.68,base);
+if(hasGst){ fit(gT,K.CW*0.09-px(4),12.5,500); x.fillText(gT,K.L+K.CW*0.79,base); }
+fit(aT,K.CW*0.19-px(4),13.5,800); x.fillText(aT,K.R,base);
 K.y=Math.max(endY,base+px(14.5*1.25))+px(3);
 if(isCash(inv)&&Number(r.mrp)>Number(r.rate||0)+0.005){ K.f(13,600); x.textAlign='left'; x.fillText('MRP '+slipInr(r.mrp),ix,K.y); K.y+=px(13*1.3); }
 });
@@ -12028,7 +12064,7 @@ const items=(inv.items||[]).filter(r=>r.itemId&&Number(r.qty)>0);
 const itemText=r=>[r.itemName,r.size,r.description].map(s=>String(s==null?'':s).trim()).filter(Boolean).join(' ');
 let est=2600; items.forEach(r=>{ est+=(Math.ceil(itemText(r).length/16)+2)*30; });
 const K=slipKit(dots,est), x=K.x, px=K.px;
-const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>9&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
+const fit=(s,mw,n,wt)=>{ s=String(s); let f=n; K.f(f,wt); while(f>8&&x.measureText(s).width>mw){ f-=0.5; K.f(f,wt); } return f; };
 const TH=tTheme();
 if(TH.ruleS){ const _r=K.rule; K.rule=kd=>_r(kd==='solid'?'dash':kd); }
 
@@ -12086,7 +12122,7 @@ K.y+=px(TH.pack?1:3); K.rule('dash');
 
 /* 3. Items */
 let qtySum=0, saved=Number(t.discount)||0;
-const gap=px(6), num=px(3);
+const gap=px(6), num=px(6);
 const hasMrp=wide&&items.some(r=>Number(r.mrp)>Number(r.rate||0)+0.005);
 const wN=Math.round(K.CW*0.06), wA=Math.round(K.CW*0.20), wR=Math.round(K.CW*0.16), wQ=Math.round(K.CW*0.14), wM=hasMrp?Math.round(K.CW*0.16):0;
 const xI=K.L+wN, amtR=K.R, rateR=K.R-wA, qtyR=rateR-wR, mrpR=qtyR-wQ, wI=(hasMrp?mrpR-wM:qtyR)-gap-xI;
@@ -12136,9 +12172,9 @@ let yy=base;
 K.f(14.5,800); x.textAlign='left'; x.fillText(String(i+1),K.L,base);
 K.wrap(nm,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(14.5*(TH.pack?1.17:1.25)); });
 if(ds){ const dNN=(TH.dot||TH.pack)?10.5:12.5, dNA=(TH.dot||TH.pack)?1.45:1.3; K.f(dNN,500); K.wrap(ds,iw).forEach(l=>{ x.fillText(l,ix,yy); yy+=px(dNN*dNA); }); }
-K.f(13,500); x.textAlign='right'; x.fillText(qtxt,K.L+K.CW*0.63,base);
-x.fillText(rtxt,K.L+K.CW*0.81,base);
-K.f(14.5,800); x.fillText(atxt,K.R,base);
+K.f(13,500); x.textAlign='right'; fit(qtxt,K.CW*0.10,13,500); x.fillText(qtxt,K.L+K.CW*0.63,base);
+fit(rtxt,K.CW*0.16,13,500); x.fillText(rtxt,K.L+K.CW*0.81,base);
+K.f(14.5,800); fit(atxt,K.CW*0.17,14.5,800); x.fillText(atxt,K.R,base);
 K.y=Math.max(yy,base+px(14.5*(TH.pack?1.17:1.25)))+px((TH.dot||TH.pack)?2:4);
 }
 });
@@ -13484,10 +13520,8 @@ if(isBos(current)){ el.querySelectorAll('.grid.g4,p.sub').forEach(n=>{n.style.di
 }
 function saveDraft(){
 if(!current){alert('No invoice open.');return;}
+if(current.status==='Finalized'){alert('Finalized invoice ko wapas Draft nahi banaya ja sakta.\n\nSudhaar ke liye Vouchers me Credit Note (Sales Return) use karo.');return;}
 syncForm();
-if(current.status==='Finalized'){
-if(!confirm('⚠️ Yeh invoice already Finalized hai (GST invoice number allot ho chuka hai).\nSave Draft dabane se iska status wapas Draft ho jayega — GST record-keeping ke liye ye risky ho sakta hai.\n\nSach me continue karna hai?')) return;
-}
 current.status='Draft'; persistInvoice(); alert('Draft saved successfully.');
 }
 function finalizeInvoice(){
@@ -13601,7 +13635,7 @@ function heldResume(idv){
   }
  }
  var c=JSON.parse(JSON.stringify(x)); delete c.held; delete c.heldAt;
- delete x.held; delete x.heldAt; saveDB();
+
  current=c; closeModal('heldModal'); openEditor(); heldRefresh();
 }
 function heldDelete(idv){
@@ -13673,7 +13707,7 @@ function ensureInvoiceHeaderData(){
 if(!current) return false;
 if(!current.invoiceNumber || !String(current.invoiceNumber).trim()) current.invoiceNumber=nextDocNo(current);
 if(!current.date) current.date=new Date().toISOString().slice(0,10);
-current.companyState=current.companyState||db.settings.state||'GUJARAT';
+current.companyState=current.companyState||db.settings.state||'';
 current.companyStateCode=current.companyStateCode||db.settings.stateCode||stateCodeFor(current.companyState);
 current.customer=current.customer||{name:'',address:'',city:'',state:'',stateCode:'',pin:'',gst:'',contact:'',email:''};
 current.customer.state=current.customer.state||'';
@@ -14115,7 +14149,7 @@ const headerBlock=showHeader&&!opts.continued?`
         <div class="co-chips">
           <div class="co-chip-row">
             ${bos?'':`<span class="co-chip"><b>GSTIN</b> ${esc(s.gstin||(externalSeller?'—':'24CNXPS9976F1ZU'))}</span>`}
-            <span class="co-chip"><b>STATE</b> ${esc(s.state||(externalSeller?'—':'GUJARAT'))} CODE ${esc(inv.companyStateCode||s.stateCode||stateCodeFor(s.state)||'—')}</span>
+            <span class="co-chip"><b>STATE</b> ${esc(s.state||'—')} CODE ${esc(inv.companyStateCode||s.stateCode||stateCodeFor(s.state)||'—')}</span>
           </div>
           <div class="co-chip-row">
             <span class="co-chip"><b>EMAIL</b> ${esc(s.email||(externalSeller?'—':'indianequipments09@gmail.com'))}</span>
@@ -14649,8 +14683,11 @@ sel.value=prev; sel.dataset.filled='1';
 }
 }
 function receiptSeqOf(r){
-const m=String(r.receiptNo||'').match(/(\d+)$/);
-return m?Number(m[1]):0;
+const s=String(r.receiptNo||'');
+const m=s.match(/^RC\d{6}(\d+)$/);
+if(m) return Number(m[1]);
+const t=s.match(/(\d+)$/);
+return t?Number(t[1]):0;
 }
 function journalFilteredReceiptRows(){
 let q=(id('rcptSearch')?.value||'').toLowerCase();
@@ -15277,7 +15314,7 @@ const s=db.settings||{};
 const bal=balanceDue(inv);
 const text=`Hello ${inv.customer?.name||''},\nThis is a reminder from ${s.company||'our company'}: the balance due on Invoice ${inv.invoiceNumber} (dated ${inv.date}) is ₹ ${money(bal)}.${inv.dueDate?' Due date: '+inv.dueDate+'.':''}\nKindly make the payment at the earliest. Thank you.${ieCreditMsg('payment reminder')}`;
 const phone=(inv.customer?.contact||'').replace(/[^0-9]/g,'');
-window.open('https://wa.me/'+(phone?phone:'')+'?text='+encodeURIComponent(text),'_blank');
+waShare('https://wa.me/'+(phone?phone:'')+'?text='+encodeURIComponent(text));
 }
 /* Dues threshold, unified: a balance of Rs 0.005 or less counts as settled on
    every surface (Dues page, customer outstanding, history, receipt allocation).
@@ -15554,7 +15591,7 @@ return `Hello ${c.name||''},\nThis is a payment reminder from ${s.company||'our 
 function sendReminderWhatsApp(){
 const c=db.customers.find(x=>x.id===reminderCustomerId); if(!c) return;
 const phone=reminderPhone(c.contact);
-window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(reminderMessageText(c,false)),'_blank');
+waShare('https://wa.me/'+phone+'?text='+encodeURIComponent(reminderMessageText(c,false)));
 }
 function sendReminderEmail(){
 const c=db.customers.find(x=>x.id===reminderCustomerId); if(!c||!c.email) return;
@@ -15933,7 +15970,7 @@ top.forEach(r=>{text+=`${r.invoiceNumber} (${fmtDateShort(r.date)}) — ${r.item
 text+=ieCreditMsg('purchase summary');
 const phone=(cust.contact||'').replace(/[^0-9]/g,'');
 const url='https://wa.me/'+(phone?phone:'')+'?text='+encodeURIComponent(text);
-window.open(url,'_blank');
+waShare(url);
 }
 function renderTopCustomers(){
 const el=id('topCustomers');
@@ -16179,6 +16216,13 @@ const existing=db.customers.find(x=>x.id===editingCustomerId);
 if(!existing){alert('Customer no longer exists.');return;}
 Object.assign(existing,data);
 }else{
+const __ph=function(v){let d=String(v||'').replace(/[^0-9]/g,''); if(d.length===12&&d.indexOf('91')===0) d=d.slice(2); return d;};
+const __dup=db.customers.find(function(x){
+if(data.gst&&x.gst&&String(x.gst).trim().toLowerCase()===String(data.gst).trim().toLowerCase()) return true;
+if(__ph(data.contact)&&String(x.name||'').trim().toLowerCase()===String(data.name||'').trim().toLowerCase()&&__ph(x.contact)===__ph(data.contact)) return true;
+return false;
+});
+if(__dup&&!confirm('Milta-julta customer pehle se hai: "'+(__dup.name||'')+'"'+(__dup.contact?' ('+__dup.contact+')':'')+'.\n\nPhir bhi naya customer banana hai?')) return;
 db.customers.push({id:crypto.randomUUID(),...data});
 }
 saveDB();
@@ -16190,7 +16234,13 @@ populateCustomerSelect();
 function deleteCustomer(cid){
 const c=db.customers.find(x=>x.id===cid);
 if(!c)return;
-if(!confirm(`Delete customer "${c.name||'this customer'}"?`))return;
+let __msg=`Delete customer "${c.name||'this customer'}"?`;
+try{
+const __bills=(db.invoices||[]).filter(function(x){return x.customerId===cid;});
+let __due=0; try{ const __d=(typeof customerDues==='function')?customerDues(c):null; __due=__d?Number(__d.outstanding||0):0; }catch(e){}
+if(__bills.length||__due>0.005) __msg+=`\n\nIske ${__bills.length} bill hain, ₹ ${money(__due)} baaki hai.\nBills ka data safe rahega (unme customer ka naam chhapa rehta hai), par Customers list se entry hat jayegi.`;
+}catch(e){}
+if(!confirm(__msg))return;
 db.customers=db.customers.filter(x=>x.id!==cid);
 saveDB();
 renderCustomers();
@@ -17313,7 +17363,7 @@ if(req>0) text+='\nAdvance: ₹ '+money(req)+(p.advanceType==='percent'?' ('+p.a
 if(p.paymentTerms) text+='\nPayment terms: '+p.paymentTerms+'.';
 text+=ieCreditMsg('purchase order');
 if(navigator.share) navigator.share({title:p.poNumber,text}).catch(()=>{});
-else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+else waShare('https://wa.me/?text='+encodeURIComponent(text));
 }
 function buildPOReportDocument(){
 const s=db.settings, rows=poFiltered();
@@ -17649,7 +17699,8 @@ function pbPaidAmount(pb){ return (pb.payments||[]).reduce((s,p)=>s+Number(p.amo
 function pbBalanceDue(pb){ return Math.max(0,Number(pb.totals?.grand||0)-pbPaidAmount(pb)); }
 function deletePB(pid){
 const pb=db.purchaseBills.find(x=>x.id===pid); if(!pb) return;
-if(!confirm('Delete this Purchase Bill? Iska stock effect wapas nahi hoga automatically.'))return;
+if(!confirm('Delete this Purchase Bill? Iska stock effect wapas ho jayega (items ka stock ghatega).'))return;
+{const __delta={};(pb.items||[]).forEach(function(i){__delta[i.itemId]=(__delta[i.itemId]||0)-rowBaseQty(i);});const __neg=[];Object.keys(__delta).forEach(function(k){const __it=db.items.find(function(x){return x.id===k;});if(__it&&(Number(__it.stock)||0)+__delta[k]<-0.0005)__neg.push(__it.name);});if(__neg.length&&!confirm('Is delete se in items ka stock negative ho jayega: '+__neg.join(', ')+'.\nPhir bhi delete karein?'))return;Object.keys(__delta).forEach(function(k){const __it=db.items.find(function(x){return x.id===k;});if(__it&&Math.abs(__delta[k])>0.0005)__it.stock=+((Number(__it.stock)||0)+__delta[k]).toFixed(3);});}
 db.purchaseBills=db.purchaseBills.filter(x=>x.id!==pid);
 (pb.items||[]).forEach(i=>{ if(i.itemId) refreshItemPurchaseRate(i.itemId); });
 db.purchaseOrders.forEach(p=>{ if(p.billId===pid||(pb.poId&&p.id===pb.poId&&p.status==='Converted')){ p.status='Sent'; delete p.billId; delete p.billNumber; delete p.advAdjustedTo; delete p.advAdjustedAmt; } });
@@ -17995,7 +18046,7 @@ if(bal>0.005) text+='\nBalance due: ₹ '+money(bal)+'.';
 if(pb.vendorBillNo) text+="\nVendor's bill no.: "+pb.vendorBillNo+'.';
 text+=ieCreditMsg('purchase bill');
 if(navigator.share) navigator.share({title:pb.pbNumber,text}).catch(()=>{});
-else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+else waShare('https://wa.me/?text='+encodeURIComponent(text));
 }
 function pbFilterSummary(){
 const vf=id('pbVendorF')?.value||'', fy=id('pbFYF')?.value||'', st=id('pbStatusF')?.value||'', pl=id('pbPoLinkF')?.value||'';
@@ -19219,7 +19270,7 @@ if(id('setGstOn')) db.settings.gstEnabled=(id('setGstOn').value==='1');
 if(id('setLateFee')) db.settings.lateFeePct=Math.max(0,Number(id('setLateFee').value||0))||0;
 if(id('setLateGrace')) db.settings.lateGraceDays=Math.max(0,Math.floor(Number(id('setLateGrace').value||0)))||0;
 db.settings.address=id('setAddress')?.value||'';
-db.settings.state=id('setState')?.value||'GUJARAT';
+db.settings.state=id('setState')?.value||'';
 db.settings.stateCode=id('setStateCode')?.value||'';
 db.settings.gstin=id('setGSTIN')?.value||'';
 db.settings.phone=id('setPhone')?.value||'';
@@ -19291,7 +19342,7 @@ set('setReminderDays',s.reminderDaysBefore??3);
 set('setDefDue',s.defDueDays||0); set('setDefRound',s.defRoundOff===false?'0':'1'); set('setShowTds',s.showTdsTcs===false?'0':'1');
 try{ieLock.paint();}catch(e){}
 if(typeof gstinFieldCheck==='function') gstinFieldCheck('setGSTIN');
-const brandSub=id('sidebarBrandSub'); if(brandSub) brandSub.textContent=s.company||'ABC Enterprises';
+const brandSub=id('sidebarBrandSub'); if(brandSub) brandSub.textContent=s.company||'New Company';
 const vis=(userProfile&&userProfile.profileVisibility)||'public';
 if(id('pfVisPublic')) id('pfVisPublic').checked=(vis==='public');
 if(id('pfVisPrivate')) id('pfVisPrivate').checked=(vis==='private');
@@ -19817,7 +19868,7 @@ const d={
 id:crypto.randomUUID(),type,number:docNextNo(type),date:new Date().toISOString().slice(0,10),status:'Draft',
 customerId:'',customer:{name:'',address:'',city:'',state:'',stateCode:'',pin:'',gst:'',contact:'',email:''},shipTo:'',
 items:[docBlankRow()],
-companyState:s.state||'GUJARAT',companyStateCode:s.stateCode||'',taxType:'auto',
+companyState:s.state||'',companyStateCode:s.stateCode||'',taxType:'auto',
 discountType:'amount',discountValue:0,roundOffEnabled:true,
 validUntil:((DOC_DISPATCH.includes(type)||DOC_PERSONAL.includes(type))?'':docPlusDays(15)),refNo:'',refDate:'',kindAttn:'',subject:'',intro:T.intro||'',
 deliveryTime:'',paymentTerms:'',poNo:'',poDate:'',
@@ -20476,7 +20527,7 @@ if(docShowPrices(d)) text+=' Total: ₹ '+money(d.totals?.grand)+'.';
 if(d.validUntil&&!DOC_DISPATCH.includes(d.type)&&!DOC_PERSONAL.includes(d.type)) text+=' Valid until '+docDateFmt(d.validUntil)+'.';
 text+=ieCreditMsg(T.label);
 if(navigator.share) navigator.share({title:d.number,text}).catch(()=>{});
-else window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+else waShare('https://wa.me/?text='+encodeURIComponent(text));
 }
 /* Shared overrides for Quotation / Proforma / Challan:
    - stamp is a fixed 50px on every page (never shrinks)
