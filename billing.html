@@ -5970,9 +5970,11 @@ const c=String((inv.customer&&inv.customer.state)||'').trim().toLowerCase();
 const same=inv.taxType==='cgst_sgst'?true:inv.taxType==='igst'?false:(!s||!c?true:s===c);
 let taxable=0,tax=0,cgst=0,sgst=0,igst=0;
 (inv.items||[]).forEach(r=>{
-const q=Number(r.qty||0), rate=Number(r.rate||0), g=Number(r.gst||0);
+let q=Number(r.qty), rate=Number(r.rate), g=Number(r.gst);
+if(!isFinite(q)) q=0; if(!isFinite(rate)) rate=0; if(!isFinite(g)) g=0;
+const bq=rowApplyBase(r);
 if(!r.itemId||q<=0||rate<0){ r.amount=0;r.taxable=0;r.cgst=0;r.sgst=0;r.igst=0; return; }
-r.taxable=+(q*rate).toFixed(2);
+r.taxable=+(bq*rate).toFixed(2);
 r.amount=+(r.taxable*(1+g/100)).toFixed(2);
 if(same){ r.cgst=+(r.taxable*g/200).toFixed(2); r.sgst=r.cgst; r.igst=0; }
 else { r.igst=+(r.taxable*g/100).toFixed(2); r.cgst=0; r.sgst=0; }
@@ -11194,6 +11196,8 @@ if(want&&!gstOn()){ alert('Settings mein GST OFF hai. With GST ke liye pehle GST
 const old=current, n=blankInvoice();
 n.id=old.id; n.bosTitle='CASH MEMO'; n.date=old.date; n.payment=old.payment||''; n.notes=old.notes||'';
 n.customerId=old.customerId; n.customer=JSON.parse(JSON.stringify(old.customer||n.customer)); n.items=JSON.parse(JSON.stringify(old.items||n.items));
+if(want){ n.items.forEach(it=>{ if(it._gstPrev!=null){ it.gst=it._gstPrev; delete it._gstPrev; } }); }
+else { n.items.forEach(it=>{ if(Number(it.gst)>0 && it._gstPrev==null) it._gstPrev=Number(it.gst); }); }
 if(want){ n.companyState=db.settings.state||'GUJARAT'; n.companyStateCode=db.settings.stateCode||stateCodeFor(n.companyState); } else n.docType='bos';
 n.invoiceNumber=nextDocNo(n); current=n; openEditor();
 }
@@ -11577,7 +11581,7 @@ ${row('&nbsp;&nbsp;Invoice ('+r.inv.length+')',r.tInv)}${row('&nbsp;&nbsp;Bill o
 ${row('Cash mila',r.modes.Cash)}${row('UPI mila',r.modes.UPI)}${row('Bank mila',r.modes.Bank)}${row('Cheque mila',r.modes.Cheque)}
 ${row('Kul Collection (aaj ke payments)',r.coll)}${row('Udhaar (aaj ke bills ka baaki)',r.udhaar)}
 </tbody></table>
-<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Bill</th><th>Customer</th><th class="right">Amount</th><th>Payment</th></tr></thead><tbody>${r.bills.map(x=>`<tr><td>${esc(x.invoiceNumber)}</td><td>${esc((x.customer&&x.customer.name)||'')}</td><td class="right">₹ ${money(x.totals?.grand||0)}</td><td>${esc(paymentModesOf(x))}${balanceDue(x)>0?' · baaki ₹'+money(balanceDue(x)):''}</td></tr>`).join('')||'<tr><td colspan="4" class="center">Is din koi bill nahi</td></tr>'}</tbody></table></div>
+<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Bill</th><th>Customer</th><th class="right">Amount</th><th>Payment</th></tr></thead><tbody>${r.bills.map(x=>`<tr><td>${esc(x.invoiceNumber)}</td><td>${esc((x.customer&&x.customer.name)||'')}</td><td class="right">₹ ${money(x.totals?.grand||0)}</td><td>${esc(paymentModesOf(x))}${balanceDue(x)>0.005?' · baaki ₹'+money(balanceDue(x)):''}</td></tr>`).join('')||'<tr><td colspan="4" class="center">Is din koi bill nahi</td></tr>'}</tbody></table></div>
 <p class="sub">Collection = us din mile payments (purane bill ke bhi). Udhaar = us din ke bills ka abhi baaki.</p>`;
 }
 function dcText(){
@@ -11947,7 +11951,7 @@ if(Number(t.cgst)) K.row('CGST',slipInr(t.cgst),19,500,700,1);
 if(Number(t.sgst)) K.row('SGST',slipInr(t.sgst),19,500,700,1);
 if(Number(t.igst)) K.row('IGST',slipInr(t.igst),19,500,700,1);
 }
-if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),19,500,700,1);
+if(Number(t.discount)) K.row(t.discInTaxable?'Discount (in Taxable)':'Discount',t.discInTaxable?slipInr(t.discount):'- '+slipInr(t.discount),19,500,700,1);
 if(Number(t.roundOff)) K.row('Round off',slipInr(t.roundOff),19,500,700,1);
 K.y+=px(4);
 const gt=Number(t.grand||0), gtxt='₹ '+slipInr(gt);
@@ -12144,7 +12148,7 @@ K.row('Items: '+items.length,'Total Qty: '+slipFmtQty(qtySum),15.5,600,600,TH.pa
 
 /* 4. Totals */
 K.row('Subtotal',slipInr(t.subTotal!=null?t.subTotal:(Number(t.grand||0)+Number(t.discount||0)-Number(t.roundOff||0))),17.5,500,700,TH.pack?0:1);
-if(Number(t.discount)) K.row('Discount','- '+slipInr(t.discount),17.5,500,700,TH.pack?0:1);
+if(Number(t.discount)) K.row(t.discInTaxable?'Discount (in Taxable)':'Discount',t.discInTaxable?slipInr(t.discount):'- '+slipInr(t.discount),17.5,500,700,TH.pack?0:1);
 if(Number(t.roundOff)) K.row('Round off',(Number(t.roundOff)>0?'+ ':'- ')+slipInr(Math.abs(t.roundOff)),17.5,500,700,TH.pack?0:1);
 K.y+=px((TH.dot||TH.pack)?1:3);
 const gt=Number(t.grand||0), gtxt='₹ '+slipInr(gt);
@@ -12274,7 +12278,7 @@ o+=LR('  '+r.qty+' '+(r.unit||'')+' x '+m(r.rate),m(r.amount))+ln;
 });
 o+=dash;
 if(!bos){ if(Number(t.taxable)) o+=LR('Taxable',m(t.taxable))+ln; if(Number(t.cgst)) o+=LR('CGST',m(t.cgst))+ln; if(Number(t.sgst)) o+=LR('SGST',m(t.sgst))+ln; if(Number(t.igst)) o+=LR('IGST',m(t.igst))+ln; }
-if(Number(t.discount)) o+=LR('Discount','-'+m(t.discount))+ln;
+if(Number(t.discount)) o+=LR(t.discInTaxable?'Discount (in Taxable)':'Discount',t.discInTaxable?m(t.discount):'-'+m(t.discount))+ln;
 if(Number(t.roundOff)) o+=LR('Round off',m(t.roundOff))+ln;
 o+=E+'E\x01'+G+'!\x01'+LR('TOTAL','Rs '+m(t.grand))+ln+G+'!\x00'+E+'E\x00';
 const paid=paidAmount(inv), bal=balanceDue(inv);
@@ -13412,37 +13416,51 @@ return a===b;
 function recalc(){
 if(!current) return;
 if(!current.items) current.items=[];
+/* Bill discount reduces taxable BEFORE tax: GST is charged on the discounted
+   value (same rule as item discount). Row amount is derived as
+   taxable+cgst+sgst+igst so line amounts always sum to the totals. */
 let same=isSameState();
-let taxable=0,tax=0,cgst=0,sgst=0,igst=0;
+const baseTaxableArr=[], baseGstArr=[];
+let baseTaxable=0;
 current.items.forEach(r=>{
-if(isBos(current)) r.gst=0;
-let q=Number(r.qty||0), rate=Number(r.rate||0), g=Number(r.gst||0);
+if(isBos(current)){ if(Number(r.gst)>0 && r._gstPrev==null) r._gstPrev=Number(r.gst); r.gst=0; }
+let q=Number(r.qty), rate=Number(r.rate), g=Number(r.gst);
+if(!isFinite(q)) q=0; if(!isFinite(rate)) rate=0; if(!isFinite(g)) g=0;
+g=Math.min(100,Math.max(0,g));
+if(!isBos(current)) r.gst=g;
 const bq=rowApplyBase(r);
-if(!r.itemId || q<=0 || rate<0){ r.amount=0; r.taxable=0; r.cgst=0; r.sgst=0; r.igst=0; return; }
-const dsc=Math.min(100,Math.max(0,Number(r.disc||0)));
-r.taxable=+(bq*rate*(1-dsc/100)).toFixed(2);
-r.amount=+(r.taxable*(1+g/100)).toFixed(2);
+if(!r.itemId || q<=0 || rate<0){ baseTaxableArr.push(0); baseGstArr.push(0); r.amount=0; r.taxable=0; r.cgst=0; r.sgst=0; r.igst=0; return; }
+const dsc=Math.min(100,Math.max(0,Number(r.disc)||0));
+const bt=+(bq*rate*(1-dsc/100)).toFixed(2);
+baseTaxableArr.push(bt); baseGstArr.push(g); baseTaxable+=bt;
+});
+baseTaxable=+baseTaxable.toFixed(2);
+const discType=current.discountType||'amount';
+const discValRaw=Number(current.discountValue||0);
+const discVal=isFinite(discValRaw)?discValRaw:0;
+let factor=1;
+if(discType==='percent'){ factor=1-Math.min(100,Math.max(0,discVal))/100; }
+else { const flat=Math.max(0,discVal); factor=baseTaxable>0?Math.max(0,(baseTaxable-flat)/baseTaxable):1; }
+let taxable=0,tax=0,cgst=0,sgst=0,igst=0;
+current.items.forEach((r,i)=>{
+const g=baseGstArr[i]||0;
+r.taxable=+(baseTaxableArr[i]*factor).toFixed(2);
 if(same){ r.cgst=+(r.taxable*g/200).toFixed(2); r.sgst=r.cgst; r.igst=0; }
 else { r.igst=+(r.taxable*g/100).toFixed(2); r.cgst=0; r.sgst=0; }
+r.amount=+(r.taxable+r.cgst+r.sgst+r.igst).toFixed(2);
 taxable+=r.taxable; tax+=r.cgst+r.sgst+r.igst; cgst+=r.cgst; sgst+=r.sgst; igst+=r.igst;
 });
 taxable=+taxable.toFixed(2); tax=+tax.toFixed(2); cgst=+cgst.toFixed(2); sgst=+sgst.toFixed(2); igst=+igst.toFixed(2);
 const subTotal=+(taxable+tax).toFixed(2);
-const discType=current.discountType||'amount';
-const discVal=Number(current.discountValue||0);
-let discount=discType==='percent'?(subTotal*discVal/100):discVal;
-if(!(discount>0)) discount=0;
-if(discount>subTotal) discount=subTotal;
-discount=+discount.toFixed(2);
-const afterDiscount=+(subTotal-discount).toFixed(2);
+const discount=+Math.max(0,baseTaxable-taxable).toFixed(2);
 const roundOffEnabled=current.roundOffEnabled!==false;
-let grand=afterDiscount, roundOff=0;
+let grand=subTotal, roundOff=0;
 if(roundOffEnabled){
-grand=Math.round(afterDiscount);
-roundOff=+(grand-afterDiscount).toFixed(2);
+grand=Math.round(subTotal);
+roundOff=+(grand-subTotal).toFixed(2);
 }
 grand=+grand.toFixed(2);
-current.totals={taxable,cgst,sgst,igst,tax,subTotal,discount,roundOff,grand};
+current.totals={taxable,cgst,sgst,igst,tax,subTotal,discount,roundOff,grand,discInTaxable:true};
 const taxLabel=same?'CGST + SGST':'IGST';
 const el=id('liveTotals');
 if(el){
@@ -13457,7 +13475,7 @@ el.innerHTML=`
       <p class="sub" style="margin:10px 0 0">Active Tax Mode: <b style="color:#a5b4fc">${taxLabel}</b> ${current.taxType!=='auto'?'(Manual)':'(Auto)'}</p>
       <div class="grid g3" style="margin-top:14px">
         <div><label>Sub Total (Taxable + Tax)</label><span style="font-size:15px;font-weight:700">₹ ${money(subTotal)}</span></div>
-        <div><label>Discount ${discType==='percent'&&discVal?'('+discVal+'%)':''}</label><span style="font-size:15px;font-weight:700;color:#fb7185">- ₹ ${money(discount)}</span></div>
+        <div><label>Discount (in Taxable) ${discType==='percent'&&discVal?'('+discVal+'%)':''}</label><span style="font-size:15px;font-weight:700;color:#fb7185">₹ ${money(discount)}</span></div>
         <div><label>Round Off</label><span style="font-size:15px;font-weight:700;color:#fbbf24">${roundOffEnabled?roSign+'₹ '+money(Math.abs(roundOff)):'Disabled'}</span></div>
       </div>
       <h2 class="right" style="margin-top:12px;color:#818cf8;font-size:22px">Grand Total: ₹ ${money(current.totals.grand)}</h2>`;
@@ -13500,7 +13518,7 @@ if(!Array.isArray(current.payments)) current.payments=[];
 current.splitPlan.forEach(r=>{ if(hsR2(r.amount)>0) current.payments.push({id:crypto.randomUUID(),amount:hsR2(r.amount),date:__d,mode:r.mode||'Cash',note:'Split payment',ref:'',receiptNo:nextReceiptNumber(__d)}); });
 delete current.splitPlan;
 }
-if(isBos(current) && /^cash sale$/i.test(String(current.customer?.name||'').trim()) && !(current.payments&&current.payments.length) && Number(current.totals?.grand||0)>0){
+if((isBos(current)||isCash(current)) && /^cash sale$/i.test(String(current.customer?.name||'').trim()) && !(current.payments&&current.payments.length) && Number(current.totals?.grand||0)>0){
 current.payments=[{id:crypto.randomUUID(),amount:Number(current.totals.grand),date:current.date||new Date().toISOString().slice(0,10),mode:'Cash',note:'Cash Sale — auto paid',ref:'',receiptNo:nextReceiptNumber(current.date||new Date().toISOString().slice(0,10))}];
 }
 {const __cm=creditCheckMsg(current); if(__cm&&!confirm(__cm)) return;}
@@ -13982,7 +14000,7 @@ if(t.roundOff===undefined) t.roundOff=0;
 let same=true;
 if(inv.taxType==='igst')same=false;
 else if(inv.taxType==='cgst_sgst')same=true;
-else same=String(inv.companyState||'').trim().toLowerCase()===String(inv.customer.state||'').trim().toLowerCase();
+else { const __ssA=String(inv.companyState||'').trim().toLowerCase(), __ssB=String((inv.customer||{}).state||'').trim().toLowerCase(); same=!__ssA||!__ssB||__ssA===__ssB; }
 let dateStr=inv.date||new Date().toISOString().slice(0,10);
 if(dateStr && dateStr.includes('-')){
 let p=dateStr.split('-');
@@ -14148,7 +14166,7 @@ const footerBlock=showFooter?`
       <table>
         <tr><td class="lab">TOTAL AMOUNT</td><td class="val">₹ ${money(t.taxable)}</td></tr>
         ${bos?'':`<tr><td class="lab">GST AMOUNT ${same?'(CGST+SGST)':'(IGST '+ (gstRate||18) +'%)'}</td><td class="val">₹ ${money(t.tax)}</td></tr>`}
-        ${Number(t.discount)>0?`<tr><td class="lab">DISCOUNT</td><td class="val">- ₹ ${money(t.discount)}</td></tr>`:''}
+        ${Number(t.discount)>0?`<tr><td class="lab">${t.discInTaxable?'DISCOUNT (IN TAXABLE)':'DISCOUNT'}</td><td class="val">${t.discInTaxable?'':'- '}₹ ${money(t.discount)}</td></tr>`:''}
         ${Number(t.roundOff)!==0?`<tr><td class="lab">ROUND OFF</td><td class="val">${Number(t.roundOff)>0?'+':'- '}₹ ${money(Math.abs(t.roundOff))}</td></tr>`:''}
         <tr><td class="lab">GRAND AMOUNT</td><td class="val">₹ ${money(t.grand)}</td></tr>
       </table>
@@ -14748,7 +14766,8 @@ if(!custId){alert('Pehle Customer chuno, phir Statement print karo.');return;}
 const cust=db.customers.find(c=>c.id===custId), s=db.settings||{};
 const from=typeof fromArg==='string'?fromArg:(id('custFrom')?.value||id('jrnlFrom')?.value||''), to=typeof toArg==='string'?toArg:(id('custTo')?.value||id('jrnlTo')?.value||'');
 const ev=[];
-db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===custId).forEach(x=>{
+const soaInvs=cust?customerInvoices(cust).filter(x=>x.status==='Finalized'):db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===custId);
+soaInvs.forEach(x=>{
 ev.push({d:x.date||'',o:0,t:'Invoice '+x.invoiceNumber,dr:Number(x.totals?.grand||0),cr:0});
 (x.payments||[]).forEach(p=>ev.push({d:p.date||'',o:1,t:'Receipt '+(p.receiptNo||'')+' ('+(p.mode||'')+(p.ref?' '+p.ref:'')+') - '+x.invoiceNumber,dr:0,cr:Number(p.amount||0)}));
 });
@@ -14878,7 +14897,7 @@ let payEditId=null;
 function resetPayEdit(){payEditId=null;if(id('payRef'))id('payRef').value='';const b=id('payAddBtn');if(b)b.textContent='+ Add Payment';const c=id('payEditCancel');if(c)c.classList.add('hidden');id('payAmount').value='';id('payNote').value='';}
 function addPayment(){
 const inv=db.invoices.find(x=>x.id===paymentModalInvoiceId); if(!inv) return;
-const amount=Number(id('payAmount')?.value||0);
+const amount=Math.round(Number(id('payAmount')?.value||0)*100)/100;
 if(!amount||amount<=0){alert('Valid amount daalo.');return;}
 const _pdate=id('payDate')?.value||new Date().toISOString().slice(0,10);
 if(!/^\d{4}-\d{2}-\d{2}$/.test(_pdate)||isNaN(new Date(_pdate).getTime())){alert('Valid date daalo.');return;}
@@ -14938,7 +14957,7 @@ function dueWa(i){paymentModalInvoiceId=i;whatsappReminder()}
 function renderDue(){
 if(!id('dueBody')) return;
 const q=(id('dueSearch')?.value||'').toLowerCase();
-const all=db.invoices.filter(x=>x.status==='Finalized'&&balanceDue(x)>0);
+const all=db.invoices.filter(x=>x.status==='Finalized'&&balanceDue(x)>0.005);
 const L={'0':'Current','1':'1-30 din','31':'31-60 din','61':'60+ din'}, T={'0':[0,0],'1':[0,0],'31':[0,0],'61':[0,0]};
 all.forEach(x=>{const t=T[bucketOf(x)];t[0]++;t[1]+=balanceDue(x)});
 id('dueChips').innerHTML=Object.keys(L).map(k=>`<button class="btn ${dueBucket===k?'primary':'muted'}" onclick="setDueBucket('${k}')">${L[k]} · ${T[k][0]} · ₹ ${money(T[k][1])}</button>`).join('');
@@ -14967,10 +14986,10 @@ custRcPlan(); id('custRcModal').classList.add('show');
 }
 function custRcAlloc(){
 const cid=id('custRcCust').value, amt=Number(id('custRcAmt').value||0);
-const invs=db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===cid&&balanceDue(x)>0.004).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.invoiceNumber).localeCompare(String(b.invoiceNumber)));
+const invs=db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===cid&&balanceDue(x)>0.005).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.invoiceNumber).localeCompare(String(b.invoiceNumber)));
 let rem=amt;
 const all=invs.map(x=>{const b=balanceDue(x),a=Math.min(b,Math.max(0,rem));rem-=a;return {inv:x,bal:b,a:Math.round(a*100)/100}});
-return {all,al:all.filter(r=>r.a>0.004),adv:rem>0.004?Math.round(rem*100)/100:0,amt,cid};
+return {all,al:all.filter(r=>r.a>0.005),adv:rem>0.005?Math.round(rem*100)/100:0,amt,cid};
 }
 function custRcPlan(){
 const r=custRcAlloc();
@@ -15260,6 +15279,9 @@ const text=`Hello ${inv.customer?.name||''},\nThis is a reminder from ${s.compan
 const phone=(inv.customer?.contact||'').replace(/[^0-9]/g,'');
 window.open('https://wa.me/'+(phone?phone:'')+'?text='+encodeURIComponent(text),'_blank');
 }
+/* Dues threshold, unified: a balance of Rs 0.005 or less counts as settled on
+   every surface (Dues page, customer outstanding, history, receipt allocation).
+   Payments are rounded to paise on entry so sub-paise dust cannot arise. */
 function customerDues(cust){
 const today=new Date().toISOString().slice(0,10);
 const fin=customerInvoices(cust).filter(x=>x.status==='Finalized');
@@ -15738,7 +15760,7 @@ return db.invoices.filter(x=>{
 if(cust.id && x.customerId) return x.customerId===cust.id;
 const xc=x.customer||{};
 if(cust.gst && xc.gst) return String(xc.gst).trim().toLowerCase()===String(cust.gst).trim().toLowerCase();
-return String(xc.name||'').trim().toLowerCase()===String(cust.name||'').trim().toLowerCase() && String(cust.name||'').trim()!=='';
+return String(xc.name||'').trim().toLowerCase()===String(cust.name||'').trim().toLowerCase() && String(cust.name||'').trim()!=='' && !/^cash sale$/i.test(String(cust.name||'').trim());
 }).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
 }
 function customerItemRows(invoices){
@@ -15767,7 +15789,7 @@ const cust=db.customers.find(x=>x.id===historyCustomerId);
 if(!cust){closeModal('customerHistoryModal');return;}
 const allInv=customerInvoices(cust).filter(x=>!x.held);
 const grand=allInv.reduce((s,x)=>s+Number(x.totals?.grand||0),0);
-const pendingInv=allInv.filter(x=>x.status==='Finalized'?balanceDue(x)>0:x.status==='Draft');
+const pendingInv=allInv.filter(x=>x.status==='Finalized'?balanceDue(x)>0.005:x.status==='Draft');
 const pendingAmt=pendingInv.reduce((s,x)=>s+(x.status==='Finalized'?balanceDue(x):Number(x.totals?.grand||0)),0);
 const avgOrder=allInv.length?grand/allInv.length:0;
 const dates=allInv.map(x=>x.date).filter(Boolean).sort();
@@ -15864,7 +15886,9 @@ const cust=db.customers.find(x=>x.id===historyCustomerId);
 if(!cust) return;
 const rows=customerHistoryFilteredRows();
 const fin=rows.filter(r=>r.status==='Finalized');
-const tTax=fin.reduce((s,r)=>s+r.taxable,0), tAmt=fin.reduce((s,r)=>s+r.amount,0);
+const tTax=fin.reduce((s,r)=>s+r.taxable,0);
+const finIds=[...new Set(fin.map(r=>r.invoiceId))];
+const tAmt=finIds.reduce((s,fid)=>{const iv=(db.invoices||[]).find(x=>x.id===fid);return s+(iv&&iv.totals&&iv.totals.grand!=null?Number(iv.totals.grand):fin.filter(r=>r.invoiceId===fid).reduce((a,r)=>a+r.amount,0));},0);
 const from=id('custHistFrom')?.value||'', to=id('custHistTo')?.value||'';
 const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
@@ -15900,11 +15924,12 @@ function shareCustomerHistoryWhatsApp(){
 const cust=db.customers.find(x=>x.id===historyCustomerId);
 if(!cust) return;
 const rows=customerHistoryFilteredRows();
-const grand=rows.reduce((s,r)=>s+r.taxable,0);
+const taxTotal=rows.reduce((s,r)=>s+r.taxable,0);
+const grand=rows.reduce((s,r)=>s+r.amount,0);
 const invCount=new Set(rows.map(r=>r.invoiceId)).size;
-let text=`Purchase Summary — ${cust.name}\nInvoices: ${invCount}\nTotal: ₹ ${money(grand)}\n\n`;
+let text=`Purchase Summary — ${cust.name}\nInvoices: ${invCount}\nTotal (incl. GST): ₹ ${money(grand)}\nTaxable: ₹ ${money(taxTotal)}\n\n`;
 const top=rows.slice(0,10);
-top.forEach(r=>{text+=`${r.invoiceNumber} (${fmtDateShort(r.date)}) — ${r.itemName} x${r.qty} — ₹ ${money(r.taxable)}\n`});
+top.forEach(r=>{text+=`${r.invoiceNumber} (${fmtDateShort(r.date)}) — ${r.itemName} x${r.qty} — ₹ ${money(r.amount)}\n`});
 text+=ieCreditMsg('purchase summary');
 const phone=(cust.contact||'').replace(/[^0-9]/g,'');
 const url='https://wa.me/'+(phone?phone:'')+'?text='+encodeURIComponent(text);
@@ -16303,7 +16328,7 @@ renderInventory();
 }
 let historyItemId=null, itemHistoryData=null;
 /* ===== NET RATE HELPERS (discount ke baad asli rate) — item history/margin + item ka last Buy rate =====
-   Purchase: row Disc % + bill-level discount. Sale: invoice discount (app me Sub Total par lagta hai, GST wahi rehta hai,
+   Purchase: row Disc % + bill-level discount. Sale: invoice discount (ab taxable me se pehle ghatta hai, GST discounted value par lagta hai,
    isliye pura discount ex-GST revenue se ghatta hai). Sirf dikhane/margin ke liye; kisi bill/invoice ka data nahi badalta. */
 function _r4(v){ return Math.round((Number(v)||0)*10000)/10000; }
 function pbBillDiscRatio(pb){
@@ -17459,7 +17484,7 @@ if(el&&s) el.textContent=s.text;
 }
 }
 function pbRowAmount(r){
-const q=rowApplyBase(r), rate=Number(r.rate||0), disc=Number(r.discountPercent||0), g=Number(r.gst||0);
+const q=rowApplyBase(r), rate=Number(r.rate||0), disc=Math.min(100,Math.max(0,Number(r.discountPercent)||0)), g=Number(r.gst||0);
 const gross=q*rate;
 const taxable=+(gross*(1-disc/100)).toFixed(2);
 const tax=+(taxable*g/100).toFixed(2);
@@ -21504,7 +21529,7 @@ if(t.tax>0){
 if(same){rows.push(`<tr><td>CGST</td><td>₹ ${money(t.cgst)}</td></tr>`,`<tr><td>SGST</td><td>₹ ${money(t.sgst)}</td></tr>`);}
 else rows.push(`<tr><td>IGST</td><td>₹ ${money(t.igst)}</td></tr>`);
 }
-if(t.discount>0) rows.push(`<tr><td>${d.type==='salaryslip'?'Deductions':'Discount'}</td><td>- ₹ ${money(t.discount)}</td></tr>`);
+if(t.discount>0) rows.push(`<tr><td>${d.type==='salaryslip'?'Deductions':(t.discInTaxable?'Discount (in Taxable)':'Discount')}</td><td>${t.discInTaxable?'':'- '}₹ ${money(t.discount)}</td></tr>`);
 if(t.roundOff!==0) rows.push(`<tr><td>Round off</td><td>${t.roundOff>0?'+':'-'} ₹ ${money(Math.abs(t.roundOff))}</td></tr>`);
 rows.push(`<tr class="gt"><td>${d.type==='bos'?'Grand amount':(d.type==='salaryslip'?'Net pay':'Grand total')}</td><td>₹ ${money(t.grand)}</td></tr>`);
 if(adv>0){
@@ -24373,7 +24398,7 @@ var hs=Object.keys(o.hsn).map(function(k){return o.hsn[k]}).sort(function(a,b){r
 h+=sec('12: HSN summary','Credit note ka HSN alag nahi aata, isliye ye sirf invoices ka hai.')+tbl(['HSN','Description','UQC','>Qty','>Rate %','>Taxable','>IGST','>CGST','>SGST','>Total value'],hs.length?hs.map(function(e){return'<tr><td>'+(esc(e.hsn)||'<span style="color:#fb7185">khaali</span>')+'</td><td>'+esc(e.desc)+'</td><td>'+esc(e.unit)+'</td><td class="right">'+r2(e.qty)+'</td><td class="right">'+e.rate+'</td>'+R(e.tx)+R(e.i)+R(e.c)+R(e.s)+'<td class="right">'+money(e.val)+'</td></tr>'}).join('')+totRow(5,'Total',[hsT.tx,hsT.i,hsT.c,hsT.s]):empty(10,'Koi item nahi.'));
 h+=sec('13: Documents issued')+tbl(['Document','From','To','>Total','>Cancelled'],'<tr><td>Invoices</td><td>'+esc(o.docs.first||'-')+'</td><td>'+esc(o.docs.last||'-')+'</td><td class="right">'+o.docs.n+'</td><td class="right">'+o.docs.cancel+'</td></tr>');
 var w=o.warn.slice(0,8);if(o.noHsn)w.push(o.noHsn+' item line me HSN nahi hai (portal par HSN summary ke liye chahiye).');
-if(o.disc)w.push(o.disc+' invoice me discount hai. App discount ko tax ke baad ghatata hai, to taxable value discount se pehle ki hai. Portal par daalne se pehle apne CA se check kara lo.');
+if(o.disc)w.push(o.disc+' invoice me discount hai. Discount taxable value me se pehle ghata diya gaya hai, isliye taxable value discount ke baad ki hai.');
 var unk=o.inv.filter(function(v){return v.pos==='-'}).length;if(unk)w.push(unk+' invoice me customer ka state nahi bhara, Place of supply "-" dikh raha hai.');
 var sub='Invoices '+o.inv.length+' | Taxable ₹ '+money(T.tx)+' | Tax ₹ '+money(T.i+T.c+T.s)+' | Credit notes '+o.cn.length+' | GSTR-1 aam taur par agle mahine ki 11 tarikh tak (QRMP me 13). Ye report taiyaari ke liye hai, portal par upload nahi hoti.'+
 (w.length?'<div style="margin-top:8px;color:#fbbf24">'+w.map(function(x){return'⚠ '+esc(x)}).join('<br>')+'</div>':'');
@@ -26969,7 +26994,7 @@ function t6InvoiceBuild(inv,copy,opts){
  opts=opts||{};copy=copy||'ORIGINAL FOR RECIPIENT';
  var s=db.settings||{},bos=isBos(inv),ext=!!(typeof chatPreviewInvoice!=='undefined'&&chatPreviewInvoice&&chatPreviewInvoice.external&&chatPreviewInvoice.seller===s);
  var t=inv.totals||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,subTotal:0,discount:0,roundOff:0,grand:0};
- var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else same=String(inv.companyState||'').trim().toLowerCase()===String((inv.customer||{}).state||'').trim().toLowerCase();
+ var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else { const __ssA=String(inv.companyState||'').trim().toLowerCase(), __ssB=String((inv.customer||{}).state||'').trim().toLowerCase(); same=!__ssA||!__ssB||__ssA===__ssB; }
  var cu=inv.customer||{},title=invLabel(inv,bos),cuNm=cu.name||(isCash(inv)?'Cash Sale':'—'),cashM=isCash(inv);
  var items=(inv.items||[]).filter(function(r){return r.itemId});
  /* tax groups (from stored per-row values, so they always match the totals) */
@@ -26995,7 +27020,7 @@ function t6InvoiceBuild(inv,copy,opts){
  function txr(label,rate,amt,neg){mx.push({rate:String(rate===''?'':rate),per:rate===''?'':'%',amt:(neg?'(-)':'')+money(amt)});return '<tr class="tx"><td></td><td class="d">'+label+'</td><td></td><td></td><td class="r n">'+(rate===''?'':rate)+'</td><td class="c n">'+(rate===''?'':'%')+'</td><td></td><td class="r n"><b>'+(neg?'(-)':'')+money(amt)+'</b></td></tr>'}
  var tx='';
  if(!bos){rates.forEach(function(g){var z=byRate[g];if(same){tx+=txr('Output CGST',g/2,z.cg)+txr('Output SGST',g/2,z.sg)}else tx+=txr('Output IGST',g,z.ig)})}
- if(Number(t.discount)>0)tx+=txr('Less : Discount','',t.discount,true);
+ if(Number(t.discount)>0)tx+=t.discInTaxable?txr('Discount (in Taxable)','',t.discount,false):txr('Less : Discount','',t.discount,true);
  if(Number(t.roundOff)!==0)tx+=txr(Number(t.roundOff)<0?'Less : Round Off':'Round Off','',Math.abs(t.roundOff),Number(t.roundOff)<0);
  /* HSN summary */
  var sum='';
@@ -27158,7 +27183,7 @@ function theme8InvoiceHTML(inv,copy){
  copy=copy||'ORIGINAL FOR RECIPIENT';
  var s=db.settings||{},t=inv.totals||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,subTotal:0,discount:0,roundOff:0,grand:0},cu=inv.customer||{};
  var ext=!!(typeof chatPreviewInvoice!=='undefined'&&chatPreviewInvoice&&chatPreviewInvoice.external&&chatPreviewInvoice.seller===s);
- var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else same=String(inv.companyState||'').trim().toLowerCase()===String(cu.state||'').trim().toLowerCase();
+ var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else { const __ssA=String(inv.companyState||'').trim().toLowerCase(), __ssB=String(cu.state||'').trim().toLowerCase(); same=!__ssA||!__ssB||__ssA===__ssB; }
  var items=(inv.items||[]).filter(function(r){return r.itemId});
  var qsum=0,units={};var T8CM=[[],[],[],[],[],[],[],[]];
  var rows=items.map(function(r,i){
@@ -27187,7 +27212,7 @@ function theme8InvoiceHTML(inv,copy){
  var sm='';
  if(same){sm+='<div class="t8sm"><span>CGST Amt. :</span><span>'+money(t.cgst)+'</span></div><div class="t8sm"><span>SGST Amt. :</span><span>'+money(t.sgst)+'</span></div>'}
  else sm+='<div class="t8sm"><span>IGST Amt. :</span><span>'+money(t.igst)+'</span></div>';
- if(Number(t.discount)>0)sm+='<div class="t8sm"><span>Discount :</span><span>-'+money(t.discount)+'</span></div>';
+ if(Number(t.discount)>0)sm+='<div class="t8sm"><span>'+(t.discInTaxable?'Discount (in Taxable)':'Discount')+' :</span><span>'+(t.discInTaxable?'':'-')+money(t.discount)+'</span></div>';
  sm+='<div class="t8sm" style="border:0"><span>Round off :</span><span>'+money(t.roundOff||0)+'</span></div>';
  var sub=t.subTotal!==undefined?Number(t.subTotal):Number(t.taxable||0)+Number(t.tax||0);
  var logo=s.logo?'<img src="'+s.logo+'" alt="">':'';
@@ -27456,7 +27481,7 @@ function t6DocBuild(d,copy){
  var tx='';
  if(prices){
   if(taxed)rates.forEach(function(g){var z=byRate[g];if(same){tx+=txr('Output CGST',g/2,z.cg)+txr('Output SGST',g/2,z.sg)}else tx+=txr('Output IGST',g,z.ig)});
-  if(Number(t.discount)>0)tx+=txr('Less : Discount','',t.discount,true);
+  if(Number(t.discount)>0)tx+=t.discInTaxable?txr('Discount (in Taxable)','',t.discount,false):txr('Less : Discount','',t.discount,true);
   if(Number(t.roundOff)!==0)tx+=txr(Number(t.roundOff)<0?'Less : Round Off':'Round Off','',Math.abs(t.roundOff),Number(t.roundOff)<0);
  }
  /* HSN summary */
