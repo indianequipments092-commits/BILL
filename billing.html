@@ -3375,6 +3375,7 @@ el.querySelector('.shb-msg').textContent=msg;
 function iePendKey(id){ return 'ie_pending_'+id; }
 function iePendSet(id,on){ try{ if(!id) return; if(on) localStorage.setItem(iePendKey(id),String(Date.now())); else localStorage.removeItem(iePendKey(id)); }catch(e){} }
 function iePendGet(id){ try{ return !!localStorage.getItem(iePendKey(id)); }catch(e){ return false; } }
+function iePendTime(id){ try{ return Number(localStorage.getItem(iePendKey(id)))||0; }catch(e){ return 0; } }
 function ieLocalDb(id){ try{ const raw=localStorage.getItem(KEY+'_'+id); if(!raw) return null; return normalizeDB(JSON.parse(raw)); }catch(e){ return null; } }
 function ieOfflineUserSave(){
 try{
@@ -3886,7 +3887,13 @@ try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('
 try{ const __rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0), __lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(__rv>__lv){ iePendSet(companyId,false); localStorage.removeItem(KEY+'_'+companyId); localStorage.setItem('IE_RESETV_'+companyId,String(__rv)); } }catch(e){}
 if(iePendGet(companyId)){
 const loc=ieLocalDb(companyId);
-if(loc){ loaded=loc; setTimeout(()=>{ try{ fsScheduleSave(); }catch(e){} },1500); }
+if(loc){
+let __cloudNewer=false;
+try{ const __cu=Number((snap.exists&&snap.data()&&snap.data().updatedAt)||0); __cloudNewer=!!loaded&&__cu>0&&iePendTime(companyId)>0&&__cu>iePendTime(companyId); }catch(e){}
+if(__cloudNewer&&!confirm('The cloud copy of this company is newer than the unsynced changes on this device (it may have been edited on another device). Press OK to upload this device\'s changes and overwrite the cloud copy, or Cancel to keep the cloud copy and discard this device\'s unsynced changes.')){
+try{ iePendSet(companyId,false); localStorage.setItem(KEY+'_'+companyId,JSON.stringify(loaded)); }catch(e){}
+}else{ loaded=loc; setTimeout(()=>{ try{ fsScheduleSave(); }catch(e){} },1500); }
+}
 }
 if(!loaded) loaded=emptyDB();
 proceed(loaded);
@@ -10698,9 +10705,9 @@ let zoomLevel=1;
 const ZOOM_STEP=0.08;
 const ZOOM_MIN=0.4;
 const ZOOM_MAX=2.5;
-var __lsT=null,__lsP=null;
-function lsFlushNow(){clearTimeout(__lsT);var p=__lsP;__lsP=null;if(!p)return;try{localStorage.setItem(p.k,JSON.stringify(p.d));saveHealthSet('local',true);}catch(e){console.warn('saveDB failed',e);saveHealthSet('local',false);}}
-function saveDB(){geminiKeyMigrate();__lsP={k:currentCompanyId?KEY+'_'+currentCompanyId:KEY,d:db};clearTimeout(__lsT);__lsT=setTimeout(lsFlushNow,400);if(typeof fsScheduleSave==='function')fsScheduleSave();refreshAll();syncAdminIndexStats();}
+var __lsT=null,__lsP={};
+function lsFlushNow(){clearTimeout(__lsT);var ps=__lsP;__lsP={};if(!Object.keys(ps).length)return;var ok=true;Object.keys(ps).forEach(function(k){var p=ps[k];if(!p)return;try{localStorage.setItem(p.k,JSON.stringify(p.d));}catch(e){ok=false;console.warn('saveDB failed',e);}});try{saveHealthSet('local',ok);}catch(e){}}
+function saveDB(){geminiKeyMigrate();var __k=currentCompanyId?KEY+'_'+currentCompanyId:KEY;__lsP[__k]={k:__k,d:db};clearTimeout(__lsT);__lsT=setTimeout(lsFlushNow,400);if(typeof fsScheduleSave==='function')fsScheduleSave();refreshAll();syncAdminIndexStats();}
 window.addEventListener('pagehide',lsFlushNow);window.addEventListener('beforeunload',lsFlushNow);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')lsFlushNow()});
 let _adminSyncT=null;
 function syncAdminIndexStats(){
@@ -19449,8 +19456,39 @@ function importJSON(){
 let f=id('importFile')?.files?.[0]; if(!f){alert('Select a JSON file first.');return;}
 let r=new FileReader();
 r.onload=()=>{
+let __impSnap=null;
 try{
 let x=JSON.parse(r.result);
+if(!x||typeof x!=='object') throw new Error('Invalid backup file format.');
+const __impBad=[];
+const __impArr=(o,k,pre)=>{ if(o&&o[k]!==undefined&&!Array.isArray(o[k])) __impBad.push(pre+k); };
+const __impObj=(o,k,pre)=>{ if(o&&o[k]!==undefined&&(typeof o[k]!=='object'||o[k]===null||Array.isArray(o[k]))) __impBad.push(pre+k); };
+__impObj(x,'settings','');
+['customers','items','deletedInvoices','documents','vendors','purchaseOrders','purchaseBills','invoices','cheques','duplicateInvoices','importedChatInvoices'].forEach(k=>__impArr(x,k,''));
+__impObj(x,'accounts','');
+if(x.accounts){
+['groups','ledgers','vouchers'].forEach(k=>__impArr(x.accounts,k,'accounts.'));
+__impObj(x.accounts,'inv','accounts.');
+if(x.accounts.inv) ['godowns','transfers','lists','boms','prod','sj'].forEach(k=>__impArr(x.accounts.inv,k,'accounts.inv.'));
+__impObj(x.accounts,'p7','accounts.');
+if(x.accounts.p7) ['cc','assets','cur'].forEach(k=>__impArr(x.accounts.p7,k,'accounts.p7.'));
+__impObj(x.accounts,'counters','accounts.');
+}
+if(__impBad.length) throw new Error('Invalid backup file format: '+__impBad.join(', '));
+const __bkMeta=(x.__backupMeta&&typeof x.__backupMeta==='object')?x.__backupMeta:null;
+const __bkCompany=(__bkMeta&&__bkMeta.company)||(x.settings&&x.settings.company)||'';
+const __bkGstin=(__bkMeta&&__bkMeta.gstin)||(x.settings&&x.settings.gstin)||'';
+const __curCompany=(db.settings&&db.settings.company)||'';
+const __curGstin=(db.settings&&db.settings.gstin)||'';
+const __bkMismatch=(__bkCompany&&__curCompany&&__bkCompany!==__curCompany)||(__bkGstin&&__curGstin&&__bkGstin!==__curGstin);
+if(__bkMismatch){
+const __msg0=id('importMsg');
+if(!confirm('This backup belongs to "'+(__bkCompany||__bkGstin)+'" but the currently open company is "'+(__curCompany||__curGstin)+'". Restoring it here will merge the backup into the open company. Do you want to continue?')){
+if(__msg0) __msg0.textContent='Import cancelled: this backup belongs to a different company.';
+return;
+}
+}
+__impSnap=JSON.stringify(db);
 if(x.settings) db.settings={...db.settings,...x.settings};
 for(let k of ['customers','items','deletedInvoices','documents','vendors','purchaseOrders','purchaseBills']){
 if(!Array.isArray(db[k])) db[k]=[];
@@ -19493,6 +19531,7 @@ saveDB(); loadSettingsUI(); renderDuplicates(); try{renderJournal();}catch(e){}
 try{renderHistory();}catch(e){}
 const msg=id('importMsg'); if(msg){ msg.style.whiteSpace='pre-line'; msg.textContent=buildImportSummary(x,dupCount); }
 }catch(e){
+try{ if(__impSnap) db=JSON.parse(__impSnap); }catch(_){}
 const msg=id('importMsg'); if(msg) msg.textContent='Import failed: '+e.message;
 }
 };
@@ -26077,6 +26116,23 @@ RSG.exec=function(mode,num){
   });
 };
 
+function ieWipeIdbCompanyDbs(){
+return new Promise(function(res){
+try{
+var q=indexedDB.open('ie_store',1);
+q.onsuccess=function(){
+try{
+var __idb=q.result, __t=__idb.transaction('kv','readwrite'), __o=__t.objectStore('kv');
+var __c=__o.openCursor();
+__c.onsuccess=function(){ var __x=__c.result; if(__x){ if(typeof __x.key==='string'&&__x.key.indexOf(KEY)===0){ try{ __o.delete(__x.key); }catch(e){} } try{ __x.continue(); }catch(e){} } };
+__t.oncomplete=function(){ try{ __idb.close(); }catch(e){} res(); };
+__t.onerror=__t.onabort=function(){ try{ __idb.close(); }catch(e){} res(); };
+}catch(e){ res(); }
+};
+q.onerror=function(){ res(); };
+}catch(e){ res(); }
+});
+}
 RSG.execDelete=function(){
   if(!currentUser) return;
   var uid=currentUser.uid;
@@ -26087,7 +26143,17 @@ RSG.execDelete=function(){
   }).then(function(){ return fbDb.collection('publicProfiles').doc(uid).set({name:'Deleted account 🚫',userId:'',photoURL:'',companyNames:[],companyGstins:[],connectionUids:[],deleted:true,deletedAt:Date.now()}); })
   .then(function(){ return fbDb.collection('users').doc(uid).delete(); })
   .then(function(){
-    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf(KEY)===0||k.indexOf('ie_pending_')===0||k.indexOf('IE_RESETV_')===0) localStorage.removeItem(k); }); }catch(e){}
+    try{
+      var __wk=[];
+      try{ for(var __i=0;__i<localStorage.length;__i++){ var __k=localStorage.key(__i); if(__k) __wk.push(__k); } }catch(e){}
+      __wk.forEach(function(k){ if(k.indexOf(KEY)===0||k.indexOf('ie_pending_')===0||k.indexOf('IE_RESETV_')===0) localStorage.removeItem(k); });
+      try{ Object.keys((userProfile&&userProfile.companies)||{}).forEach(function(cid){ localStorage.removeItem(KEY+'_'+cid); }); }catch(e){}
+      try{ localStorage.removeItem(KEY); }catch(e){}
+    }catch(e){}
+    return ieWipeIdbCompanyDbs();
+  }).then(function(){
+    try{ Object.keys((userProfile&&userProfile.companies)||{}).forEach(function(cid){ localStorage.removeItem(KEY+'_'+cid); }); }catch(e){}
+    try{ localStorage.removeItem(KEY); }catch(e){}
     return fbAuth.signOut();
   }).then(function(){
     userProfile=null; currentCompanyId=null; db=null;
