@@ -1558,6 +1558,11 @@ if (this._limitN && this._postFilters.length === 0) q = q.limit(this._limitN);
 else if (this._postFilters.length > 0) q = q.limit(2000);
 return q;
 }
+async listDocIds() {
+const { data, error } = await supabase.from('fs_documents').select('doc_id').eq('collection_path', this.path);
+if (error) throw error;
+return (data || []).map(row => row.doc_id);
+}
 async get() {
 const { data, error } = await this._buildQuery();
 if (error) throw error;
@@ -3439,6 +3444,7 @@ function __fsRetryDelay(){ return __saveHealth.cloudFails<=1?2000:__saveHealth.c
 function fsScheduleSave(){
 if(!currentUser||!currentCompanyId) return;
 if(window.__coLoading) return;
+if(window.__ieMigrating) return;
 const __cid=currentCompanyId, __ver=++__fsVer, __db=db;
 iePendSet(__cid,true);
 clearTimeout(fsSaveTimer);
@@ -3453,17 +3459,22 @@ let __done=false;
 const __settle=(ok,e)=>{
 if(__done) return; __done=true;
 __fsInFlight=false;
-if(ok){ saveHealthSet('cloud',true); if(__ver===__fsVer&&!__fsQueued) iePendSet(__cid,false); }
+if(ok){ saveHealthSet('cloud',true); if(__ver===__fsVer&&!__fsQueued){ if(!(typeof ieSplitIsActive==='function'&&ieSplitIsActive(__cid))||(typeof ieSplitDirtyEmpty==='function'&&ieSplitDirtyEmpty())) iePendSet(__cid,false); } }
 else{ console.warn('Firestore save failed',e); window.__lastSyncErr=String((e&&(e.message||e.code||e.details))||e||'').slice(0,140); saveHealthSet('cloud',false); }
 if(__fsQueued){ __fsQueued=false; clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,ok?300:__fsRetryDelay()); }
 else if(!ok){ clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,__fsRetryDelay()); }
 };
 setTimeout(()=>__settle(false,new Error('sync timeout 90s')),90000);
 try{
+if(window.__ieMigrating){ __settle(false,new Error('migrating')); }
+else if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(__cid)){
+ieSplitSaveDelta(__cid,__db).then(function(r){ __settle(!!(r&&r.ok),r&&r.ok?null:new Error('split save failed: '+((r&&r.failed)||[]).join(','))); }).catch(function(e){ __settle(false,e); });
+} else {
 fbDb.collection('users').doc(__uid).collection('companies').doc(__cid)
 .set({data:JSON.stringify(__db),updatedAt:Date.now()},{merge:true})
 .then(()=>__settle(true))
 .catch(e=>__settle(false,e));
+}
 }catch(e){ __settle(false,e); }
 },250);
 }
@@ -3483,7 +3494,11 @@ const rawBefore=localStorage.getItem(KEY+'_'+cid);
 if(!rawBefore) continue;
 const locDb=ieLocalDb(cid);
 if(!locDb) continue;
-await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 90s')),90000))]);
+if(typeof ieSplitFetchMeta==='function'){
+var __mig=false; try{ __mig=!!(await ieSplitFetchMeta(cid)); }catch(e){ try{ __mig=ieSplitIsMigratedCached(cid); }catch(e2){} }
+if(__mig){ await ieSplitFlushCompany(cid,locDb); }
+else { await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 90s')),90000))]); }
+} else { await Promise.race([fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid).set({data:JSON.stringify(locDb),updatedAt:Date.now()},{merge:true}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('sync timeout 90s')),90000))]); }
 if(localStorage.getItem(KEY+'_'+cid)===rawBefore) iePendSet(cid,false);
 }catch(e){ console.warn('pending flush failed for',cid,e); }
 }
@@ -3626,7 +3641,9 @@ let __localUsed=false;
 try{ const __loc=ieLocalDb(editId); if(__loc&&__loc.settings){ __fillFrom(__loc.settings); __localUsed=true; } }catch(e){}
 if(__localUsed){ window.__coFormReady=true; __takeSnap(); if(__btn){ __btn.disabled=false; __btn.textContent='Save Changes'; } }
 else if(__btn){ __btn.disabled=true; __btn.textContent='Details load ho rahi hain…'; }
-fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId).get().then(snap=>{
+var __coRef=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId);
+try{ if(typeof ieSplitIsMigratedCached==='function'&&ieSplitIsMigratedCached(editId)) __coRef=ieSplitPartRef(editId,'core'); }catch(e){}
+__coRef.get().then(snap=>{
 if(window.__coFormTok!==__tok) return;
 if(snap.exists && snap.data() && snap.data().data){
 try{
@@ -3750,7 +3767,7 @@ if(!__baseOpen){
 const __ref2=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(editId);
 let __finalDb=__base;
 try{ const __snap2=await __ref2.get(); if(__snap2.exists && __snap2.data() && __snap2.data().data){ const __cp=normalizeDB(JSON.parse(__snap2.data().data)); __cp.settings={...(__cp.settings||{}),...__formSet}; __finalDb=__cp; } }catch(e){}
-await __ref2.set({data:JSON.stringify(__finalDb),updatedAt:Date.now()},{merge:true});
+if(typeof ieSplitIsMigratedCached==='function'&&ieSplitIsMigratedCached(editId)){ await ieSplitFlushCompany(editId,__finalDb); } else { await __ref2.set({data:JSON.stringify(__finalDb),updatedAt:Date.now()},{merge:true}); }
 try{ const __now=ieLocalDb(editId); if(__now && JSON.stringify(__now.settings||{})===JSON.stringify(__base.settings||{})) iePendSet(editId,false); }catch(e){}
 }
 userDocRef(currentUser.uid).set({companies:userProfile.companies,companyNames:userProfile.companyNames,companyGstins:userProfile.companyGstins},{merge:true}).then(()=>syncPublicProfileDoc()).catch(()=>{});
@@ -3771,6 +3788,7 @@ if(snap.exists && snap.data() && snap.data().data){ try{ parsed=normalizeDB(JSON
 }
 if(!parsed) throw new Error('Company ka purana data nahi mila (na phone me, na cloud par) — data safety ke liye save roka gaya hai. Net ON karke form dobara kholo.');
 parsed.settings={...(parsed.settings||{}),company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+if(typeof ieSplitIsMigratedCached==='function'&&ieSplitIsMigratedCached(editId)) throw new Error('Company migrated — please open the company once before editing its details, so the latest data loads.');
 await __withTo(ref.set({data:JSON.stringify(parsed),updatedAt:Date.now()},{merge:true}),20000,'Save hone me time zyada lag gaya — net slow hai, dobara try karo.');
 userProfile.companies=userProfile.companies||{};
 userProfile.companies[editId]={name,gstin,businessType};
@@ -3826,6 +3844,7 @@ const name=c.name||'Ye company';
 if(window.RSG&&window.RSW&&window.RSG.gate){ window.__rsgCid=id; window.RSG.gate('company',function(){ window.__rsgCid=id; window.RSW.start('company',{id:id,name:name}); }); return; }
 if(!confirm('"'+name+'" ko delete karna hai?\n\nIski saari invoices, customers, inventory — sab hamesha ke liye delete ho jayega. Ye wapas nahi aa sakta.')) return;
 fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(id).delete()
+.then(()=>{ try{ if(typeof ieSplitDeleteCompanyDocs==='function') return ieSplitDeleteCompanyDocs(id).catch(function(){}); }catch(e){} })
 .then(()=>{
 if(userProfile.companies) delete userProfile.companies[id];
 syncCompanySearchFields();
@@ -3905,6 +3924,817 @@ ieCacheApplyCloud(companyId,loaded,cu,crv);
 return 'applied';
 }catch(e){ return 'error'; }
 }
+/* ===== IE Billing Phase 2: split-cloud persistence (25 Oct 2026) =====
+   CLOUD ONLY split. In-memory db keeps its whole shape; localStorage keeps
+   one whole-db copy. Only Supabase upload/download is split into section
+   docs (users/<uid>/companies/<cid>/parts/<section>), one doc per invoice
+   (users/<uid>/companies/<cid>/invoices/<invoiceId>) and parts/meta.
+   Every new doc keeps today's envelope {data:"<stringified payload>",updatedAt}.
+   Delta saves use PLAIN upsert (no merge, no RPC) via DocRef.set() with no
+   opts.merge. The old company doc is NEVER written by this code. */
+var IE_SPLIT_SECTIONS=['core','parties','inventory','purchases','documents','trash','duplicates','accounts'];
+var IE_SPLIT_META_SECTIONS=['core','parties','inventory','index','purchases','documents','trash','duplicates','accounts'];
+var ieSectionLoaded={core:false,parties:false,inventory:false,index:false,purchases:false,documents:false,trash:false,duplicates:false,accounts:false};
+var ieInvoiceBody={};
+var ieSplitEnsurePromises={};
+var ieSplitMigrated={};
+var ieSplitLastSynced=null;
+var __ieSplitLastDirtyEmpty=true;
+function ieSplitCompanyDoc(cid){ return fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(cid); }
+function ieSplitPartRef(cid,section){ return ieSplitCompanyDoc(cid).collection('parts').doc(section); }
+function ieSplitIndexRef(cid){ return ieSplitCompanyDoc(cid).collection('parts').doc('invoices_index'); }
+function ieSplitInvoiceRef(cid,id){ return ieSplitCompanyDoc(cid).collection('invoices').doc(id); }
+function ieSplitMetaRef(cid){ return ieSplitCompanyDoc(cid).collection('parts').doc('meta'); }
+function ieSplitPartsPath(cid){ return 'users/'+currentUser.uid+'/companies/'+cid+'/parts'; }
+function ieSplitInvoicesPath(cid){ return 'users/'+currentUser.uid+'/companies/'+cid+'/invoices'; }
+function ieSplitRows(inv){ return (inv.items&&inv.items.length)?inv.items:(inv.sold||[]); }
+function ieInvoiceIndexEntry(b){
+  if(!b) return null;
+  var t=b.totals||{};
+  var cust=b.customer||{};
+  var pays=(b.payments||[]).map(function(p){ return {id:p.id,date:p.date,mode:p.mode,amount:p.amount,receiptNo:p.receiptNo,ref:p.ref}; });
+  var sold=null;
+  if(b.status==='Finalized'&&Array.isArray(b.items)){
+    sold=b.items.filter(function(r){ return r&&r.itemId&&Number(r.qty)>0; }).map(function(r){
+      var bq=(r.baseQty!=null&&r.baseQty!==''&&!isNaN(Number(r.baseQty)))?Number(r.baseQty):Number(r.qty)||0;
+      return {itemId:r.itemId,itemName:r.itemName||'',qty:Number(r.qty)||0,baseQty:bq,amount:Number(r.amount)||0};
+    });
+  }
+  var e={id:b.id,invoiceNumber:b.invoiceNumber||'',date:b.date||'',status:b.status||'',held:!!b.held,heldAt:b.heldAt||'',docType:b.docType||'',bosTitle:b.bosTitle||'',customerId:b.customerId||'',customerName:b.customerName||cust.name||'',customerGst:b.customerGst||cust.gst||'',companyState:b.companyState||'',companyStateCode:b.companyStateCode||'',taxType:b.taxType||'',totals:{taxable:Number(t.taxable)||0,cgst:Number(t.cgst)||0,sgst:Number(t.sgst)||0,igst:Number(t.igst)||0,tax:Number(t.tax)||0,subTotal:Number(t.subTotal)||0,discount:Number(t.discount)||0,roundOff:Number(t.roundOff)||0,grand:Number(t.grand)||0},payments:pays,createdAt:b.createdAt||'',updatedAt:b.updatedAt||''};
+  e.customer={name:e.customerName,gst:e.customerGst};
+  if(sold) e.sold=sold; else if(Array.isArray(b.sold)) e.sold=b.sold;
+  return e;
+}
+function ieSplitSectionsFromDb(d){
+  d=d||{};
+  return {
+    core:{settings:d.settings||{},receiptCounter:d.receiptCounter||1,importedChatInvoices:d.importedChatInvoices||[],pendingChatInvoiceMappings:d.pendingChatInvoiceMappings||{}},
+    parties:{customers:d.customers||[],vendors:d.vendors||[]},
+    inventory:{items:d.items||[]},
+    purchases:{purchaseOrders:d.purchaseOrders||[],purchaseBills:d.purchaseBills||[]},
+    documents:{documents:d.documents||[],cheques:d.cheques||[]},
+    trash:{deletedInvoices:d.deletedInvoices||[]},
+    duplicates:{duplicateInvoices:d.duplicateInvoices||[]},
+    accounts:{accounts:d.accounts||{}}
+  };
+}
+function ieSplitIndexFromDb(d){ return (d.invoices||[]).map(ieInvoiceIndexEntry).filter(Boolean); }
+function ieSplitApplySection(name,payload){
+  if(!payload) return false;
+  if(name==='index'){
+    var arr=payload.index||payload;
+    if(!Array.isArray(arr)) return false;
+    db.invoices=JSON.parse(JSON.stringify(arr));
+    ieSectionLoaded.index=true;
+    return true;
+  }
+  if(name==='core'){ db.settings=payload.settings||db.settings; db.receiptCounter=payload.receiptCounter||db.receiptCounter; db.importedChatInvoices=payload.importedChatInvoices||[]; db.pendingChatInvoiceMappings=payload.pendingChatInvoiceMappings||{}; }
+  else if(name==='parties'){ db.customers=payload.customers||[]; db.vendors=payload.vendors||[]; }
+  else if(name==='inventory'){ db.items=payload.items||[]; }
+  else if(name==='purchases'){ db.purchaseOrders=payload.purchaseOrders||[]; db.purchaseBills=payload.purchaseBills||[]; }
+  else if(name==='documents'){ db.documents=payload.documents||[]; db.cheques=payload.cheques||[]; }
+  else if(name==='trash'){ db.deletedInvoices=payload.deletedInvoices||[]; }
+  else if(name==='duplicates'){ db.duplicateInvoices=payload.duplicateInvoices||[]; }
+  else if(name==='accounts'){ db.accounts=payload.accounts||db.accounts; }
+  else return false;
+  ieSectionLoaded[name]=true;
+  return true;
+}
+function ieSplitAssemble(sections,indexEntries,localDb){
+  var whole={settings:{},customers:[],items:[],invoices:[],deletedInvoices:[],documents:[],receiptCounter:1,duplicateInvoices:[],vendors:[],purchaseOrders:[],purchaseBills:[],importedChatInvoices:[],pendingChatInvoiceMappings:{},cheques:[],accounts:null};
+  if(sections.core){ whole.settings=sections.core.settings||{}; whole.receiptCounter=sections.core.receiptCounter||1; whole.importedChatInvoices=sections.core.importedChatInvoices||[]; whole.pendingChatInvoiceMappings=sections.core.pendingChatInvoiceMappings||{}; }
+  if(sections.parties){ whole.customers=sections.parties.customers||[]; whole.vendors=sections.parties.vendors||[]; }
+  if(sections.inventory){ whole.items=sections.inventory.items||[]; }
+  if(sections.purchases){ whole.purchaseOrders=sections.purchases.purchaseOrders||[]; whole.purchaseBills=sections.purchases.purchaseBills||[]; }
+  if(sections.documents){ whole.documents=sections.documents.documents||[]; whole.cheques=sections.documents.cheques||[]; }
+  if(sections.trash){ whole.deletedInvoices=sections.trash.deletedInvoices||[]; }
+  if(sections.duplicates){ whole.duplicateInvoices=sections.duplicates.duplicateInvoices||[]; }
+  if(sections.accounts){ whole.accounts=sections.accounts.accounts||null; }
+  if(localDb){
+    if(!sections.purchases){ whole.purchaseOrders=localDb.purchaseOrders||[]; whole.purchaseBills=localDb.purchaseBills||[]; }
+    if(!sections.documents){ whole.documents=localDb.documents||[]; whole.cheques=localDb.cheques||[]; }
+    if(!sections.trash){ whole.deletedInvoices=localDb.deletedInvoices||[]; }
+    if(!sections.duplicates){ whole.duplicateInvoices=localDb.duplicateInvoices||[]; }
+    if(!sections.accounts){ whole.accounts=localDb.accounts||null; }
+  }
+  whole.invoices=indexEntries||[];
+  return normalizeDB(whole);
+}
+function ieSplitBodiesFromWhole(whole){
+  var m={};
+  (whole.invoices||[]).forEach(function(b){ if(b&&b.id&&Array.isArray(b.items)) m[b.id]=b; });
+  return m;
+}
+function ieSplitWholeFromAssembled(assembled,bodies){
+  var w=JSON.parse(JSON.stringify(assembled));
+  var idx=assembled.invoices||[];
+  w.invoices=idx.map(function(e){ return bodies[e.id]?JSON.parse(JSON.stringify(bodies[e.id])):e; });
+  return normalizeDB(w);
+}
+function ieSplitAssembleFromWhole(whole){
+  var secs=ieSplitSectionsFromDb(whole);
+  var idx=ieSplitIndexFromDb(whole);
+  var db2=ieSplitAssemble(secs,idx,whole);
+  ieSectionLoaded={core:true,parties:true,inventory:true,index:true,purchases:false,documents:false,trash:false,duplicates:false,accounts:false};
+  var bodies=ieSplitBodiesFromWhole(whole);
+  return {db:db2,bodies:bodies,sections:secs,index:idx};
+}
+function ieDocStampKey(cid){ return 'IE_CLOUDSTAMPS_'+cid; }
+function ieDocStampMap(cid){ try{ return JSON.parse(localStorage.getItem(ieDocStampKey(cid))||'{}')||{}; }catch(e){ return {}; } }
+function ieDocStampGet(cid,key){ var m=ieDocStampMap(cid); return Number(m[key])||0; }
+function ieDocStampSet(cid,key,ts){ try{ var m=ieDocStampMap(cid); if(ts>0) m[key]=ts; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampDel(cid,key){ try{ var m=ieDocStampMap(cid); delete m[key]; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampPrune(cid,validIds){ try{ var m=ieDocStampMap(cid); Object.keys(m).forEach(function(k){ if(k.indexOf('inv:')===0&&validIds.indexOf(k.slice(4))<0) delete m[k]; }); localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampClear(cid){ try{ localStorage.removeItem(ieDocStampKey(cid)); }catch(e){} }
+function ieSplitPendKey(cid){ return 'IE_CLOUDPEND_'+cid; }
+function ieSplitPendList(cid){ try{ var v=JSON.parse(localStorage.getItem(ieSplitPendKey(cid))||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function ieSplitPendHas(cid,key){ return ieSplitPendList(cid).indexOf(key)>=0; }
+function ieSplitPendAdd(cid,key){ try{ var l=ieSplitPendList(cid); if(l.indexOf(key)<0) l.push(key); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
+function ieSplitPendDel(cid,key){ try{ var l=ieSplitPendList(cid).filter(function(x){ return x!==key; }); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
+function ieSplitPendClear(cid){ try{ localStorage.removeItem(ieSplitPendKey(cid)); }catch(e){} }
+function ieSplitMigratedKey(cid){ return 'IE_SPLIT_MIGRATED_'+cid; }
+function ieSplitIsActive(cid){ return !!(cid&&ieSplitMigrated[cid]); }
+function ieSplitIsMigratedCached(cid){ try{ return localStorage.getItem(ieSplitMigratedKey(cid))==='1'; }catch(e){ return false; } }
+function ieSplitSetActive(cid,meta){ ieSplitMigrated[cid]=meta||true; try{ localStorage.setItem(ieSplitMigratedKey(cid),'1'); }catch(e){} }
+function ieSplitClearActive(cid){ delete ieSplitMigrated[cid]; try{ localStorage.removeItem(ieSplitMigratedKey(cid)); }catch(e){} }
+function ieSplitOffKey(cid){ return 'IE_SPLIT_OFF_'+cid; }
+function ieSplitOffGet(cid){ try{ return localStorage.getItem(ieSplitOffKey(cid))==='1'; }catch(e){ return false; } }
+function ieSplitOffSet(cid){ try{ localStorage.setItem(ieSplitOffKey(cid),'1'); }catch(e){} }
+function ieSplitIsMigratedMeta(meta){ return !!(meta&&meta.schemaVersion===2&&Array.isArray(meta.sections)&&IE_SPLIT_META_SECTIONS.every(function(s){ return meta.sections.indexOf(s)>=0; })); }
+function ieSplitParseSnapData(snap){
+  try{
+    if(!snap||!snap.exists) return null;
+    var d=snap.data();
+    if(!d||!d.data) return null;
+    return {payload:JSON.parse(d.data),updatedAt:Number(d.updatedAt)||0};
+  }catch(e){ return null; }
+}
+async function ieSplitFetchMeta(cid){ var snap=await ieSplitMetaRef(cid).get(); if(!snap.exists) return null; var p=ieSplitParseSnapData(snap); return p?p.payload:null; }
+async function ieSplitFetchPart(cid,section){ var snap=await ieSplitPartRef(cid,section).get(); return ieSplitParseSnapData(snap); }
+async function ieSplitFetchIndex(cid){ var snap=await ieSplitIndexRef(cid).get(); return ieSplitParseSnapData(snap); }
+async function ieSplitFetchInvoiceDoc(cid,id){ var snap=await ieSplitInvoiceRef(cid,id).get(); return ieSplitParseSnapData(snap); }
+async function ieCloudStampFetchDoc(cid,collPath,docId){
+  var sb=(typeof supabaseClient!=='undefined'?supabaseClient:null);
+  if(!sb) throw new Error('no supabase client');
+  var q=await sb.from('fs_documents').select('upd:data->>updatedAt').eq('collection_path',collPath).eq('doc_id',docId).maybeSingle();
+  if(q.error) throw q.error;
+  var row=q.data||{};
+  var v=row.upd;
+  if(v===undefined||v===null){ for(var k in row){ if(k.indexOf('updatedAt')>=0){ v=row[k]; break; } } }
+  var n=Number(v);
+  return n>0?n:0;
+}
+function ieBodyCacheKey(cid){ return 'IE_BODIES_'+cid; }
+function ieBodyCacheGet(cid,id){ try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; return m[id]||null; }catch(e){ return null; } }
+function ieBodyCacheSet(cid,id,body){
+  try{
+    var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{};
+    m[id]=body;
+    localStorage.setItem(ieBodyCacheKey(cid),JSON.stringify(m));
+  }catch(e){
+    try{ localStorage.removeItem(ieBodyCacheKey(cid)); }catch(e2){}
+  }
+}
+function ieBodyCacheDel(cid,id){ try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; delete m[id]; localStorage.setItem(ieBodyCacheKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieSplitInstallBody(body){
+  if(!body||!body.id) return null;
+  ieInvoiceBody[body.id]=body;
+  if(db&&Array.isArray(db.invoices)){
+    var ix=db.invoices.findIndex(function(x){ return x.id===body.id; });
+    if(ix>=0) db.invoices[ix]=body;
+  }
+  return body;
+}
+function ieSplitMergeSummaryIntoBody(body,summary,lastEntry){
+  if(!body||!summary) return body;
+  var changed=true;
+  if(lastEntry){ try{ changed=JSON.stringify(ieInvoiceIndexEntry(summary))!==JSON.stringify(lastEntry); }catch(e){ changed=true; } }
+  if(!changed) return body;
+  if(summary.status) body.status=summary.status;
+  if(summary.held!==undefined){ if(summary.held) body.held=true; else delete body.held; }
+  if(summary.heldAt) body.heldAt=summary.heldAt; else delete body.heldAt;
+  if(summary.invoiceNumber) body.invoiceNumber=summary.invoiceNumber;
+  if(summary.date) body.date=summary.date;
+  if(Array.isArray(summary.payments)) body.payments=JSON.parse(JSON.stringify(summary.payments));
+  if(summary.totals) body.totals=JSON.parse(JSON.stringify(summary.totals));
+  return body;
+}
+async function ieEnsureSection(name){
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)) return true;
+  if(ieSectionLoaded[name]) return true;
+  if(ieSplitEnsurePromises['sec:'+name]) return ieSplitEnsurePromises['sec:'+name];
+  var cid=currentCompanyId;
+  var p=(async function(){
+    try{
+      var localDb=null;
+      try{ localDb=ieLocalDb(cid); }catch(e){}
+      var isIndex=(name==='index');
+      var collPath=ieSplitPartsPath(cid);
+      var docId=isIndex?'invoices_index':name;
+      if(ieSplitPendHas(cid,docId)){ ieSectionLoaded[name]=true; return true; }
+      var localPayload=null;
+      if(localDb){ localPayload=isIndex?{index:ieSplitIndexFromDb(localDb)}:ieSplitSectionsFromDb(localDb)[name]; }
+      var hasLocal=!!localDb;
+      var cloudStamp=0;
+      try{ cloudStamp=await ieCloudStampFetchDoc(cid,collPath,docId); }catch(e){ cloudStamp=0; }
+      var localStamp=ieDocStampGet(cid,docId);
+      var dec=ieCacheDecision(hasLocal,ieSplitPendHas(cid,docId),localStamp,cloudStamp);
+      if(dec==='skip'){
+        if(!isIndex&&localPayload) ieSplitApplySection(name,localPayload);
+        ieSectionLoaded[name]=true;
+        return true;
+      }
+      if(dec==='keep-local'){ ieSectionLoaded[name]=true; return true; }
+      var fetched=null;
+      if(isIndex){ fetched=await ieSplitFetchIndex(cid); }
+      else { fetched=await ieSplitFetchPart(cid,name); }
+      if(!fetched||!fetched.payload){
+        if(localPayload){ ieSplitApplySection(name,localPayload); ieSectionLoaded[name]=true; return true; }
+        return false;
+      }
+      ieSplitApplySection(name,fetched.payload);
+      if(fetched.updatedAt>0) ieDocStampSet(cid,docId,fetched.updatedAt);
+      if(ieSplitLastSynced){ ieSplitLastSynced[isIndex?'index':name]=JSON.stringify(fetched.payload); }
+      if(isIndex){ try{ ieDocStampPrune(cid,(fetched.payload.index||[]).map(function(e){ return e.id; })); }catch(e){} }
+      return true;
+    }catch(e){ console.warn('ieEnsureSection failed',name,e); return false; }
+  })();
+  ieSplitEnsurePromises['sec:'+name]=p;
+  try{ var r=await p; return r; } finally { delete ieSplitEnsurePromises['sec:'+name]; }
+}
+async function ieSplitVerifySection(name){
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)) return;
+  var cid=currentCompanyId;
+  var isIndex=(name==='index');
+  var docId=isIndex?'invoices_index':name;
+  if(ieSplitPendHas(cid,docId)) return;
+  var cloudStamp=0;
+  try{ cloudStamp=await ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),docId); }catch(e){ return; }
+  var localStamp=ieDocStampGet(cid,docId);
+  var dec=ieCacheDecision(true,false,localStamp,cloudStamp);
+  if(dec!=='download') return;
+  var fetched=isIndex?await ieSplitFetchIndex(cid):await ieSplitFetchPart(cid,name);
+  if(!fetched||!fetched.payload) return;
+  if(ieSplitLastSynced){
+    var curStr=isIndex?JSON.stringify({index:ieSplitIndexFromDb(db)}):JSON.stringify(ieSplitSectionsFromDb(db)[name]);
+    var lastKey=isIndex?'index':name;
+    if(ieSplitLastSynced[lastKey]!==undefined&&ieSplitLastSynced[lastKey]!==curStr) return;
+  }
+  ieSplitApplySection(name,fetched.payload);
+  if(fetched.updatedAt>0) ieDocStampSet(cid,docId,fetched.updatedAt);
+  if(ieSplitLastSynced){ ieSplitLastSynced[isIndex?'index':name]=JSON.stringify(fetched.payload); }
+}
+async function ieSplitBackgroundVerify(cid){
+  if(currentCompanyId!==cid||!ieSplitIsActive(cid)) return;
+  var names=['core','parties','inventory','index'];
+  for(var i=0;i<names.length;i++){ try{ await ieSplitVerifySection(names[i]); }catch(e){} }
+}
+async function ieEnsureInvoice(id){
+  if(!id) return null;
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)){ return (db&&db.invoices||[]).find(function(x){ return x.id===id; })||null; }
+  if(ieInvoiceBody[id]){ ieSplitInstallBody(ieInvoiceBody[id]); return ieInvoiceBody[id]; }
+  if(ieSplitEnsurePromises['inv:'+id]) return ieSplitEnsurePromises['inv:'+id];
+  var cid=currentCompanyId;
+  var p=(async function(){
+    try{
+      var summary=(db&&db.invoices||[]).find(function(x){ return x.id===id; })||null;
+      var localBody=null;
+      try{ var lb=ieBodyCacheGet(cid,id); if(lb&&Array.isArray(lb.items)) localBody=lb; }catch(e){}
+      if(!localBody){
+        try{
+          var ldb=ieLocalDb(cid);
+          var le=ldb?(ldb.invoices||[]).find(function(x){ return x.id===id; })||null:null;
+          if(le&&Array.isArray(le.items)) localBody=le;
+        }catch(e){}
+      }
+      var cloudStamp=0;
+      try{ cloudStamp=await ieCloudStampFetchDoc(cid,ieSplitInvoicesPath(cid),id); }catch(e){ cloudStamp=0; }
+      var localStamp=ieDocStampGet(cid,'inv:'+id);
+      var dec=ieCacheDecision(!!localBody,ieSplitPendHas(cid,'inv:'+id),localStamp,cloudStamp);
+      if(dec==='skip'&&localBody){
+        var b0=JSON.parse(JSON.stringify(localBody));
+        ieSplitInstallBody(b0);
+        try{ ieBodyCacheSet(cid,id,b0); }catch(e){}
+        if(ieSplitLastSynced) ieSplitLastSynced['inv:'+id]=JSON.stringify(b0);
+        return b0;
+      }
+      if(dec==='keep-local'){
+        if(localBody){ var b1=JSON.parse(JSON.stringify(localBody)); ieSplitInstallBody(b1); return b1; }
+        return summary;
+      }
+      if(ieSplitPendHas(cid,'inv:'+id)){
+        if(localBody){ var b2=JSON.parse(JSON.stringify(localBody)); ieSplitInstallBody(b2); return b2; }
+        return summary;
+      }
+      var fetched=await ieSplitFetchInvoiceDoc(cid,id);
+      if(!fetched||!fetched.payload){
+        if(localBody){ var b3=JSON.parse(JSON.stringify(localBody)); ieSplitInstallBody(b3); return b3; }
+        if(summary){ ieInvoiceBody[id]=summary; return summary; }
+        return null;
+      }
+      var body=fetched.payload;
+      try{
+        var lastIdx=null;
+        if(ieSplitLastSynced&&ieSplitLastSynced['index']){
+          var li=JSON.parse(ieSplitLastSynced['index']);
+          var le2=(li.index||[]).find(function(e){ return e.id===id; });
+          if(le2) lastIdx=le2;
+        }
+        if(summary) body=ieSplitMergeSummaryIntoBody(body,summary,lastIdx);
+      }catch(e){}
+      ieSplitInstallBody(body);
+      try{ ieBodyCacheSet(cid,id,body); }catch(e){}
+      if(fetched.updatedAt>0) ieDocStampSet(cid,'inv:'+id,fetched.updatedAt);
+      if(ieSplitLastSynced) ieSplitLastSynced['inv:'+id]=JSON.stringify(body);
+      return body;
+    }catch(e){
+      console.warn('ieEnsureInvoice failed',id,e);
+      return (db&&db.invoices||[]).find(function(x){ return x.id===id; })||null;
+    }
+  })();
+  ieSplitEnsurePromises['inv:'+id]=p;
+  try{ return await p; } finally { delete ieSplitEnsurePromises['inv:'+id]; }
+}
+function ieBill(id){
+  if(ieInvoiceBody[id]) return ieInvoiceBody[id];
+  return (db&&db.invoices||[]).find(function(x){ return x.id===id; })||null;
+}
+async function ieSplitPeriodFetch(f,t){
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)) return [];
+  try{ await ieEnsureSection('trash'); }catch(e){}
+  var ids=(db.invoices||[]).filter(function(x){ return !isBos(x)&&x.status==='Finalized'&&(!f||(x.date||'')>=f)&&(!t||(x.date||'')<=t); }).map(function(x){ return x.id; });
+  var out=[];
+  for(var i=0;i<ids.length;i+=10){
+    var chunk=ids.slice(i,i+10);
+    var bodies=await Promise.all(chunk.map(function(id){ return ieEnsureInvoice(id); }));
+    bodies.forEach(function(b){ if(b) out.push(b); });
+  }
+  return out;
+}
+function ieSplitInitLastSynced(sourceDb){
+  var src=sourceDb||db;
+  var secs=ieSplitSectionsFromDb(src);
+  var m={};
+  IE_SPLIT_SECTIONS.forEach(function(n){ m[n]=JSON.stringify(secs[n]); });
+  m['index']=JSON.stringify({index:ieSplitIndexFromDb(src)});
+  (src.invoices||[]).forEach(function(b){
+    if(b&&b.id&&(Array.isArray(b.items)||ieInvoiceBody[b.id])){
+      var body=ieInvoiceBody[b.id]||b;
+      m['inv:'+b.id]=JSON.stringify(body);
+    }
+  });
+  Object.keys(ieInvoiceBody).forEach(function(id){ if(!m['inv:'+id]) m['inv:'+id]=JSON.stringify(ieInvoiceBody[id]); });
+  ieSplitLastSynced=m;
+}
+function ieSplitComputeDirty(sourceDb){
+  var d=sourceDb||db;
+  var secs=ieSplitSectionsFromDb(d);
+  var indexEntries=ieSplitIndexFromDb(d);
+  var indexStr=JSON.stringify({index:indexEntries});
+  var out={sections:{},index:null,indexEntries:indexEntries,bodies:{},deletedInvoiceIds:[],staleSummaryIds:[],dirtyKeys:[]};
+  var last=ieSplitLastSynced;
+  IE_SPLIT_SECTIONS.forEach(function(n){
+    var s=JSON.stringify(secs[n]);
+    if(!last||last[n]!==s){ out.sections[n]=s; out.dirtyKeys.push(n); }
+  });
+  if(!last||last['index']!==indexStr){ out.index=indexStr; out.dirtyKeys.push('index'); }
+  var lastIndexMap={};
+  if(last&&last['index']){
+    try{ var li=JSON.parse(last['index']); (li.index||[]).forEach(function(e){ lastIndexMap[e.id]=e; }); }catch(e){}
+  }
+  var curIds={};
+  (d.invoices||[]).forEach(function(b){
+    if(!b||!b.id) return;
+    curIds[b.id]=true;
+    var body=ieInvoiceBody[b.id]||null;
+    var isBody=Array.isArray(b.items)||!!body;
+    if(isBody){
+      var bb=body||b;
+      var bs=JSON.stringify(bb);
+      if(!last||last['inv:'+b.id]!==bs){ out.bodies[b.id]=bs; out.dirtyKeys.push('inv:'+b.id); }
+    } else {
+      var curEntry=indexEntries.find(function(e){ return e.id===b.id; });
+      var prev=lastIndexMap[b.id];
+      if(last&&prev&&curEntry&&JSON.stringify(curEntry)!==JSON.stringify(prev)) out.staleSummaryIds.push(b.id);
+    }
+  });
+  if(last){
+    Object.keys(last).forEach(function(k){
+      if(k.indexOf('inv:')===0){
+        var id=k.slice(4);
+        if(!curIds[id]) out.deletedInvoiceIds.push(id);
+      }
+    });
+  }
+  return out;
+}
+function ieSplitDirtyEmpty(){ return __ieSplitLastDirtyEmpty; }
+async function ieSplitUploadDirty(dirty,cid,sourceDb){
+  var ts=Date.now();
+  var uploaded=[],failed=[];
+  var names=Object.keys(dirty.sections);
+  for(var si=0;si<names.length;si++){
+    var n=names[si];
+    try{
+      await ieSplitPartRef(cid,n).set({data:dirty.sections[n],updatedAt:ts});
+      if(ieSplitLastSynced) ieSplitLastSynced[n]=dirty.sections[n];
+      ieDocStampSet(cid,n,ts);
+      ieSplitPendDel(cid,n);
+      uploaded.push(n);
+    }catch(e){ failed.push(n); }
+  }
+  var bIds=Object.keys(dirty.bodies);
+  for(var bi=0;bi<bIds.length;bi++){
+    var bid=bIds[bi];
+    try{
+      await ieSplitInvoiceRef(cid,bid).set({data:dirty.bodies[bid],updatedAt:ts});
+      if(ieSplitLastSynced) ieSplitLastSynced['inv:'+bid]=dirty.bodies[bid];
+      ieDocStampSet(cid,'inv:'+bid,ts);
+      ieSplitPendDel(cid,'inv:'+bid);
+      uploaded.push('inv:'+bid);
+      try{ ieBodyCacheSet(cid,bid,JSON.parse(dirty.bodies[bid])); }catch(e){}
+    }catch(e){ failed.push('inv:'+bid); }
+  }
+  for(var di=0;di<dirty.deletedInvoiceIds.length;di++){
+    var did=dirty.deletedInvoiceIds[di];
+    try{
+      await ieSplitInvoiceRef(cid,did).delete();
+      if(ieSplitLastSynced) delete ieSplitLastSynced['inv:'+did];
+      ieDocStampDel(cid,'inv:'+did);
+      ieSplitPendDel(cid,'inv:'+did);
+      try{ ieBodyCacheDel(cid,did); }catch(e){}
+      delete ieInvoiceBody[did];
+      uploaded.push('del:'+did);
+    }catch(e){ failed.push('del:'+did); }
+  }
+  if(dirty.index){
+    try{
+      await ieSplitIndexRef(cid).set({data:dirty.index,updatedAt:ts});
+      if(ieSplitLastSynced) ieSplitLastSynced['index']=dirty.index;
+      ieDocStampSet(cid,'invoices_index',ts);
+      ieSplitPendDel(cid,'invoices_index');
+      uploaded.push('index');
+    }catch(e){ failed.push('index'); }
+  }
+  var ok=failed.length===0;
+  __ieSplitLastDirtyEmpty=ok;
+  return {ok:ok,uploaded:uploaded,failed:failed,dirtyEmpty:ok};
+}
+async function ieSplitSaveDelta(cid,sourceDb){
+  var dirty=ieSplitComputeDirty(sourceDb);
+  if(dirty.staleSummaryIds.length){
+    for(var i=0;i<dirty.staleSummaryIds.length;i++){ try{ await ieEnsureInvoice(dirty.staleSummaryIds[i]); }catch(e){} }
+    dirty=ieSplitComputeDirty(sourceDb);
+    if(dirty.staleSummaryIds.length){
+      __ieSplitLastDirtyEmpty=false;
+      return {ok:false,uploaded:[],failed:dirty.staleSummaryIds,dirtyEmpty:false};
+    }
+  }
+  dirty.dirtyKeys.forEach(function(k){
+    var sk=(k==='index')?'invoices_index':k;
+    ieSplitPendAdd(cid,sk);
+  });
+  dirty.deletedInvoiceIds.forEach(function(id){ ieSplitPendAdd(cid,'inv:'+id); });
+  if(!dirty.dirtyKeys.length&&!dirty.deletedInvoiceIds.length){
+    __ieSplitLastDirtyEmpty=true;
+    return {ok:true,uploaded:[],failed:[],dirtyEmpty:true};
+  }
+  var res=await ieSplitUploadDirty(dirty,cid,sourceDb);
+  return res;
+}
+async function ieSplitUploadAll(cid,wholeDb){
+  var secs=ieSplitSectionsFromDb(wholeDb);
+  var indexStr=JSON.stringify({index:ieSplitIndexFromDb(wholeDb)});
+  var ts=Date.now();
+  var names=Object.keys(secs);
+  for(var i=0;i<names.length;i++){ await ieSplitPartRef(cid,names[i]).set({data:JSON.stringify(secs[names[i]]),updatedAt:ts}); }
+  await ieSplitIndexRef(cid).set({data:indexStr,updatedAt:ts});
+  for(var j=0;j<(wholeDb.invoices||[]).length;j++){
+    var b=wholeDb.invoices[j];
+    if(b&&b.id&&Array.isArray(b.items)){ await ieSplitInvoiceRef(cid,b.id).set({data:JSON.stringify(b),updatedAt:ts}); }
+  }
+  return true;
+}
+async function ieSplitFlushCompany(cid,locDb){ return ieSplitUploadAll(cid,locDb); }
+function ieSplitVerify(snapshot,sections,indexEntries,bodies){
+  var errs=[];
+  var reassembled=ieSplitAssemble(sections,indexEntries,null);
+  var reassSecs=ieSplitSectionsFromDb(reassembled);
+  var arrKeys=[['customers',sections.parties.customers],['vendors',sections.parties.vendors],['items',sections.inventory.items],['purchaseOrders',sections.purchases.purchaseOrders],['purchaseBills',sections.purchases.purchaseBills],['documents',sections.documents.documents],['cheques',sections.documents.cheques],['deletedInvoices',sections.trash.deletedInvoices],['duplicateInvoices',sections.duplicates.duplicateInvoices]];
+  arrKeys.forEach(function(pair){
+    var k=pair[0],arr=pair[1]||[];
+    var exp=(snapshot[k]||[]).length;
+    if(arr.length!==exp) errs.push('count '+k+' '+arr.length+'!='+exp);
+  });
+  if(indexEntries.length!==(snapshot.invoices||[]).length) errs.push('count invoices');
+  var snapAcc=snapshot.accounts||{};
+  var reAcc=reassSecs.accounts.accounts||{};
+  if(((reAcc.vouchers||[]).length)!==((snapAcc.vouchers||[]).length)) errs.push('count vouchers');
+  if(((reAcc.ledgers||[]).length)!==((snapAcc.ledgers||[]).length)) errs.push('count ledgers');
+  if(((reAcc.pdc||[]).length)!==((snapAcc.pdc||[]).length)) errs.push('count pdc');
+  IE_SPLIT_SECTIONS.forEach(function(n){
+    var a=JSON.stringify(reassSecs[n]);
+    var b2=JSON.stringify(ieSplitSectionsFromDb(snapshot)[n]);
+    if(a!==b2) errs.push('reserial '+n);
+  });
+  var snapIds={};
+  (snapshot.invoices||[]).forEach(function(b){ snapIds[b.id]=b; });
+  var idxIds={};
+  indexEntries.forEach(function(e){ idxIds[e.id]=e; });
+  Object.keys(snapIds).forEach(function(id){
+    if(!idxIds[id]){ errs.push('identity missing '+id); return; }
+    var b=snapIds[id],e=idxIds[id];
+    if(e.invoiceNumber!==b.invoiceNumber) errs.push('identity number '+id);
+    if(Number(e.totals.grand||0)!==Number((b.totals||{}).grand||0)) errs.push('identity grand '+id);
+    if(e.status!==b.status) errs.push('identity status '+id);
+    if(bodies[id]&&JSON.stringify(bodies[id])!==JSON.stringify(b)) errs.push('identity body '+id);
+  });
+  Object.keys(idxIds).forEach(function(id){ if(!snapIds[id]) errs.push('identity extra '+id); });
+  var sumSnap=0,sumRe=0;
+  (snapshot.invoices||[]).forEach(function(b){ if(b.status==='Finalized') sumSnap+=Number((b.totals||{}).grand||0); });
+  indexEntries.forEach(function(e){ if(e.status==='Finalized') sumRe+=Number((e.totals||{}).grand||0); });
+  if(Math.abs(sumSnap-sumRe)>0.005) errs.push('money grand-sum');
+  return {ok:errs.length===0,errors:errs};
+}
+async function ieSplitMigrate(cid,snapshotDb,oldUpdatedAt,opts){
+  opts=opts||{};
+  if(ieSplitOffGet(cid)) return {ok:false,reason:'split-off'};
+  if(window.__ieMigrating) return {ok:false,reason:'migrating'};
+  window.__ieMigrating=true;
+  try{ __fsVer++; clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); }catch(e){}
+  try{
+    var snap=normalizeDB(JSON.parse(JSON.stringify(snapshotDb)));
+    var secs=ieSplitSectionsFromDb(snap);
+    var idx=ieSplitIndexFromDb(snap);
+    var bodies=ieSplitBodiesFromWhole(snap);
+    var ver=ieSplitVerify(snap,secs,idx,bodies);
+    if(!ver.ok) return {ok:false,reason:'verify',errors:ver.errors};
+    var ts=Date.now();
+    var names=Object.keys(secs);
+    for(var i=0;i<names.length;i++){ await ieSplitPartRef(cid,names[i]).set({data:JSON.stringify(secs[names[i]]),updatedAt:ts}); }
+    await ieSplitIndexRef(cid).set({data:JSON.stringify({index:idx}),updatedAt:ts});
+    var bIds=Object.keys(bodies);
+    for(var j=0;j<bIds.length;j++){ await ieSplitInvoiceRef(cid,bIds[j]).set({data:JSON.stringify(bodies[bIds[j]]),updatedAt:ts}); }
+    if(opts.oldStampNow!==undefined){
+      if(opts.oldStampNow>0&&oldUpdatedAt>0&&opts.oldStampNow!==oldUpdatedAt) return {ok:false,reason:'stale-old'};
+    } else {
+      try{
+        var nowStamp=await ieCloudStampFetch(cid);
+        if(nowStamp>0&&oldUpdatedAt>0&&nowStamp!==oldUpdatedAt) return {ok:false,reason:'stale-old'};
+      }catch(e){}
+    }
+    var meta={schemaVersion:2,migratedAt:Date.now(),migratedFromUpdatedAt:oldUpdatedAt||0,sections:IE_SPLIT_META_SECTIONS.slice(),invoiceCount:(snap.invoices||[]).length,counts:{customers:(snap.customers||[]).length,items:(snap.items||[]).length,invoices:(snap.invoices||[]).length}};
+    await ieSplitMetaRef(cid).set({data:JSON.stringify(meta),updatedAt:Date.now()});
+    IE_SPLIT_SECTIONS.forEach(function(n){ ieDocStampSet(cid,n,ts); });
+    ieDocStampSet(cid,'invoices_index',ts);
+    bIds.forEach(function(id){ ieDocStampSet(cid,'inv:'+id,ts); });
+    ieSplitSetActive(cid,meta);
+    return {ok:true,meta:meta,sections:secs,index:idx,bodies:bodies};
+  }catch(e){
+    return {ok:false,reason:'write',error:String(e&&e.message||e)};
+  } finally {
+    window.__ieMigrating=false;
+  }
+}
+async function ieSplitRollback(cid){
+  try{ await ieSplitMetaRef(cid).delete(); }catch(e){}
+  ieSplitClearActive(cid);
+  ieDocStampClear(cid);
+  ieSplitPendClear(cid);
+  ieSplitOffSet(cid);
+  return true;
+}
+function ieSplitAfterReset(cid){
+  try{ ieSplitMetaRef(cid).delete().catch(function(){}); }catch(e){}
+  ieSplitClearActive(cid);
+  ieDocStampClear(cid);
+  ieSplitPendClear(cid);
+}
+async function ieSplitDeleteCompanyDocs(cid){
+  var total=0;
+  var paths=[ieSplitPartsPath(cid),ieSplitInvoicesPath(cid)];
+  for(var pi=0;pi<paths.length;pi++){
+    var path=paths[pi];
+    var ids=[];
+    try{
+      var coll=fbDb.collection(path);
+      if(typeof coll.listDocIds==='function'){ ids=await coll.listDocIds(); }
+      else {
+        var snap=await coll.get();
+        snap.docs.forEach(function(d){ ids.push(d.id); });
+      }
+    }catch(e){ continue; }
+    for(var i=0;i<ids.length;i++){
+      try{ await fbDb.collection(path).doc(ids[i]).delete(); total++; }catch(e){}
+    }
+  }
+  ieSplitClearActive(cid);
+  ieDocStampClear(cid);
+  ieSplitPendClear(cid);
+  try{ localStorage.removeItem(ieBodyCacheKey(cid)); }catch(e){}
+  return total;
+}
+async function ieSplitFetchTierA(cid,localDb){
+  try{
+    var core=await ieSplitFetchPart(cid,'core');
+    var parties=await ieSplitFetchPart(cid,'parties');
+    var inv=await ieSplitFetchPart(cid,'inventory');
+    var idx=await ieSplitFetchIndex(cid);
+    if(!core||!core.payload||!idx||!idx.payload) return null;
+    var indexEntries=idx.payload.index||idx.payload;
+    if(!Array.isArray(indexEntries)) return null;
+    var localSecs=localDb?ieSplitSectionsFromDb(localDb):null;
+    var secs={
+      core:core.payload,
+      parties:parties?parties.payload:(localSecs?localSecs.parties:null),
+      inventory:inv?inv.payload:(localSecs?localSecs.inventory:null),
+      purchases:null,documents:null,trash:null,duplicates:null,accounts:null
+    };
+    if(!secs.parties||!secs.inventory) return null;
+    var db2=ieSplitAssemble(secs,indexEntries,localDb);
+    ieSectionLoaded={core:true,parties:true,inventory:true,index:true,purchases:false,documents:false,trash:false,duplicates:false,accounts:false};
+    if(core.updatedAt>0) ieDocStampSet(cid,'core',core.updatedAt);
+    if(parties&&parties.updatedAt>0) ieDocStampSet(cid,'parties',parties.updatedAt);
+    if(inv&&inv.updatedAt>0) ieDocStampSet(cid,'inventory',inv.updatedAt);
+    if(idx.updatedAt>0) ieDocStampSet(cid,'invoices_index',idx.updatedAt);
+    return {db:db2,bodies:{},sections:secs,index:indexEntries};
+  }catch(e){
+    console.warn('ieSplitFetchTierA failed',e);
+    return null;
+  }
+}
+async function ieSplitOpenAttempt(cid){
+  try{
+    if(ieSplitOffGet(cid)) return {mode:'old'};
+    var meta=null;
+    var metaErr=null;
+    try{
+      meta=await Promise.race([ieSplitFetchMeta(cid),new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('meta timeout')); },3000); })]);
+    }catch(e){ metaErr=e; }
+    if(metaErr){
+      if(ieSplitIsMigratedCached(cid)){
+        var loc0=null;
+        try{ loc0=ieLocalDb(cid); }catch(e){}
+        if(loc0){
+          var asm0=ieSplitAssembleFromWhole(loc0);
+          ieSplitSetActive(cid,{schemaVersion:2,sections:IE_SPLIT_META_SECTIONS.slice()});
+          ieSplitInitLastSynced(asm0.db);
+          ieInvoiceBody=asm0.bodies;
+          return {mode:'split',db:asm0.db};
+        }
+        return {mode:'blocked',message:'Split company data could not be loaded (network). Please check internet and reopen.'};
+      }
+      return {mode:'old'};
+    }
+    if(!meta) return {mode:'old'};
+    if(!ieSplitIsMigratedMeta(meta)) return {mode:'old'};
+    var oldStamp=0;
+    try{ oldStamp=await ieCloudStampFetch(cid); }catch(e){ oldStamp=0; }
+    if(oldStamp>0&&meta.migratedFromUpdatedAt>0&&oldStamp>meta.migratedFromUpdatedAt){
+      var doRe=false;
+      try{ doRe=confirm('The old cloud copy of this company is newer than the split copy (an edit from another device before migration). Press OK to re-migrate from the newer old copy, or Cancel to keep the split copy.'); }catch(e){ doRe=false; }
+      if(doRe){
+        try{
+          var osnap=await ieSplitCompanyDoc(cid).get();
+          var oparsed=ieSplitParseSnapData(osnap);
+          if(oparsed&&oparsed.payload){
+            var oldDb=normalizeDB(oparsed.payload);
+            var mig=await ieSplitMigrate(cid,oldDb,oparsed.updatedAt);
+            if(mig.ok){
+              var asmR=ieSplitAssembleFromWhole(oldDb);
+              ieSplitInitLastSynced(asmR.db);
+              ieInvoiceBody=asmR.bodies;
+              return {mode:'split',db:asmR.db};
+            }
+          }
+        }catch(e){ console.warn('stale re-migrate failed',e); }
+      }
+    }
+    ieSplitSetActive(cid,meta);
+    var localDb=null;
+    try{ localDb=ieLocalDb(cid); }catch(e){}
+    if(iePendGet(cid)&&localDb){
+      var stamps=[0,0,0,0];
+      try{
+        stamps=await Promise.all([ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),'core'),ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),'parties'),ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),'inventory'),ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),'invoices_index')]);
+      }catch(e){ stamps=[0,0,0,0]; }
+      var maxStamp=Math.max.apply(null,stamps);
+      if(maxStamp>0&&iePendTime(cid)>0&&maxStamp>iePendTime(cid)){
+        var keepLocal=true;
+        try{ keepLocal=confirm('The cloud copy of this company is newer than the unsynced changes on this device (it may have been edited on another device). Press OK to upload this device\'s changes and overwrite the cloud copy, or Cancel to keep the cloud copy and discard this device\'s unsynced changes.'); }catch(e){ keepLocal=true; }
+        if(!keepLocal){
+          iePendSet(cid,false);
+          var cloudAsm=await ieSplitFetchTierA(cid,null);
+          if(!cloudAsm) return {mode:'blocked',message:'Cloud sections could not be loaded. Please check internet and reopen.'};
+          ieSplitInitLastSynced(cloudAsm.db);
+          try{ var wholeC=ieSplitWholeFromAssembled(cloudAsm.db,cloudAsm.bodies); localStorage.setItem(KEY+'_'+cid,JSON.stringify(wholeC)); }catch(e){}
+          ieInvoiceBody=cloudAsm.bodies;
+          return {mode:'split',db:cloudAsm.db};
+        } else {
+          var asmL=ieSplitAssembleFromWhole(localDb);
+          ieSplitLastSynced=null;
+          ieInvoiceBody=asmL.bodies;
+          setTimeout(function(){ try{ fsScheduleSave(); }catch(e){} },1500);
+          return {mode:'split',db:asmL.db};
+        }
+      }
+    }
+    if(localDb){
+      var asm=ieSplitAssembleFromWhole(localDb);
+      ieSplitInitLastSynced(asm.db);
+      ieInvoiceBody=asm.bodies;
+      setTimeout(function(){ try{ ieSplitBackgroundVerify(cid); }catch(e){} },0);
+      return {mode:'split',db:asm.db};
+    }
+    var cloudAsm2=await ieSplitFetchTierA(cid,null);
+    if(!cloudAsm2) return {mode:'blocked',message:'Cloud sections could not be loaded. Please check internet and reopen.'};
+    ieSplitInitLastSynced(cloudAsm2.db);
+    ieInvoiceBody=cloudAsm2.bodies;
+    return {mode:'split',db:cloudAsm2.db};
+  }catch(e){
+    console.warn('ieSplitOpenAttempt failed',e);
+    return {mode:'old'};
+  }
+}
+async function ieSplitMaybeMigrate(cid,loadedDb,oldUpdatedAt){
+  if(ieSplitOffGet(cid)) return {mode:'old'};
+  try{ if(typeof navigator!=='undefined'&&navigator.onLine===false) return {mode:'old'}; }catch(e){}
+  if(iePendGet(cid)) return {mode:'old'};
+  var meta=null;
+  try{ meta=await ieSplitFetchMeta(cid); }catch(e){ return {mode:'old'}; }
+  if(meta){
+    if(!ieSplitIsMigratedMeta(meta)) return {mode:'old'};
+    if(oldUpdatedAt>0&&meta.migratedFromUpdatedAt>0&&oldUpdatedAt>meta.migratedFromUpdatedAt){
+      var doRe=false;
+      try{ doRe=confirm('The old cloud copy of this company is newer than the split copy (an edit from another device before migration). Press OK to re-migrate from the newer old copy, or Cancel to keep the split copy.'); }catch(e){}
+      if(doRe){
+        var mig=await ieSplitMigrate(cid,loadedDb,oldUpdatedAt);
+        if(mig.ok){
+          var asmR=ieSplitAssembleFromWhole(loadedDb);
+          ieSplitInitLastSynced(asmR.db);
+          ieInvoiceBody=asmR.bodies;
+          return {mode:'migrated',db:asmR.db};
+        }
+      }
+    }
+    var tier=await ieSplitFetchTierA(cid,loadedDb);
+    if(!tier) return {mode:'old'};
+    ieSplitSetActive(cid,meta);
+    ieSplitInitLastSynced(tier.db);
+    ieInvoiceBody=tier.bodies;
+    return {mode:'split',db:tier.db};
+  }
+  var mig2=await ieSplitMigrate(cid,loadedDb,oldUpdatedAt);
+  if(!mig2.ok) return {mode:'old'};
+  var asm2=ieSplitAssembleFromWhole(loadedDb);
+  ieSplitInitLastSynced(asm2.db);
+  ieInvoiceBody=asm2.bodies;
+  return {mode:'migrated',db:asm2.db};
+}
+var IE_SPLIT_PAGE_SECTIONS={purchaseOrders:['purchases'],purchaseBills:['purchases'],documents:['documents'],chequePrint:['documents'],history:['trash','duplicates'],acctVouchers:['accounts'],acctLedgers:['accounts'],acctReports:['accounts'],acctRecon:['accounts'],acctPdc:['accounts'],acctControl:['accounts'],acctGst:['accounts','purchases','parties','trash'],acctExt:['accounts'],invAdv:['accounts']};
+function ieSplitGatePage(id,btn){
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)) return false;
+  var needs=IE_SPLIT_PAGE_SECTIONS[id];
+  if(!needs) return false;
+  var missing=needs.filter(function(n){ return !ieSectionLoaded[n]; });
+  if(!missing.length) return false;
+  (async function(){
+    try{
+      for(var i=0;i<needs.length;i++){
+        var ok=await ieEnsureSection(needs[i]);
+        if(!ok){ alert('Section "'+needs[i]+'" could not be loaded. Please check internet and try again.'); return; }
+      }
+      if(id==='acctGst'){
+        try{
+          var f=document.getElementById('gsFrom')?document.getElementById('gsFrom').value:'';
+          var t=document.getElementById('gsTo')?document.getElementById('gsTo').value:'';
+          if(!f||!t){
+            var dd=new Date(),s=new Date(dd.getFullYear(),dd.getMonth()-1,1);
+            f=s.getFullYear()+'-'+String(s.getMonth()+1).padStart(2,'0')+'-01';
+            var e=new Date(s.getFullYear(),s.getMonth()+1,0);
+            t=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0');
+          }
+          await ieSplitPeriodFetch(f,t);
+        }catch(e){ console.warn('gst period fetch failed',e); }
+      }
+      showPage(id,btn);
+    }catch(e){ console.warn('split gate failed',e); }
+  })();
+  return true;
+}
+async function ieSplitAssembleFullDb(){
+  if(!currentCompanyId||!ieSplitIsActive(currentCompanyId)) return null;
+  var names=['core','parties','inventory','purchases','documents','trash','duplicates','accounts'];
+  for(var i=0;i<names.length;i++){ await ieEnsureSection(names[i]); }
+  var ids=(db.invoices||[]).map(function(x){ return x.id; });
+  for(var j=0;j<ids.length;j+=10){
+    var chunk=ids.slice(j,j+10);
+    await Promise.all(chunk.map(function(id){ return ieEnsureInvoice(id); }));
+  }
+  var whole=ieSplitWholeFromAssembled(db,ieInvoiceBody);
+  return whole;
+}
+
 function coOpenCompany(companyId,preloadedDb){
 window.__coLoading=true;
 let opened=false;
@@ -3938,13 +4768,20 @@ const __loc0=(!preloadedDb&&navigator.onLine!==false&&!iePendGet(companyId)&&has
 const __cacheFirst=!!__loc0&&ieCloudStampGet(companyId)>0;
 const __dataGet=(__cacheFirst||preloadedDb)?null:fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
 if(__dataGet) __dataGet.catch(()=>{});
-const openIt=()=>{
+const openIt=async()=>{
 if(opened) return;
+if(!preloadedDb&&typeof ieSplitOpenAttempt==='function'){
+try{
+var __spRes=await ieSplitOpenAttempt(companyId);
+if(__spRes.mode==='split'){ proceed(__spRes.db); return; }
+if(__spRes.mode==='blocked'){ unbusy(); window.__coLoading=false; if(__spRes.message) alert(__spRes.message); return; }
+}catch(e){ console.warn('split open failed, old path',e); }
+}
 currentCompanyId=companyId;
 if(preloadedDb){ proceed(preloadedDb); return; }
 if(__cacheFirst){ proceed(__loc0); try{ ieCacheFirstVerify(companyId,__fsVer,db); }catch(e){} return; }
 const get=__dataGet||fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
-withTimeout(get,hasLocal()?4000:15000).then(snap=>{
+withTimeout(get,hasLocal()?4000:15000).then(async snap=>{
 if(opened) return;
 let loaded=null;
 if(snap.exists && snap.data() && snap.data().data){
@@ -3961,6 +4798,12 @@ if(__cloudNewer&&!confirm('The cloud copy of this company is newer than the unsy
 try{ iePendSet(companyId,false); localStorage.setItem(KEY+'_'+companyId,JSON.stringify(loaded)); }catch(e){}
 }else{ loaded=loc; setTimeout(()=>{ try{ fsScheduleSave(); }catch(e){} },1500); }
 }
+}
+if(loaded&&!preloadedDb&&typeof ieSplitMaybeMigrate==='function'){
+try{
+var __mm=await ieSplitMaybeMigrate(companyId,loaded,Number((snap.exists&&snap.data()&&snap.data().updatedAt)||0));
+if(__mm.mode!=='old'){ proceed(__mm.db); return; }
+}catch(e){ console.warn('split migrate failed, old path',e); }
 }
 if(!loaded) loaded=emptyDB();
 proceed(loaded);
@@ -5196,8 +6039,16 @@ db.pendingChatInvoiceMappings=db.pendingChatInvoiceMappings||{};
 db.pendingChatInvoiceMappings[sourceKey]=mapping;
 saveDB();
 const ref=fbDb.collection('chats').doc(connId).collection('messages').doc(msgId);
-fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(context.companyId)
-.set({data:JSON.stringify(db),updatedAt:Date.now()},{merge:true}).then(()=>{
+const __chatSplitActive=(typeof ieSplitIsActive==='function'&&ieSplitIsActive(context.companyId));
+let __chatPersist;
+if(__chatSplitActive){
+__chatPersist=(typeof ieSplitSaveDelta==='function'?ieSplitSaveDelta(context.companyId,db):Promise.reject(new Error('split save unavailable')))
+.then(function(__r){ if(!(__r&&__r.ok)) throw new Error('split save failed: '+((__r&&__r.failed)||[]).join(',')); });
+}else{
+__chatPersist=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(context.companyId)
+.set({data:JSON.stringify(db),updatedAt:Date.now()},{merge:true});
+}
+__chatPersist.then(()=>{
 if(context.companyId!==currentCompanyId||context.connId!==chatConnId) throw new Error('Company ya chat badal gaya; wapas kholkar try karo.');
 return fbDb.runTransaction(async tx=>{
 const snap=await tx.get(ref), data=snap.data();
@@ -5422,7 +6273,8 @@ box.innerHTML=rows.map(inv=>`<div class="pf-co-row" style="cursor:pointer;displa
     <div style="font-weight:700">₹ ${money(inv.totals?.grand||0)}</div>
   </div>`).join('');
 }
-function chatSendInvoice(invId){
+async function chatSendInvoice(invId){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(invId); if(!__b) return; }
 const inv=(db.invoices||[]).find(x=>x.id===invId); if(!inv||!chatConnId) return;
 const payload=chatInvoicePayload(inv);
 const connId=chatConnId, otherUid=chatCurrentUid;
@@ -12613,7 +13465,7 @@ const map=new Map();
 (db.invoices||[]).forEach(inv=>{
 if(inv.status!=='Finalized') return;
 if(excludeInvoiceId && inv.id===excludeInvoiceId) return;
-(inv.items||[]).forEach(r=>{
+(typeof ieSplitRows==='function'?ieSplitRows(inv):(inv.items||[])).forEach(r=>{
 if(!r.itemId || !(Number(r.qty)>0)) return;
 map.set(r.itemId,(map.get(r.itemId)||0)+rowBaseQty(r));
 });
@@ -13631,7 +14483,8 @@ if(!__holdSave){ delete current.held; delete current.heldAt; }
 recalc();
 if(isBos(current)||isCash(current)){ try{bosAutoSaveCustomer();}catch(e){console.warn('bosAutoSaveCustomer',e);} }
 current.updatedAt=new Date().toISOString();
-let old=db.invoices.find(x=>x.id===current.id);
+let old=(typeof ieInvoiceBody!=='undefined'&&ieInvoiceBody[current.id])||db.invoices.find(x=>x.id===current.id);
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)&&old&&!Array.isArray(old.items)&&!ieInvoiceBody[current.id]) old=null;
 if(old && JSON.stringify(old)!==JSON.stringify(current)){
 current.versions=Array.isArray(old.versions)?old.versions:[];
 {const __sn=JSON.parse(JSON.stringify(old));delete __sn.versions;current.versions.push({savedAt:new Date().toISOString(),snapshot:__sn});}current.versions.forEach(function(v){if(v&&v.snapshot)delete v.snapshot.versions});
@@ -13639,7 +14492,7 @@ if(current.versions.length>10) current.versions=current.versions.slice(-10);
 }
 let ix=db.invoices.findIndex(x=>x.id===current.id);
 const snap=JSON.parse(JSON.stringify(current));
-if(ix>=0) db.invoices[ix]=snap; else db.invoices.push(snap);
+if(ix>=0){ if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ ieInvoiceBody[current.id]=snap; db.invoices[ix]=ieInvoiceIndexEntry(snap); } else db.invoices[ix]=snap; } else { if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ ieInvoiceBody[current.id]=snap; db.invoices.push(ieInvoiceIndexEntry(snap)); } else db.invoices.push(snap); }
 saveDB();
 try{heldRefresh();}catch(e){}
 }
@@ -13691,7 +14544,8 @@ function heldRender(){
  }).join(''):'<tr><td colspan="4" class="center">Koi held bill nahi hai.</td></tr>';
  var hint=id('heldHint'); if(hint) hint.textContent=oldN?('⚠️ '+oldN+' bill 1 din se zyada purane hain. Zaroorat na ho to Delete kar do.'):'';
 }
-function heldResume(idv){
+async function heldResume(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b) return; }
  var x=db.invoices.find(function(i){return i.id===idv&&i.held}); if(!x) return;
  if(current&&current.id===idv){ closeModal('heldModal'); return; }
  if(current&&current.status!=='Finalized'){
@@ -13705,7 +14559,8 @@ function heldResume(idv){
 
  current=c; closeModal('heldModal'); openEditor(); heldRefresh();
 }
-function heldDelete(idv){
+async function heldDelete(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b) return; }
  var ix=db.invoices.findIndex(function(i){return i.id===idv&&i.held}); if(ix<0) return;
  var x=db.invoices[ix];
  if(!confirm('Held bill '+(x.invoiceNumber||'')+' (₹ '+money(x.totals&&x.totals.grand)+') delete karna hai?\nYeh "Deleted Bills" me chala jayega.')) return;
@@ -14407,7 +15262,8 @@ return `<tr>
 renderTrash();
 renderDuplicates();
 }
-function deleteInvoice(idv){
+async function deleteInvoice(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b) return; }
 if(!confirm('Delete this bill? It will move to Deleted Bills and can be restored later.')) return;
 let ix=db.invoices.findIndex(i=>i.id===idv); if(ix<0) return;
 let x=db.invoices[ix];
@@ -14445,7 +15301,7 @@ let ix=db.deletedInvoices.findIndex(i=>i.id===idv); if(ix<0) return;
 let x=db.deletedInvoices[ix];
 delete x.deletedAt;
 const clashed=resolveInvoiceNumberClash(x.invoiceNumber,x.id,'Trash se restore karte waqt isi number ka naya invoice pehle se ban chuka tha');
-db.invoices.push(x);
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ ieInvoiceBody[x.id]=x; db.invoices.push(ieInvoiceIndexEntry(x)); } else db.invoices.push(x);
 db.deletedInvoices.splice(ix,1);
 migrateReceiptNumbers();
 saveDB(); renderHistory(); renderDuplicates();
@@ -14457,7 +15313,8 @@ let ix=db.deletedInvoices.findIndex(i=>i.id===idv); if(ix<0) return;
 db.deletedInvoices.splice(ix,1);
 saveDB(); renderTrash();
 }
-function editInvoice(idv){
+async function editInvoice(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b){ alert('Invoice nahi mili.'); return; } }
 let x=db.invoices.find(i=>i.id===idv); if(!x) return;
 current=JSON.parse(JSON.stringify(x));
 if(!current.taxType) current.taxType='auto';
@@ -14499,10 +15356,11 @@ function recDueList(){
 const today=new Date().toISOString().slice(0,10);
 return (db.invoices||[]).filter(x=>x.status==='Finalized'&&x.recurring&&x.recurring.on&&x.recurring.next&&x.recurring.next<=today);
 }
-function recAsk(){
+async function recAsk(){
 const L=recDueList(); if(!L.length) return;
 const names=L.slice(0,6).map(x=>'• '+((x.customer&&x.customer.name)||'Customer')+' — '+x.invoiceNumber+' ('+x.recurring.next+')').join('\n');
 if(!confirm('🔁 '+L.length+' recurring bill ban\'ne baaki hain:\n\n'+names+(L.length>6?'\n…':'')+'\n\nAbhi Draft bana dun? (Finalize aap khud karoge)')) return;
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ await Promise.all(L.map(function(__x){ return ieEnsureInvoice(__x.id); })); }
 L.forEach(x=>{
 const n=JSON.parse(JSON.stringify(x)), at=x.recurring.next;
 n.id=crypto.randomUUID(); n.status='Draft'; n.date=at; n.createdAt=new Date().toISOString(); n.updatedAt=n.createdAt;
@@ -14521,8 +15379,10 @@ if(window.__recAsked||!db||!Array.isArray(db.invoices)||!db.invoices.length) ret
 window.__recAsked=true; setTimeout(recAsk,700);
 }
 var __spOrig=showPage; showPage=function(){ var r=__spOrig.apply(this,arguments); try{recMaybe()}catch(e){} return r };
+if(!window.__ieSplitShowPageWrapped){ window.__ieSplitShowPageWrapped=true; var __ieSpOrig2=showPage; showPage=function(id,btn){ if(typeof ieSplitGatePage==='function'&&ieSplitGatePage(id,btn)) return; return __ieSpOrig2.apply(this,arguments); }; }
 
-function duplicateInvoice(idv){
+async function duplicateInvoice(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b){ alert('Invoice nahi mili.'); return; } }
 let x=db.invoices.find(i=>i.id===idv); if(!x) return;
 current=JSON.parse(JSON.stringify(x));
 current.id=crypto.randomUUID();
@@ -14536,7 +15396,8 @@ current.dueDate='';
 if(!current.taxType) current.taxType='auto';
 openEditor();
 }
-function archiveInvoice(idv){
+async function archiveInvoice(idv){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(idv); if(!__b) return; }
 if(!confirm('Archive this invoice?')) return;
 let x=db.invoices.find(i=>i.id===idv); if(!x) return;
 x.status='Archived'; saveDB(); renderHistory();
@@ -14899,7 +15760,8 @@ if(!w){alert('Popup blocked — allow popups for print.');return;}
 w.document.write(html); w.document.close();
 }
 let paymentModalInvoiceId=null;
-function openPaymentModal(invId){
+async function openPaymentModal(invId){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(invId); if(!__b) return; }
 const inv=db.invoices.find(x=>x.id===invId); if(!inv) return;
 if(!paymentEligible(inv)){alert('Sirf Finalized invoices pe payment record ho sakti hai. Pehle invoice Finalize karo.');return;}
 paymentModalInvoiceId=invId;
@@ -15881,7 +16743,11 @@ rate:Number(r.rate||0),gst:Number(r.gst||0),taxable:Number(r.taxable||0),amount:
 return rows;
 }
 let historyCustomerId=null;
-function openCustomerHistory(cid){
+async function openCustomerHistory(cid){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){
+var __cust=(db.customers||[]).find(function(x){ return x.id===cid; });
+if(__cust){ var __ids=customerInvoices(__cust).map(function(x){ return x.id; }); for(var __i=0;__i<__ids.length;__i+=10){ await Promise.all(__ids.slice(__i,__i+10).map(function(__id){ return ieEnsureInvoice(__id); })); } }
+}
 historyCustomerId=cid;
 const from=id('custHistFrom'), to=id('custHistTo'), q=id('custHistSearch'), sortEl=id('custHistSort');
 if(from) from.value=''; if(to) to.value=''; if(q) q.value=''; if(sortEl) sortEl.value='date_desc';
@@ -19118,11 +19984,11 @@ const prior=db.invoices.some(y=>y.status==='Finalized'&&(y.customerId||('n:'+Str
 if(prior)repeatCount++; else newCount++;});
 id('anaNewRepeat').innerHTML=seen.size?svgPieChart([{label:'New Customers',value:newCount},{label:'Repeat Customers',value:repeatCount}],{colors:['#818cf8','#34d399']}):'<p class="sub">Koi data nahi.</p>';
 const itemMap={};
-inv.forEach(x=>(x.items||[]).forEach(r=>{if(!r.itemId)return; if(!itemMap[r.itemId])itemMap[r.itemId]={name:r.itemName,qty:0,amount:0}; itemMap[r.itemId].qty+=Number(r.qty||0); itemMap[r.itemId].amount+=Number(r.amount||0);}));
+inv.forEach(x=>(typeof ieSplitRows==='function'?ieSplitRows(x):(x.items||[])).forEach(r=>{if(!r.itemId)return; if(!itemMap[r.itemId])itemMap[r.itemId]={name:r.itemName,qty:0,amount:0}; itemMap[r.itemId].qty+=Number(r.qty||0); itemMap[r.itemId].amount+=Number(r.amount||0);}));
 const bestItems=Object.values(itemMap).sort((a,b)=>b.amount-a.amount).slice(0,10);
 id('anaBestItems').innerHTML=bestItems.length?`<div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Qty Sold</th><th>Revenue</th></tr></thead><tbody>${bestItems.map((it,i)=>`<tr><td>${i+1}</td><td>${esc(it.name)}</td><td>${it.qty}</td><td>₹ ${money(it.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="sub">Is period me koi sale nahi.</p>';
 const soldMap={};
-db.invoices.filter(x=>x.status==='Finalized').forEach(x=>(x.items||[]).forEach(r=>{if(!r.itemId)return; if(!soldMap[r.itemId])soldMap[r.itemId]={qty:0,last:''}; soldMap[r.itemId].qty+=Number(r.qty||0); if(!soldMap[r.itemId].last||x.date>soldMap[r.itemId].last)soldMap[r.itemId].last=x.date;}));
+db.invoices.filter(x=>x.status==='Finalized').forEach(x=>(typeof ieSplitRows==='function'?ieSplitRows(x):(x.items||[])).forEach(r=>{if(!r.itemId)return; if(!soldMap[r.itemId])soldMap[r.itemId]={qty:0,last:''}; soldMap[r.itemId].qty+=Number(r.qty||0); if(!soldMap[r.itemId].last||x.date>soldMap[r.itemId].last)soldMap[r.itemId].last=x.date;}));
 const ninetyAgo=new Date(); ninetyAgo.setDate(ninetyAgo.getDate()-90);
 window._slowBase=(db.items||[]).filter(it=>it.active!==false&&!(it.isPremium&&it.premiumInactive)).filter(it=>{const s=soldMap[it.id]; return !s||new Date(s.last)<ninetyAgo;}).map(it=>{const stk=Number(it.stock)||0; return {name:it.name,qty:soldMap[it.id]?soldMap[it.id].qty:0,last:soldMap[it.id]?soldMap[it.id].last:'',stock:stk,value:stk*(Number(it.purchaseRate)||0)};});
 window._slowLimit=100; window._slowQ=''; if(!window._slowMode) window._slowMode='stock';
@@ -19287,7 +20153,8 @@ if(kind==='share') IEPDF.sharePdfs(items,function(){shareInvoice();});
 else IEPDF.savePdfs(items);
 });
 }
-function histPdfAction(kind,invId){
+async function histPdfAction(kind,invId){
+if(typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){ var __b=await ieEnsureInvoice(invId); if(!__b){ alert('Invoice nahi mili.'); return; } }
 const inv=db.invoices.find(i=>i.id===invId); if(!inv){alert('Invoice nahi mili.');return;}
 const labels=['Original for Recipient','Duplicate for Transporter','Triplicate for Supplier'];
 let order=[];
@@ -19533,7 +20400,15 @@ outstandingTotal:backupOutstandingTotal(db.invoices),
 receiptCounter:Number(db.receiptCounter)||1
 }};
 }
-function backupJSON(){downloadBlob(JSON.stringify(buildBackupObject(),null,2),'IE-BILLING-COMPLETE-BACKUP.json','application/json')}
+async function backupJSON(){
+try{
+if(typeof ieSplitAssembleFullDb==='function'&&typeof ieSplitIsActive==='function'&&ieSplitIsActive(currentCompanyId)){
+var __full=await ieSplitAssembleFullDb();
+if(__full){ var __oldDb=db; db=__full; try{ downloadBlob(JSON.stringify(buildBackupObject(),null,2),'IE-BILLING-COMPLETE-BACKUP.json','application/json'); } finally { db=__oldDb; } return; }
+}
+}catch(e){ console.warn('split backup assembly failed, using current db',e); }
+downloadBlob(JSON.stringify(buildBackupObject(),null,2),'IE-BILLING-COMPLETE-BACKUP.json','application/json')
+}
 function restoreExtraBackupData(x){
 const mergeById=(key)=>{
 if(!Array.isArray(db[key])) db[key]=[];
@@ -26247,6 +27122,7 @@ RSG.exec=function(mode,num){
     /* 3. cloud succeeded -> local */
     db=nd;
     try{ localStorage.setItem(KEY+'_'+cid,JSON.stringify(nd)); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){}
+    try{ if(typeof ieSplitAfterReset==='function') ieSplitAfterReset(cid); }catch(e){}
     /* 4. audit record in cloud (best effort) */
     try{ fbDb.collection('users').doc(currentUser.uid).collection('resetAudit').doc(cid+'_'+Date.now()).set({companyId:cid,mode:mode,at:Date.now(),by:currentUser.email||'',counts:c,resetVersion:rv}).catch(function(){}); }catch(e){}
     ui('Reset Complete','Your data has been reset successfully. The app will now reload.','Reload Now',function(){ location.reload(); });
@@ -26283,6 +27159,7 @@ RSG.execDelete=function(){
   try{ clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); __fsVer++; }catch(e){}
   fbDb.collection('users').doc(uid).collection('companies').get().then(function(snap){
     var b=fbDb.batch(); snap.docs.forEach(function(d){ b.delete(d.ref); }); return b.commit();
+  }).then(function(){ var __ids=[]; try{ __ids=Object.keys((userProfile&&userProfile.companies)||{}); }catch(e){} return Promise.allSettled(__ids.map(function(cid){ try{ if(typeof ieSplitDeleteCompanyDocs==='function') return ieSplitDeleteCompanyDocs(cid).catch(function(){}); }catch(e){} return Promise.resolve(0); }));
   }).then(function(){ return fbDb.collection('publicProfiles').doc(uid).set({name:'Deleted account 🚫',userId:'',photoURL:'',companyNames:[],companyGstins:[],connectionUids:[],deleted:true,deletedAt:Date.now()}); })
   .then(function(){ return fbDb.collection('users').doc(uid).delete(); })
   .then(function(){
@@ -26313,6 +27190,7 @@ RSG.execDeleteCompany=function(id,name){
   var wasCur=String(currentCompanyId||'')===String(id);
   if(wasCur){ try{ clearTimeout(fsSaveTimer); clearTimeout(fsRetryTimer); __fsVer++; }catch(e){} }
   fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(id).delete()
+  .then(function(){ try{ if(typeof ieSplitDeleteCompanyDocs==='function') return ieSplitDeleteCompanyDocs(id).catch(function(){}); }catch(e){} })
   .then(function(){
     if(userProfile&&userProfile.companies) delete userProfile.companies[id];
     try{ syncCompanySearchFields(); }catch(e){}
