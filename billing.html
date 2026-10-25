@@ -3182,7 +3182,7 @@ if(!state||!state.enabled||!currentCompanyId) return;
 const catKeys=Object.keys(state.categories||{});
 if(!catKeys.length) return;
 const CACHE_KEY='masterInventoryCache_v2:'+catKeys.slice().sort().join(',');
-const CACHE_MS=60*60*1000;
+const CACHE_MS=24*60*60*1000;
 function applyDocs(docs){
 const categories=(db.settings&&db.settings.invPremium&&db.settings.invPremium.categories)||{};
 let changed=false;
@@ -3842,6 +3842,69 @@ if(typeof loadProfileUI==='function') loadProfileUI();
 })
 .catch(e=>alert('Delete nahi ho paya: '+(e.message||e)));
 }
+function ieCloudStampKey(id){ return 'IE_CLOUDAT_'+id; }
+function ieCloudStampGet(id){ try{ return Number(localStorage.getItem(ieCloudStampKey(id)))||0; }catch(e){ return 0; } }
+function ieCloudStampSet(id,ts){ try{ if(ts>0) localStorage.setItem(ieCloudStampKey(id),String(ts)); }catch(e){} }
+function ieCacheDecision(hasLocal,hasPending,localStamp,cloudStamp){
+if(!hasLocal) return 'full-fallback';
+if(hasPending) return 'full-fallback';
+if(!localStamp) return 'full-fallback';
+if(!cloudStamp) return 'full-fallback';
+if(cloudStamp===localStamp) return 'skip';
+if(cloudStamp>localStamp) return 'download';
+return 'keep-local';
+}
+function ieCacheApplyOk(companyId,guardVer,guardDb){
+try{
+if(currentCompanyId!==companyId) return false;
+if(typeof __fsVer!=='undefined'&&__fsVer!==guardVer) return false;
+if(typeof db!=='undefined'&&db!==guardDb) return false;
+if(iePendGet(companyId)) return false;
+return true;
+}catch(e){ return false; }
+}
+async function ieCloudStampFetch(companyId){
+const sb=(typeof supabaseClient!=='undefined'?supabaseClient:null);
+if(!sb) throw new Error('no supabase client');
+const uid=(typeof currentUser!=='undefined'&&currentUser)?currentUser.uid:null;
+if(!uid) throw new Error('no user');
+const q=await sb.from('fs_documents').select('upd:data->>updatedAt').eq('collection_path','users/'+uid+'/companies').eq('doc_id',companyId).maybeSingle();
+if(q.error) throw q.error;
+const row=q.data||{};
+let v=row.upd;
+if(v===undefined||v===null){ for(const k in row){ if(k.indexOf('updatedAt')>=0){ v=row[k]; break; } } }
+const n=Number(v);
+return n>0?n:0;
+}
+function ieCacheApplyCloud(companyId,loaded,cloudUpdatedAt,cloudResetVersion){
+try{ const lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(cloudResetVersion>lv) localStorage.setItem('IE_RESETV_'+companyId,String(cloudResetVersion)); }catch(e){}
+try{ localStorage.setItem(KEY+'_'+companyId,JSON.stringify(loaded)); }catch(e){}
+if(cloudUpdatedAt>0) ieCloudStampSet(companyId,cloudUpdatedAt);
+db=loaded;
+try{ if(typeof refreshAll==='function') refreshAll(); }catch(e){}
+try{ if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile(); }catch(e){}
+}
+async function ieCacheFirstVerify(companyId,guardVer,guardDb){
+try{
+if(typeof navigator!=='undefined'&&navigator.onLine===false) return 'offline';
+if(typeof currentUser==='undefined'||!currentUser) return 'no-user';
+const localStamp=ieCloudStampGet(companyId);
+let cloudStamp=0;
+try{ cloudStamp=await ieCloudStampFetch(companyId); }catch(e){ cloudStamp=0; }
+const dec=ieCacheDecision(true,iePendGet(companyId),localStamp,cloudStamp);
+if(dec==='skip') return 'skipped';
+if(dec==='keep-local') return 'kept-local';
+const snap=await fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
+if(!snap.exists||!snap.data()||!snap.data().data) return 'no-cloud-row';
+let loaded=null;
+try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ return 'parse-failed'; }
+const cu=Number(snap.data().updatedAt)||0;
+const crv=Number(snap.data().resetVersion)||0;
+if(!ieCacheApplyOk(companyId,guardVer,guardDb)) return 'discarded';
+ieCacheApplyCloud(companyId,loaded,cu,crv);
+return 'applied';
+}catch(e){ return 'error'; }
+}
 function coOpenCompany(companyId,preloadedDb){
 window.__coLoading=true;
 let opened=false;
@@ -3871,12 +3934,15 @@ return true;
 };
 if(!preloadedDb && navigator.onLine===false && useLocal()) return;
 currentCompanyId=companyId;
-const __dataGet=preloadedDb?null:fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
+const __loc0=(!preloadedDb&&navigator.onLine!==false&&!iePendGet(companyId)&&hasLocal())?ieLocalDb(companyId):null;
+const __cacheFirst=!!__loc0&&ieCloudStampGet(companyId)>0;
+const __dataGet=(__cacheFirst||preloadedDb)?null:fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
 if(__dataGet) __dataGet.catch(()=>{});
 const openIt=()=>{
 if(opened) return;
 currentCompanyId=companyId;
 if(preloadedDb){ proceed(preloadedDb); return; }
+if(__cacheFirst){ proceed(__loc0); try{ ieCacheFirstVerify(companyId,__fsVer,db); }catch(e){} return; }
 const get=__dataGet||fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId).get();
 withTimeout(get,hasLocal()?4000:15000).then(snap=>{
 if(opened) return;
@@ -3884,6 +3950,7 @@ let loaded=null;
 if(snap.exists && snap.data() && snap.data().data){
 try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
 }
+try{ const __cu0=Number((snap.exists&&snap.data()&&snap.data().updatedAt)||0); if(__cu0>0) ieCloudStampSet(companyId,__cu0); }catch(e){}
 try{ const __rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0), __lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(__rv>__lv){ iePendSet(companyId,false); localStorage.removeItem(KEY+'_'+companyId); localStorage.setItem('IE_RESETV_'+companyId,String(__rv)); } }catch(e){}
 if(iePendGet(companyId)){
 const loc=ieLocalDb(companyId);
@@ -4783,7 +4850,7 @@ chatCloseMenu();
 chatBindBodyHandlers();
 if(chatUnsub) chatUnsub();
 chatUnsub=fbDb.collection('chats').doc(chatConnId).collection('messages')
-.orderBy('createdAt','asc').limit(200)
+.orderBy('createdAt','asc').limit(100)
 .onSnapshot(snap=>{
 const msgs=[]; snap.forEach(d=>msgs.push({id:d.id,...d.data()}));
 lastChatMsgsAll=msgs;
@@ -23238,7 +23305,7 @@ function dayLabel(ts){var n=new Date(),s=new Date(n.getFullYear(),n.getMonth(),n
 function sync(uids){
 Object.keys(P.idx).forEach(function(u){if(uids.indexOf(u)<0){P.idx[u].unsub&&P.idx[u].unsub();delete P.idx[u]}});
 uids.forEach(function(u){if(P.idx[u])return;var o=P.idx[u]={cid:connDocId(me(),u),msgs:[],unsub:null};
-o.unsub=fbDb.collection('chats').doc(o.cid).collection('messages').orderBy('createdAt','desc').limit(80).onSnapshot(function(s){var a=[];s.forEach(function(d){a.push(Object.assign({id:d.id},d.data()))});o.msgs=a.reverse();queue()},function(){})})}
+o.unsub=fbDb.collection('chats').doc(o.cid).collection('messages').orderBy('createdAt','desc').limit(50).onSnapshot(function(s){var a=[];s.forEach(function(d){a.push(Object.assign({id:d.id},d.data()))});o.msgs=a.reverse();queue()},function(){})})}
 function queue(){clearTimeout(P.rt);P.rt=setTimeout(function(){var c=$('chats');if(c&&!c.classList.contains('hidden'))render()},120)}
 function vis(u){var o=P.idx[u];if(!o)return[];var h=chatGetHidden(o.cid);return h.size?o.msgs.filter(function(m){return!h.has(m.id)}):o.msgs}
 function info(u){var ms=vis(u),last=ms[ms.length-1],ra=prefs().read[u]||0;
@@ -23380,7 +23447,7 @@ else if(k==='add'){if(g.admin!==me())toast('Sirf admin member add kar sakta hai'
 else if(k==='leave')gLeave()})}
 function gOpen(id){var g=G.list.filter(function(x){return x.id===id})[0];if(!g)return;gDom();G.cur=id;prefs().read['g_'+id]=Date.now();save();
 var b=$('cpxGBody');b.innerHTML='';delete b.dataset.n;gHead();$('cpxGM').classList.add('show');
-if(G.mu)G.mu();G.mu=fbDb.collection('groups').doc(id).collection('messages').orderBy('createdAt','asc').limitToLast(200).onSnapshot(function(s){var a=[];s.forEach(function(d){a.push(Object.assign({id:d.id},d.data()))});gRender(a)},function(){})}
+if(G.mu)G.mu();G.mu=fbDb.collection('groups').doc(id).collection('messages').orderBy('createdAt','asc').limitToLast(100).onSnapshot(function(s){var a=[];s.forEach(function(d){a.push(Object.assign({id:d.id},d.data()))});gRender(a)},function(){})}
 function gClose(){if(G.mu){G.mu();G.mu=null}var m=$('cpxGM');if(m)m.classList.remove('show');if(G.cur){prefs().read['g_'+G.cur]=Date.now();save()}G.cur=null;queue()}
 function gRender(ms){var b=$('cpxGBody');if(!b)return;var near=b.scrollHeight-b.scrollTop-b.clientHeight<120,first=!b.dataset.n,last='',h='';
 ms.forEach(function(m){if(m.createdAt){var d=dayLabel(m.createdAt);if(d!==last){last=d;h+='<div class="cpx-day">'+d+'</div>'}}
