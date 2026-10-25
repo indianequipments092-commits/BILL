@@ -3601,6 +3601,17 @@ html+=`<button type="button" class="co-card new" style="--i:${ids.length}" oncli
   </button>`;
 grid.innerHTML=html;
 }
+function ieComposeLegacyAddress(addr1,addr2,city,state){
+  var a1=String(addr1||'').trim(), a2=String(addr2||'').trim(), ct=String(city||'').trim(), st=String(state||'').trim();
+  var cs=[ct,st].filter(Boolean).join(', ');
+  return [a1,a2,cs].filter(Boolean).join('\n');
+}
+function ieAddrFillFromSettings(s){
+  s=s||{};
+  var a1=String(s.addr1||'').trim(), a2=String(s.addr2||'').trim(), ct=String(s.city||'').trim();
+  if(!a1 && !a2 && !ct && String(s.address||'').trim()){ a1=String(s.address||''); }
+  return {addr1:a1,addr2:a2,city:ct};
+}
 function coOpenForm(editId){
 const editing=!!editId;
 document.getElementById('coFormTitle').textContent=editing?'Edit Company':'Create Company';
@@ -3615,7 +3626,9 @@ document.getElementById('coBusinessType').value='';
 document.getElementById('coFirmType').value='';
 document.getElementById('coOwnerName').value='';
 document.getElementById('coOwnerNick').value='';
-document.getElementById('coAddress').value='';
+document.getElementById('coAddr1').value='';
+document.getElementById('coAddr2').value='';
+document.getElementById('coCity').value='';
 document.getElementById('coState').value='';
 document.getElementById('coPhone').value='';
 document.getElementById('coEmail').value='';
@@ -3637,9 +3650,9 @@ document.getElementById('coBusinessType').value=quick.businessType||'';
 const __tok=(window.__coFormTok=(window.__coFormTok||0)+1);
 window.__coFormReady=false;
 const __btn=document.getElementById('coSubmitBtn');
-const __fldIds=['coName','coGstin','coFirmType','coOwnerName','coOwnerNick','coAddress','coState','coPhone','coEmail','coEmail2','coPrefix','coBankName','coAccName','coAccNo','coIfsc','coPan','coUpiId'];
+const __fldIds=['coName','coGstin','coFirmType','coOwnerName','coOwnerNick','coAddr1','coAddr2','coCity','coState','coPhone','coEmail','coEmail2','coPrefix','coBankName','coAccName','coAccNo','coIfsc','coPan','coUpiId'];
 const __setF=(idd,v)=>{ const el=document.getElementById(idd); if(el) el.value=v||''; };
-const __fillFrom=(s)=>{ __setF('coName',s.company||quick.name); __setF('coGstin',s.gstin||quick.gstin); __setF('coFirmType',s.firmType); __setF('coOwnerName',s.ownerName); __setF('coOwnerNick',s.ownerNick); __setF('coAddress',s.address); __setF('coState',s.state); __setF('coPhone',s.phone); __setF('coEmail',s.email); __setF('coEmail2',s.email2); coShowEmail2(!!s.email2); __setF('coPrefix',s.prefix||'IE'); __setF('coBankName',s.bankName); __setF('coAccName',s.accName); __setF('coAccNo',s.accNo); __setF('coIfsc',s.ifsc); __setF('coPan',s.pan); __setF('coUpiId',s.upiId); };
+const __fillFrom=(s)=>{ __setF('coName',s.company||quick.name); __setF('coGstin',s.gstin||quick.gstin); __setF('coFirmType',s.firmType); __setF('coOwnerName',s.ownerName); __setF('coOwnerNick',s.ownerNick); const __af=ieAddrFillFromSettings(s); __setF('coAddr1',__af.addr1); __setF('coAddr2',__af.addr2); __setF('coCity',__af.city); __setF('coState',s.state); __setF('coPhone',s.phone); __setF('coEmail',s.email); __setF('coEmail2',s.email2); coShowEmail2(!!s.email2); __setF('coPrefix',s.prefix||'IE'); __setF('coBankName',s.bankName); __setF('coAccName',s.accName); __setF('coAccNo',s.accNo); __setF('coIfsc',s.ifsc); __setF('coPan',s.pan); __setF('coUpiId',s.upiId); };
 const __snapVals={};
 const __takeSnap=()=>{ __fldIds.forEach(idd=>{ const el=document.getElementById(idd); __snapVals[idd]=el?el.value:null; }); };
 const __failMsg=()=>{ if(__localUsed) return; const m=document.getElementById('coFormMsg'); if(m){ m.textContent='Details load nahi ho payi — net check karke form band karke dobara kholo. (Khali save rokne ke liye Save band hai)'; m.className='auth-msg err'; } };
@@ -3658,7 +3671,7 @@ const s=parsed.settings||{};
 if(!__localUsed){ __fillFrom(s); }
 else{
 const F2=(idd,v)=>{ const el=document.getElementById(idd); if(!el) return; if(el.value===(__snapVals[idd]||'') || el.value==='') el.value=v||''; };
-F2('coName',s.company||quick.name); F2('coGstin',s.gstin||quick.gstin); F2('coFirmType',s.firmType); F2('coOwnerName',s.ownerName); F2('coOwnerNick',s.ownerNick); F2('coAddress',s.address); F2('coState',s.state); F2('coPhone',s.phone); F2('coEmail',s.email);
+F2('coName',s.company||quick.name); F2('coGstin',s.gstin||quick.gstin); F2('coFirmType',s.firmType); F2('coOwnerName',s.ownerName); F2('coOwnerNick',s.ownerNick); const __af2=ieAddrFillFromSettings(s); F2('coAddr1',__af2.addr1); F2('coAddr2',__af2.addr2); F2('coCity',__af2.city); F2('coState',s.state); F2('coPhone',s.phone); F2('coEmail',s.email);
 { const el=document.getElementById('coEmail2'); if(el && (el.value===(__snapVals['coEmail2']||'') || el.value==='')){ el.value=s.email2||''; coShowEmail2(!!s.email2); } }
 F2('coPrefix',s.prefix||'IE'); F2('coBankName',s.bankName); F2('coAccName',s.accName); F2('coAccNo',s.accNo); F2('coIfsc',s.ifsc); F2('coPan',s.pan); F2('coUpiId',s.upiId);
 }
@@ -3704,8 +3717,11 @@ const businessType=document.getElementById('coBusinessType').value;
 const firmType=document.getElementById('coFirmType').value;
 const ownerName=document.getElementById('coOwnerName').value.trim();
 const ownerNick=document.getElementById('coOwnerNick').value.trim();
-const address=document.getElementById('coAddress').value.trim();
+const addr1=document.getElementById('coAddr1').value.trim();
+const addr2=document.getElementById('coAddr2').value.trim();
+const city=document.getElementById('coCity').value.trim();
 const state=document.getElementById('coState').value.trim();
+const address=ieComposeLegacyAddress(addr1,addr2,city,state);
 const phone=document.getElementById('coPhone').value.trim();
 const email=document.getElementById('coEmail').value.trim();
 const email2=document.getElementById('coEmail2').value.trim();
@@ -3746,7 +3762,7 @@ submitBtn.textContent='Save & Continue';
 return;
 }
 if(editId){
-const __formSet={company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+const __formSet={company:name,gstin,address,addr1,addr2,city,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
 let __base=null, __baseOpen=false;
 if(currentCompanyId===editId && typeof db!=='undefined' && db){ __base=db; __baseOpen=true; }
 if(!__base){ try{ __base=ieLocalDb(editId); }catch(e){} }
@@ -3793,14 +3809,14 @@ const snap=await __withTo(ref.get(),15000,'Company ka data load hone me time zya
 if(snap.exists && snap.data() && snap.data().data){ try{ parsed=normalizeDB(JSON.parse(snap.data().data)); }catch(e){} }
 }
 if(!parsed) throw new Error('Company ka purana data nahi mila (na phone me, na cloud par) — data safety ke liye save roka gaya hai. Net ON karke form dobara kholo.');
-parsed.settings={...(parsed.settings||{}),company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+parsed.settings={...(parsed.settings||{}),company:name,gstin,address,addr1,addr2,city,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
 if(typeof ieSplitIsMigratedCached==='function'&&ieSplitIsMigratedCached(editId)) throw new Error('Company migrated — please open the company once before editing its details, so the latest data loads.');
 await __withTo(ref.set({data:JSON.stringify(parsed),updatedAt:Date.now()},{merge:true}),20000,'Save hone me time zyada lag gaya — net slow hai, dobara try karo.');
 userProfile.companies=userProfile.companies||{};
 userProfile.companies[editId]={name,gstin,businessType};
 syncCompanySearchFields();
 if(currentCompanyId===editId && typeof db!=='undefined' && db && db.settings){
-db.settings={...db.settings,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+db.settings={...db.settings,company:name,gstin,address,addr1,addr2,city,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
 try{ saveDB(); }catch(e){}
 if(typeof loadSettingsUI==='function') loadSettingsUI();
 if(typeof renderUserChipAndProfile==='function') renderUserChipAndProfile();
@@ -3819,7 +3835,7 @@ return;
 }
 const companyId=fbDb.collection('users').doc(currentUser.uid).collection('companies').doc().id;
 const newDb=emptyDB();
-newDb.settings={...DEFAULT_SETTINGS,company:name,gstin,address,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
+newDb.settings={...DEFAULT_SETTINGS,company:name,gstin,address,addr1,addr2,city,state,phone,email,prefix,bankName,accName,accNo,ifsc,pan,upiId,firmType,ownerName,ownerNick,email2};
 fbDb.collection('users').doc(currentUser.uid).collection('companies').doc(companyId)
 .set({data:JSON.stringify(newDb),updatedAt:Date.now()})
 .then(()=>{
@@ -7927,7 +7943,7 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
     <h2 id="coFormTitle">Create Company</h2>
     <input type="hidden" id="coEditId" value="">
     <div class="auth-field"><label>Company Name *</label><input id="coName" placeholder="e.g. ABC Enterprises"></div>
-    <div class="auth-field"><label>GSTIN</label><div style="display:flex;gap:6px;align-items:stretch"><input id="coGstin" placeholder="24CNXPS9976F1ZU" oninput="gstinFieldCheck('coGstin')" style="font-family:monospace;text-transform:uppercase;flex:1;min-width:0"><button type="button" id="coGstin_vbtn" onclick="gstinVerifyUI('coGstin',{name:'coName',address:'coAddress',state:'coState'})" style="padding:0 14px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;min-height:38px">Verify</button></div><div id="coGstin_err" class="gst-msg"></div></div>
+    <div class="auth-field"><label>GSTIN</label><div style="display:flex;gap:6px;align-items:stretch"><input id="coGstin" placeholder="24CNXPS9976F1ZU" oninput="gstinFieldCheck('coGstin')" style="font-family:monospace;text-transform:uppercase;flex:1;min-width:0"><button type="button" id="coGstin_vbtn" onclick="gstinVerifyUI('coGstin',{name:'coName',address:'coAddr1',state:'coState'})" style="padding:0 14px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;white-space:nowrap;min-height:38px">Verify</button></div><div id="coGstin_err" class="gst-msg"></div></div>
     <div class="auth-field"><label>Business Type</label>
       <select id="coBusinessType">
         <option value="">— Select —</option>
@@ -7950,7 +7966,9 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
     </div>
     <div class="auth-field"><label>Owner / Director Name <span style="font-weight:400;color:var(--text-muted)">(reports ke header me)</span></label><input id="coOwnerName" placeholder="e.g. Surendra Kumar Patel"></div>
     <div class="auth-field"><label>Owner Nickname <span style="font-weight:400;color:var(--text-muted)">(shown on quotations and documents)</span></label><input id="coOwnerNick" placeholder="e.g. Raj Bhai"></div>
-    <div class="auth-field"><label>Address</label><input id="coAddress" placeholder="Company address"></div>
+    <div class="auth-field"><label>Address Line 1</label><input id="coAddr1" placeholder="Shop / building / street"></div>
+    <div class="auth-field"><label>Address Line 2 <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label><input id="coAddr2" placeholder="Area / landmark"></div>
+    <div class="auth-field"><label>City</label><input id="coCity" placeholder="e.g. Lucknow"></div>
     <div class="auth-field"><label>State</label><input id="coState" placeholder="e.g. GUJARAT"></div>
     <div class="auth-field"><label>Phone</label><input id="coPhone" placeholder="+91 ..."></div>
     <div class="auth-field"><label>Email</label><input id="coEmail" placeholder="company@example.com"></div>
@@ -9669,7 +9687,9 @@ var ph=document.getElementById('pfPhoto');if(ph)new MutationObserver(pf2Update).
     <div class="section-title">Business details</div>
     <div class="grid g3">
       <div><label>Company Name</label><input id="setCompany" value=""></div>
-      <div><label>Full Address</label><input id="setAddress" value=""></div>
+      <div><label>Address Line 1</label><input id="setAddr1" value=""></div>
+      <div><label>Address Line 2 (optional)</label><input id="setAddr2" value=""></div>
+      <div><label>City</label><input id="setCity" value=""></div>
       <div><label>State</label><input id="setState" onblur="autoStateCode(this,id('setStateCode'))" value=""></div>
       <div><label>State Code</label><input id="setStateCode" inputmode="numeric" maxlength="2" placeholder="e.g. 24"></div>
       <div><label>GST (Invoice)</label><select id="setGstOn"><option value="0">GST OFF — sirf Bill of Supply</option><option value="1">GST ON — Invoice + Bill of Supply</option></select></div>
@@ -20232,7 +20252,10 @@ db.settings.company=id('setCompany')?.value||db.settings.company;
 if(id('setGstOn')) db.settings.gstEnabled=(id('setGstOn').value==='1');
 if(id('setLateFee')) db.settings.lateFeePct=Math.max(0,Number(id('setLateFee').value||0))||0;
 if(id('setLateGrace')) db.settings.lateGraceDays=Math.max(0,Math.floor(Number(id('setLateGrace').value||0)))||0;
-db.settings.address=id('setAddress')?.value||'';
+db.settings.addr1=(id('setAddr1')?.value||'').trim();
+db.settings.addr2=(id('setAddr2')?.value||'').trim();
+db.settings.city=(id('setCity')?.value||'').trim();
+db.settings.address=ieComposeLegacyAddress(db.settings.addr1,db.settings.addr2,db.settings.city,id('setState')?.value||'');
 db.settings.state=id('setState')?.value||'';
 db.settings.stateCode=id('setStateCode')?.value||'';
 db.settings.gstin=id('setGSTIN')?.value||'';
@@ -20293,7 +20316,7 @@ try{prLoadUI();}catch(e){}
 try{tThemeGallerySync();}catch(e){}
 const set=(k,v)=>{const el=id(k); if(el) el.value=v??'';};
 pickDocTheme(s.docTheme||'2');
-set('setCompany',s.company); set('setAddress',s.address); set('setState',s.state); set('setStateCode',s.stateCode||'');
+set('setCompany',s.company); { const __af=ieAddrFillFromSettings(s); set('setAddr1',__af.addr1); set('setAddr2',__af.addr2); set('setCity',__af.city); } set('setState',s.state); set('setStateCode',s.stateCode||'');
 set('setGSTIN',s.gstin); set('setPhone',s.phone); set('setEmail',s.email);
 set('setGstOn',gstOn()?'1':'0'); set('setLateFee',s.lateFeePct||0); set('setLateGrace',s.lateGraceDays||0); set('setPrefix',s.prefix); set('setStart',s.start); set('setFY',fyForDate(new Date()));
 set('setGeminiKey',getGeminiKey());
@@ -23636,7 +23659,7 @@ actions().forEach(function(a){ var h=lc(a.k+' '+a.kw); R.push({t:'act',o:a,ti:lc
 return R;
 }
 var XKW={showPlanOverlay:'subscription plan upgrade renew golden silver paid billing pricing premium',openOffersPage:'offer offers discount deal coupon',openReferralPage:'referral refer earn invite reward friend',helpModal:'help support contact faq guide',openLegalModal:'terms legal privacy policy conditions'};
-var SETKW={setCompany:'business firm name',setAddress:'location',setState:'gujarat',setStateCode:'code',setGSTIN:'gst tax gstin number verify',setPhone:'mobile contact number',setEmail:'mail id',setPrefix:'invoice number series format',setStart:'starting number index counter',setFY:'financial year fy',setGeminiKey:'ai hsn api key google gemini',setReminderEnabled:'email auto payment reminder',setReminderDays:'days due date reminder before',setUpiId:'upi vpa qr payment gpay phonepe paytm',setUpiName:'payee qr name'};
+var SETKW={setCompany:'business firm name',setAddr1:'location address line',setAddr2:'address line area',setCity:'city location',setState:'gujarat',setStateCode:'code',setGSTIN:'gst tax gstin number verify',setPhone:'mobile contact number',setEmail:'mail id',setPrefix:'invoice number series format',setStart:'starting number index counter',setFY:'financial year fy',setGeminiKey:'ai hsn api key google gemini',setReminderEnabled:'email auto payment reminder',setReminderDays:'days due date reminder before',setUpiId:'upi vpa qr payment gpay phonepe paytm',setUpiName:'payee qr name'};
 function clean(t){ return String(t||'').replace(/\s+/g,' ').replace(/^[^A-Za-z0-9]+/,'').trim(); }
 function hiddenIn(el,page){ for(var n=el;n&&n!==page;n=n.parentElement){ if(n.classList&&n.classList.contains('hidden')) return true; var st=n.getAttribute&&n.getAttribute('style'); if(st&&/display\s*:\s*none/i.test(st)) return true; } return false; }
 function extraBtns(R){
