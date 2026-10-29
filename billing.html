@@ -27853,7 +27853,7 @@ function t6MakeLarge(css){
 /* CSS for all 4 looks (thin x large) is scoped with zero-specificity :where(.t6vN); each page carries its own t6vN class, so every document can have its own look in the same print/preview */
 var _t6css=null,_t6cssK='';
 /* Theme 6 only: tighter rows/line-height to save vertical space (Theme 7 unchanged) */
-var T6_TIGHT='.t6pg{line-height:1.2}.t6hl>div{padding:3px 6px}.t6it th{padding:3px 3px}.t6it td{line-height:1.12}.t6cont{padding:4px 6px}.t6aw{padding:3px 6px}.t6tw{padding:2px 6px}';
+var T6_TIGHT='.t6pg{line-height:1.2}.t6hl>div{padding:3px 6px}.t6it th{padding:3px 3px}.t6it td{line-height:1.12}.t6cont{padding:4px 6px}.t6aw{padding:3px 6px}.t6tw{padding:2px 6px}.t6hl b.n{line-height:1.08}.t6hl small{line-height:1.05}';
 function t6Scope(css,vn,first){
  var out='',re=/([^{}]+)\{([^{}]*)\}/g,m;
  while((m=re.exec(css))){
