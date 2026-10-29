@@ -2752,14 +2752,14 @@ async function ipRunAction(kind,rows,single){
   if(!rows.length){ ipMsg('ipBrowseCount','Kuch badalne layak item nahi mila (status pehle se wahi hai).'); return; }
   const n=rows.length, label=single?('"'+rows[0].name+'"'):(n+' item');
   if(kind==='off'){
-    if(!confirm(label+' Off karna hai?\n\nUsers ki company se: jo item kabhi use nahi hua wo hat jayega; jo bill/stock/rate me use hua hai wo sirf chhup jayega (purana record safe rahega). Kabhi bhi On kar sakte ho.')) return;
+    if(!confirm(label+' Off karna hai?\n\nUsers ki company me ye item sirf chhup jayega (delete nahi hoga). Kabhi bhi On kar sakte ho.')) return;
   } else if(kind==='on'){
     if(!confirm(label+' On karna hai?\n\nYe users ki company me dobara aa jayenge / dikhne lagenge.')) return;
   } else if(kind==='restore'){
     if(!confirm(label+' Recycle Bin se wapas lana hai?\n\nSafety ke liye wo "Off" state me aayenge. Phir On karoge tabhi users ko dikhenge.')) return;
   } else if(kind==='del'){
     if(single){
-      if(!confirm(label+' Delete (Recycle Bin) karna hai?\n\nUsers ki company se hat/chhup jayega. Bin se wapas la sakte ho.')) return;
+      if(!confirm(label+' Delete (Recycle Bin) karna hai?\n\nUsers ki company se bhi POORA delete ho jayega. Bin se master me wapas la sakte ho, par company ka item wapas nahi aayega (On karne par naya add hoga).')) return;
     } else {
       ipCsvDownload(rows,'master-delete-backup');
       const t=prompt(n+' item Delete (Recycle Bin) hone wale hain.\nBackup CSV download ho gayi hai.\n\nConfirm karne ke liye '+n+' type karo:');

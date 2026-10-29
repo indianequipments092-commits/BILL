@@ -3275,20 +3275,13 @@ async function invPremiumRetireItems(retired){
 if(__ipRetireBusy) return; __ipRetireBusy=true;
 try{
 const cid=currentCompanyId, guardDb=db;
-const byCode=new Map(); (db.items||[]).forEach(x=>{ if(x.isPremium&&x.itemCode&&!x.premiumRetired) byCode.set(x.itemCode,x); });
+const byCode=new Map(); (db.items||[]).forEach(x=>{ if(x.isPremium&&x.itemCode) byCode.set(x.itemCode,x); });
 const cands=[]; retired.forEach(m=>{ const it=byCode.get(m.id); if(it) cands.push(it); });
 if(!cands.length) return;
-const hide=[], maybe=[];
-cands.forEach(it=>{
-const touched=(Number(it.stock)||0)!==0||(Number(it.rate)||0)!==0||(Number(it.purchaseRate)||0)!==0||!!it.barcode||!!it.altUnit||!!it.size;
-(touched?hide:maybe).push(it);
-});
-const remove=[];
-if(maybe.length){
-let used=null;
-try{ used=await invPremiumUsedIdSet(); }catch(e){ console.warn('premium retire: usage scan failed, sirf chhupa rahe hain',e); used=null; }
-maybe.forEach(it=>{ if(used&&!used.has(String(it.id).toLowerCase())) remove.push(it); else hide.push(it); });
-}
+const hide=[], remove=[];
+// Rule (naya): Admin ne item 'Delete' kiya -> company se POORA hat jata hai (kisi bhi case me). 'Off' kiya -> sirf chhupta hai, kabhi delete nahi hota.
+const stat=new Map(retired.map(m=>[m.id,m.status]));
+cands.forEach(it=>{ if(stat.get(it.itemCode)==='deleted') remove.push(it); else if(!it.premiumRetired) hide.push(it); });
 if(currentCompanyId!==cid||db!==guardDb) return;
 hide.forEach(it=>{ it.premiumRetired=true; it.premiumInactive=true; });
 if(remove.length){ const rs=new Set(remove.map(x=>x.id)); db.items=(db.items||[]).filter(x=>!rs.has(x.id)); }
