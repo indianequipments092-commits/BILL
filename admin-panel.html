@@ -834,13 +834,15 @@ Hardware & Tools,Hand Tools,Spanners,Combination Spanner 8mm,Chrome vanadium,820
         <div style="flex:1;min-width:150px"><label style="font-size:11px;color:var(--mu)">Subcategory</label><select id="ipBrSub" onchange="ipBrSubChanged()" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--tx)"></select></div>
         <button class="btn ok" style="padding:12px 16px" onclick="ipLoadCatalog()"><svg class="ic"><use href="#ic-refresh"/></svg> Refresh</button>
         <button class="btn ok" style="padding:12px 16px" onclick="ipBackupAll()"><svg class="ic"><use href="#ic-save"/></svg> Backup All Items</button>
+        <div style="flex:1;min-width:150px"><label style="font-size:11px;color:var(--mu)">Status</label><select id="ipBrStatus" onchange="ipBrStatusChanged()" style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);background:rgba(255,255,255,.04);color:var(--tx)"><option value="live">Active + Off</option><option value="on">Sirf Active (On)</option><option value="off">Sirf Off</option><option value="bin">🗑 Recycle Bin</option></select></div>
       </div>
       <input id="ipBrowseSearch" placeholder="Search item code / name / HSN" oninput="ipBrSearch()">
       <div id="ipBrowseCount" style="font-size:12px;color:var(--mu);margin-bottom:8px;white-space:pre-wrap"></div>
+      <div id="ipBulkBar" class="hidden" style="position:sticky;top:0;z-index:5;background:#0f172a;border:1px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:10px"></div>
       <div class="overflow">
         <table>
-          <thead><tr><th>#</th><th>Code</th><th>Name</th><th>Category</th><th>HSN</th><th>Unit</th><th>GST%</th></tr></thead>
-          <tbody id="ipBrowseRows"><tr><td colspan="7">Loading…</td></tr></tbody>
+          <thead><tr><th><input type="checkbox" id="ipSelAll" onchange="ipSelPage(this.checked)" title="Is page ke sab select"></th><th>#</th><th>Code</th><th>Name</th><th>Category</th><th>HSN</th><th>Unit</th><th>GST%</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="ipBrowseRows"><tr><td colspan="10">Loading…</td></tr></tbody>
         </table>
         <div id="ipBrPager" style="display:flex;gap:10px;align-items:center;justify-content:center;padding:12px 0"></div>
       </div>
@@ -2252,9 +2254,9 @@ function ipRenderTree(){
     const subRows=Object.keys(subs).map(sc=>{
       const sub=subs[sc], subsubs=sub.subsubs||{};
       const subsubRows=Object.keys(subsubs).map(ss=>`
-        <div style="padding:5px 0 5px 44px;font-size:12px;color:var(--mu)">↳ ${esc(subsubs[ss].name)} <code>(${cc}${sc}${ss})</code> — ${subsubs[ss].nextSeq||1} item(s) so far</div>`).join('');
+        <div style="padding:5px 0 5px 44px;font-size:12px;color:var(--mu)">↳ ${esc(subsubs[ss].name)} <code>(${cc}${sc}${ss})</code> — ${(subsubs[ss].nextSeq||1)-1} item(s) bane ${ipTreeCtl(cc,sc,ss)}</div>`).join('');
       return `<div style="padding:6px 0 6px 22px">
-          <div style="font-size:13px;font-weight:700">${esc(sub.name)} <code style="font-weight:400;color:var(--mu)">(${cc}${sc})</code></div>
+          <div style="font-size:13px;font-weight:700">${esc(sub.name)} <code style="font-weight:400;color:var(--mu)">(${cc}${sc})</code> ${ipTreeCtl(cc,sc,'')}</div>
           ${subsubRows}
           <div style="display:flex;gap:8px;margin-top:6px">
             <input placeholder="Sub-subcategory name" id="ipSS_name_${cc}_${sc}" style="margin-bottom:0;max-width:200px;padding:8px 10px;font-size:12px">
@@ -2264,7 +2266,7 @@ function ipRenderTree(){
         </div>`;
     }).join('');
     return `<div class="card" style="margin-bottom:10px;padding:14px">
-        <div style="font-weight:800">${esc(cat.name)} <code style="font-weight:400;color:var(--mu)">(${cc})</code></div>
+        <div style="font-weight:800">${esc(cat.name)} <code style="font-weight:400;color:var(--mu)">(${cc})</code> ${ipTreeCtl(cc,'','')}</div>
         ${subRows}
         <div style="display:flex;gap:8px;margin-top:8px;padding-left:22px">
           <input placeholder="Subcategory name" id="ipS_name_${cc}" style="margin-bottom:0;max-width:200px;padding:8px 10px;font-size:12px">
@@ -2352,13 +2354,14 @@ function ipAddSingleItem(){
     catName:ipTree.categories[cc].name, subName:ipTree.categories[cc].subs[sc].name, subsubName:ipTree.categories[cc].subs[sc].subsubs[ss].name,
     createdAt:Date.now(), createdBy:auth.currentUser.email
   };
+  if(ipChainOffC(cc,sc,ss)){ item.status='off'; item.offReason='cat'; }
   ipMsg('ipsMsg','Saving…');
-  ipNextItemCode(cc,sc,ss).then(code=>{
+  ipDupExists(cc,sc,ss,name).then(dup=>{ if(dup) throw new Error('Ye item is sub-subcategory me pehle se hai (code '+dup+'). Duplicate nahi banaya.'); return ipNextItemCode(cc,sc,ss); }).then(code=>{
     return db.collection('masterInventory').doc(code).set(item).then(()=>code);
   }).then(code=>{
     ipMsg('ipsMsg','<svg class="ic"><use href="#ic-check"/></svg> Item save ho gaya. Code: '+code,true);
     document.getElementById('ipsName').value=''; document.getElementById('ipsDesc').value=''; document.getElementById('ipsHSN').value='';
-    ipCatalog=[]; // stale, reload next browse
+    ipCatalog=[]; ipBumpVersion(); // stale, reload next browse
   }).catch(e=>ipMsg('ipsMsg','<svg class="ic"><use href="#ic-x-circle"/></svg> '+e.message));
 }
 
@@ -2500,7 +2503,8 @@ async function ipBulkImport(){
             name:r.itemName, description:r.description, hsn:r.hsn, unit:r.unit, gst:r.gst,
             catCode:r.cc, subCode:r.sc, subsubCode:r.ss,
             catName:cat.name, subName:sub.name, subsubName:subsub.name,
-            createdAt:now, createdBy:auth.currentUser.email });
+            createdAt:now, createdBy:auth.currentUser.email,
+            ...(ipChainOffC(r.cc,r.sc,r.ss)?{status:'off',offReason:'cat'}:{}) });
         });
         try{ await batch.commit(); ok+=part.length; }
         catch(e){ errs.push('Batch '+(i/400+1)+' fail hua: '+e.message); }
@@ -2510,6 +2514,7 @@ async function ipBulkImport(){
   }
   ipCatalog=[];
   ipLoadTree();                             // counters + naya tree screen par refresh
+  if(ok>0) ipBumpVersion();
   let out='<svg class="ic"><use href="#ic-check"/></svg> '+ok+' item(s) import ho gaye.';
   if(made.cats||made.subs||made.subsubs) out+='\n<svg class="ic"><use href="#ic-user-plus"/></svg> Tree me naye bane: '+made.cats+' categor'+(made.cats===1?'y':'ies')+', '+made.subs+' subcategor'+(made.subs===1?'y':'ies')+', '+made.subsubs+' sub-subcategor'+(made.subsubs===1?'y':'ies')+'.';
   if(skipped) out+='\n↩️ '+skipped+' item(s) pehle se the, skip kiye.';
@@ -2537,7 +2542,7 @@ function ipBrSearch(){ clearTimeout(ipBrTimer); ipBrTimer=setTimeout(()=>{ ipBrP
 // Poora catalog ek baar load (1000 ke tukdon me) aur memory me rakho; filter/sort ab turant chalte hain.
 async function ipLoadCatalog(){
   if(ipBrLoading) return; ipBrLoading=true;
-  document.getElementById('ipBrowseRows').innerHTML='<tr><td colspan="7">Loading…</td></tr>';
+  document.getElementById('ipBrowseRows').innerHTML='<tr><td colspan="10">Loading…</td></tr>';
   try{
     const all=[]; let last=null;
     while(true){
@@ -2550,35 +2555,82 @@ async function ipLoadCatalog(){
       last=snap.docs[snap.docs.length-1];
     }
     ipCatalog=all; ipBrPage=0; ipRenderBrowse();
-  }catch(e){ document.getElementById('ipBrowseRows').innerHTML='<tr><td colspan="7">'+esc(e.message)+'</td></tr>'; }
+  }catch(e){ document.getElementById('ipBrowseRows').innerHTML='<tr><td colspan="10">'+esc(e.message)+'</td></tr>'; }
   ipBrLoading=false;
 }
 function ipBrGo(p){ ipBrPage=p; ipRenderBrowse(); document.getElementById('ipBrowseCount').scrollIntoView({block:'start'}); }
-function ipRenderBrowse(){
+function ipStat(i){ return i.status==='deleted'?'deleted':(i.status==='off'?'off':'on'); }
+let ipSel=new Set(), ipBrFiltered=[], ipBrSlice=[];
+function ipBrStatusChanged(){ ipBrPage=0; ipSel.clear(); ipRenderBrowse(); }
+function ipBrRows(){
   const q=(document.getElementById('ipBrowseSearch').value||'').toLowerCase();
   const words=q.split(/\s+/).filter(Boolean);
   const cc=document.getElementById('ipBrCat').value, sc=document.getElementById('ipBrSub').value;
-  const rows=ipCatalog.filter(i=>(!cc||i.catCode===cc) && (!sc||i.subCode===sc) &&
-    (!words.length || (()=>{
-      const hay=[i.id,i.name,i.hsn,i.catName,i.subName,i.subsubName,i.description,i.unit].map(v=>String(v||'').toLowerCase()).join(' ');
-      return words.every(w=>hay.includes(w));
-    })()));
+  const sv=(document.getElementById('ipBrStatus')||{}).value||'live';
+  return ipCatalog.filter(i=>{
+    if(i.purged) return false;
+    const st=ipStat(i);
+    if(sv==='live'&&st==='deleted') return false;
+    if(sv==='on'&&st!=='on') return false;
+    if(sv==='off'&&st!=='off') return false;
+    if(sv==='bin'&&st!=='deleted') return false;
+    if(cc&&i.catCode!==cc) return false;
+    if(sc&&i.subCode!==sc) return false;
+    if(!words.length) return true;
+    const hay=[i.id,i.name,i.hsn,i.catName,i.subName,i.subsubName,i.description,i.unit].map(v=>String(v||'').toLowerCase()).join(' ');
+    return words.every(w=>hay.includes(w));
+  });
+}
+function ipRenderBrowse(){
+  const rows=ipBrRows(); ipBrFiltered=rows;
+  const sv=(document.getElementById('ipBrStatus')||{}).value||'live';
   const pages=Math.max(1,Math.ceil(rows.length/IP_BR_PAGE)); if(ipBrPage>=pages) ipBrPage=pages-1;
-  const start=ipBrPage*IP_BR_PAGE, slice=rows.slice(start,start+IP_BR_PAGE);
-  ipMsg('ipBrowseCount', rows.length+' item(s) — page '+(ipBrPage+1)+' / '+pages, true);
-  document.getElementById('ipBrowseRows').innerHTML = slice.length ? slice.map((i,n)=>`
-    <tr>
+  const start=ipBrPage*IP_BR_PAGE, slice=rows.slice(start,start+IP_BR_PAGE); ipBrSlice=slice;
+  let cOn=0,cOff=0,cBin=0; ipCatalog.forEach(i=>{ if(i.purged) return; const st=ipStat(i); if(st==='on')cOn++; else if(st==='off')cOff++; else cBin++; });
+  ipMsg('ipBrowseCount', rows.length+' item(s) — page '+(ipBrPage+1)+' / '+pages+'\nTotal: ✅ On '+cOn+' · ⏸ Off '+cOff+' · 🗑 Bin '+cBin, true);
+  const badge=st=>st==='on'?'<span style="color:#34d399;font-weight:700">On</span>':st==='off'?'<span style="color:#fbbf24;font-weight:700">Off</span>':'<span style="color:#fb7185;font-weight:700">Bin</span>';
+  const bt='padding:4px 8px;font-size:12px;margin:0 2px';
+  document.getElementById('ipBrowseRows').innerHTML = slice.length ? slice.map((i,n)=>{
+    const st=ipStat(i), id=esc(i.id);
+    const acts = st==='deleted'
+      ? `<button class="btn ok" style="${bt}" title="Restore (Off me wapas)" onclick="ipRowAct('${id}','restore')">♻️</button><button class="btn ok" style="${bt}" title="Hamesha ke liye delete" onclick="ipRowAct('${id}','purge')">❌</button>`
+      : `<button class="btn ok" style="${bt}" title="Edit" onclick="ipEditItem('${id}')">✏️</button><button class="btn ok" style="${bt}" title="${st==='on'?'Off karo':'On karo'}" onclick="ipRowAct('${id}','${st==='on'?'off':'on'}')">⏻</button><button class="btn ok" style="${bt}" title="Delete (Recycle Bin)" onclick="ipRowAct('${id}','del')">🗑</button>`;
+    return `
+    <tr style="${st==='on'?'':'opacity:.6'}">
+      <td><input type="checkbox" ${ipSel.has(i.id)?'checked':''} onchange="ipRowSel('${id}',this.checked)"></td>
       <td>${start+n+1}</td>
-      <td><code>${esc(i.id)}</code></td>
+      <td><code>${id}</code></td>
       <td>${esc(i.name)}</td>
       <td style="font-size:11px;color:var(--mu)">${esc(i.catName)} › ${esc(i.subName)} › ${esc(i.subsubName)}</td>
       <td>${esc(i.hsn||'—')}</td>
       <td>${esc(i.unit||'—')}</td>
       <td>${esc(i.gst??'—')}%</td>
-    </tr>`).join('') : '<tr><td colspan="7">Koi item nahi mila.</td></tr>';
+      <td>${badge(st)}${st==='off'&&i.offReason==='cat'?'<div style="font-size:10px;color:var(--mu)">category se</div>':''}</td>
+      <td style="white-space:nowrap">${acts}</td>
+    </tr>`;}).join('') : '<tr><td colspan="10">Koi item nahi mila.</td></tr>';
   const pg=document.getElementById('ipBrPager');
   if(pg) pg.innerHTML = pages>1 ? `<button class="btn ok" ${ipBrPage===0?'disabled':''} onclick="ipBrGo(${ipBrPage-1})">‹ Prev</button><span style="font-size:12px;color:var(--mu)">${ipBrPage+1} / ${pages}</span><button class="btn ok" ${ipBrPage>=pages-1?'disabled':''} onclick="ipBrGo(${ipBrPage+1})">Next ›</button>` : '';
+  const all=document.getElementById('ipSelAll'); if(all) all.checked=slice.length>0&&slice.every(i=>ipSel.has(i.id));
+  ipRenderBulkBar(sv);
 }
+function ipRenderBulkBar(sv){
+  const bar=document.getElementById('ipBulkBar'); if(!bar) return;
+  const n=ipSel.size;
+  if(!n){ bar.classList.add('hidden'); bar.innerHTML=''; return; }
+  bar.classList.remove('hidden');
+  const b='padding:8px 12px;font-size:12px;margin:3px 4px 0 0';
+  const link='style="color:#60a5fa;cursor:pointer;margin-right:10px;font-size:12px;text-decoration:underline"';
+  const btns = sv==='bin'
+    ? `<button class="btn ok" style="${b}" onclick="ipBulkDo('restore')">♻️ Restore (${n})</button><button class="btn ok" style="${b}" onclick="ipBulkDo('purge')">❌ Hamesha ke liye delete</button>`
+    : `<button class="btn ok" style="${b}" onclick="ipBulkDo('off')">⏸ Off (${n})</button><button class="btn ok" style="${b}" onclick="ipBulkDo('on')">✅ On (${n})</button><button class="btn ok" style="${b}" onclick="ipBulkDo('del')">🗑 Delete (${n})</button>`;
+  bar.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">✔ ${n} item select hue</div>
+    <div><a ${link} onclick="ipSelPage(true)">Is page ke sab</a><a ${link} onclick="ipSelFilter()">Filter ke sabhi ${ipBrFiltered.length}</a><a ${link} onclick="ipSelClear()">Clear</a></div>
+    <div>${btns}</div>`;
+}
+function ipRowSel(id,on){ if(on) ipSel.add(id); else ipSel.delete(id); const all=document.getElementById('ipSelAll'); if(all) all.checked=ipBrSlice.length>0&&ipBrSlice.every(i=>ipSel.has(i.id)); ipRenderBulkBar((document.getElementById('ipBrStatus')||{}).value||'live'); }
+function ipSelPage(on){ ipBrSlice.forEach(i=>{ if(on) ipSel.add(i.id); else ipSel.delete(i.id); }); ipRenderBrowse(); }
+function ipSelFilter(){ ipBrFiltered.forEach(i=>ipSel.add(i.id)); ipRenderBrowse(); }
+function ipSelClear(){ ipSel.clear(); ipRenderBrowse(); }
 
 /* ---- Backup All Items: poora catalog CSV me download (import wale format me + Code column) ---- */
 async function ipBackupAll(){
@@ -2596,14 +2648,240 @@ async function ipBackupAll(){
       if(snap.size<1000) break;
     }
     const q_=v=>{ v=String(v??''); return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-    const head=['Code','Category','Subcategory','SubSubcategory','ItemName','Description','HSN','Unit','GST%'];
-    const lines=[head.join(',')].concat(all.map(i=>[i.id,i.catName,i.subName,i.subsubName,i.name,i.description,i.hsn,i.unit,i.gst].map(q_).join(',')));
+    const head=['Code','Category','Subcategory','SubSubcategory','ItemName','Description','HSN','Unit','GST%','Status'];
+    const lines=[head.join(',')].concat(all.filter(i=>!i.purged).map(i=>[i.id,i.catName,i.subName,i.subsubName,i.name,i.description,i.hsn,i.unit,i.gst,(i.status||'on')].map(q_).join(',')));
     const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download='master-catalog-backup-'+new Date().toISOString().slice(0,10)+'.csv';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
     ipMsg('ipBrowseCount','<svg class="ic"><use href="#ic-check"/></svg> Backup ho gaya — '+all.length+' item(s) download hue.',true);
   }catch(e){ ipMsg('ipBrowseCount','<svg class="ic"><use href="#ic-x-circle"/></svg> Backup fail: '+e.message); }
+}
+
+/* ===================== MASTER CATALOG — Off / Delete / Bin / Edit / Rename (naya) =====================
+   Item status (masterInventory/{code}.status): 'on' (ya khaali) | 'off' | 'deleted' (Recycle Bin).
+   offReason: 'item' (khud Off kiya) | 'cat' (category/subcategory Off hone se). Category On karne par sirf 'cat' wale wapas aate hain.
+   "Hamesha ke liye delete" doc ko hatata nahi, ek chhota tombstone chhodta hai ({status:'deleted',purged:true,...}) taaki
+   users ki app ko pata chale ki item hat chuka hai. Item code kabhi dobara use nahi hota (counter tree par hai).
+   Har badlav ke baad masterCategories/meta.version badalta hai -> user app ko pata chalta hai ki catalog dobara laana hai. */
+function ipBumpVersion(){
+  return db.collection('masterCategories').doc('meta').set({version:Date.now(),updatedAt:Date.now(),by:(auth.currentUser&&auth.currentUser.email)||''}).catch(e=>console.warn('catalog version bump failed',e));
+}
+function ipNode(cc,sc,ss){
+  const c=(ipTree.categories||{})[cc]; if(!c) return null; if(!sc) return c;
+  const s=(c.subs||{})[sc]; if(!s) return null; if(!ss) return s;
+  return (s.subsubs||{})[ss]||null;
+}
+function ipChainOffC(cc,sc,ss){
+  const c=(ipTree.categories||{})[cc]; if(!c) return false; if(c.off) return true;
+  const s=(c.subs||{})[sc]; if(!s) return false; if(s.off) return true;
+  const x=(s.subsubs||{})[ss]; return !!(x&&x.off);
+}
+function ipChainOff(i){ return ipChainOffC(i.catCode,i.subCode,i.subsubCode); }
+function ipTreeCtl(cc,sc,ss){
+  const node=ipNode(cc,sc,ss); if(!node) return '';
+  const off=!!node.off, bs='padding:2px 8px;font-size:11px;margin-left:6px', arg="'"+cc+"','"+(sc||'')+"','"+(ss||'')+"'";
+  return (off?'<span style="color:#fbbf24;font-weight:700;font-size:11px;margin-left:6px">⏸ OFF</span>':'')+
+    '<button class="btn ok" style="'+bs+'" title="Naam badlo" onclick="ipTreeRename('+arg+')">✏️</button>'+
+    '<button class="btn ok" style="'+bs+'" title="'+(off?'On karo':'Off karo')+'" onclick="ipTreeToggleOff('+arg+')">'+(off?'✅ On':'⏸ Off')+'</button>';
+}
+async function ipDupExists(cc,sc,ss,name){
+  const n=ipNorm(name);
+  let list=ipCatalog;
+  if(!list.length){ const snap=await db.collection('masterInventory').where('catCode','==',cc).get(); list=snap.docs.map(d=>({id:d.id,...d.data()})); }
+  const hit=list.find(x=>!x.purged&&x.status!=='deleted'&&x.catCode===cc&&x.subCode===sc&&x.subsubCode===ss&&ipNorm(x.name)===n);
+  return hit?hit.id:null;
+}
+async function ipEnsureCatalog(){
+  while(ipBrLoading) await new Promise(r=>setTimeout(r,200));
+  if(!ipCatalog.length) await ipLoadCatalog();
+  while(ipBrLoading) await new Promise(r=>setTimeout(r,200));
+}
+function ipDataOf(i){ const d={...i}; delete d.id; return d; }
+// Bahut saare docs ek saath: seedha Supabase upsert (300-300 ke tukde). Adapter ka batch ek-ek karke likhta hai, wo 9,000+ items par bahut dheema hota.
+async function ipWriteDocs(entries){
+  const CH=300, ts=new Date().toISOString();
+  for(let k=0;k<entries.length;k+=CH){
+    const part=entries.slice(k,k+CH).map(e=>({collection_path:'masterInventory',doc_id:e.id,data:e.data,updated_at:ts}));
+    const {error}=await supabaseClient.from('fs_documents').upsert(part,{onConflict:'collection_path,doc_id'});
+    if(error) throw error;
+    ipMsg('ipBrowseCount','Save ho raha hai… '+Math.min(k+CH,entries.length)+' / '+entries.length,true);
+  }
+}
+async function ipSetStatus(ids,status,reason){
+  if(!ids.length) return 0;
+  const map=new Map(ipCatalog.map(x=>[x.id,x])), by=auth.currentUser.email, now=Date.now(), ents=[], touched=[];
+  ids.forEach(id=>{
+    const it=map.get(id); if(!it) return;
+    const d=ipDataOf(it);
+    d.status=status; d.statusAt=now; d.statusBy=by;
+    if(status==='on'){ delete d.offReason; delete d.deletedAt; delete d.deletedBy; }
+    else if(status==='off'){ d.offReason=reason||'item'; delete d.deletedAt; delete d.deletedBy; }
+    else if(status==='deleted'){ d.deletedAt=now; d.deletedBy=by; }
+    ents.push({id,data:d}); touched.push([it,d]);
+  });
+  await ipWriteDocs(ents);
+  touched.forEach(([it,d])=>{ Object.keys(it).forEach(k=>{ if(k!=='id'&&!(k in d)) delete it[k]; }); Object.assign(it,d); });
+  await ipBumpVersion();
+  try{ logAdmin('master_'+status,ents.length+' item(s)'+(reason?' ['+reason+']':'')); }catch(e){}
+  return ents.length;
+}
+function ipCsvDownload(rows,fname){
+  const q_=v=>{ v=String(v??''); return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const head=['Code','Category','Subcategory','SubSubcategory','ItemName','Description','HSN','Unit','GST%','Status'];
+  const lines=[head.join(',')].concat(rows.map(i=>[i.id,i.catName,i.subName,i.subsubName,i.name,i.description,i.hsn,i.unit,i.gst,(i.status||'on')].map(q_).join(',')));
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=fname+'-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function ipRowAct(id,kind){ const it=ipCatalog.find(x=>x.id===id); if(it) ipRunAction(kind,[it],true); }
+function ipBulkDo(kind){
+  const map=new Map(ipCatalog.map(x=>[x.id,x]));
+  ipRunAction(kind,[...ipSel].map(id=>map.get(id)).filter(Boolean),false);
+}
+async function ipRunAction(kind,rows,single){
+  if(!requireSuper()) return;
+  const want={off:'on',on:'off',restore:'deleted',purge:'deleted'};
+  if(kind==='del') rows=rows.filter(r=>ipStat(r)!=='deleted'); else rows=rows.filter(r=>ipStat(r)===want[kind]);
+  if(kind==='on'){
+    const blocked=rows.filter(r=>ipChainOff(r));
+    if(blocked.length) alert(blocked.length+' item skip hue: unki category/subcategory abhi Off hai. Pehle Categories tab me use On karo.');
+    rows=rows.filter(r=>!ipChainOff(r));
+  }
+  if(!rows.length){ ipMsg('ipBrowseCount','Kuch badalne layak item nahi mila (status pehle se wahi hai).'); return; }
+  const n=rows.length, label=single?('"'+rows[0].name+'"'):(n+' item');
+  if(kind==='off'){
+    if(!confirm(label+' Off karna hai?\n\nUsers ki company se: jo item kabhi use nahi hua wo hat jayega; jo bill/stock/rate me use hua hai wo sirf chhup jayega (purana record safe rahega). Kabhi bhi On kar sakte ho.')) return;
+  } else if(kind==='on'){
+    if(!confirm(label+' On karna hai?\n\nYe users ki company me dobara aa jayenge / dikhne lagenge.')) return;
+  } else if(kind==='restore'){
+    if(!confirm(label+' Recycle Bin se wapas lana hai?\n\nSafety ke liye wo "Off" state me aayenge. Phir On karoge tabhi users ko dikhenge.')) return;
+  } else if(kind==='del'){
+    if(single){
+      if(!confirm(label+' Delete (Recycle Bin) karna hai?\n\nUsers ki company se hat/chhup jayega. Bin se wapas la sakte ho.')) return;
+    } else {
+      ipCsvDownload(rows,'master-delete-backup');
+      const t=prompt(n+' item Delete (Recycle Bin) hone wale hain.\nBackup CSV download ho gayi hai.\n\nConfirm karne ke liye '+n+' type karo:');
+      if(String(t||'').trim()!==String(n)){ alert('Cancel ho gaya — number match nahi hua.'); return; }
+    }
+  } else if(kind==='purge'){
+    ipCsvDownload(rows,'master-purge-backup');
+    const t=prompt(label+' HAMESHA ke liye delete hone wale hain (wapas nahi aayenge).\nBackup CSV download ho gayi hai.\n\nConfirm karne ke liye DELETE type karo:');
+    if(String(t||'').trim()!=='DELETE'){ alert('Cancel ho gaya.'); return; }
+  }
+  try{
+    ipMsg('ipBrowseCount','Kaam chal raha hai…',true);
+    if(kind==='purge'){
+      const by=auth.currentUser.email, now=Date.now();
+      await ipWriteDocs(rows.map(r=>({id:r.id,data:{status:'deleted',purged:true,catCode:r.catCode,subCode:r.subCode,subsubCode:r.subsubCode,deletedAt:r.deletedAt||now,statusAt:now,statusBy:by}})));
+      const gone=new Set(rows.map(r=>r.id));
+      ipCatalog=ipCatalog.filter(x=>!gone.has(x.id));
+      await ipBumpVersion();
+      try{ logAdmin('master_purge',n+' item(s)'); }catch(e){}
+    } else {
+      await ipSetStatus(rows.map(r=>r.id),({off:'off',on:'on',del:'deleted',restore:'off'})[kind],'item');
+    }
+  }catch(e){
+    ipMsg('ipBrowseCount','<svg class="ic"><use href="#ic-x-circle"/></svg> Fail hua: '+esc(e.message||e)+'\nDobara try karo (jo ho chuka wo wahi rahega).');
+    return;
+  }
+  ipSel.clear(); ipRenderBrowse();
+}
+
+/* ---- Item edit ---- */
+function ipEditClose(){ const w=document.getElementById('ipEditWrap'); if(w) w.remove(); }
+function ipEditItem(id){
+  const it=ipCatalog.find(x=>x.id===id); if(!it) return;
+  ipEditClose();
+  const w=document.createElement('div'); w.id='ipEditWrap';
+  w.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px';
+  w.innerHTML=`<div class="card" style="max-width:480px;width:100%;max-height:92vh;overflow:auto">
+    <div class="section-title">✏️ Item Edit — <code>${esc(it.id)}</code></div>
+    <p class="sub" style="margin-top:-4px">${esc(it.catName)} › ${esc(it.subName)} › ${esc(it.subsubName)}<br>Ye badlav naye users/companies ke liye hai. Jin companies me ye item pehle se hai unme purana naam/HSN/GST rehta hai (unke bills na bigden).</p>
+    <label style="font-size:11px;color:var(--mu)">Item name</label><input id="ipEdName" value="${esc(it.name)}">
+    <label style="font-size:11px;color:var(--mu)">Description</label><input id="ipEdDesc" value="${esc(it.description||'')}">
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">
+      <div><label style="font-size:11px;color:var(--mu)">HSN</label><input id="ipEdHsn" value="${esc(it.hsn||'')}"></div>
+      <div><label style="font-size:11px;color:var(--mu)">Unit</label><input id="ipEdUnit" value="${esc(it.unit||'pcs')}"></div>
+      <div><label style="font-size:11px;color:var(--mu)">GST %</label><input id="ipEdGst" type="number" value="${esc(it.gst??0)}"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ok" style="padding:12px 20px" onclick="ipEditSave('${esc(it.id)}')">Save</button><button class="btn ok" style="padding:12px 20px" onclick="ipEditClose()">Cancel</button></div>
+  </div>`;
+  document.body.appendChild(w);
+}
+async function ipEditSave(id){
+  const it=ipCatalog.find(x=>x.id===id); if(!it) return;
+  const g=k=>(document.getElementById(k).value||'').trim();
+  const name=g('ipEdName'); if(!name){ alert('Item name zaroori hai.'); return; }
+  if(ipNorm(name)!==ipNorm(it.name)){
+    const dup=ipCatalog.find(x=>x.id!==id&&!x.purged&&x.status!=='deleted'&&x.catCode===it.catCode&&x.subCode===it.subCode&&x.subsubCode===it.subsubCode&&ipNorm(x.name)===ipNorm(name));
+    if(dup&&!confirm('Is sub-subcategory me ye naam pehle se hai ('+dup.id+'). Phir bhi save karein?')) return;
+  }
+  const d=ipDataOf(it);
+  d.name=name; d.description=g('ipEdDesc'); d.hsn=g('ipEdHsn'); d.unit=g('ipEdUnit')||'pcs'; d.gst=Number(g('ipEdGst'))||0;
+  d.editedAt=Date.now(); d.editedBy=auth.currentUser.email;
+  try{
+    await ipWriteDocs([{id,data:d}]); Object.assign(it,d);
+    await ipBumpVersion(); try{ logAdmin('master_edit',id); }catch(e){}
+  }catch(e){ alert('Save nahi hua: '+(e.message||e)); return; }
+  ipEditClose(); ipRenderBrowse();
+}
+
+/* ---- Category / Subcategory / Sub-subcategory: Off-On aur Rename ---- */
+function ipTreeMatch(i,cc,sc,ss){ return !i.purged&&i.catCode===cc&&(!sc||i.subCode===sc)&&(!ss||i.subsubCode===ss); }
+async function ipTreeToggleOff(cc,sc,ss){
+  if(!requireSuper()) return;
+  const node=ipNode(cc,sc,ss); if(!node) return;
+  const turningOff=!node.off;
+  if(!turningOff){
+    const c=ipTree.categories[cc], s=sc?(c.subs||{})[sc]:null;
+    if((sc&&c.off)||(ss&&s&&s.off)){ alert('Pehle upar wali category/subcategory On karo.'); return; }
+  }
+  ipMsg('ipTreeMsg','Catalog check ho raha hai…',true);
+  try{ await ipEnsureCatalog(); }catch(e){ ipMsg('ipTreeMsg','Catalog load nahi hua: '+esc(e.message)); return; }
+  const affected=ipCatalog.filter(i=>ipTreeMatch(i,cc,sc,ss));
+  const nOn=affected.filter(i=>ipStat(i)==='on').length;
+  const msg=turningOff
+    ? '"'+node.name+'" Off karne par '+nOn+' active item Off honge.\n\nUsers ki company se: jo item use nahi hua wo hat jayega, jo use hua hai wo sirf chhup jayega. Is category ke naye items bhi Off hi banenge. Kabhi bhi On kar sakte ho.\n\nContinue?'
+    : '"'+node.name+'" On karna hai?\n\nIs category ke jo item category-Off ki wajah se band hue the wo wapas aa jayenge (jo aapne alag se khud Off kiye the wo Off hi rahenge).';
+  if(!confirm(msg)){ ipMsg('ipTreeMsg',''); return; }
+  try{
+    if(turningOff) node.off=true; else delete node.off;
+    await ipTreeRef().set(ipTree,{merge:true});
+    const targets = turningOff
+      ? affected.filter(i=>ipStat(i)==='on')
+      : affected.filter(i=>ipStat(i)==='off'&&i.offReason==='cat'&&!ipChainOff(i));
+    const done=await ipSetStatus(targets.map(x=>x.id),turningOff?'off':'on','cat');
+    await ipBumpVersion();
+    ipMsg('ipTreeMsg','<svg class="ic"><use href="#ic-check"/></svg> "'+esc(node.name)+'" '+(turningOff?'Off':'On')+' ho gaya — '+done+' item badle.',true);
+  }catch(e){
+    ipMsg('ipTreeMsg','<svg class="ic"><use href="#ic-x-circle"/></svg> Poora nahi hua: '+esc(e.message||e)+' — wahi button dobara dabao (safe hai).');
+  }
+  ipRenderTree(); if(!document.getElementById('ipTab-browse').classList.contains('hidden')) ipRenderBrowse();
+}
+async function ipTreeRename(cc,sc,ss){
+  const node=ipNode(cc,sc,ss); if(!node) return;
+  const nn=(prompt('Naya naam likho:',node.name)||'').trim();
+  if(!nn||nn===node.name) return;
+  const sibs=ss?ipTree.categories[cc].subs[sc].subsubs:(sc?ipTree.categories[cc].subs:ipTree.categories);
+  const me=ss||sc||cc;
+  if(Object.keys(sibs).some(k=>k!==me&&ipNorm(sibs[k].name)===ipNorm(nn))){ alert('Is naam ki entry yahan pehle se hai.'); return; }
+  ipMsg('ipTreeMsg','Rename ho raha hai…',true);
+  try{
+    await ipEnsureCatalog();
+    node.name=nn;
+    await ipTreeRef().set(ipTree,{merge:true});
+    const field=ss?'subsubName':(sc?'subName':'catName');
+    const affected=ipCatalog.filter(i=>ipTreeMatch(i,cc,sc,ss));
+    await ipWriteDocs(affected.map(i=>{ const d=ipDataOf(i); d[field]=nn; return {id:i.id,data:d}; }));
+    affected.forEach(i=>{ i[field]=nn; });
+    await ipBumpVersion(); try{ logAdmin('master_rename',cc+(sc||'')+(ss||'')+' -> '+nn); }catch(e){}
+    ipMsg('ipTreeMsg','<svg class="ic"><use href="#ic-check"/></svg> Naam badal gaya ('+affected.length+' item me bhi).',true);
+  }catch(e){
+    ipMsg('ipTreeMsg','<svg class="ic"><use href="#ic-x-circle"/></svg> Poora nahi hua: '+esc(e.message||e)+' — dobara rename karo (same naam).');
+  }
+  ipRenderTree();
 }
 
 // Category tree turant load karo taaki Single-Add/Bulk dropdown ready rahein.

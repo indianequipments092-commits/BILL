@@ -3013,7 +3013,7 @@ return `<p class="sub" style="margin-top:0">Common items (spanner, bolt, wire, p
 if(!invPremiumDraftCats) invPremiumDraftCats=JSON.parse(JSON.stringify(state.categories||{}));
 const cats=Object.keys(invPremiumDraftCats);
 const catNames=cats.map(c=>(masterCatTree&&masterCatTree.categories&&masterCatTree.categories[c]&&masterCatTree.categories[c].name)||c).join(', ');
-const chipsHtml=(masterCatTree&&masterCatTree.categories)?Object.keys(masterCatTree.categories).map(cc=>{
+const chipsHtml=(masterCatTree&&masterCatTree.categories)?Object.keys(masterCatTree.categories).filter(cc=>!(masterCatTree.categories[cc]&&masterCatTree.categories[cc].off)).map(cc=>{
 const sel=invPremiumDraftCats[cc], on=!!sel, part=on&&!sel.all;
 return `<button type="button" onclick="invPremiumToggleCat('${cc}')" style="cursor:pointer;padding:7px 12px;border-radius:20px;font-size:12px;border:1px solid ${on?'var(--primary)':'var(--border-color)'};background:${on?'var(--primary-glow)':'transparent'};color:var(--text-main)">${on?'✅':'⬜'} ${esc(masterCatTree.categories[cc].name)}${part?' (kuch sub)':''}</button>`;
 }).join(''):'';
@@ -3041,11 +3041,11 @@ if(!planAllows('inventoryPremium')){ showUpgradeModal('Inventory Premium'); retu
 if(!masterCatTree) await loadMasterCatTree();
 const state=(db.settings&&db.settings.invPremium)||{categories:{}};
 const cats=masterCatTree.categories||{};
-const body=Object.keys(cats).map(cc=>{
+const body=Object.keys(cats).filter(cc=>!(cats[cc]&&cats[cc].off)).map(cc=>{
 const cat=cats[cc];
 const chosen=state.categories&&state.categories[cc];
 const subs=cat.subs||{};
-const subHtml=Object.keys(subs).map(sc=>{
+const subHtml=Object.keys(subs).filter(sc=>!(subs[sc]&&subs[sc].off)).map(sc=>{
 const sub=subs[sc];
 const subChecked=chosen && (chosen.all || (chosen.subs&&chosen.subs.includes(sc)));
 return `<label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:12.5px;padding:4px 0 4px 22px;cursor:pointer">
@@ -3158,6 +3158,7 @@ if(byCode) byCode.set(m.id,local);
 } else {
 if(local.catCode!==cat.catCode || local.subCode!==cat.subCode) touched=true;
 Object.assign(local,cat);
+if(local.premiumRetired){ local.premiumRetired=false; touched=true; }
 if(local.premiumInactive){ local.premiumInactive=false; touched=true; }
 }
 return touched;
@@ -3167,6 +3168,7 @@ const st=db.settings&&db.settings.invPremium; if(!st) return;
 const cats=st.categories||{};
 (db.items||[]).forEach(it=>{
 if(!it.isPremium) return;
+if(it.premiumRetired){ it.premiumInactive=true; return; }
 if(!st.enabled){ it.premiumInactive=true; return; }
 if(!it.catCode) return;
 it.premiumInactive=!invPremiumCategoryMatches(it,cats);
@@ -3198,8 +3200,10 @@ function applyDocs(docs){
 const categories=(db.settings&&db.settings.invPremium&&db.settings.invPremium.categories)||{};
 let changed=false;
 const byCode=new Map(); (db.items||[]).forEach(x=>{ if(x.itemCode) byCode.set(x.itemCode,x); });
+const retiredList=[];
 docs.forEach(m=>{
 if(!invPremiumCategoryMatches(m,categories)) return;
+if(m.status==='off'||m.status==='deleted'){ retiredList.push(m); return; }
 const before=byCode.get(m.id);
 const wasNewOrRevived = invPremiumApplyItem(m,byCode);
 if(wasNewOrRevived || !before) changed=true;
@@ -3208,19 +3212,11 @@ const _b=(db.items||[]).filter(x=>x.isPremium&&x.premiumInactive).length;
 invPremiumApplyScope();
 const _a=(db.items||[]).filter(x=>x.isPremium&&x.premiumInactive).length;
 if(changed||_a!==_b){ saveDB(); renderInventory(); }
+if(retiredList.length) invPremiumRetireItems(retiredList);
 }
-if(!force){
+async function pullFresh(ver){
 try{
-const cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
-if(cached && cached.savedAt && (Date.now()-cached.savedAt)<CACHE_MS && Array.isArray(cached.docs)){
-applyDocs(cached.docs);
-return;
-}
-}catch(e){   }
-}
-(async()=>{
-try{
-// Supabase 1 request me max 1000 rows deta hai -> 1000-1000 ke pages me saare items lao
+// Supabase 1 request me max 1000 rows deta hai -> 1000-1000 ke pages me saare items lao (Off/Deleted bhi aate hain, taaki hatane ka pata chale)
 const docs=[], PAGE=1000;
 for(let from=0;;from+=PAGE){
 const {data,error}=await supabaseClient.from('fs_documents').select('doc_id,data')
@@ -3230,10 +3226,75 @@ if(error) throw error;
 (data||[]).forEach(r=>docs.push({id:r.doc_id,...r.data}));
 if(!data||data.length<PAGE) break;
 }
-try{ localStorage.setItem(CACHE_KEY, JSON.stringify({savedAt:Date.now(), docs})); }catch(e){   }
+try{ localStorage.setItem(CACHE_KEY, JSON.stringify({savedAt:Date.now(), version:(ver===undefined?null:ver), docs})); }catch(e){   }
 applyDocs(docs);
 }catch(err){ console.warn('Inventory Premium sync failed', err); }
+}
+if(!force){
+let cached=null;
+try{ cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){ cached=null; }
+if(cached && cached.savedAt && Array.isArray(cached.docs)){
+(async()=>{
+const age=Date.now()-cached.savedAt;
+let ver; // undefined = check fail (offline), null = admin ne abhi version nahi lagaya
+try{ const sn=await fbDb.collection('masterCategories').doc('meta').get(); ver=(sn.exists&&sn.data()&&Number(sn.data().version))||null; }catch(e){ ver=undefined; }
+const fresh = (ver===undefined||ver===null) ? age<CACHE_MS : (cached.version===ver && age<7*CACHE_MS);
+if(fresh){ applyDocs(cached.docs); return; }
+await pullFresh(ver);
 })();
+return;
+}
+}
+(async()=>{
+let ver; try{ const sn=await fbDb.collection('masterCategories').doc('meta').get(); ver=(sn.exists&&sn.data()&&Number(sn.data().version))||null; }catch(e){ ver=undefined; }
+await pullFresh(ver);
+})();
+}
+/* ===== Inventory Premium: admin ne item Off / Delete kiya -> company se hatao ya chhupao =====
+   Rule: jo item kabhi use nahi hua (stock 0, rate 0, kisi bill/purchase/quotation/koi bhi record me uska id nahi) -> company se hat jata hai.
+   Jo use ho chuka hai -> sirf chhup jata hai (premiumRetired), purane bills/ledger/stock bilkul safe. Pakka na ho (offline / section load nahi hua) -> chhupao, hatao mat. */
+let __ipRetireBusy=false;
+async function invPremiumUsedIdSet(){
+let whole=db;
+if(typeof ieSplitIsActive==='function'&&currentCompanyId&&ieSplitIsActive(currentCompanyId)){
+const names=['core','parties','inventory','purchases','documents','trash','duplicates','accounts'];
+for(let i=0;i<names.length;i++){ const ok=await ieEnsureSection(names[i]); if(!ok) throw new Error('section '+names[i]+' load nahi hua'); }
+const ids=(db.invoices||[]).map(x=>x.id);
+for(let j=0;j<ids.length;j+=10){ await Promise.all(ids.slice(j,j+10).map(id=>ieEnsureInvoice(id))); }
+const miss=ids.filter(id=>!ieInvoiceBody[id]);
+if(miss.length) throw new Error(miss.length+' invoice body load nahi hui');
+whole=ieSplitWholeFromAssembled(db,ieInvoiceBody);
+}
+const copy=Object.assign({},whole); delete copy.items;
+const txt=JSON.stringify(copy);
+const set=new Set(); const re=/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g; let m;
+while((m=re.exec(txt))) set.add(m[0].toLowerCase());
+return set;
+}
+async function invPremiumRetireItems(retired){
+if(__ipRetireBusy) return; __ipRetireBusy=true;
+try{
+const cid=currentCompanyId, guardDb=db;
+const byCode=new Map(); (db.items||[]).forEach(x=>{ if(x.isPremium&&x.itemCode&&!x.premiumRetired) byCode.set(x.itemCode,x); });
+const cands=[]; retired.forEach(m=>{ const it=byCode.get(m.id); if(it) cands.push(it); });
+if(!cands.length) return;
+const hide=[], maybe=[];
+cands.forEach(it=>{
+const touched=(Number(it.stock)||0)!==0||(Number(it.rate)||0)!==0||(Number(it.purchaseRate)||0)!==0||!!it.barcode||!!it.altUnit||!!it.size;
+(touched?hide:maybe).push(it);
+});
+const remove=[];
+if(maybe.length){
+let used=null;
+try{ used=await invPremiumUsedIdSet(); }catch(e){ console.warn('premium retire: usage scan failed, sirf chhupa rahe hain',e); used=null; }
+maybe.forEach(it=>{ if(used&&!used.has(String(it.id).toLowerCase())) remove.push(it); else hide.push(it); });
+}
+if(currentCompanyId!==cid||db!==guardDb) return;
+hide.forEach(it=>{ it.premiumRetired=true; it.premiumInactive=true; });
+if(remove.length){ const rs=new Set(remove.map(x=>x.id)); db.items=(db.items||[]).filter(x=>!rs.has(x.id)); }
+if(hide.length||remove.length){ saveDB(); renderInventory(); }
+}catch(e){ console.warn('premium retire failed',e); }
+finally{ __ipRetireBusy=false; }
 }
 function invPremiumIsNewBadge(it){
 return it.isPremium && it.premiumAddedAt && (Date.now()-it.premiumAddedAt) < NEW_BADGE_MS;
