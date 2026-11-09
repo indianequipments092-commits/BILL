@@ -801,9 +801,14 @@ body.pv-share .modal{z-index:300}
 #authOverlay .auth-sub{font-size:12.5px;margin:-4px 0 0}
 #authOverlay #authGoogleBtn{margin:0;height:clamp(42px,6.2vh,50px);padding:0;border-radius:15px;font-size:14px}
 #authOverlay .auth-divider{margin:0;font-size:9.5px;letter-spacing:1.5px;font-weight:600}
-#authOverlay .auth-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0;border-radius:15px}
-#authOverlay .auth-tabs::before{content:'';position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:11px;background:linear-gradient(135deg,#6366f1,#a855f7);box-shadow:0 6px 18px rgba(99,102,241,.5);transition:transform .35s cubic-bezier(.4,1.4,.5,1)}
+#authOverlay .auth-tabs{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin:0;border-radius:15px}
+#authOverlay .auth-tabs::before{content:'';position:absolute;top:4px;bottom:4px;left:4px;width:calc(33.333% - 4px);border-radius:11px;background:linear-gradient(135deg,#6366f1,#a855f7);box-shadow:0 6px 18px rgba(99,102,241,.5);transition:transform .35s cubic-bezier(.4,1.4,.5,1)}
 #authOverlay .auth-tabs:has(#authTabSignup.active)::before{transform:translateX(100%)}
+#authOverlay .auth-tabs:has(#authTabAuditor.active)::before{transform:translateX(200%)}
+#authAuditorBox{display:none}
+#authAuditorBox.show{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
+.auditor-banner{position:sticky;top:0;z-index:10000;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#7f1d1d;color:#fff;font-size:13px;font-weight:600;padding:8px 12px}
+.auditor-banner button{background:#fff;color:#7f1d1d;border:0;border-radius:8px;padding:5px 12px;font-weight:700;cursor:pointer}
 #authOverlay .auth-tab{position:relative;z-index:1;padding:0;height:clamp(34px,5vh,40px)}
 #authOverlay .auth-tab.active{background:none;box-shadow:none;color:#fff}
 #authFormBox,#authForgotBox.show{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
@@ -1837,15 +1842,23 @@ if(url) window.open(url,'_blank');
 }
 function authSwitchTab(tab){
 authTab=tab;
+var isAud=tab==='auditor';
 document.getElementById('authTabLogin').classList.toggle('active',tab==='login');
 document.getElementById('authTabSignup').classList.toggle('active',tab==='signup');
-document.getElementById('authSubmitBtn').querySelector('.btn-label').textContent=tab==='login'?'Log In':'Create Account';
+var audTab=document.getElementById('authTabAuditor'); if(audTab) audTab.classList.toggle('active',isAud);
+var gBtn=document.getElementById('authGoogleBtn'); if(gBtn) gBtn.style.display=isAud?'none':'';
+var dv=document.querySelector('#authOverlay .auth-divider'); if(dv) dv.style.display=isAud?'none':'';
+var fBox=document.getElementById('authFormBox'); if(fBox) fBox.style.display=isAud?'none':'';
+var aBox=document.getElementById('authAuditorBox'); if(aBox) aBox.classList.toggle('show',isAud);
+var fgBox=document.getElementById('authForgotBox'); if(fgBox) fgBox.classList.remove('show');
+if(!isAud){ document.getElementById('authSubmitBtn').querySelector('.btn-label').textContent=tab==='login'?'Log In':'Create Account'; }
 const h=document.getElementById('authHeading'), s=document.getElementById('authSubtext');
-if(h) h.textContent=tab==='login'?'Welcome back':'Create your account';
-if(s) s.textContent=tab==='login'?'Sign in to access your billing workspace':'Start managing your billing in minutes';
+if(h) h.textContent=isAud?'Auditor / CA Login':(tab==='login'?'Welcome back':'Create your account');
+if(s) s.textContent=isAud?'View-only access for audit':(tab==='login'?'Sign in to access your billing workspace':'Start managing your billing in minutes');
 document.getElementById('authMsg').textContent='';
-document.getElementById('authConfirmField').classList.toggle('hidden',tab==='login');
-document.getElementById('authRememberRow').classList.toggle('hidden',tab==='signup');
+var aMsg=document.getElementById('audMsg'); if(aMsg) aMsg.textContent='';
+document.getElementById('authConfirmField').classList.toggle('hidden',tab!=='signup');
+document.getElementById('authRememberRow').classList.toggle('hidden',tab!=='login');
 document.getElementById('authPasswordConfirm').value='';
 document.getElementById('authPassword').setAttribute('autocomplete',tab==='login'?'current-password':'new-password');
 const bar=document.getElementById('authStrengthBar'), lbl=document.getElementById('authStrengthLabel');
@@ -7889,6 +7902,7 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
       <div class="auth-tabs" id="authTabsRow">
         <button type="button" class="auth-tab active" id="authTabLogin" onclick="authSwitchTab('login')">Log In</button>
         <button type="button" class="auth-tab" id="authTabSignup" onclick="authSwitchTab('signup')">Sign Up</button>
+        <button type="button" class="auth-tab" id="authTabAuditor" onclick="authSwitchTab('auditor')">Auditor / CA</button>
       </div>
 
       <div id="authFormBox">
@@ -7922,6 +7936,35 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
         <button type="button" class="auth-submit" id="authSubmitBtn" onclick="authEmailSubmit()"><span class="btn-label">Log In</span><span class="auth-spinner"></span></button>
         <div class="auth-msg" id="authMsg"></div>
         <div class="auth-safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Encrypted connection · Your data stays private</div>
+      </div>
+
+      <div id="authAuditorBox">
+        <div class="auth-field">
+          <label>Owner Email</label>
+          <input type="email" id="audOwnerEmail" placeholder="Owner's email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
+        </div>
+        <div class="auth-field">
+          <label>Unique ID</label>
+          <input type="text" id="audUserId" placeholder="Owner's 10-digit Unique ID" inputmode="numeric" maxlength="10" autocomplete="off">
+        </div>
+        <div class="auth-field">
+          <label>Auditor Email</label>
+          <input type="email" id="audEmail" placeholder="Your email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
+        </div>
+        <div class="auth-field">
+          <label>Your Name</label>
+          <input type="text" id="audName" placeholder="Your name (shown in the audit log)" autocomplete="off">
+        </div>
+        <div class="auth-field auth-field-pass">
+          <label>Pass Key</label>
+          <input type="password" id="audPasskey" placeholder="Pass Key (IE-AUD-XXXX-XXXX-XXXX)" autocomplete="off">
+          <button type="button" class="auth-eye-btn" onclick="authToggleEye('audPasskey',this)" aria-label="Show pass key" tabindex="-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button type="button" class="auth-submit" id="audSubmitBtn" onclick="auditorLoginSubmit()"><span class="btn-label">Log In as Auditor</span><span class="auth-spinner"></span></button>
+        <div class="auth-msg" id="audMsg"></div>
+        <div class="auth-safe">View-only access · Nothing can be changed · All activity is logged</div>
       </div>
 
       <div id="authForgotBox">
@@ -25293,9 +25336,9 @@ function toast(m,c){var d=document.createElement('div');d.textContent=m;d.style.
 function cid(){try{return currentCompanyId||''}catch(e){return''}}
 function hash(s){var h=5381;s='ie|'+s;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)}
 function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=function(){var x;try{x=pre.apply(this,arguments)}catch(e){x=undefined}if(x===false)return;return o.apply(this,arguments)}}
-var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)'},
-DENY={owner:[],accountant:['settings','backup'],salesman:['acctExt','invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint']};
-function role(){try{var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
+var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)',auditor:'Auditor (view only)'},
+DENY={owner:[],accountant:['settings','backup'],salesman:['acctExt','invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint'],auditor:['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','invAdv','acctVouchers','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','chats']};
+function role(){try{if(window.__auditor)return'auditor';var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
 function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
 function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
 document.querySelectorAll('.sidebar .nav-group').forEach(function(g){var v=g.querySelectorAll('button[data-page]'),any=false;v.forEach(function(b){if(b.style.display!=='none')any=true});if(v.length)g.style.display=any?'':'none'})}
@@ -25373,7 +25416,7 @@ h='<div class="grid g3"><div><label>Search</label><input value="'+esc(q)+'" onin
 (L.length?L.slice(0,300).map(function(e){return'<tr><td>'+esc(new Date(e.t).toLocaleString('en-IN'))+'</td><td>'+esc(e.u)+'</td><td><span class="badge '+(e.a==='Deleted'?'unpaid':e.a==='Created'?'paid':'partial')+'">'+esc(e.a)+'</span></td><td>'+esc(e.k)+'</td><td>'+esc(e.n)+'</td><td style="min-width:260px;white-space:normal;line-height:1.5">'+((e.d&&e.d.length)?e.d.map(function(x){return'<div>'+esc(x)+'</div>'}).join(''):'<span class="sub">-</span>')+'</td></tr>'}).join(''):'<tr><td colspan="5" class="sub" style="text-align:center;padding:18px">Abhi koi entry nahi.</td></tr>')+'</tbody></table></div>'+(own&&L.length?'<div class="toolbar" style="margin-top:12px"><button class="btn danger" onclick="acctAuditClear()">Audit log saaf karo</button></div>':'')}
 else if(ct==='lock'){h='<div class="section-title">Period Lock</div><div class="sub" style="margin-bottom:12px">Is date tak (is date samet) ki invoice, purchase bill, payment aur voucher entries add, edit ya delete nahi ho sakengi. Owner par bhi lagta hai. Hatane ke liye khaali karke save karo.</div><div class="grid g3"><div><label>Lock date</label><input id="ctLock" type="date" value="'+esc(A().lockDate||'')+'"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveLock()">Save</button></div></div>'}
 else if(ct==='roles'){var nme='';try{nme=localStorage.getItem('IE_UNAME')||''}catch(e){}
-h='<div class="section-title">Is device ka role</div><div class="grid g3"><div><label>Naam (audit me dikhega)</label><input id="ctName" value="'+esc(nme)+'"></div><div><label>Role</label><select id="ctRoleSel">'+Object.keys(ROLES).map(function(k){return opt(k,ROLES[k],r)}).join('')+'</select></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveRole()">Save</button></div></div>'+
+h='<div class="section-title">Is device ka role</div><div class="grid g3"><div><label>Naam (audit me dikhega)</label><input id="ctName" value="'+esc(nme)+'"></div><div><label>Role</label><select id="ctRoleSel">'+Object.keys(ROLES).filter(function(k){return k!=='auditor'}).map(function(k){return opt(k,ROLES[k],r)}).join('')+'</select></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctSaveRole()">Save</button></div></div>'+
 '<div class="sub" style="margin:12px 0"><b>Owner:</b> sab kuch. <b>Accountant:</b> Settings aur Backup chhodkar sab. <b>Salesman:</b> sirf sales side (accounts, purchase, analytics, settings band), delete band. <b>Viewer:</b> sirf dekh sakta hai, kuch save nahi hota.</div>'+
 (function(){if(OS===null)osLoad();var o=OS||{has_pin:false,rec:[]},leg=!!A().rolePin;
 function rf(k,l){var set=o.rec.indexOf(k)>-1;return'<div><label>'+l+(set?' <span style="color:#10b981">&#10003; set hai</span>':'')+'</label><input id="ctRc_'+k+'" type="password" autocomplete="off" placeholder="'+(set?'naya daalo to badlega':'')+'"></div>'}
@@ -25382,6 +25425,7 @@ h2+='<div class="sub" style="margin-top:12px">'+(o.has_pin?'PIN server (Supabase
 h2+='<div class="section-title" style="margin-top:22px">Recovery PIN / Password</div><div class="sub" style="margin-bottom:12px">Inme se koi bhi ek Owner mode kholta hai aur PIN reset kar deta hai. Ye server me hash hokar jaate hain, baad me dikhte nahi, isliye kahin likh lo. Kam se kam 4 akshar. Khaali = badlao nahi.</div>';
 if(!o.has_pin)h2+='<div class="sub">Pehle Owner PIN set karo, phir recovery set hoga.</div>';
 else h2+='<div class="grid g3">'+rf('pin1','Recovery PIN 1')+rf('pin2','Recovery PIN 2')+rf('pw1','Password 1')+rf('pw2','Password 2')+'<div><label>Owner PIN ya Recovery (confirm)</label><input id="ctRcCur" type="password" autocomplete="off"></div></div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn primary" onclick="acctSaveRecovery()">Recovery save</button><a href="#" style="color:#fca5a5;font-weight:600" onclick="acctClearRecovery();return false">Sab recovery hatao</a></div>';
+h2+=(typeof auditorPasskeySectionHtml==='function'?auditorPasskeySectionHtml():'');
 h2+='<div class="sub" style="margin-top:12px">Dhyan: role har device par alag chunna padta hai aur ye app ke andar ki rok hai, bank jaisi security nahi.</div>';return h2})()}
 else{h='<div class="section-title">Owner ban jao</div><div class="grid g3"><div><label>Owner PIN</label><input id="ctOwnPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctToOwner()">Owner mode</button></div></div><div class="sub" style="margin-top:14px">PIN bhool gaye ya chal nahi raha? <a href="#" style="color:#a5b4fc;font-weight:600" onclick="acctPinReset();return false">PIN reset karo</a> (Recovery PIN ya Password daalna padega).</div>'}
 $('ctBody').innerHTML=h};
@@ -25734,7 +25778,7 @@ function q3(n){n=r3(n);return(n<0?'<span style="color:#f43f5e">':'<span>')+n.toL
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function today(){return ymd(new Date())}
 function tt(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
-function role(){try{return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
+function role(){try{if(window.__auditor)return'auditor';return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
 function ro(){if(role()==='viewer'){tt('View-only role: changes allowed nahi','#f43f5e');return true}return false}
 function lk(d){var l=A().lockDate;if(l&&d&&String(d)<=l){alert('Period lock: '+l+' tak ki entries add / edit / delete nahi ho sakti. Owner Audit & Security page se lock hata sakta hai.');return true}return false}
 function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
@@ -25909,7 +25953,7 @@ function m2(n){n=r2(n);return(n<0?'-':'')+money(Math.abs(n))}
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function today(){return ymd(new Date())}
 function tt(m,c){var d=document.createElement('div');d.textContent=m;d.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:'+(c||'#10b981')+';color:#fff;padding:10px 18px;border-radius:12px;font-weight:600;font-size:13px';document.body.appendChild(d);setTimeout(function(){d.remove()},2200)}
-function role(){try{return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
+function role(){try{if(window.__auditor)return'auditor';return localStorage.getItem('IE_ROLE')||'owner'}catch(e){return'owner'}}
 function ro(){if(role()==='viewer'){tt('View-only role: changes allowed nahi','#f43f5e');return true}return false}
 function lk(d){var l=A().lockDate;if(l&&d&&String(d)<=l){alert('Period lock: '+l+' tak ki entries add / edit / delete nahi ho sakti. Owner Audit & Security page se lock hata sakta hai.');return true}return false}
 function th(a){return'<thead><tr>'+a.map(function(x){return'<th'+(x.charAt(0)==='>'?' class="right"':'')+'>'+esc(x.replace(/^>/,''))+'</th>'}).join('')+'</tr></thead>'}
@@ -26897,7 +26941,7 @@ if(window.RSG) return;
 var $=function(i){return document.getElementById(i)};
 var busy=false, cur=null;
 
-function role(){ try{ return localStorage.getItem('IE_ROLE')||'owner'; }catch(e){ return 'owner'; } }
+function role(){ try{ if(window.__auditor) return 'auditor'; return localStorage.getItem('IE_ROLE')||'owner'; }catch(e){ return 'owner'; } }
 function cidk(){ try{ return window.__rsgCid||currentCompanyId||'default'; }catch(e){ return 'default'; } }
 function lockDate(){ try{ return (db&&db.accounts&&db.accounts.lockDate)||''; }catch(e){ return ''; } }
 function legacyPin(){ try{ return (db&&db.accounts&&db.accounts.rolePin)||''; }catch(e){ return ''; } }
@@ -29586,5 +29630,442 @@ if(typeof _b==='function')window.bindInvoice=bindInvoice=function(){var r=_b.app
 setInterval(all,400);
 })();
 </script>
+<script id="auditor-js">
+/* ==========================================================================
+   Auditor / CA login — view-only auditor access via an owner-created Pass Key.
+   Added 2026-11-09 (feature/auditor-login). All UI strings here are English.
+   - Auditor login is a SEPARATE tab on the login page. It is NOT a Supabase
+     Auth session: currentUser stays null and ensureUserProfile() is never
+     called for an auditor. The session lives in window.__auditor (memory)
+     plus sessionStorage (same tab only, no Remember Me).
+   - The auditor's data comes only from the SECURITY DEFINER RPC
+     auditor_get_data(). No direct reads of another user's fs_documents rows.
+   - Enforcement is app-level (same as the existing role system): saves are
+     blocked at saveDB/fsScheduleSave, deletes and admin actions are wrapped,
+     and the auditor DENY list blocks navigation. It is not bank-grade
+     security — the server RPCs are the real gate for the Pass Key itself.
+   - Until supabase/migrations/20261109_auditor_passkeys.sql has been run in
+     the Supabase SQL Editor, every auditor RPC fails and the UI shows a
+     clear "not set up yet" message instead of logging anyone in.
+   ========================================================================== */
+(function(){
+'use strict';
+function audEl(id){ return document.getElementById(id); }
+function audVal(id){ var e=audEl(id); return e?e.value:''; }
+function audToast(m){ try{ if(typeof appToast==='function') appToast(m,'err'); }catch(e){} }
+function audIsSetupMissing(e){ var m=''; try{ m=String((e&&(e.message||e.code||e))||''); }catch(x){} return /could not find the function|does not exist|PGRST202|42883/i.test(m); }
+function audRpc(fn,args){
+  var c=(typeof supabaseClient!=='undefined')?supabaseClient:null;
+  if(!c) return Promise.reject(new Error('Supabase is not connected'));
+  return Promise.resolve(c.rpc(fn,args)).then(function(r){ if(r&&r.error) throw r.error; return r.data; });
+}
+function audSha256Hex(str){
+  var data=new TextEncoder().encode(str);
+  if(window.crypto&&crypto.subtle&&crypto.subtle.digest){
+    return crypto.subtle.digest('SHA-256',data).then(function(b){
+      return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
+    });
+  }
+  var h1=5381,h2=52711,i;
+  for(i=0;i<str.length;i++){ h1=((h1<<5)+h1+str.charCodeAt(i))|0; h2=((h2<<5)+h2+str.charCodeAt(i))|0; }
+  return Promise.resolve('x'+(h1>>>0).toString(16)+(h2>>>0).toString(16));
+}
+function audGenPasskey(){
+  var chars='ABCDEFGHJKMNPQRSTUVWXYZ23456789', out=[], i, a;
+  try{
+    a=new Uint8Array(12); (window.crypto||{}).getRandomValues(a);
+    for(i=0;i<12;i++) out.push(chars[a[i]%chars.length]);
+  }catch(e){ for(i=0;i<12;i++) out.push(chars[Math.floor(Math.random()*chars.length)]); }
+  return 'IE-AUD-'+out.slice(0,4).join('')+'-'+out.slice(4,8).join('')+'-'+out.slice(8,12).join('');
+}
+function audLog(action,detail){
+  var s=window.__auditor; if(!s) return;
+  try{
+    audRpc('auditor_log_action',{p_owner_uid:s.ownerUid,p_auditor_email:s.auditorEmail,p_auditor_name:s.auditorName||'',p_action:action,p_detail:detail||''}).catch(function(){});
+  }catch(e){}
+}
+/* Wrap a global function with a pre-hook; returning false from pre aborts it.
+   (The file's own wrap() helper lives inside an IIFE, so this is a copy.) */
+function audWrap(name,pre){
+  var o=window[name]; if(typeof o!=='function') return false;
+  window[name]=function(){ var x; try{ x=pre.apply(this,arguments); }catch(e){ x=undefined; } if(x===false) return; return o.apply(this,arguments); };
+  return true;
+}
+function audWrapPost(name,after){
+  var o=window[name]; if(typeof o!=='function') return false;
+  window[name]=function(){ var r=o.apply(this,arguments); try{ after.apply(this,arguments); }catch(e){} return r; };
+  return true;
+}
+function audBlockMsg(m){ return function(){ if(window.__auditor){ audToast(m); return false; } }; }
+
+/* ---------------- Auditor login ---------------- */
+function audShowMsg(text,ok){
+  var m=audEl('audMsg'); if(!m) return;
+  m.textContent=text||'';
+  m.className='auth-msg'+(text?(ok?' ok':' err'):'');
+}
+window.auditorLoginSubmit=async function(){
+  var oe=audVal('audOwnerEmail').trim().toLowerCase();
+  var uid=audVal('audUserId').trim();
+  var ae=audVal('audEmail').trim().toLowerCase();
+  var an=audVal('audName').trim();
+  var pk=audVal('audPasskey').trim().toUpperCase();
+  if(!oe||!uid||!ae||!an||!pk){ audShowMsg('Please fill in all fields.'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(oe)){ audShowMsg('Please enter a valid owner email address.'); return; }
+  if(!/^\d{10}$/.test(uid)){ audShowMsg('Unique ID must be the 10-digit number shown on the owner profile.'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ae)){ audShowMsg('Please enter a valid auditor email address.'); return; }
+  audShowMsg('');
+  try{ if(typeof authSetLoading==='function') authSetLoading('audSubmitBtn',true); }catch(e){}
+  try{
+    var hash=await audSha256Hex(pk);
+    var rows=await audRpc('auditor_verify_login',{p_owner_email:oe,p_user_id:uid,p_auditor_email:ae,p_passkey_hash:hash});
+    var r=Array.isArray(rows)?rows[0]:rows;
+    if(!r||!r.status) throw new Error('bad');
+    if(r.status==='bad'){ audShowMsg('Incorrect Pass Key. Please check and try again.'); return; }
+    if(r.status==='locked'){ audShowMsg('Too many wrong attempts. This Pass Key is locked for 15 minutes.'); return; }
+    if(r.status==='expired'){ audShowMsg('This Pass Key has expired. Please ask the owner for a new one.'); return; }
+    if(r.status==='revoked'){ audShowMsg('This Pass Key has been revoked. Please ask the owner for a new one.'); return; }
+    if(r.status!=='ok'){ audShowMsg('No Pass Key found for these details. Please check the Owner Email, Unique ID and your email.'); return; }
+    var companies=Array.isArray(r.companies)?r.companies:[];
+    var sess={ownerUid:r.owner_uid,ownerEmail:r.owner_email||oe,ownerUserId:uid,auditorEmail:ae,auditorName:an,companies:companies,expiresAt:r.expires_at,passkeyHash:hash,rows:[]};
+    window.__auditor=sess;
+    try{ sessionStorage.setItem('IE_AUDITOR',JSON.stringify(sess)); }catch(e){}
+    var dataRows=[];
+    try{ dataRows=await audRpc('auditor_get_data',{p_owner_uid:sess.ownerUid,p_auditor_email:ae,p_passkey_hash:hash,p_company_ids:companies.map(function(c){ return c.id; })}); }
+    catch(e){
+      if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup.'); window.__auditor=null; try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(x){} return; }
+      throw e;
+    }
+    sess.rows=Array.isArray(dataRows)?dataRows:[];
+    try{
+      userProfile={userId:uid,email:sess.ownerEmail,name:'',companies:{}};
+      companies.forEach(function(c){ userProfile.companies[c.id]={name:c.name}; });
+    }catch(e){}
+    audLog('login','Auditor '+an+' logged in');
+    auditorShowBanner();
+    auditorApplySidebar();
+    showCompanyOverlay();
+  }catch(e){
+    if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup (supabase/migrations/20261109_auditor_passkeys.sql).'); return; }
+    audShowMsg('Could not log in. Please check your connection and try again.');
+  }finally{
+    try{ if(typeof authSetLoading==='function') authSetLoading('audSubmitBtn',false); }catch(e){}
+  }
+};
+
+/* ---------------- Auditor banner / logout / restore ---------------- */
+function auditorShowBanner(){
+  var old=audEl('auditorBanner'); if(old) old.remove();
+  var s=window.__auditor; if(!s) return;
+  var b=document.createElement('div'); b.id='auditorBanner'; b.className='auditor-banner';
+  b.innerHTML='<span>Auditor Mode &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; View only</span><span id="audExpCountdown"></span><button type="button" onclick="auditorLogout()">Log Out</button>';
+  document.body.insertBefore(b,document.body.firstChild);
+  document.body.classList.add('auditor-mode');
+  try{ clearInterval(window.__audCountdownTimer); }catch(e){}
+  window.__audCountdownTimer=setInterval(auditorTickCountdown,30000);
+  auditorTickCountdown();
+}
+function auditorTickCountdown(){
+  var s=window.__auditor; if(!s) return;
+  var el=audEl('audExpCountdown'); if(!el) return;
+  var ms=new Date(s.expiresAt).getTime()-Date.now();
+  if(ms<=0){ auditorLogout(true); return; }
+  var d=Math.floor(ms/86400000), h=Math.floor(ms%86400000/3600000), m=Math.floor(ms%3600000/60000);
+  el.textContent='Expires in '+(d>0?d+'d ':'')+h+'h '+m+'m';
+}
+window.auditorLogout=function(expired){
+  var s=window.__auditor;
+  if(s) audLog('logout',expired?'Session expired':'Auditor logged out');
+  window.__auditor=null;
+  try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(e){}
+  try{ clearInterval(window.__audCountdownTimer); }catch(e){}
+  var b=audEl('auditorBanner'); if(b) b.remove();
+  document.body.classList.remove('auditor-mode');
+  try{ currentCompanyId=null; }catch(e){}
+  try{ db=emptyDB(); }catch(e){}
+  try{ userProfile=null; }catch(e){}
+  auditorApplySidebar();
+  try{ if(typeof authSwitchTab==='function') authSwitchTab('login'); }catch(e){}
+  try{ showAuthOverlay(); }catch(e){}
+  if(expired) audToast('Auditor session expired. Please log in again.');
+};
+async function auditorRestoreSession(){
+  var raw=null;
+  try{ raw=sessionStorage.getItem('IE_AUDITOR'); }catch(e){ return; }
+  if(!raw) return;
+  var s=null;
+  try{ s=JSON.parse(raw); }catch(e){ return; }
+  if(!s||!s.ownerUid||!s.passkeyHash) return;
+  if(s.expiresAt&&new Date(s.expires_at||s.expiresAt).getTime()<=Date.now()){ try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(e){} return; }
+  window.__auditor=s;
+  try{
+    var rows=await audRpc('auditor_get_data',{p_owner_uid:s.ownerUid,p_auditor_email:s.auditorEmail,p_passkey_hash:s.passkeyHash,p_company_ids:(s.companies||[]).map(function(c){ return c.id; })});
+    s.rows=Array.isArray(rows)?rows:[];
+  }catch(e){ window.__auditor=null; return; }
+  try{
+    userProfile={userId:s.ownerUserId,email:s.ownerEmail,name:'',companies:{}};
+    (s.companies||[]).forEach(function(c){ userProfile.companies[c.id]={name:c.name}; });
+  }catch(e){}
+  auditorShowBanner();
+  auditorApplySidebar();
+  try{ showCompanyOverlay(); }catch(e){}
+}
+document.addEventListener('DOMContentLoaded',function(){ setTimeout(auditorRestoreSession,300); });
+
+/* ---------------- Company picker (auditor) + open company ---------------- */
+var AUD_DENY=['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','invAdv','acctVouchers','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','chats'];
+function auditorApplySidebar(){
+  /* applyRole() lives inside an IIFE, so replicate its sidebar hiding here. */
+  var deny=window.__auditor?AUD_DENY:[];
+  try{
+    document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){ b.style.display=deny.indexOf(b.dataset.page)>-1?'none':''; });
+    document.querySelectorAll('.sidebar .nav-group').forEach(function(g){
+      var v=g.querySelectorAll('button[data-page]'), any=false;
+      v.forEach(function(b){ if(b.style.display!=='none') any=true; });
+      if(v.length) g.style.display=any?'':'none';
+    });
+  }catch(e){}
+  try{ document.body.classList.toggle('auditor-mode',!!window.__auditor); }catch(e){}
+}
+var __origRenderCompanyGrid=window.renderCompanyGrid;
+window.renderCompanyGrid=function(){
+  if(!window.__auditor) return __origRenderCompanyGrid.apply(this,arguments);
+  var grid=audEl('coGrid'); if(!grid) return;
+  var s=window.__auditor, list=s.companies||[];
+  var un=audEl('coUserName'), ua=audEl('coUserAv'), cc=audEl('coCount');
+  if(un) un.textContent=s.auditorName||s.auditorEmail;
+  if(ua){ ua.style.backgroundImage=''; ua.textContent=(s.auditorName||'?').trim().slice(0,1).toUpperCase(); }
+  if(cc) cc.textContent=list.length?list.length+(list.length===1?' company':' companies')+' · auditor access (view only)':'No companies assigned to this Pass Key';
+  var html='';
+  list.forEach(function(c,idx){
+    html+='<div class="co-card" style="--i:'+idx+'" onclick="auditorOpenCompany(\''+esc(c.id)+'\')">'
+      +'<div class="co-card-ic">'+esc((c.name||'?').trim().slice(0,2).toUpperCase())+'</div>'
+      +'<div class="co-card-name">'+esc(c.name||'Untitled Company')+'</div>'
+      +'<div class="co-open"><span>Open workspace</span></div></div>';
+  });
+  grid.innerHTML=html||'<div class="sub">No companies assigned to this Pass Key. Please ask the owner to create a new one.</div>';
+};
+function audPayloadOf(row){
+  try{
+    if(row&&row.data&&typeof row.data.data==='string') return JSON.parse(row.data.data);
+    if(row&&row.data&&typeof row.data==='object') return row.data;
+  }catch(e){}
+  return null;
+}
+window.auditorOpenCompany=function(cid){
+  var s=window.__auditor; if(!s) return;
+  var rows=s.rows||[], uid=s.ownerUid, base='users/'+uid+'/companies/'+cid;
+  var loaded=null, bodies={};
+  function findRow(path,docId){ for(var i=0;i<rows.length;i++){ if(rows[i].collection_path===path&&rows[i].doc_id===docId) return rows[i]; } return null; }
+  var metaRow=findRow(base+'/parts','meta'), meta=metaRow?audPayloadOf(metaRow):null;
+  if(meta&&meta.schemaVersion===2){
+    var secs={};
+    rows.forEach(function(r){
+      if(r.collection_path===base+'/parts'&&IE_SPLIT_META_SECTIONS.indexOf(r.doc_id)>-1) secs[r.doc_id]=audPayloadOf(r);
+    });
+    var idxRow=findRow(base+'/parts','invoices_index'), idxPayload=idxRow?audPayloadOf(idxRow):null;
+    var indexEntries=idxPayload?(idxPayload.index||idxPayload):null;
+    rows.forEach(function(r){
+      if(r.collection_path===base+'/invoices'){ var b=audPayloadOf(r); if(b) bodies[r.doc_id]=b; }
+    });
+    if(secs.core&&Array.isArray(indexEntries)){
+      try{ var asm=ieSplitAssemble(secs,indexEntries,null); loaded=ieSplitWholeFromAssembled(asm,bodies); }catch(e){ console.warn('auditor split assemble failed',e); }
+    }
+  }
+  if(!loaded){
+    var compRow=findRow('users/'+uid+'/companies',cid), whole=compRow?audPayloadOf(compRow):null;
+    if(whole){ try{ loaded=normalizeDB(whole); }catch(e){} }
+  }
+  if(!loaded){ audToast('Could not load this company. Please ask the owner to open it once on their device, then try again.'); return; }
+  currentCompanyId=cid; db=loaded;
+  try{ ieInvoiceBody=bodies; }catch(e){}
+  try{ ieSectionLoaded={core:true,parties:true,inventory:true,index:true,purchases:true,documents:true,trash:true,duplicates:true,accounts:true}; }catch(e){}
+  try{ if(typeof ieSplitMigrated!=='undefined') ieSplitMigrated[cid]={schemaVersion:2,sections:IE_SPLIT_META_SECTIONS.slice()}; }catch(e){}
+  /* NOTE: runSafeBoot() is deliberately NOT called — it writes to localStorage. */
+  try{ showAppRoot(); }catch(e){}
+  try{ renderUserChipAndProfile(); }catch(e){}
+  try{ if(typeof loadSettingsUI==='function') loadSettingsUI(); }catch(e){}
+  try{ if(typeof refreshAll==='function') refreshAll(); }catch(e){}
+  auditorApplySidebar();
+  try{ showPage('dashboard'); }catch(e){}
+  audLog('view','Opened company '+cid);
+};
+
+/* ---------------- Create Pass Key (owner side, Roles & PIN tab) ---------------- */
+window.__audPinVerified=false;
+window.__audExpiryDays=30;
+window.auditorPasskeySectionHtml=function(){
+  var comps=(typeof userProfile!=='undefined'&&userProfile&&userProfile.companies)||{};
+  var ids=Object.keys(comps);
+  var h='<div class="section-title" style="margin-top:22px">Create Pass Key (Auditor / CA Login)</div>';
+  h+='<div class="sub" style="margin-bottom:12px">An auditor logs in with the owner email, the owner Unique ID, this Pass Key, their own email and any name they type. The Pass Key is shown only once — save it and share it with the auditor.</div>';
+  if(!window.__audPinVerified){
+    h+='<div class="grid g3"><div><label>Owner PIN (to unlock)</label><input id="audPinGate" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="auditorVerifyPinGate()">Verify PIN</button></div></div>';
+    return h;
+  }
+  h+='<div class="grid g3"><div><label>Auditor Email</label><input id="audEmail" type="email" placeholder="auditor@example.com" autocomplete="off"></div>'
+    +'<div><label>Expiry</label><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn muted" data-exp="7" onclick="auditorSetExpiry(7,this)">7 days</button><button type="button" class="btn muted" data-exp="15" onclick="auditorSetExpiry(15,this)">15 days</button><button type="button" class="btn primary" data-exp="30" onclick="auditorSetExpiry(30,this)">30 days</button></div></div>'
+    +'<div><label>Custom expiry date</label><input id="audExpDate" type="date" onchange="auditorSetCustomExpiry(this)"></div></div>';
+  h+='<div style="margin-top:12px"><button type="button" class="btn" onclick="auditorToggleCompanies()">Company Customize</button> <span class="sub" id="audCoCount"></span></div>';
+  h+='<div id="audCoList" class="hidden" style="margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">'
+    +ids.map(function(id){ var c=comps[id]||{}; return '<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" class="audCoChk" value="'+esc(id)+'" checked onchange="auditorUpdateCoCount()"> '+esc(c.name||id)+'</label>'; }).join('')
+    +(ids.length?'':'<span class="sub">No companies yet.</span>')+'</div>';
+  h+='<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" onclick="auditorGeneratePasskey()">Generate Pass Key</button></div>';
+  h+='<div id="audOnceBox" class="hidden" style="margin-top:12px;border:1px solid #f59e0b;border-radius:10px;padding:12px"></div>';
+  h+='<div class="section-title" style="margin-top:18px">Pass Keys</div><div id="audKeyList"><div class="sub">Loading…</div></div>';
+  setTimeout(function(){ auditorUpdateCoCount(); auditorRefreshPasskeyList(); },0);
+  return h;
+};
+window.auditorSetExpiry=function(days,btn){
+  window.__audExpiryDays=days;
+  var d=audEl('audExpDate'); if(d) d.value='';
+  if(btn&&btn.parentElement){ Array.prototype.forEach.call(btn.parentElement.querySelectorAll('button'),function(b){ b.className='btn '+(Number(b.getAttribute('data-exp'))===days?'primary':'muted'); }); }
+};
+window.auditorSetCustomExpiry=function(input){
+  window.__audExpiryDays=null;
+  var wrapEl=input?input.closest('.grid'):null;
+  if(wrapEl){ Array.prototype.forEach.call(wrapEl.querySelectorAll('button[data-exp]'),function(b){ b.className='btn muted'; }); }
+};
+window.auditorToggleCompanies=function(){ var l=audEl('audCoList'); if(l) l.classList.toggle('hidden'); };
+window.auditorUpdateCoCount=function(){
+  var boxes=document.querySelectorAll('.audCoChk'), sel=0, tot=0;
+  boxes.forEach(function(b){ tot++; if(b.checked) sel++; });
+  var el=audEl('audCoCount'); if(el) el.textContent=tot?(sel===tot?'All companies selected':sel+' of '+tot+' companies selected'):'';
+};
+window.auditorVerifyPinGate=async function(){
+  var pin=(audVal('audPinGate')||'').trim();
+  if(!pin){ alert('Please enter the Owner PIN.'); return; }
+  try{
+    var r=await audRpc('owner_verify',{p_cid:(typeof currentCompanyId!=='undefined'&&currentCompanyId)||'default',p_code:pin});
+    if(r==='pin'||r==='rec'){ window.__audPinVerified=true; if(typeof acctRenderControl==='function') acctRenderControl(); return; }
+    if(r==='locked'){ alert('Too many wrong attempts. Please try again after 15 minutes.'); return; }
+    if(r==='nopin'){ alert('No Owner PIN is set. Please set an Owner PIN first.'); return; }
+    alert('Wrong PIN. Please try again.');
+  }catch(e){
+    if(audIsSetupMissing(e)) alert('Owner PIN check is not available (database setup is incomplete).');
+    else alert('Could not verify the PIN. Please check your connection and try again.');
+  }
+};
+window.auditorGeneratePasskey=async function(){
+  var email=(audVal('audEmail')||'').trim().toLowerCase();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Please enter a valid auditor email address.'); return; }
+  var sel=[]; document.querySelectorAll('.audCoChk').forEach(function(b){ if(b.checked) sel.push(b.value); });
+  var expDate=(audVal('audExpDate')||'').trim(), expiresAt=null;
+  if(expDate){ expiresAt=new Date(expDate+'T23:59:59'); if(expiresAt.getTime()<=Date.now()){ alert('Please choose a future expiry date.'); return; } }
+  else { expiresAt=new Date(Date.now()*1+(window.__audExpiryDays||30)*86400000); }
+  var key=audGenPasskey();
+  var hash=await audSha256Hex(key);
+  var ownerUid=(typeof currentUser!=='undefined'&&currentUser&&currentUser.uid)||'';
+  var ownerUserId=(typeof userProfile!=='undefined'&&userProfile&&userProfile.userId)||'';
+  var ownerEmail=(typeof currentUser!=='undefined'&&currentUser&&currentUser.email)||((typeof userProfile!=='undefined'&&userProfile&&userProfile.email)||'');
+  try{
+    await audRpc('auditor_create_passkey',{p_owner_uid:ownerUid,p_owner_email:ownerEmail,p_owner_user_id:ownerUserId,p_auditor_email:email,p_company_ids:sel,p_expires_at:expiresAt.toISOString(),p_passkey_hash:hash});
+  }catch(e){
+    if(audIsSetupMissing(e)){ alert('Auditor setup is not complete. Please run the SQL file supabase/migrations/20261109_auditor_passkeys.sql in the Supabase SQL Editor, then try again.'); return; }
+    alert('Could not create the Pass Key. Please check your connection and try again.'); return;
+  }
+  var box=audEl('audOnceBox');
+  if(box){
+    box.classList.remove('hidden');
+    box.innerHTML='<div style="font-weight:700;margin-bottom:6px">Pass Key created — copy it now. It will never be shown again.</div><div style="font-size:18px;font-weight:700;letter-spacing:1px;word-break:break-all">'+esc(key)+'</div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" onclick="auditorCopyOnceKey(\''+key+'\')">Copy Pass Key</button></div><div class="sub" style="margin-top:8px">Share this key with the auditor along with the owner email and Unique ID. Expiry: '+esc(expiresAt.toLocaleDateString('en-IN'))+'.</div>';
+  }
+  auditorRefreshPasskeyList();
+};
+window.auditorCopyOnceKey=function(key){
+  try{ navigator.clipboard.writeText(key); if(typeof appToast==='function') appToast('Pass Key copied','ok'); }catch(e){}
+};
+window.auditorRefreshPasskeyList=async function(){
+  var list=audEl('audKeyList'); if(!list) return;
+  var ownerUid=(typeof currentUser!=='undefined'&&currentUser&&currentUser.uid)||'';
+  try{
+    var rows=await audRpc('auditor_list_passkeys',{p_owner_uid:ownerUid});
+    if(!rows||!rows.length){ list.innerHTML='<div class="sub">No Pass Keys created yet.</div>'; return; }
+    list.innerHTML='<div class="table-wrap"><table><thead><tr><th>Auditor Email</th><th>Companies</th><th>Created</th><th>Expiry</th><th>Last Used</th><th>Status</th><th></th></tr></thead><tbody>'+
+      rows.map(function(k){
+        var st=k.revoked?'REVOKED':(new Date(k.expires_at).getTime()<=Date.now()?'EXPIRED':'ACTIVE');
+        var comps=(k.company_names&&k.company_names.length)?k.company_names.join(', '):'All companies';
+        return '<tr><td>'+esc(k.auditor_email||'')+'</td><td>'+esc(comps)+'</td><td>'+esc(new Date(k.created_at).toLocaleDateString('en-IN'))+'</td><td>'+esc(new Date(k.expires_at).toLocaleDateString('en-IN'))+'</td><td>'+(k.last_used_at?esc(new Date(k.last_used_at).toLocaleString('en-IN')):'-')+'</td><td>'+st+'</td><td>'+(st==='ACTIVE'?'<button class="btn danger" onclick="auditorRevokePasskey(\''+k.id+'\')">Revoke</button>':'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }catch(e){
+    if(audIsSetupMissing(e)){ list.innerHTML='<div class="sub">Auditor setup is not complete. Please run the SQL file supabase/migrations/20261109_auditor_passkeys.sql in the Supabase SQL Editor.</div>'; }
+    else { list.innerHTML='<div class="sub">Could not load Pass Keys. Please check your connection.</div>'; }
+  }
+};
+window.auditorRevokePasskey=async function(id){
+  if(!confirm('Revoke this Pass Key? The auditor will not be able to log in with it anymore.')) return;
+  var ownerUid=(typeof currentUser!=='undefined'&&currentUser&&currentUser.uid)||'';
+  try{ await audRpc('auditor_revoke_passkey',{p_owner_uid:ownerUid,p_passkey_id:id}); if(typeof appToast==='function') appToast('Pass Key revoked','ok'); auditorRefreshPasskeyList(); }
+  catch(e){ alert('Could not revoke the Pass Key. Please try again.'); }
+};
+
+/* ---------------- Enforcement (auditor mode) ---------------- */
+/* Save paths: block all writes (local + cloud). */
+audWrap('saveDB',audBlockMsg('Auditor access is view-only. Changes cannot be saved.'));
+audWrap('fsScheduleSave',function(){ if(window.__auditor) return false; });
+/* Deletes. */
+['deleteInvoice','deletePayment','deletePB','deletePBPayment','acctDelVoucher','acctDelLedger','acctDelGroup','acctPdcDel'].forEach(function(n){
+  audWrap(n,audBlockMsg('Auditor access is view-only. Deleting is not allowed.'));
+});
+/* Admin actions: PIN / lock / audit-log / role / backup / company delete. */
+['acctAuditClear','acctSaveLock','acctSavePin','acctSaveRecovery','acctClearRecovery','acctToOwner','acctPinReset','acctSaveRole'].forEach(function(n){
+  audWrap(n,audBlockMsg('Auditor access is view-only. This action is not allowed.'));
+});
+audWrap('backupJSON',audBlockMsg('Auditor access is view-only. Full backup download is not allowed.'));
+audWrap('coDeleteCompany',audBlockMsg('Auditor access is view-only. Companies cannot be deleted.'));
+audWrap('coOpenForm',audBlockMsg('Auditor access is view-only. Companies cannot be created or edited.'));
+try{
+  if(window.RSG){
+    if(typeof RSG.execDeleteCompany==='function'){ var __audRdc=RSG.execDeleteCompany; RSG.execDeleteCompany=function(){ if(window.__auditor){ audToast('Auditor access is view-only. Companies cannot be deleted.'); return; } return __audRdc.apply(this,arguments); }; }
+    if(typeof RSG.execDelete==='function'){ var __audRd=RSG.execDelete; RSG.execDelete=function(){ if(window.__auditor){ audToast('Auditor access is view-only. The account cannot be deleted.'); return; } return __audRd.apply(this,arguments); }; }
+  }
+}catch(e){}
+/* Creation / edit entry points (buttons and keyboard shortcuts both call these). */
+['newInvoice','docNew','openCustomerModal','openItemModal','openVendorModal','openPaymentModal','addPayment','addRow','docAddRow','finalizeInvoice','holdBill','duplicateLastRow','openPBPayModal','openVoiceInvoice','poAddRow','pbAddRow'].forEach(function(n){
+  audWrap(n,audBlockMsg('Auditor access is view-only. Creating or editing is not allowed.'));
+});
+/* Auth-overlay guards: never bounce an active auditor back to login. */
+audWrap('showAuthOverlay',function(){ if(window.__auditor) return false; });
+audWrap('ieTryOfflineLogin',function(){ if(window.__auditor) return false; });
+/* Watermark: every print/PDF/Excel path already goes through ieCreditHtml /
+   ieCreditXls, so prepending the audit copy line there covers invoice print,
+   history PDF/Excel, customer reports and document prints. */
+(function(){
+  var __och=window.ieCreditHtml;
+  if(typeof __och==='function'){
+    window.ieCreditHtml=function(label,style){
+      var base=''; try{ base=__och.apply(this,arguments)||''; }catch(e){}
+      if(window.__auditor){
+        var s=window.__auditor;
+        return '<div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:#b91c1c;margin-top:10px">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</div>'+base;
+      }
+      return base;
+    };
+  }
+  var __ocx=window.ieCreditXls;
+  if(typeof __ocx==='function'){
+    window.ieCreditXls=function(html,label){
+      var out=''; try{ out=__ocx.apply(this,arguments)||html; }catch(e){ out=html; }
+      if(window.__auditor){
+        var s=window.__auditor;
+        var row='<tr><td colspan="20" style="font-size:11px;color:#b91c1c;padding:10px 4px;font-weight:700">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</td></tr>';
+        var i=out.lastIndexOf('</table>');
+        if(i>=0) out=out.slice(0,i)+row+out.slice(i); else out=out+row;
+      }
+      return out;
+    };
+  }
+})();
+/* Audit logging: exports / prints / sensitive page views (fire-and-forget). */
+audWrapPost('printFromPreview',function(){ if(window.__auditor) audLog('print','Invoice print'); });
+audWrapPost('docPrintRun',function(){ if(window.__auditor) audLog('print','Document print'); });
+audWrapPost('exportHistoryPDF',function(){ if(window.__auditor) audLog('export','History PDF export'); });
+audWrapPost('exportHistoryExcel',function(){ if(window.__auditor) audLog('export','History Excel export'); });
+audWrapPost('exportCustomerExcel',function(){ if(window.__auditor) audLog('export','Customer Excel export'); });
+audWrapPost('showPage',function(id){
+  if(window.__auditor&&['invoice','history','customers','inventory','acctLedgers','acctReports','dashboard','journal','documents','cashHistory','bosHistory','analytics'].indexOf(id)>-1) audLog('view','Viewed page '+id);
+});
+})();
+</script>
+
 </body>
 </html>
