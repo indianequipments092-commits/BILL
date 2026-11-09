@@ -1,8 +1,10 @@
 /* IE Billing — Service Worker (offline support)
    Online: hamesha network se taaza file (cache bhi update hota hai).
    Offline: cache se khulta hai. Supabase/API calls kabhi cache nahi hoti.
-   APK / /app/ folder: service worker ke raaste se nahi jaata, seedha server se aata hai. */
-var VER = 'ie-v4';
+   APK / /app/ folder: service worker ke raaste se nahi jaata, seedha server se aata hai.
+   ie-v5: purana ie-v4 cache delete hoga, aur slow net pe bhi taaza file milegi —
+   5s timeout wala purana cache ab nahi diya jayega, sirf net fail hone pe cache milega. */
+var VER = 'ie-v5';
 var CORE = ['loader.html', 'billing.html'];
 var LIBS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
@@ -58,31 +60,18 @@ self.addEventListener('fetch', function (e) {
   var same = url.origin === self.location.origin;
   var key = keyOf(req.url);
 
-  /* App ki apni files: network pehle (taaza), fail ya 5s se der ho to cache */
+  /* App ki apni files: network pehle (taaza), sirf net fail hone pe cache.
+     Pehle 5s timeout pe purana cache de diya jata tha — isiliye slow net pe
+     APK purana billing.html dikhata tha. Ab timeout nahi hai. */
   if (same) {
     e.respondWith(
-      new Promise(function (resolve) {
-        var done = false;
-        function fromCache() {
-          return caches.open(VER).then(function (c) { return c.match(key); });
-        }
-        var t = setTimeout(function () {
-          fromCache().then(function (m) { if (m && !done) { done = true; resolve(m); } });
-        }, 5000);
-        fetch(req).then(function (res) {
-          clearTimeout(t);
-          if (done) { put(key, res); return; }
-          done = true;
-          if (res.redirected || res.type === 'opaqueredirect' || !res.ok) { resolve(res); return; }
-          put(key, res.clone());
-          resolve(res);
-        }).catch(function () {
-          clearTimeout(t);
-          if (done) return;
-          fromCache().then(function (m) {
-            done = true;
-            resolve(m || new Response('Offline — pehli baar app net ke saath kholo.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }));
-          });
+      fetch(req).then(function (res) {
+        if (res.redirected || res.type === 'opaqueredirect' || !res.ok) { return res; }
+        put(key, res.clone());
+        return res;
+      }).catch(function () {
+        return caches.open(VER).then(function (c) { return c.match(key); }).then(function (m) {
+          return m || new Response('Offline — pehli baar app net ke saath kholo.', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
         });
       })
     );
