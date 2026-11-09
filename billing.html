@@ -100,11 +100,6 @@ span.chip:hover{background:var(--primary-glow)}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
 .top h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-0.8px;background:linear-gradient(135deg,#fff,#9ca3af);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.invBarToggle .invBarChev{display:inline-block;transition:transform .25s ease}
-.invBarToggle[aria-expanded="true"] .invBarChev{transform:rotate(180deg)}
-.invBarWrap{width:100%;overflow:hidden;max-height:0;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .25s ease,visibility 0s linear .3s}
-.invBarWrap.open{max-height:360px;opacity:1;visibility:visible;transition:max-height .3s ease,opacity .25s ease}
-@media(max-width:600px){.invBarToggle{width:100%;justify-content:center}}
 
 
 .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(10px);min-height:42px;white-space:nowrap}
@@ -812,8 +807,9 @@ body.pv-share .modal{z-index:300}
 #authOverlay .auth-tabs:has(#authTabAuditor.active)::before{transform:translateX(200%)}
 #authAuditorBox{display:none}
 #authAuditorBox.show{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
-.auditor-banner{position:sticky;top:0;z-index:10000;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#7f1d1d;color:#fff;font-size:13px;font-weight:600;padding:8px 12px}
+.auditor-banner{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#7f1d1d;color:#fff;font-size:13px;font-weight:600;padding:8px 12px;line-height:1.3}
 .auditor-banner button{background:#fff;color:#7f1d1d;border:0;border-radius:8px;padding:5px 12px;font-weight:700;cursor:pointer}
+@media(max-width:600px){.auditor-banner{font-size:12px;padding:6px 8px;gap:8px}}
 #authOverlay .auth-tab{position:relative;z-index:1;padding:0;height:clamp(34px,5vh,40px)}
 #authOverlay .auth-tab.active{background:none;box-shadow:none;color:#fff}
 #authFormBox,#authForgotBox.show{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
@@ -8348,9 +8344,7 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
 <div id="invoice" class="page hidden">
  <div class="top">
   <h1 id="invoiceHeading">Create Invoice</h1>
-  <button type="button" class="btn muted invBarToggle" id="invBarToggle" onclick="toggleInvBar()" aria-expanded="false" aria-controls="invBarWrap"><span class="invBarChev">▾</span> Actions</button>
-  <div class="invBarWrap" id="invBarWrap">
-   <div class="toolbar">
+  <div class="toolbar">
     <button class="btn muted bosOnly" id="holdBtn" onclick="holdBill()">⏸ Hold</button>
     <button class="btn muted bosOnly" id="heldBtn" onclick="heldOpen()">📋 Held (0)</button>
     <button class="btn muted bosOnly" id="splitBtn" onclick="splitOpen()">💳 Split Pay</button>
@@ -8360,7 +8354,6 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
     <button class="btn primary" onclick="saveDraft()">Save Draft</button>
     <button class="btn success" onclick="finalizeInvoice()">Finalize</button>
     <button class="btn muted" onclick="openOutputModal()">Save / Share</button>
-   </div>
   </div>
  </div>
  
@@ -14604,12 +14597,6 @@ el.innerHTML=`
       <h2 class="right" style="margin-top:12px;color:#818cf8;font-size:22px">Grand Total: ₹ ${money(current.totals.grand)}</h2>`;
 if(isBos(current)){ el.querySelectorAll('.grid.g4,p.sub').forEach(n=>{n.style.display='none';}); }
 }
-}
-function toggleInvBar(){
-  var w=document.getElementById('invBarWrap'),b=document.getElementById('invBarToggle');
-  if(!w||!b) return;
-  var open=w.classList.toggle('open');
-  b.setAttribute('aria-expanded',open?'true':'false');
 }
 function saveDraft(){
 if(!current){alert('No invoice open.');return;}
