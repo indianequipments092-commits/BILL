@@ -29903,7 +29903,7 @@ window.auditorPasskeySectionHtml=function(){
     h+='<div class="grid g3"><div><label>Owner PIN (to unlock)</label><input id="audPinGate" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="auditorVerifyPinGate()">Verify PIN</button></div></div>';
     return h;
   }
-  h+='<div class="grid g3"><div><label>Auditor Email</label><input id="audEmail" type="email" placeholder="auditor@example.com" autocomplete="off"></div>'
+  h+='<div class="grid g3"><div><label>Auditor Email</label><input id="audCreateEmail" type="email" placeholder="auditor@example.com" autocomplete="off"></div>'
     +'<div><label>Expiry</label><div style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn muted" data-exp="7" onclick="auditorSetExpiry(7,this)">7 days</button><button type="button" class="btn muted" data-exp="15" onclick="auditorSetExpiry(15,this)">15 days</button><button type="button" class="btn primary" data-exp="30" onclick="auditorSetExpiry(30,this)">30 days</button></div></div>'
     +'<div><label>Custom expiry date</label><input id="audExpDate" type="date" onchange="auditorSetCustomExpiry(this)"></div></div>';
   h+='<div style="margin-top:12px"><button type="button" class="btn" onclick="auditorToggleCompanies()">Company Customize</button> <span class="sub" id="audCoCount"></span></div>';
@@ -29947,7 +29947,7 @@ window.auditorVerifyPinGate=async function(){
   }
 };
 window.auditorGeneratePasskey=async function(){
-  var email=(audVal('audEmail')||'').trim().toLowerCase();
+  var email=(audVal('audCreateEmail')||'').trim().toLowerCase();
   if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert('Please enter a valid auditor email address.'); return; }
   var sel=[]; document.querySelectorAll('.audCoChk').forEach(function(b){ if(b.checked) sel.push(b.value); });
   var expDate=(audVal('audExpDate')||'').trim(), expiresAt=null;
