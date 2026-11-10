@@ -807,6 +807,15 @@ body.pv-share .modal{z-index:300}
 #authOverlay .auth-tabs:has(#authTabAuditor.active)::before{transform:translateX(200%)}
 #authAuditorBox{display:none}
 #authAuditorBox.show{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
+#authAuditorBox .aud-form{display:flex;flex-direction:column;gap:clamp(7px,1.5vh,13px)}
+#authAuditorBox .aud-seg{display:flex;gap:6px}
+#authAuditorBox .aud-seg button{flex:1;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cbd0dc;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}
+#authAuditorBox .aud-seg button.on{background:#4f46e5;border-color:#6366f1;color:#fff}
+#authAuditorBox .aud-keep{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.4;color:#aab0c0;cursor:pointer}
+#authAuditorBox .aud-keep input{margin-top:2px}
+#authAuditorBox .aud-hint{font-size:12px;line-height:1.45;color:#98a0b3}
+#authOverlay .auth-field select{width:100%;height:clamp(44px,6.6vh,52px);padding:0 14px;border-radius:15px;font-size:14.5px;font-family:inherit;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,0.09);color:#f3f4f6}
+#authOverlay .auth-field select option{color:#111}
 .auditor-banner{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#7f1d1d;color:#fff;font-size:13px;font-weight:600;padding:8px 12px;line-height:1.3}
 .auditor-banner button{background:#fff;color:#7f1d1d;border:0;border-radius:8px;padding:5px 12px;font-weight:700;cursor:pointer}
 @media(max-width:600px){.auditor-banner{font-size:12px;padding:6px 8px;gap:8px}}
@@ -7940,30 +7949,24 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
       </div>
 
       <div id="authAuditorBox">
-        <div class="auth-field">
-          <label>Owner Email</label>
-          <input type="email" id="audOwnerEmail" placeholder="Owner's email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
+        <div class="aud-seg"><button type="button" id="audSegLogin" class="on" onclick="audMode('login')">Login Auditor/CA</button><button type="button" id="audSegCreate" onclick="audMode('create')">Create Auditor/CA</button></div>
+        <div id="audLoginForm" class="aud-form">
+          <div class="auth-field"><label>Auditor Email</label><input type="email" id="audEmail" placeholder="Your email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email"></div>
+          <div class="auth-field auth-field-pass"><label>Pass Key</label><input type="password" id="audPasskey" placeholder="Pass Key (IE-AUD-XXXX-XXXX-XXXX)" autocomplete="off"><button type="button" class="auth-eye-btn" onclick="authToggleEye('audPasskey',this)" aria-label="Show pass key" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          <label class="aud-keep"><input type="checkbox" id="audKeep"><span>Keep me logged in on this device (use only on your own device)</span></label>
+          <button type="button" class="auth-submit" id="audSubmitBtn" onclick="auditorLoginSubmit()"><span class="btn-label">Log In as Auditor</span><span class="auth-spinner"></span></button>
+          <div class="aud-hint">First time? Use &ldquo;Create Auditor/CA&rdquo; once with the Pass Key the owner gave you.</div>
         </div>
-        <div class="auth-field">
-          <label>Unique ID</label>
-          <input type="text" id="audUserId" placeholder="Owner's 10-digit Unique ID" inputmode="numeric" maxlength="10" autocomplete="off">
+        <div id="audCreateForm" class="aud-form" style="display:none">
+          <div class="auth-field"><label>Owner Email</label><input type="email" id="audOwnerEmail" placeholder="Owner's email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email"></div>
+          <div class="auth-field"><label>Auditor Email</label><input type="email" id="audNewEmail" placeholder="Your email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email"></div>
+          <div class="auth-field"><label>Owner Unique ID</label><input type="text" id="audUserId" placeholder="Owner's 10-digit Unique ID" inputmode="numeric" maxlength="10" autocomplete="off"></div>
+          <div class="auth-field"><label>Auditor Name</label><input type="text" id="audName" placeholder="Your name (shown in the owner's activity log)" autocomplete="off"></div>
+          <div class="auth-field"><label>Auditor Type</label><select id="audType"><option value="CA">CA</option><option value="Auditor">Auditor</option><option value="Accountant">Accountant</option><option value="Other">Other</option></select></div>
+          <div class="auth-field auth-field-pass"><label>Pass Key</label><input type="password" id="audNewPasskey" placeholder="Pass Key given by the owner" autocomplete="off"><button type="button" class="auth-eye-btn" onclick="authToggleEye('audNewPasskey',this)" aria-label="Show pass key" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          <button type="button" class="auth-submit" id="audCreateBtn" onclick="auditorCreateSubmit()"><span class="btn-label">Create Auditor/CA</span><span class="auth-spinner"></span></button>
+          <div class="aud-hint">One-time setup. The Pass Key is created by the business owner &mdash; without it you cannot register.</div>
         </div>
-        <div class="auth-field">
-          <label>Auditor Email</label>
-          <input type="email" id="audEmail" placeholder="Your email address" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
-        </div>
-        <div class="auth-field">
-          <label>Your Name</label>
-          <input type="text" id="audName" placeholder="Your name (shown in the audit log)" autocomplete="off">
-        </div>
-        <div class="auth-field auth-field-pass">
-          <label>Pass Key</label>
-          <input type="password" id="audPasskey" placeholder="Pass Key (IE-AUD-XXXX-XXXX-XXXX)" autocomplete="off">
-          <button type="button" class="auth-eye-btn" onclick="authToggleEye('audPasskey',this)" aria-label="Show pass key" tabindex="-1">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <button type="button" class="auth-submit" id="audSubmitBtn" onclick="auditorLoginSubmit()"><span class="btn-label">Log In as Auditor</span><span class="auth-spinner"></span></button>
         <div class="auth-msg" id="audMsg"></div>
         <div class="auth-safe">View-only access · Nothing can be changed · All activity is logged</div>
       </div>
@@ -25406,7 +25409,7 @@ var ct='audit';
 window.acctCtTab=function(t){ct=t;acctRenderControl()};
 function opt(v,l,s){return'<option value="'+esc(v)+'"'+(v===s?' selected':'')+'>'+esc(l)+'</option>'}
 window.acctRenderControl=function(){if(!A())return;var r=role(),own=r==='owner',tabs=[];
-if(r!=='salesman')tabs.push(['audit','Audit Trail']);if(own)tabs.push(['lock','Period Lock'],['roles','Roles & PIN']);else tabs.push(['switch','Role']);
+if(r!=='salesman')tabs.push(['audit','Audit Trail']);if(own)tabs.push(['lock','Period Lock'],['roles','Roles & PIN'],['audkey','Auditor Pass Key']);else tabs.push(['switch','Role']);
 if(!tabs.some(function(x){return x[0]===ct}))ct=tabs[0][0];
 $('ctTabs').innerHTML=tabs.map(function(x){return'<button class="btn '+(ct===x[0]?'primary':'muted')+'" onclick="acctCtTab(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
 $('ctRole').textContent='Is device ka role: '+ROLES[r]+(A().lockDate?' | Period lock: '+A().lockDate+' tak':'');
@@ -25426,8 +25429,8 @@ h2+='<div class="sub" style="margin-top:12px">'+(o.has_pin?'PIN server (Supabase
 h2+='<div class="section-title" style="margin-top:22px">Recovery PIN / Password</div><div class="sub" style="margin-bottom:12px">Inme se koi bhi ek Owner mode kholta hai aur PIN reset kar deta hai. Ye server me hash hokar jaate hain, baad me dikhte nahi, isliye kahin likh lo. Kam se kam 4 akshar. Khaali = badlao nahi.</div>';
 if(!o.has_pin)h2+='<div class="sub">Pehle Owner PIN set karo, phir recovery set hoga.</div>';
 else h2+='<div class="grid g3">'+rf('pin1','Recovery PIN 1')+rf('pin2','Recovery PIN 2')+rf('pw1','Password 1')+rf('pw2','Password 2')+'<div><label>Owner PIN ya Recovery (confirm)</label><input id="ctRcCur" type="password" autocomplete="off"></div></div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn primary" onclick="acctSaveRecovery()">Recovery save</button><a href="#" style="color:#fca5a5;font-weight:600" onclick="acctClearRecovery();return false">Sab recovery hatao</a></div>';
-h2+=(typeof auditorPasskeySectionHtml==='function'?auditorPasskeySectionHtml():'');
 h2+='<div class="sub" style="margin-top:12px">Dhyan: role har device par alag chunna padta hai aur ye app ke andar ki rok hai, bank jaisi security nahi.</div>';return h2})()}
+else if(ct==='audkey'){h=(typeof auditorPasskeyTabHtml==='function'?auditorPasskeyTabHtml():'')}
 else{h='<div class="section-title">Owner ban jao</div><div class="grid g3"><div><label>Owner PIN</label><input id="ctOwnPin" type="password" inputmode="numeric" maxlength="8"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="acctToOwner()">Owner mode</button></div></div><div class="sub" style="margin-top:14px">PIN bhool gaye ya chal nahi raha? <a href="#" style="color:#a5b4fc;font-weight:600" onclick="acctPinReset();return false">PIN reset karo</a> (Recovery PIN ya Password daalna padega).</div>'}
 $('ctBody').innerHTML=h};
 window.acctSaveLock=function(){A().lockDate=$('ctLock').value||'';saveDB();acctRenderControl();toast(A().lockDate?'Lock: '+A().lockDate:'Lock hata diya')};
@@ -29705,54 +29708,118 @@ function audShowMsg(text,ok){
   m.textContent=text||'';
   m.className='auth-msg'+(text?(ok?' ok':' err'):'');
 }
+var AUD_EMAIL_RX=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function audLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){} return null; }
+function audClearStored(){ try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(e){} audLS('IE_AUDITOR_KEEP',null); }
+window.audMode=function(m){
+  var c=(m==='create');
+  var lf=audEl('audLoginForm'), cf=audEl('audCreateForm'), sl=audEl('audSegLogin'), sc=audEl('audSegCreate');
+  if(lf) lf.style.display=c?'none':'flex';
+  if(cf) cf.style.display=c?'flex':'none';
+  if(sl) sl.className=c?'':'on';
+  if(sc) sc.className=c?'on':'';
+  audShowMsg('');
+  var e=audLS('IE_AUD_EMAIL')||'';
+  var t=audEl(c?'audNewEmail':'audEmail'); if(t&&!t.value&&e) t.value=e;
+};
+function audStatusMsg(r,mode){
+  var st=r&&r.status;
+  if(st==='locked') return 'Too many wrong attempts. This Pass Key is locked for 15 minutes.';
+  if(st==='expired') return 'This Pass Key has expired. Please ask the owner for a new one.';
+  if(st==='revoked') return 'This Pass Key has been revoked. Please ask the owner for a new one.';
+  if(st==='noreg') return 'First time? Please use "Create Auditor/CA" once with your Pass Key.';
+  if(st==='already') return 'You are already registered. Please use "Login Auditor/CA".';
+  if(st==='badname') return 'Please enter your name (up to 80 characters).';
+  if(st==='badtype') return 'Please choose a valid Auditor Type.';
+  if(st==='nopin') return 'No Pass Key found for these details. Please check the Owner Email, Unique ID and your email. The Pass Key must be created by the owner.';
+  if(st==='bad') return mode==='create'?'Incorrect Pass Key. Please check and try again.':'Incorrect email or Pass Key. Please check and try again.';
+  return 'No Pass Key found for these details.';
+}
+/* Shared by Login and Create: builds the session, loads data, opens the company picker. */
+async function audFinishLogin(r,hash,ae,keep,logText){
+  var companies=Array.isArray(r.companies)?r.companies:[];
+  var an=r.auditor_name||ae;
+  var sess={ownerUid:r.owner_uid,ownerEmail:r.owner_email||'',ownerUserId:r.owner_user_id||'',auditorEmail:ae,auditorName:an,auditorType:r.auditor_type||'',companies:companies,expiresAt:r.expires_at,passkeyHash:hash,rows:[]};
+  window.__auditor=sess;
+  var store=JSON.stringify(sess);
+  audClearStored();
+  if(keep) audLS('IE_AUDITOR_KEEP',store); else { try{ sessionStorage.setItem('IE_AUDITOR',store); }catch(e){} }
+  var dataRows=[];
+  try{ dataRows=await audRpc('auditor_get_data',{p_owner_uid:sess.ownerUid,p_auditor_email:ae,p_passkey_hash:hash,p_company_ids:companies.map(function(c){ return c.id; })}); }
+  catch(e){
+    window.__auditor=null; audClearStored();
+    if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup.'); return false; }
+    throw e;
+  }
+  sess.rows=Array.isArray(dataRows)?dataRows:[];
+  try{
+    userProfile={userId:sess.ownerUserId,email:sess.ownerEmail,name:'',companies:{}};
+    companies.forEach(function(c){ userProfile.companies[c.id]={name:c.name}; });
+  }catch(e){}
+  audLog(logText.action,logText.detail.replace('{name}',an));
+  auditorShowBanner();
+  auditorApplySidebar();
+  showCompanyOverlay();
+  return true;
+}
 window.auditorLoginSubmit=async function(){
-  var oe=audVal('audOwnerEmail').trim().toLowerCase();
-  var uid=audVal('audUserId').trim();
   var ae=audVal('audEmail').trim().toLowerCase();
-  var an=audVal('audName').trim();
   var pk=audVal('audPasskey').trim().toUpperCase();
-  if(!oe||!uid||!ae||!an||!pk){ audShowMsg('Please fill in all fields.'); return; }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(oe)){ audShowMsg('Please enter a valid owner email address.'); return; }
-  if(!/^\d{10}$/.test(uid)){ audShowMsg('Unique ID must be the 10-digit number shown on the owner profile.'); return; }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ae)){ audShowMsg('Please enter a valid auditor email address.'); return; }
+  var keep=!!(audEl('audKeep')&&audEl('audKeep').checked);
+  if(!ae||!pk){ audShowMsg('Please enter your email and Pass Key.'); return; }
+  if(!AUD_EMAIL_RX.test(ae)){ audShowMsg('Please enter a valid auditor email address.'); return; }
   audShowMsg('');
   try{ if(typeof authSetLoading==='function') authSetLoading('audSubmitBtn',true); }catch(e){}
   try{
     var hash=await audSha256Hex(pk);
-    var rows=await audRpc('auditor_verify_login',{p_owner_email:oe,p_user_id:uid,p_auditor_email:ae,p_passkey_hash:hash});
+    var rows=await audRpc('auditor_login',{p_auditor_email:ae,p_passkey_hash:hash});
     var r=Array.isArray(rows)?rows[0]:rows;
     if(!r||!r.status) throw new Error('bad');
-    if(r.status==='bad'){ audShowMsg('Incorrect Pass Key. Please check and try again.'); return; }
-    if(r.status==='locked'){ audShowMsg('Too many wrong attempts. This Pass Key is locked for 15 minutes.'); return; }
-    if(r.status==='expired'){ audShowMsg('This Pass Key has expired. Please ask the owner for a new one.'); return; }
-    if(r.status==='revoked'){ audShowMsg('This Pass Key has been revoked. Please ask the owner for a new one.'); return; }
-    if(r.status!=='ok'){ audShowMsg('No Pass Key found for these details. Please check the Owner Email, Unique ID and your email.'); return; }
-    var companies=Array.isArray(r.companies)?r.companies:[];
-    var sess={ownerUid:r.owner_uid,ownerEmail:r.owner_email||oe,ownerUserId:uid,auditorEmail:ae,auditorName:an,companies:companies,expiresAt:r.expires_at,passkeyHash:hash,rows:[]};
-    window.__auditor=sess;
-    try{ sessionStorage.setItem('IE_AUDITOR',JSON.stringify(sess)); }catch(e){}
-    var dataRows=[];
-    try{ dataRows=await audRpc('auditor_get_data',{p_owner_uid:sess.ownerUid,p_auditor_email:ae,p_passkey_hash:hash,p_company_ids:companies.map(function(c){ return c.id; })}); }
-    catch(e){
-      if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup.'); window.__auditor=null; try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(x){} return; }
-      throw e;
-    }
-    sess.rows=Array.isArray(dataRows)?dataRows:[];
-    try{
-      userProfile={userId:uid,email:sess.ownerEmail,name:'',companies:{}};
-      companies.forEach(function(c){ userProfile.companies[c.id]={name:c.name}; });
-    }catch(e){}
-    audLog('login','Auditor '+an+' logged in');
-    auditorShowBanner();
-    auditorApplySidebar();
-    showCompanyOverlay();
+    if(r.status!=='ok'){ audShowMsg(audStatusMsg(r,'login')); return; }
+    audLS('IE_AUD_EMAIL',ae);
+    var pe=audEl('audPasskey'); if(pe) pe.value='';
+    await audFinishLogin(r,hash,ae,keep,{action:'login',detail:'Auditor {name} logged in'});
   }catch(e){
-    if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup (supabase/migrations/20261109_auditor_passkeys.sql).'); return; }
+    if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup.'); return; }
     audShowMsg('Could not log in. Please check your connection and try again.');
   }finally{
     try{ if(typeof authSetLoading==='function') authSetLoading('audSubmitBtn',false); }catch(e){}
   }
 };
+window.auditorCreateSubmit=async function(){
+  var oe=audVal('audOwnerEmail').trim().toLowerCase();
+  var ae=audVal('audNewEmail').trim().toLowerCase();
+  var uid=audVal('audUserId').trim();
+  var an=audVal('audName').trim();
+  var ty=audVal('audType').trim();
+  var pk=audVal('audNewPasskey').trim().toUpperCase();
+  if(!oe||!ae||!uid||!an||!ty||!pk){ audShowMsg('Please fill in all fields.'); return; }
+  if(!AUD_EMAIL_RX.test(oe)){ audShowMsg('Please enter a valid owner email address.'); return; }
+  if(!/^\d{10}$/.test(uid)){ audShowMsg('Unique ID must be the 10-digit number shown on the owner profile.'); return; }
+  if(!AUD_EMAIL_RX.test(ae)){ audShowMsg('Please enter a valid auditor email address.'); return; }
+  audShowMsg('');
+  try{ if(typeof authSetLoading==='function') authSetLoading('audCreateBtn',true); }catch(e){}
+  try{
+    var hash=await audSha256Hex(pk);
+    var rows=await audRpc('auditor_register',{p_owner_email:oe,p_user_id:uid,p_auditor_email:ae,p_auditor_name:an,p_auditor_type:ty,p_passkey_hash:hash});
+    var r=Array.isArray(rows)?rows[0]:rows;
+    if(!r||!r.status) throw new Error('bad');
+    if(r.status!=='ok'){
+      audShowMsg(audStatusMsg(r,'create'));
+      if(r.status==='already'){ audLS('IE_AUD_EMAIL',ae); setTimeout(function(){ audMode('login'); audShowMsg('You are already registered. Enter your Pass Key to log in.',true); },900); }
+      return;
+    }
+    audLS('IE_AUD_EMAIL',ae);
+    var pe=audEl('audNewPasskey'); if(pe) pe.value='';
+    await audFinishLogin(r,hash,ae,false,{action:'register',detail:'Auditor {name} registered and logged in'});
+  }catch(e){
+    if(audIsSetupMissing(e)){ audShowMsg('Auditor login is not set up yet. Please ask the owner to run the database setup.'); return; }
+    audShowMsg('Could not create the account. Please check your connection and try again.');
+  }finally{
+    try{ if(typeof authSetLoading==='function') authSetLoading('audCreateBtn',false); }catch(e){}
+  }
+};
+document.addEventListener('DOMContentLoaded',function(){ var e=audLS('IE_AUD_EMAIL'); var t=audEl('audEmail'); if(e&&t&&!t.value) t.value=e; });
 
 /* ---------------- Auditor banner / logout / restore ---------------- */
 function auditorShowBanner(){
@@ -29778,7 +29845,7 @@ window.auditorLogout=function(expired){
   var s=window.__auditor;
   if(s) audLog('logout',expired?'Session expired':'Auditor logged out');
   window.__auditor=null;
-  try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(e){}
+  audClearStored();
   try{ clearInterval(window.__audCountdownTimer); }catch(e){}
   var b=audEl('auditorBanner'); if(b) b.remove();
   document.body.classList.remove('auditor-mode');
@@ -29792,12 +29859,22 @@ window.auditorLogout=function(expired){
 };
 async function auditorRestoreSession(){
   var raw=null;
-  try{ raw=sessionStorage.getItem('IE_AUDITOR'); }catch(e){ return; }
+  try{ raw=sessionStorage.getItem('IE_AUDITOR'); }catch(e){}
+  if(!raw) raw=audLS('IE_AUDITOR_KEEP');
   if(!raw) return;
+  var keepStored=!!audLS('IE_AUDITOR_KEEP');
   var s=null;
-  try{ s=JSON.parse(raw); }catch(e){ return; }
-  if(!s||!s.ownerUid||!s.passkeyHash) return;
-  if(s.expiresAt&&new Date(s.expires_at||s.expiresAt).getTime()<=Date.now()){ try{ sessionStorage.removeItem('IE_AUDITOR'); }catch(e){} return; }
+  try{ s=JSON.parse(raw); }catch(e){ audClearStored(); return; }
+  if(!s||!s.ownerUid||!s.passkeyHash){ audClearStored(); return; }
+  if(s.expiresAt&&new Date(s.expires_at||s.expiresAt).getTime()<=Date.now()){ audClearStored(); return; }
+  /* Re-check the key on the server: revoked / expired / locked keys must not restore. */
+  try{
+    var chk=await audRpc('auditor_login',{p_auditor_email:s.auditorEmail,p_passkey_hash:s.passkeyHash});
+    var cr=Array.isArray(chk)?chk[0]:chk;
+    if(!cr||cr.status!=='ok'){ if(cr&&cr.status&&cr.status!=='locked'){ audClearStored(); } return; }
+    s.companies=Array.isArray(cr.companies)?cr.companies:(s.companies||[]);
+    s.auditorName=cr.auditor_name||s.auditorName; s.auditorType=cr.auditor_type||s.auditorType; s.expiresAt=cr.expires_at||s.expiresAt;
+  }catch(e){ return; }
   window.__auditor=s;
   try{
     var rows=await audRpc('auditor_get_data',{p_owner_uid:s.ownerUid,p_auditor_email:s.auditorEmail,p_passkey_hash:s.passkeyHash,p_company_ids:(s.companies||[]).map(function(c){ return c.id; })});
@@ -29895,11 +29972,49 @@ window.auditorOpenCompany=function(cid){
 /* ---------------- Create Pass Key (owner side, Roles & PIN tab) ---------------- */
 window.__audPinVerified=false;
 window.__audExpiryDays=30;
+function audWho(k){
+  var em='<div class="sub">'+esc(k.auditor_email||'')+'</div>';
+  if(k.auditor_name) return '<b>'+esc(k.auditor_name)+'</b>'+(k.auditor_type?' <span class="sub">('+esc(k.auditor_type)+')</span>':'')+em;
+  return '<i class="sub">Not registered yet</i>'+em;
+}
+window.auditorPasskeyTabHtml=function(){
+  var h=(typeof window.auditorPasskeySectionHtml==='function'?window.auditorPasskeySectionHtml():'');
+  h+='<div class="section-title" style="margin-top:26px">Auditor Activity Log</div>'
+    +'<div class="sub" style="margin-bottom:10px">What your auditors did: logins, company opened, pages viewed, prints and exports (latest first).</div>'
+    +'<div class="grid g3"><div><label>Auditor</label><select id="audLogFilter" onchange="auditorRefreshLogs()"><option value="">All auditors</option></select></div>'
+    +'<div style="display:flex;align-items:flex-end"><button class="btn" onclick="auditorRefreshLogs()">Refresh</button></div></div>'
+    +'<div id="audLogList" style="margin-top:12px"><div class="sub">Loading…</div></div>';
+  setTimeout(function(){ auditorRefreshLogs(true); },0);
+  return h;
+};
+window.auditorRefreshLogs=async function(fillFilter){
+  var box=audEl('audLogList'); if(!box) return;
+  var ownerUid=(typeof currentUser!=='undefined'&&currentUser&&currentUser.uid)||'';
+  var sel=audEl('audLogFilter'), who=sel?sel.value:'';
+  try{
+    var rows=await audRpc('auditor_list_logs',{p_owner_uid:ownerUid,p_auditor_email:who||null,p_limit:300});
+    if(sel&&(fillFilter===true||sel.options.length<=1)){
+      var all=who?await audRpc('auditor_list_logs',{p_owner_uid:ownerUid,p_auditor_email:null,p_limit:1000}):rows;
+      var seen={}, cur=who;
+      (all||[]).forEach(function(r){ if(r.auditor_email&&!seen[r.auditor_email]) seen[r.auditor_email]=r.auditor_name||''; });
+      sel.innerHTML='<option value="">All auditors</option>'+Object.keys(seen).map(function(e){ return '<option value="'+esc(e)+'"'+(e===cur?' selected':'')+'>'+esc(seen[e]?seen[e]+' — '+e:e)+'</option>'; }).join('');
+    }
+    if(!rows||!rows.length){ box.innerHTML='<div class="sub">No auditor activity yet.</div>'; return; }
+    box.innerHTML='<div class="table-wrap"><table><thead><tr><th>Time</th><th>Auditor</th><th>Action</th><th>Detail</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        var cls=(r.action==='export'||r.action==='print')?'partial':(r.action==='login'||r.action==='register')?'paid':'';
+        return '<tr><td>'+esc(new Date(r.created_at).toLocaleString('en-IN'))+'</td><td><b>'+esc(r.auditor_name||'-')+'</b><div class="sub">'+esc(r.auditor_email||'')+'</div></td><td><span class="badge '+cls+'">'+esc(r.action||'')+'</span></td><td style="white-space:normal;min-width:200px">'+esc(r.detail||'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }catch(e){
+    if(audIsSetupMissing(e)) box.innerHTML='<div class="sub">Activity log is not set up yet (database update pending).</div>';
+    else box.innerHTML='<div class="sub">Could not load the activity log. Please check your connection.</div>';
+  }
+};
 window.auditorPasskeySectionHtml=function(){
   var comps=(typeof userProfile!=='undefined'&&userProfile&&userProfile.companies)||{};
   var ids=Object.keys(comps);
   var h='<div class="section-title" style="margin-top:22px">Create Pass Key (Auditor / CA Login)</div>';
-  h+='<div class="sub" style="margin-bottom:12px">An auditor logs in with the owner email, the owner Unique ID, this Pass Key, their own email and any name they type. The Pass Key is shown only once — save it and share it with the auditor.</div>';
+  h+='<div class="sub" style="margin-bottom:12px">Create a Pass Key for the auditor’s email, then share the Pass Key, your Owner Email and your Unique ID with the auditor. On the login page they use &ldquo;Create Auditor/CA&rdquo; once to add their name and type, and after that log in with only their email and Pass Key. The Pass Key is shown only once.</div>';
   if(!window.__audPinVerified){
     h+='<div class="grid g3"><div><label>Owner PIN (to unlock)</label><input id="audPinGate" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div><div style="display:flex;align-items:flex-end"><button class="btn primary" onclick="auditorVerifyPinGate()">Verify PIN</button></div></div>';
     return h;
@@ -29968,7 +30083,7 @@ window.auditorGeneratePasskey=async function(){
   var box=audEl('audOnceBox');
   if(box){
     box.classList.remove('hidden');
-    box.innerHTML='<div style="font-weight:700;margin-bottom:6px">Pass Key created — copy it now. It will never be shown again.</div><div style="font-size:18px;font-weight:700;letter-spacing:1px;word-break:break-all">'+esc(key)+'</div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" onclick="auditorCopyOnceKey(\''+key+'\')">Copy Pass Key</button></div><div class="sub" style="margin-top:8px">Share this key with the auditor along with the owner email and Unique ID. Expiry: '+esc(expiresAt.toLocaleDateString('en-IN'))+'.</div>';
+    box.innerHTML='<div style="font-weight:700;margin-bottom:6px">Pass Key created — copy it now. It will never be shown again.</div><div style="font-size:18px;font-weight:700;letter-spacing:1px;word-break:break-all">'+esc(key)+'</div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" onclick="auditorCopyOnceKey(\''+key+'\')">Copy Pass Key</button></div><div class="sub" style="margin-top:8px">Share this key with the auditor along with your Owner Email and Unique ID. Expiry: '+esc(expiresAt.toLocaleDateString('en-IN'))+'.</div>';
   }
   auditorRefreshPasskeyList();
 };
@@ -29981,11 +30096,11 @@ window.auditorRefreshPasskeyList=async function(){
   try{
     var rows=await audRpc('auditor_list_passkeys',{p_owner_uid:ownerUid});
     if(!rows||!rows.length){ list.innerHTML='<div class="sub">No Pass Keys created yet.</div>'; return; }
-    list.innerHTML='<div class="table-wrap"><table><thead><tr><th>Auditor Email</th><th>Companies</th><th>Created</th><th>Expiry</th><th>Last Used</th><th>Status</th><th></th></tr></thead><tbody>'+
+    list.innerHTML='<div class="table-wrap"><table><thead><tr><th>Auditor</th><th>Companies</th><th>Created</th><th>Expiry</th><th>Last Used</th><th>Status</th><th></th></tr></thead><tbody>'+
       rows.map(function(k){
         var st=k.revoked?'REVOKED':(new Date(k.expires_at).getTime()<=Date.now()?'EXPIRED':'ACTIVE');
         var comps=(k.company_names&&k.company_names.length)?k.company_names.join(', '):'All companies';
-        return '<tr><td>'+esc(k.auditor_email||'')+'</td><td>'+esc(comps)+'</td><td>'+esc(new Date(k.created_at).toLocaleDateString('en-IN'))+'</td><td>'+esc(new Date(k.expires_at).toLocaleDateString('en-IN'))+'</td><td>'+(k.last_used_at?esc(new Date(k.last_used_at).toLocaleString('en-IN')):'-')+'</td><td>'+st+'</td><td>'+(st==='ACTIVE'?'<button class="btn danger" onclick="auditorRevokePasskey(\''+k.id+'\')">Revoke</button>':'')+'</td></tr>';
+        return '<tr><td>'+audWho(k)+'</td><td>'+esc(comps)+'</td><td>'+esc(new Date(k.created_at).toLocaleDateString('en-IN'))+'</td><td>'+esc(new Date(k.expires_at).toLocaleDateString('en-IN'))+'</td><td>'+(k.last_used_at?esc(new Date(k.last_used_at).toLocaleString('en-IN')):'-')+'</td><td>'+st+'</td><td>'+(st==='ACTIVE'?'<button class="btn danger" onclick="auditorRevokePasskey(\''+k.id+'\')">Revoke</button>':'')+'</td></tr>';
       }).join('')+'</tbody></table></div>';
   }catch(e){
     if(audIsSetupMissing(e)){ list.innerHTML='<div class="sub">Auditor setup is not complete. Please run the SQL file supabase/migrations/20261109_auditor_passkeys.sql in the Supabase SQL Editor.</div>'; }
