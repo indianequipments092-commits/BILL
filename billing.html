@@ -1415,6 +1415,12 @@ let recoveryCbs=[], recoveryPending=false;
 function fireRecovery(){ if(recoveryCbs.length){ recoveryCbs.forEach(cb=>{ try{cb();}catch(e){console.error(e);} }); } else { recoveryPending=true; } }
 supabase.auth.onAuthStateChange((event,session)=>{ if(event==='PASSWORD_RECOVERY') fireRecovery(); if(!session && event!=='SIGNED_OUT') return;   const u=wrapUser(session&&session.user); authStateCbs.forEach(cb=>cb(u)); });
 const IS_NATIVE_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+/* BROWSER-ONLY SERVER-FIRST MODE: when the app runs in a plain browser
+   (not the native APK), company/business data is never stored in the
+   browser. Data is always fetched fresh from Supabase and every save
+   goes straight to the cloud. The APK keeps the existing local-first
+   behaviour (localStorage + 15s cloud sync, offline login). */
+var IE_BROWSER_SERVER_FIRST = !IS_NATIVE_APP;
 const APP_AUTH_CALLBACK = 'com.iebilling.app://auth-callback';
 const GOOGLE_WEB_CLIENT_ID = '964174275031-iptdupn27inokm1dqluv5tcrv0kl7hr8.apps.googleusercontent.com';
 if(IS_NATIVE_APP && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
@@ -3255,11 +3261,11 @@ if(error) throw error;
 (data||[]).forEach(r=>docs.push({id:r.doc_id,...r.data}));
 if(!data||data.length<PAGE) break;
 }
-try{ localStorage.setItem(CACHE_KEY, JSON.stringify({savedAt:Date.now(), version:(ver===undefined?null:ver), docs})); }catch(e){   }
+if(!IE_BROWSER_SERVER_FIRST){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({savedAt:Date.now(), version:(ver===undefined?null:ver), docs})); }catch(e){   } }
 applyDocs(docs);
 }catch(err){ console.warn('Inventory Premium sync failed', err); }
 }
-if(!force){
+if(!force && !IE_BROWSER_SERVER_FIRST){
 let cached=null;
 try{ cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){ cached=null; }
 if(cached && cached.savedAt && Array.isArray(cached.docs)){
@@ -3467,11 +3473,12 @@ el.innerHTML='<span class="shb-msg"></span><span style="display:flex;gap:6px;fle
 el.querySelector('.shb-msg').textContent=msg;
 }
 function iePendKey(id){ return 'ie_pending_'+id; }
-function iePendSet(id,on){ try{ if(!id) return; if(on) localStorage.setItem(iePendKey(id),String(Date.now())); else localStorage.removeItem(iePendKey(id)); }catch(e){} }
-function iePendGet(id){ try{ return !!localStorage.getItem(iePendKey(id)); }catch(e){ return false; } }
-function iePendTime(id){ try{ return Number(localStorage.getItem(iePendKey(id)))||0; }catch(e){ return 0; } }
-function ieLocalDb(id){ try{ const raw=localStorage.getItem(KEY+'_'+id); if(!raw) return null; return normalizeDB(JSON.parse(raw)); }catch(e){ return null; } }
+function iePendSet(id,on){ if(IE_BROWSER_SERVER_FIRST) return; try{ if(!id) return; if(on) localStorage.setItem(iePendKey(id),String(Date.now())); else localStorage.removeItem(iePendKey(id)); }catch(e){} }
+function iePendGet(id){ if(IE_BROWSER_SERVER_FIRST) return false; try{ return !!localStorage.getItem(iePendKey(id)); }catch(e){ return false; } }
+function iePendTime(id){ if(IE_BROWSER_SERVER_FIRST) return 0; try{ return Number(localStorage.getItem(iePendKey(id)))||0; }catch(e){ return 0; } }
+function ieLocalDb(id){ if(IE_BROWSER_SERVER_FIRST) return null; try{ const raw=localStorage.getItem(KEY+'_'+id); if(!raw) return null; return normalizeDB(JSON.parse(raw)); }catch(e){ return null; } }
 function ieOfflineUserSave(){
+if(IE_BROWSER_SERVER_FIRST) return;
 try{
 if(!currentUser||!currentUser.uid) return;
 let prof=userProfile||null;
@@ -3511,6 +3518,7 @@ el.textContent='📴 Offline — data will sync when the connection is restored'
 }catch(e){}
 }
 function kick(){
+if(IE_BROWSER_SERVER_FIRST) return;
 try{
 pill();
 if(!navigator.onLine) return;
@@ -3522,7 +3530,7 @@ try{ if(typeof ieFlushPendingOthers==='function') ieFlushPendingOthers(); }catch
 window.addEventListener('online',function(){ setTimeout(kick,300); });
 window.addEventListener('offline',pill);
 document.addEventListener('DOMContentLoaded',pill);
-setInterval(function(){ try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} try{ if(navigator.onLine&&typeof ieFlushPendingOthers==='function') ieFlushPendingOthers(); }catch(e){} },15000);
+setInterval(function(){ if(IE_BROWSER_SERVER_FIRST) return; try{ if(navigator.onLine&&currentUser&&currentCompanyId&&iePendGet(currentCompanyId)) fsScheduleSave(); }catch(e){} try{ if(navigator.onLine&&typeof ieFlushPendingOthers==='function') ieFlushPendingOthers(); }catch(e){} },15000);
 document.addEventListener('visibilitychange',function(){ if(!document.hidden) kick(); });
 })();
 let fsRetryTimer=null;
@@ -3549,7 +3557,7 @@ const __settle=(ok,e)=>{
 if(__done) return; __done=true;
 __fsInFlight=false;
 if(ok){ saveHealthSet('cloud',true); if(__ver===__fsVer&&!__fsQueued){ if(!(typeof ieSplitIsActive==='function'&&ieSplitIsActive(__cid))||(typeof ieSplitDirtyEmpty==='function'&&ieSplitDirtyEmpty())) iePendSet(__cid,false); } }
-else{ console.warn('Firestore save failed',e); window.__lastSyncErr=String((e&&(e.message||e.code||e.details))||e||'').slice(0,140); saveHealthSet('cloud',false); }
+else{ console.warn('Firestore save failed',e); window.__lastSyncErr=String((e&&(e.message||e.code||e.details))||e||'').slice(0,140); saveHealthSet('cloud',false); if(IE_BROWSER_SERVER_FIRST){ try{ var __bwNow=Date.now(); if(!window.__ieBwFailToastAt||__bwNow-window.__ieBwFailToastAt>15000){ window.__ieBwFailToastAt=__bwNow; toast('⚠️ Save nahi ho paya — net ya server problem hai. Tumhara change abhi cloud pe save NAHI hua hai.','#b45309'); } }catch(_e){} } }
 if(__fsQueued){ __fsQueued=false; clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,ok?300:__fsRetryDelay()); }
 else if(!ok){ clearTimeout(fsRetryTimer); fsRetryTimer=setTimeout(fsScheduleSave,__fsRetryDelay()); }
 };
@@ -3568,6 +3576,7 @@ fbDb.collection('users').doc(__uid).collection('companies').doc(__cid)
 },250);
 }
 async function ieFlushPendingOthers(){
+if(IE_BROWSER_SERVER_FIRST) return;
 if(!currentUser||!currentUser.uid) return;
 if(navigator.onLine===false) return;
 if(window.__coLoading||window.__pendFlushBusy) return;
@@ -3975,8 +3984,8 @@ if(typeof loadProfileUI==='function') loadProfileUI();
 .catch(e=>alert('Delete nahi ho paya: '+(e.message||e)));
 }
 function ieCloudStampKey(id){ return 'IE_CLOUDAT_'+id; }
-function ieCloudStampGet(id){ try{ return Number(localStorage.getItem(ieCloudStampKey(id)))||0; }catch(e){ return 0; } }
-function ieCloudStampSet(id,ts){ try{ if(ts>0) localStorage.setItem(ieCloudStampKey(id),String(ts)); }catch(e){} }
+function ieCloudStampGet(id){ if(IE_BROWSER_SERVER_FIRST) return 0; try{ return Number(localStorage.getItem(ieCloudStampKey(id)))||0; }catch(e){ return 0; } }
+function ieCloudStampSet(id,ts){ if(IE_BROWSER_SERVER_FIRST) return; try{ if(ts>0) localStorage.setItem(ieCloudStampKey(id),String(ts)); }catch(e){} }
 function ieCacheDecision(hasLocal,hasPending,localStamp,cloudStamp){
 if(!hasLocal) return 'full-fallback';
 if(hasPending) return 'full-fallback';
@@ -4153,18 +4162,18 @@ function ieSplitAssembleFromWhole(whole){
   return {db:db2,bodies:bodies,sections:secs,index:idx};
 }
 function ieDocStampKey(cid){ return 'IE_CLOUDSTAMPS_'+cid; }
-function ieDocStampMap(cid){ try{ return JSON.parse(localStorage.getItem(ieDocStampKey(cid))||'{}')||{}; }catch(e){ return {}; } }
+function ieDocStampMap(cid){ if(IE_BROWSER_SERVER_FIRST) return {}; try{ return JSON.parse(localStorage.getItem(ieDocStampKey(cid))||'{}')||{}; }catch(e){ return {}; } }
 function ieDocStampGet(cid,key){ var m=ieDocStampMap(cid); return Number(m[key])||0; }
-function ieDocStampSet(cid,key,ts){ try{ var m=ieDocStampMap(cid); if(ts>0) m[key]=ts; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
-function ieDocStampDel(cid,key){ try{ var m=ieDocStampMap(cid); delete m[key]; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
-function ieDocStampPrune(cid,validIds){ try{ var m=ieDocStampMap(cid); Object.keys(m).forEach(function(k){ if(k.indexOf('inv:')===0&&validIds.indexOf(k.slice(4))<0) delete m[k]; }); localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
-function ieDocStampClear(cid){ try{ localStorage.removeItem(ieDocStampKey(cid)); }catch(e){} }
+function ieDocStampSet(cid,key,ts){ if(IE_BROWSER_SERVER_FIRST) return; try{ var m=ieDocStampMap(cid); if(ts>0) m[key]=ts; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampDel(cid,key){ if(IE_BROWSER_SERVER_FIRST) return; try{ var m=ieDocStampMap(cid); delete m[key]; localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampPrune(cid,validIds){ if(IE_BROWSER_SERVER_FIRST) return; try{ var m=ieDocStampMap(cid); Object.keys(m).forEach(function(k){ if(k.indexOf('inv:')===0&&validIds.indexOf(k.slice(4))<0) delete m[k]; }); localStorage.setItem(ieDocStampKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieDocStampClear(cid){ if(IE_BROWSER_SERVER_FIRST) return; try{ localStorage.removeItem(ieDocStampKey(cid)); }catch(e){} }
 function ieSplitPendKey(cid){ return 'IE_CLOUDPEND_'+cid; }
-function ieSplitPendList(cid){ try{ var v=JSON.parse(localStorage.getItem(ieSplitPendKey(cid))||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function ieSplitPendList(cid){ if(IE_BROWSER_SERVER_FIRST) return []; try{ var v=JSON.parse(localStorage.getItem(ieSplitPendKey(cid))||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
 function ieSplitPendHas(cid,key){ return ieSplitPendList(cid).indexOf(key)>=0; }
-function ieSplitPendAdd(cid,key){ try{ var l=ieSplitPendList(cid); if(l.indexOf(key)<0) l.push(key); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
-function ieSplitPendDel(cid,key){ try{ var l=ieSplitPendList(cid).filter(function(x){ return x!==key; }); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
-function ieSplitPendClear(cid){ try{ localStorage.removeItem(ieSplitPendKey(cid)); }catch(e){} }
+function ieSplitPendAdd(cid,key){ if(IE_BROWSER_SERVER_FIRST) return; try{ var l=ieSplitPendList(cid); if(l.indexOf(key)<0) l.push(key); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
+function ieSplitPendDel(cid,key){ if(IE_BROWSER_SERVER_FIRST) return; try{ var l=ieSplitPendList(cid).filter(function(x){ return x!==key; }); localStorage.setItem(ieSplitPendKey(cid),JSON.stringify(l)); }catch(e){} }
+function ieSplitPendClear(cid){ if(IE_BROWSER_SERVER_FIRST) return; try{ localStorage.removeItem(ieSplitPendKey(cid)); }catch(e){} }
 function ieSplitMigratedKey(cid){ return 'IE_SPLIT_MIGRATED_'+cid; }
 function ieSplitIsActive(cid){ return !!(cid&&ieSplitMigrated[cid]); }
 function ieSplitIsMigratedCached(cid){ try{ return localStorage.getItem(ieSplitMigratedKey(cid))==='1'; }catch(e){ return false; } }
@@ -4198,8 +4207,9 @@ async function ieCloudStampFetchDoc(cid,collPath,docId){
   return n>0?n:0;
 }
 function ieBodyCacheKey(cid){ return 'IE_BODIES_'+cid; }
-function ieBodyCacheGet(cid,id){ try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; return m[id]||null; }catch(e){ return null; } }
+function ieBodyCacheGet(cid,id){ if(IE_BROWSER_SERVER_FIRST) return null; try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; return m[id]||null; }catch(e){ return null; } }
 function ieBodyCacheSet(cid,id,body){
+  if(IE_BROWSER_SERVER_FIRST) return;
   try{
     var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{};
     m[id]=body;
@@ -4208,7 +4218,7 @@ function ieBodyCacheSet(cid,id,body){
     try{ localStorage.removeItem(ieBodyCacheKey(cid)); }catch(e2){}
   }
 }
-function ieBodyCacheDel(cid,id){ try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; delete m[id]; localStorage.setItem(ieBodyCacheKey(cid),JSON.stringify(m)); }catch(e){} }
+function ieBodyCacheDel(cid,id){ if(IE_BROWSER_SERVER_FIRST) return; try{ var m=JSON.parse(localStorage.getItem(ieBodyCacheKey(cid))||'{}')||{}; delete m[id]; localStorage.setItem(ieBodyCacheKey(cid),JSON.stringify(m)); }catch(e){} }
 function ieSplitInstallBody(body){
   if(!body||!body.id) return null;
   ieInvoiceBody[body.id]=body;
@@ -4882,7 +4892,7 @@ renderUserChipAndProfile();
 runSafeBoot();
 setTimeout(runPostCompanyBanners,700);
 };
-const hasLocal=()=>{ try{ return !!localStorage.getItem(KEY+'_'+companyId); }catch(e){ return false; } };
+const hasLocal=()=>{ if(IE_BROWSER_SERVER_FIRST) return false; try{ return !!localStorage.getItem(KEY+'_'+companyId); }catch(e){ return false; } };
 const withTimeout=(pr,ms)=>new Promise((res,rej)=>{ const t=setTimeout(()=>rej(new Error('timeout')),ms); pr.then(v=>{clearTimeout(t);res(v);},e=>{clearTimeout(t);rej(e);}); });
 const useLocal=()=>{
 const loc=ieLocalDb(companyId);
@@ -4923,7 +4933,7 @@ if(snap.exists && snap.data() && snap.data().data){
 try{ loaded=normalizeDB(JSON.parse(snap.data().data)); }catch(e){ console.warn('company data parse failed',e); }
 }
 try{ const __cu0=Number((snap.exists&&snap.data()&&snap.data().updatedAt)||0); if(__cu0>0) ieCloudStampSet(companyId,__cu0); }catch(e){}
-try{ const __rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0), __lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(__rv>__lv){ iePendSet(companyId,false); localStorage.removeItem(KEY+'_'+companyId); localStorage.setItem('IE_RESETV_'+companyId,String(__rv)); } }catch(e){}
+if(!IE_BROWSER_SERVER_FIRST){ try{ const __rv=Number((snap.exists&&snap.data()&&snap.data().resetVersion)||0), __lv=Number(localStorage.getItem('IE_RESETV_'+companyId)||0); if(__rv>__lv){ iePendSet(companyId,false); localStorage.removeItem(KEY+'_'+companyId); localStorage.setItem('IE_RESETV_'+companyId,String(__rv)); } }catch(e){} }
 if(iePendGet(companyId)){
 const loc=ieLocalDb(companyId);
 if(loc){
@@ -7510,6 +7520,7 @@ applyTheme(saved);
 })();
 let _authBootedUid=null;
 function ieTryOfflineLogin(force){
+if(IE_BROWSER_SERVER_FIRST) return false;
 try{
 if(!force && navigator.onLine!==false) return false;
 let c=ieOfflineUserGet();
@@ -7583,7 +7594,7 @@ if(typeof checkAppVersion==='function') checkAppVersion();
 if(lastProfileWasNew){ rfCaptureOnSignup(); showPlanOverlay(proceed); } else { proceed(); }
 }).catch(e=>{
 console.warn('profile load failed',e);
-try{ if(!userProfile){ const c=ieOfflineUserGet(); if(c&&c.uid===user.uid&&c.profile) userProfile=c.profile; } }catch(_){}
+try{ if(!IE_BROWSER_SERVER_FIRST&&!userProfile){ const c=ieOfflineUserGet(); if(c&&c.uid===user.uid&&c.profile) userProfile=c.profile; } }catch(_){}
 showCompanyOverlay();
 });
 } else {
@@ -7604,6 +7615,7 @@ showAuthOverlay();
 });
 /* ---------- Session backup + boot restore ---------- */
 function ieSessionBackupSave(session){
+if(IE_BROWSER_SERVER_FIRST) return;
 try{
 if(!session||!session.refresh_token||!session.user||!session.user.id) return;
 localStorage.setItem('ie_session_backup',JSON.stringify({at:session.access_token||'',rt:session.refresh_token,exp:session.expires_at||0,uid:session.user.id,email:session.user.email||'',savedAt:Date.now()}));
@@ -7630,6 +7642,7 @@ try{ supabaseClient.auth.onAuthStateChange(function(ev,session){ if(session&&(ev
 (async function(){
 try{
 if(navigator.onLine===false) return;
+if(IE_BROWSER_SERVER_FIRST) return;
 const bk=ieSessionBackupGet(); if(!bk||!bk.rt||!bk.uid) return;
 let healthy=false;
 try{ const cur=await supabaseClient.auth.getSession(); const sess=cur&&cur.data?cur.data.session:null; healthy=!!(sess&&sess.user&&sess.user.id===bk.uid&&((sess.expires_at||0)*1000>Date.now()+60000)); }catch(e){}
@@ -11822,8 +11835,13 @@ const ZOOM_STEP=0.08;
 const ZOOM_MIN=0.4;
 const ZOOM_MAX=2.5;
 var __lsT=null,__lsP={};
-function lsFlushNow(){clearTimeout(__lsT);var ps=__lsP;__lsP={};if(!Object.keys(ps).length)return;var ok=true;Object.keys(ps).forEach(function(k){var p=ps[k];if(!p)return;try{localStorage.setItem(p.k,JSON.stringify(p.d));}catch(e){ok=false;console.warn('saveDB failed',e);}});try{saveHealthSet('local',ok);}catch(e){}}
-function saveDB(){geminiKeyMigrate();var __k=currentCompanyId?KEY+'_'+currentCompanyId:KEY;__lsP[__k]={k:__k,d:db};clearTimeout(__lsT);__lsT=setTimeout(lsFlushNow,400);if(typeof fsScheduleSave==='function')fsScheduleSave();refreshAll();syncAdminIndexStats();}
+function lsFlushNow(){if(IE_BROWSER_SERVER_FIRST){ __lsP={}; return; }clearTimeout(__lsT);var ps=__lsP;__lsP={};if(!Object.keys(ps).length)return;var ok=true;Object.keys(ps).forEach(function(k){var p=ps[k];if(!p)return;try{localStorage.setItem(p.k,JSON.stringify(p.d));}catch(e){ok=false;console.warn('saveDB failed',e);}});try{saveHealthSet('local',ok);}catch(e){}}
+/* BROWSER-ONLY SERVER-FIRST SAVE: no localStorage queue, no pending flag.
+   The cloud write is attempted immediately (fsScheduleSave debounces
+   bursts by 250ms and retries with backoff); a failure is shown loudly
+   (toast + health bar) and never hidden as a local-only save. */
+function ieBrowserSave(){ geminiKeyMigrate(); if(typeof fsScheduleSave==='function')fsScheduleSave(); refreshAll(); syncAdminIndexStats(); }
+function saveDB(){if(IE_BROWSER_SERVER_FIRST){ ieBrowserSave(); return; }geminiKeyMigrate();var __k=currentCompanyId?KEY+'_'+currentCompanyId:KEY;__lsP[__k]={k:__k,d:db};clearTimeout(__lsT);__lsT=setTimeout(lsFlushNow,400);if(typeof fsScheduleSave==='function')fsScheduleSave();refreshAll();syncAdminIndexStats();}
 window.addEventListener('pagehide',lsFlushNow);window.addEventListener('beforeunload',lsFlushNow);document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')lsFlushNow()});
 let _adminSyncT=null;
 function syncAdminIndexStats(){
@@ -20925,7 +20943,7 @@ db.invoices.forEach(inv=>{if(!inv.invoiceNumber)inv.invoiceNumber=nextNo(); if(!
 migrateReceiptNumbers();
 loadSettingsUI(); refreshAll();
 if(typeof renderNotifBadgeAndPanel==='function') renderNotifBadgeAndPanel();
-try{localStorage.setItem(currentCompanyId?KEY+'_'+currentCompanyId:KEY,JSON.stringify(db));saveHealthSet('local',true);}catch(e){saveHealthSet('local',false);}
+if(!IE_BROWSER_SERVER_FIRST){ try{localStorage.setItem(currentCompanyId?KEY+'_'+currentCompanyId:KEY,JSON.stringify(db));saveHealthSet('local',true);}catch(e){saveHealthSet('local',false);} }
 __booted=true;
 if(planAllows('inventoryPremium') && db.settings && db.settings.invPremium && db.settings.invPremium.enabled){
 loadMasterCatTree().then(()=>invPremiumStartSync());
@@ -27346,7 +27364,7 @@ RSG.exec=function(mode,num){
   }).then(function(){
     /* 3. cloud succeeded -> local */
     db=nd;
-    try{ localStorage.setItem(KEY+'_'+cid,JSON.stringify(nd)); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){}
+    if(!IE_BROWSER_SERVER_FIRST){ try{ localStorage.setItem(KEY+'_'+cid,JSON.stringify(nd)); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){} }
     try{ if(typeof ieSplitAfterReset==='function') ieSplitAfterReset(cid); }catch(e){}
     /* 4. audit record in cloud (best effort) */
     try{ fbDb.collection('users').doc(currentUser.uid).collection('resetAudit').doc(cid+'_'+Date.now()).set({companyId:cid,mode:mode,at:Date.now(),by:currentUser.email||'',counts:c,resetVersion:rv}).catch(function(){}); }catch(e){}
@@ -27599,7 +27617,7 @@ function restore(d){
     rv=Number((s.exists&&s.data()&&s.data().resetVersion)||0)+1;
     return RSX.cref().set({data:d.data,updatedAt:Date.now(),resetVersion:rv,lastReset:null},{merge:true});
   }).then(function(){
-    try{ localStorage.setItem(KEY+'_'+cid,d.data); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){}
+    if(!IE_BROWSER_SERVER_FIRST){ try{ localStorage.setItem(KEY+'_'+cid,d.data); localStorage.setItem('IE_RESETV_'+cid,String(rv)); iePendSet(cid,false); }catch(e){} }
     sref().delete().catch(function(){});
     alertOwner('undo_reset',{});
     ui('Data Restored','Your data has been restored. The app will now reload.','Reload Now',function(){ location.reload(); });
