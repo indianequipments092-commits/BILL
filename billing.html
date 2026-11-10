@@ -30177,35 +30177,8 @@ audWrap('ieTryOfflineLogin',function(){ if(window.__auditor) return false; });
    change-password modal and submit for auditors as well. */
 audWrap('pwOpen',audBlockMsg('Auditor access is view-only. Password cannot be changed.'));
 audWrap('pwSubmit',audBlockMsg('Auditor access is view-only. Password cannot be changed.'));
-/* Watermark: every print/PDF/Excel path already goes through ieCreditHtml /
-   ieCreditXls, so prepending the audit copy line there covers invoice print,
-   history PDF/Excel, customer reports and document prints. */
-(function(){
-  var __och=window.ieCreditHtml;
-  if(typeof __och==='function'){
-    window.ieCreditHtml=function(label,style){
-      var base=''; try{ base=__och.apply(this,arguments)||''; }catch(e){}
-      if(window.__auditor){
-        var s=window.__auditor;
-        return '<div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:#b91c1c;margin-top:10px">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</div>'+base;
-      }
-      return base;
-    };
-  }
-  var __ocx=window.ieCreditXls;
-  if(typeof __ocx==='function'){
-    window.ieCreditXls=function(html,label){
-      var out=''; try{ out=__ocx.apply(this,arguments)||html; }catch(e){ out=html; }
-      if(window.__auditor){
-        var s=window.__auditor;
-        var row='<tr><td colspan="20" style="font-size:11px;color:#b91c1c;padding:10px 4px;font-weight:700">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</td></tr>';
-        var i=out.lastIndexOf('</table>');
-        if(i>=0) out=out.slice(0,i)+row+out.slice(i); else out=out+row;
-      }
-      return out;
-    };
-  }
-})();
+/* AUDIT COPY watermark removed 2026-11-10 (owner request): auditor exports now
+   look identical to the owner's. Export/print actions are still logged below. */
 /* Audit logging: exports / prints / sensitive page views (fire-and-forget). */
 audWrapPost('printFromPreview',function(){ if(window.__auditor) audLog('print','Invoice print'); });
 audWrapPost('docPrintRun',function(){ if(window.__auditor) audLog('print','Document print'); });
