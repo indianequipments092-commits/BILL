@@ -25341,7 +25341,7 @@ function cid(){try{return currentCompanyId||''}catch(e){return''}}
 function hash(s){var h=5381;s='ie|'+s;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)}
 function wrap(n,pre){var o=window[n];if(typeof o!=='function')return;window[n]=function(){var x;try{x=pre.apply(this,arguments)}catch(e){x=undefined}if(x===false)return;return o.apply(this,arguments)}}
 var ROLES={owner:'Owner',accountant:'Accountant',salesman:'Salesman',viewer:'Viewer (sirf dekhna)',auditor:'Auditor (view only)'},
-DENY={owner:[],accountant:['settings','backup'],salesman:['acctExt','invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint'],auditor:['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','invAdv','acctVouchers','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','chats']};
+DENY={owner:[],accountant:['settings','backup'],salesman:['acctExt','invAdv','acctVouchers','acctLedgers','acctReports','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','analytics','settings','backup','chequePrint'],viewer:['settings','backup','chequePrint'],auditor:['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','chats']};
 function role(){try{if(window.__auditor)return'auditor';var r=localStorage.getItem('IE_ROLE');return ROLES[r]?r:'owner'}catch(e){return'owner'}}
 function who(){var n='';try{n=localStorage.getItem('IE_UNAME')||''}catch(e){}return(n?n+' ':'')+'('+ROLES[role()].split(' ')[0]+')'}
 function applyRole(){var d=DENY[role()];document.querySelectorAll('.sidebar button[data-page]').forEach(function(b){b.style.display=d.indexOf(b.dataset.page)>-1?'none':''});
@@ -29891,7 +29891,7 @@ async function auditorRestoreSession(){
 document.addEventListener('DOMContentLoaded',function(){ setTimeout(auditorRestoreSession,300); });
 
 /* ---------------- Company picker (auditor) + open company ---------------- */
-var AUD_DENY=['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','invAdv','acctVouchers','acctRecon','acctPdc','acctGst','purchaseOrders','purchaseBills','vendors','chats'];
+var AUD_DENY=['settings','backup','acctControl','chequePrint','cashCreate','bosCreate','chats'];
 function auditorApplySidebar(){
   /* applyRole() lives inside an IIFE, so replicate its sidebar hiding here. */
   var deny=window.__auditor?AUD_DENY:[];
