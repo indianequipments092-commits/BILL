@@ -818,6 +818,7 @@ body.pv-share .modal{z-index:300}
 #authOverlay .auth-field select option{color:#111}
 .auditor-banner{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:#7f1d1d;color:#fff;font-size:13px;font-weight:600;padding:8px 12px;line-height:1.3}
 .auditor-banner button{background:#fff;color:#7f1d1d;border:0;border-radius:8px;padding:5px 12px;font-weight:700;cursor:pointer}
+body.auditor-mode .pf2-act[onclick*="pwOpen"]{display:none}
 @media(max-width:600px){.auditor-banner{font-size:12px;padding:6px 8px;gap:8px}}
 #authOverlay .auth-tab{position:relative;z-index:1;padding:0;height:clamp(34px,5vh,40px)}
 #authOverlay .auth-tab.active{background:none;box-shadow:none;color:#fff}
@@ -30190,35 +30191,12 @@ try{
 /* Auth-overlay guards: never bounce an active auditor back to login. */
 audWrap('showAuthOverlay',function(){ if(window.__auditor) return false; });
 audWrap('ieTryOfflineLogin',function(){ if(window.__auditor) return false; });
-/* Watermark: every print/PDF/Excel path already goes through ieCreditHtml /
-   ieCreditXls, so prepending the audit copy line there covers invoice print,
-   history PDF/Excel, customer reports and document prints. */
-(function(){
-  var __och=window.ieCreditHtml;
-  if(typeof __och==='function'){
-    window.ieCreditHtml=function(label,style){
-      var base=''; try{ base=__och.apply(this,arguments)||''; }catch(e){}
-      if(window.__auditor){
-        var s=window.__auditor;
-        return '<div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;color:#b91c1c;margin-top:10px">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</div>'+base;
-      }
-      return base;
-    };
-  }
-  var __ocx=window.ieCreditXls;
-  if(typeof __ocx==='function'){
-    window.ieCreditXls=function(html,label){
-      var out=''; try{ out=__ocx.apply(this,arguments)||html; }catch(e){ out=html; }
-      if(window.__auditor){
-        var s=window.__auditor;
-        var row='<tr><td colspan="20" style="font-size:11px;color:#b91c1c;padding:10px 4px;font-weight:700">AUDIT COPY &mdash; '+esc(s.auditorName||s.auditorEmail)+' &mdash; '+esc(new Date().toLocaleString('en-IN'))+'</td></tr>';
-        var i=out.lastIndexOf('</table>');
-        if(i>=0) out=out.slice(0,i)+row+out.slice(i); else out=out+row;
-      }
-      return out;
-    };
-  }
-})();
+/* Password: the My Profile page is not in the DENY list, so block the
+   change-password modal and submit for auditors as well. */
+audWrap('pwOpen',audBlockMsg('Auditor access is view-only. Password cannot be changed.'));
+audWrap('pwSubmit',audBlockMsg('Auditor access is view-only. Password cannot be changed.'));
+/* AUDIT COPY watermark removed 2026-11-10 (owner request): auditor exports now
+   look identical to the owner's. Export/print actions are still logged below. */
 /* Audit logging: exports / prints / sensitive page views (fire-and-forget). */
 audWrapPost('printFromPreview',function(){ if(window.__auditor) audLog('print','Invoice print'); });
 audWrapPost('docPrintRun',function(){ if(window.__auditor) audLog('print','Document print'); });
