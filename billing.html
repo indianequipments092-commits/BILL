@@ -4890,7 +4890,13 @@ try{ toast('📴 Offline — device ka saved data khola. Net aate hi sync hoga.'
 proceed(loc);
 return true;
 };
-if(!preloadedDb && navigator.onLine===false && useLocal()) return;
+if(!preloadedDb && (navigator.onLine===false || (currentUser&&currentUser._offline)) && useLocal()) return;
+/* FIX: session expire (offline-login mode) me cloud se mat padho — bina login ke server khali deta hai aur app zero dikhati thi */
+if(!preloadedDb && currentUser && currentUser._offline){
+window.__coLoading=false; unbusy(); ieCoLoadingHide();
+try{ alert('Session expire ho gaya hai, isliye is company ka data abhi load nahi ho sakta.\n\nTumhara data cloud me bilkul safe hai. Logout karke Google se dobara login karo, phir company kholo.'); }catch(_e){}
+return;
+}
 currentCompanyId=companyId;
 const __loc0=(!preloadedDb&&navigator.onLine!==false&&!iePendGet(companyId)&&hasLocal())?ieLocalDb(companyId):null;
 const __cacheFirst=!!__loc0&&ieCloudStampGet(companyId)>0;
@@ -4933,7 +4939,17 @@ var __mm=await ieSplitMaybeMigrate(companyId,loaded,Number((snap.exists&&snap.da
 if(__mm.mode!=='old'){ proceed(__mm.db); return; }
 }catch(e){ console.warn('split migrate failed, old path',e); }
 }
-if(!loaded) loaded=emptyDB();
+if(!loaded){
+/* FIX: khali company tabhi kholo jab valid login session ho. Bina session ke "row nahi mili" ka matlab data gayab nahi, sirf permission nahi hai. */
+let __hasSess=false;
+try{ const __s=await supabaseClient.auth.getSession(); __hasSess=!!(__s&&__s.data&&__s.data.session&&__s.data.session.user); }catch(_e){}
+if(!__hasSess){
+currentCompanyId=null; window.__coLoading=false; unbusy(); ieCoLoadingHide();
+try{ alert('Login session nahi mila, isliye company ka data load nahi hua.\n\nTumhara data cloud me safe hai. Logout karke dobara login karo.'); }catch(_e){}
+return;
+}
+loaded=emptyDB();
+}
 proceed(loaded);
 }).catch(e=>{
 if(opened) return;
@@ -7528,7 +7544,21 @@ if(ieTryOfflineLogin(true)){ try{ toast('\u26a0\ufe0f Session expire ho gaya —
 if(!user && window.__ieManualOut) window.__ieManualOut=false;
 if(!user && ieTryOfflineLogin()) return;
 if(user){
-if(_authBootedUid===user.uid && !(currentUser&&currentUser._offline&&!currentCompanyId)){ currentUser=user; return; }
+if(_authBootedUid===user.uid && !(currentUser&&currentUser._offline&&!currentCompanyId)){
+/* FIX: offline-mode me company khuli thi aur ab asli login wapas aaya — company ko cloud se dobara load karo (pehle wahi khali company khuli reh jati thi) */
+const __wasOff=!!(currentUser&&currentUser._offline&&currentCompanyId);
+currentUser=user;
+if(__wasOff){
+let __recent=false; try{ __recent=(Date.now()-Number(sessionStorage.getItem('ie_relogin_reload')||0))<30000; }catch(_e){}
+if(!__recent){
+try{ sessionStorage.setItem('ie_relogin_reload',String(Date.now())); }catch(_e){}
+try{ if(typeof lsFlushNow==='function') lsFlushNow(); }catch(_e){}
+try{ toast('✅ Login ho gaya — data dobara load ho raha hai…','#15803d'); }catch(_e){}
+setTimeout(function(){ try{ location.reload(); }catch(_e){} },1200);
+}
+}
+return;
+}
 _authBootedUid=user.uid;
 currentUser=user;
 try{ ieOfflineUserSave(); }catch(e){}
@@ -7595,7 +7625,7 @@ return found?prof:null;
 }catch(e){ return null; }
 }
 (function(){
-try{ supabaseClient.auth.onAuthStateChanged(function(ev,session){ if(session&&(ev==='SIGNED_IN'||ev==='TOKEN_REFRESHED'||ev==='INITIAL_SESSION'||ev==='USER_UPDATED')) ieSessionBackupSave(session); }); }catch(e){}
+try{ supabaseClient.auth.onAuthStateChange(function(ev,session){ if(session&&(ev==='SIGNED_IN'||ev==='TOKEN_REFRESHED'||ev==='INITIAL_SESSION'||ev==='USER_UPDATED')) ieSessionBackupSave(session); }); }catch(e){}
 (async function(){
 try{
 if(navigator.onLine===false) return;
