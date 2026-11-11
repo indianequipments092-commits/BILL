@@ -1477,7 +1477,7 @@ return supabase.auth.resetPasswordForEmail(email, { redirectTo: IS_NATIVE_APP ? 
 onPasswordRecovery(cb){ recoveryCbs.push(cb); if(recoveryPending){ recoveryPending=false; setTimeout(()=>{ try{cb();}catch(e){console.error(e);} },0); } },
 updatePassword(pw){ return supabase.auth.updateUser({ password: pw, data:{ has_password:true } }).then(({error})=>{ if(error) throw error; }); },
 hasPasswordLogin(){ return supabase.auth.getUser().then(({data})=>{ const u=data&&data.user; const ids=(u&&u.identities)||[]; const um=(u&&u.user_metadata)||{}; const am=(u&&u.app_metadata)||{}; return ids.some(i=>i.provider==='email')||um.has_password===true||((am.providers||[]).indexOf('email')>=0); }).catch(()=>false); },
-signOut(){ return supabase.auth.signOut(); }
+signOut(){ try{ localStorage.removeItem('ie_session_backup'); }catch(e){} return supabase.auth.signOut({scope:'local'}); }
 };
 }
 const fbAuth = createAuthAdapter(supabaseClient);
@@ -4285,7 +4285,7 @@ async function ieSplitVerifySection(name){
   try{ cloudStamp=await ieCloudStampFetchDoc(cid,ieSplitPartsPath(cid),docId); }catch(e){ return; }
   var localStamp=ieDocStampGet(cid,docId);
   var dec=ieCacheDecision(true,false,localStamp,cloudStamp);
-  if(dec!=='download') return;
+  if(dec==='keep-local') return;
   var fetched=isIndex?await ieSplitFetchIndex(cid):await ieSplitFetchPart(cid,name);
   if(!fetched||!fetched.payload) return;
   if(ieSplitLastSynced){
@@ -4293,6 +4293,7 @@ async function ieSplitVerifySection(name){
     var lastKey=isIndex?'index':name;
     if(ieSplitLastSynced[lastKey]!==undefined&&ieSplitLastSynced[lastKey]!==curStr) return;
   }
+  if(dec!=='download'){ try{ var __cur=isIndex?JSON.stringify({index:ieSplitIndexFromDb(db)}):JSON.stringify(ieSplitSectionsFromDb(db)[name]); if(__cur===JSON.stringify(fetched.payload)){ if(fetched.updatedAt>0) ieDocStampSet(cid,docId,fetched.updatedAt); return; } }catch(e){} }
   ieSplitApplySection(name,fetched.payload);
   if(fetched.updatedAt>0) ieDocStampSet(cid,docId,fetched.updatedAt);
   if(ieSplitLastSynced){ ieSplitLastSynced[isIndex?'index':name]=JSON.stringify(fetched.payload); }
@@ -28949,7 +28950,7 @@ C.onclick=function(){hide()};
 F.onclick=function(){
  if(!confirm('PIN reset karne ke liye logout hoga. Phir password se login karna padega. Aage badhein?'))return;
  ls(KH,null);ls(KS,null);ls('ie_lock_len',null);hide();paint();
- try{if(typeof logout==='function')logout();else if(window.supabaseClient)supabaseClient.auth.signOut().then(function(){location.reload()});else location.reload()}catch(e){location.reload()}
+ try{if(typeof logout==='function')logout();else if(window.supabaseClient)supabaseClient.auth.signOut({scope:'local'}).then(function(){location.reload()});else location.reload()}catch(e){location.reload()}
 };
 window.ieLock={
  paint:paint,
