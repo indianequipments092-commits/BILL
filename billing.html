@@ -28950,7 +28950,7 @@ C.onclick=function(){hide()};
 F.onclick=function(){
  if(!confirm('PIN reset karne ke liye logout hoga. Phir password se login karna padega. Aage badhein?'))return;
  ls(KH,null);ls(KS,null);ls('ie_lock_len',null);hide();paint();
- try{if(typeof logout==='function')logout();else if(window.supabaseClient)supabaseClient.auth.signOut({scope:'local'}).then(function(){location.reload()});else location.reload()}catch(e){location.reload()}
+ try{if(typeof logout==='function')logout();else if(window.supabaseClient){ try{ if(typeof ieOfflineUserClear==='function') ieOfflineUserClear(); }catch(_){} try{ if(typeof ieSessionBackupClear==='function') ieSessionBackupClear(); }catch(_){} supabaseClient.auth.signOut({scope:'local'}).then(function(){location.reload()}); }else location.reload()}catch(e){location.reload()}
 };
 window.ieLock={
  paint:paint,
