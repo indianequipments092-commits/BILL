@@ -8945,9 +8945,12 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
     <div class="toolbar" style="flex-wrap:wrap;gap:8px;align-items:center"><span id="dueChips" style="display:contents"></span><input id="dueSearch" oninput="renderDue()" placeholder="Invoice / Customer..." style="max-width:200px"><button class="btn success" onclick="openCustReceipt()">+ Customer Receipt</button></div>
     <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Invoice</th><th>Customer</th><th>Due Date</th><th>Late</th><th class="right">Balance</th><th>Actions</th></tr></thead><tbody id="dueBody"></tbody></table></div>
   </div>
-  <div class="card hidden" id="custCard" style="margin-top:18px">
-    <div class="toolbar" style="flex-wrap:wrap;gap:8px;align-items:flex-end"><div><label>Search</label><input id="custSearch" oninput="renderCustTab()" placeholder="Customer..."></div><div><label>Statement From</label><input id="custFrom" type="date"></div><div><label>Statement To</label><input id="custTo" type="date"></div><button class="btn success" onclick="openCustReceipt()">+ Customer Receipt</button></div>
-    <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Customer</th><th class="right">Baaki</th><th class="right">Advance</th><th>Aakhri Payment</th><th>Sabse Purana Due</th><th>Actions</th></tr></thead><tbody id="custBody"></tbody></table></div>
+  <div class="card hidden" id="jrnlCustCard" style="margin-top:18px">
+    <div class="dashboard" id="jrnlCustStats" style="margin-bottom:14px"></div>
+    <div class="toolbar" style="flex-wrap:wrap;gap:8px;align-items:flex-end"><div><label>Search</label><input id="jrnlCustSearch" oninput="renderCustTab()" placeholder="Name / City / Contact..."></div><div><label>Filter</label><select id="jrnlCustFilter" onchange="renderCustTab()"><option value="all">All Customers</option><option value="due">Baaki wale</option><option value="overdue">Overdue</option><option value="advance">Advance wale</option><option value="clear">All Clear</option></select></div><div><label>Sort By</label><select id="jrnlCustSort" onchange="renderCustTab()"><option value="bal">Baaki: zyada-pehle</option><option value="old">Sabse purana due</option><option value="name">Naam (A-Z)</option><option value="last">Last payment: recent first</option></select></div><div><label>Statement From</label><input id="custFrom" type="date"></div><div><label>Statement To</label><input id="custTo" type="date"></div><button class="btn success" onclick="openCustReceipt()">+ Customer Receipt</button></div>
+    <div class="sub" style="margin-top:8px">Statement From/To sirf A/c Statement print ke liye hain — is list pe asar nahi karte.</div>
+    <div class="toolbar hidden" id="jrnlCustBulkBar" style="margin-top:12px;flex-wrap:wrap;gap:8px;align-items:center"><span id="jrnlCustSelCount" class="sub"></span><button class="btn primary" onclick="custBulkWa()">WhatsApp Reminder</button><button class="btn muted" onclick="custBulkCSV()">Export CSV (selected)</button><button class="btn muted" onclick="custBulkStatement()">Statement PDF (selected)</button><button class="btn muted" onclick="custClearSel()">Clear selection</button></div>
+    <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th style="width:34px"><input type="checkbox" id="jrnlCustSelAll" onchange="custToggleAll(this.checked)" style="width:18px;height:18px"></th><th>Customer</th><th class="right">Baaki</th><th>Ageing</th><th class="right">Advance</th><th>Credit Limit</th><th>Aakhri Payment</th><th>Sabse Purana Due</th><th>Follow-up</th><th>Actions</th></tr></thead><tbody id="custBody"></tbody></table></div>
   </div>
   <div class="card" id="jrnlCustTotCard" style="margin-top:18px">
     <div class="section-title">Customer-wise Totals (filtered invoices ke payments)</div>
@@ -8970,6 +8973,21 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
   <div class="toolbar" style="margin-top:14px"><button class="btn success" onclick="custRcSave()">Save Receipt</button><button class="btn muted" onclick="closeModal('custRcModal')">Close</button></div>
 </div></div>
 
+<!-- Customer Follow-up Modal -->
+<div class="modal" id="custFuModal"><div class="modalbox" style="max-width:520px">
+  <div class="modalhead"><h2 id="custFuTitle">Follow-up</h2><button class="x" onclick="closeModal('custFuModal')">✕</button></div>
+  <div class="grid g2"><div><label>Last reminder (date)</label><input id="custFuLast" type="date"></div><div><label>Next follow-up (date)</label><input id="custFuNext" type="date"></div></div>
+  <div style="margin-top:10px"><label>Note</label><input id="custFuNote" placeholder="e.g. Phone par baat hui, Friday ko payment karega"></div>
+  <div class="toolbar" style="margin-top:14px"><button class="btn success" onclick="custFollowUpSave()">Save Follow-up</button><button class="btn muted" onclick="custFollowUpClear()">Clear</button><button class="btn muted" onclick="closeModal('custFuModal')">Close</button></div>
+</div></div>
+
+<!-- Bulk WhatsApp Modal (one tap per customer: browsers block auto-opening many chats) -->
+<div class="modal" id="custBulkWaModal"><div class="modalbox" style="max-width:560px">
+  <div class="modalhead"><h2>WhatsApp Reminder — Selected</h2><button class="x" onclick="closeModal('custBulkWaModal')">✕</button></div>
+  <div class="sub" id="custBulkWaNote" style="margin-bottom:10px"></div>
+  <div class="table-wrap"><table><thead><tr><th>Customer</th><th class="right">Baaki</th><th></th></tr></thead><tbody id="custBulkWaBody"></tbody></table></div>
+  <div class="toolbar" style="margin-top:14px"><button class="btn muted" onclick="closeModal('custBulkWaModal')">Close</button></div>
+</div></div>
 <!-- Payment Modal -->
 <div class="modal" id="paymentModal"><div class="modalbox" style="max-width:640px">
   <div class="modalhead"><h2 id="paymentModalTitle">Payments</h2><button class="x" onclick="closeModal('paymentModal')">✕</button></div>
@@ -15617,7 +15635,7 @@ if(!['due','cust','receipt'].includes(tab)) tab='invoice';
 journalTab=tab;
 const T={due:'jrnlTabDueBtn',cust:'jrnlTabCustBtn',receipt:'jrnlTabRcptBtn',invoice:'jrnlTabInvBtn'};
 Object.keys(T).forEach(k=>{const b=id(T[k]);if(b){b.classList.toggle('primary',k===tab);b.classList.toggle('muted',k!==tab)}});
-const show={invoice:['jrnlMainCard','jrnlModeCard','jrnlCustTotCard','jrnlTrendCard'],receipt:['receiptLogCard'],due:['dueCard'],cust:['custCard']};
+const show={invoice:['jrnlMainCard','jrnlModeCard','jrnlCustTotCard','jrnlTrendCard'],receipt:['receiptLogCard'],due:['dueCard'],cust:['jrnlCustCard']};
 [].concat(...Object.values(show)).forEach(k=>{const e=id(k);if(e)e.classList.toggle('hidden',!show[tab].includes(k))});
 if(tab==='receipt')renderReceiptLog();else if(tab==='due')renderDue();else if(tab==='cust')renderCustTab();
 }
@@ -15931,11 +15949,8 @@ const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
 w.document.write(html); w.document.close();
 }
-function printJournalCustomerStatement(cidArg,fromArg,toArg){
-const custId=(typeof cidArg==='string'&&cidArg)||id('jrnlCustomer')?.value||'';
-if(!custId){alert('Pehle Customer chuno, phir Statement print karo.');return;}
+function custStatementBodyHtml(custId,from,to){
 const cust=db.customers.find(c=>c.id===custId), s=db.settings||{};
-const from=typeof fromArg==='string'?fromArg:(id('custFrom')?.value||id('jrnlFrom')?.value||''), to=typeof toArg==='string'?toArg:(id('custTo')?.value||id('jrnlTo')?.value||'');
 const ev=[];
 const soaInvs=cust?customerInvoices(cust).filter(x=>x.status==='Finalized'):db.invoices.filter(x=>x.status==='Finalized'&&x.customerId===custId);
 soaInvs.forEach(x=>{
@@ -15948,18 +15963,46 @@ let bal=0; ev.forEach(e=>{if(from&&e.d<from)bal+=e.dr-e.cr});
 const open=bal; let tdr=0,tcr=0;
 const bl=v=>money(Math.abs(v))+(v<0?' Cr':' Dr');
 const rows=ev.filter(e=>(!from||e.d>=from)&&(!to||e.d<=to)).map(e=>{bal+=e.dr-e.cr;tdr+=e.dr;tcr+=e.cr;return `<tr><td>${esc(e.d)}</td><td>${esc(e.t)}</td><td class="r">${e.dr?money(e.dr):''}</td><td class="r">${e.cr?money(e.cr):''}</td><td class="r">${bl(bal)}</td></tr>`}).join('');
+return `<h1>${esc(s.company||'Statement')} — Statement of Account</h1>
+  <div class="sub">Customer: ${esc(cust?.name||'')} &nbsp;|&nbsp; Period: ${esc(from||'Start')} to ${esc(to||'Today')} &nbsp;|&nbsp; Generated: ${esc(new Date().toLocaleString('en-IN'))}</div>
+  <table><thead><tr><th>Date</th><th>Particulars</th><th class="r">Debit</th><th class="r">Credit</th><th class="r">Balance</th></tr></thead>
+  <tbody><tr><td>${esc(from)}</td><td><b>Opening Balance</b></td><td></td><td></td><td class="r">${bl(open)}</td></tr>${rows}</tbody>
+  <tfoot><tr><td colspan="2">Closing Balance</td><td class="r">₹ ${money(tdr)}</td><td class="r">₹ ${money(tcr)}</td><td class="r">${bl(bal)}</td></tr></tfoot></table>`;
+}
+function printJournalCustomerStatement(cidArg,fromArg,toArg){
+const custId=(typeof cidArg==='string'&&cidArg)||id('jrnlCustomer')?.value||'';
+if(!custId){alert('Pehle Customer chuno, phir Statement print karo.');return;}
+const from=typeof fromArg==='string'?fromArg:(id('custFrom')?.value||id('jrnlFrom')?.value||''), to=typeof toArg==='string'?toArg:(id('custTo')?.value||id('jrnlTo')?.value||'');
 const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Customer Statement</title>
   <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#111}
   h1{font-size:20px;margin:0 0 4px}.sub{color:#555;font-size:12px;margin-bottom:14px}
   table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
   th{background:#1e3a5f;color:#fff}td.r,th.r{text-align:right}tfoot td{font-weight:800;background:#f1f5f9}</style></head>
   <body onload="window.print()">
-  <h1>${esc(s.company||'Statement')} — Statement of Account</h1>
-  <div class="sub">Customer: ${esc(cust?.name||'')} &nbsp;|&nbsp; Period: ${esc(from||'Start')} to ${esc(to||'Today')} &nbsp;|&nbsp; Generated: ${esc(new Date().toLocaleString('en-IN'))}</div>
-  <table><thead><tr><th>Date</th><th>Particulars</th><th class="r">Debit</th><th class="r">Credit</th><th class="r">Balance</th></tr></thead>
-  <tbody><tr><td>${esc(from)}</td><td><b>Opening Balance</b></td><td></td><td></td><td class="r">${bl(open)}</td></tr>${rows}</tbody>
-  <tfoot><tr><td colspan="2">Closing Balance</td><td class="r">₹ ${money(tdr)}</td><td class="r">₹ ${money(tcr)}</td><td class="r">${bl(bal)}</td></tr></tfoot></table>
+  ${custStatementBodyHtml(custId,from,to)}
   ${ieCreditHtml('customer statement')}
+  </body></html>`;
+const w=window.open('','_blank');
+if(!w){alert('Popup blocked — allow popups for print.');return;}
+w.document.write(html); w.document.close();
+}
+function custBulkStatement(){
+const from=id('custFrom')?.value||'', to=id('custTo')?.value||'';
+const ids=[...jrnlCustSel].filter(k=>{const c=(db.customers||[]).find(x=>x.id===k);return !!c;});
+if(!ids.length){alert('Pehle customers select karo (sirf Directory wale customers ka statement banta hai).');return;}
+if(ids.length===1){printJournalCustomerStatement(ids[0],from,to);return;}
+const s=db.settings||{};
+const sections=ids.map((cid,i)=>`<div${i<ids.length-1?' style="page-break-after:always"':''}>${custStatementBodyHtml(cid,from,to)}</div>`).join('');
+const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Customer Statements</title>
+  <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px;color:#111}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:#555;font-size:12px;margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+  th{background:#1e3a5f;color:#fff}td.r,th.r{text-align:right}tfoot td{font-weight:800;background:#f1f5f9}</style></head>
+  <body onload="window.print()">
+  <h1>${esc(s.company||'Statements')} — Customer Statements (${ids.length})</h1>
+  <div class="sub">Period: ${esc(from||'Start')} to ${esc(to||'Today')} &nbsp;|&nbsp; Generated: ${esc(new Date().toLocaleString('en-IN'))}</div>
+  ${sections}
+  ${ieCreditHtml('customer statements')}
   </body></html>`;
 const w=window.open('','_blank');
 if(!w){alert('Popup blocked — allow popups for print.');return;}
@@ -16137,17 +16180,156 @@ const rows=all.filter(x=>(!dueBucket||bucketOf(x)===dueBucket)&&(!q||[x.invoiceN
 const st='padding:6px 8px;min-height:34px';
 id('dueBody').innerHTML=rows.length?rows.slice(0,300).map(x=>{const d=daysLate(x);return `<tr><td><b>${esc(x.invoiceNumber)}</b></td><td>${esc(x.customer?.name||'')}</td><td>${esc(x.dueDate)||'—'}</td><td>${d?`<span class="badge overdue">${d} din late</span>`:'—'}</td><td class="right">₹ ${money(balanceDue(x))}</td><td style="white-space:nowrap"><button class="btn primary" style="${st}" onclick="openPaymentModal('${x.id}')">Payment lo</button> <button class="btn muted" style="${st}" onclick="dueWa('${x.id}')">WhatsApp</button></td></tr>`}).join(''):'<tr><td colspan="6" class="center">Koi baaki invoice nahi.</td></tr>';
 }
+/* ---------- Payment Journal: Customers tab (advanced) ----------
+   NOTE: the journal card used to share its element id with the invoice
+   editor's customer card, so getElementById always found the editor's
+   div and this tab stayed hidden. The journal card is now jrnlCustCard,
+   and its search input is jrnlCustSearch (the old search id also
+   collided with the Customers Directory search). */
+let jrnlCustSel=new Set(), jrnlCustExp=new Set(), jrnlCustLastKeys=[];
+function jrnlQk(k){return String(k??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/[\r\n]/g,' ')}
 function custSummary(){
 const m={};
-db.invoices.filter(x=>x.status==='Finalized').forEach(x=>{const k=x.customerId||('n:'+(x.customer?.name||''));const c=m[k]||(m[k]={id:x.customerId||'',name:x.customer?.name||'—',bal:0,last:'',old:'',adv:0});const b=balanceDue(x);c.bal+=b;(x.payments||[]).forEach(p=>{if((p.date||'')>c.last)c.last=p.date});if(b>0){const d=x.dueDate||x.date||'';if(d&&(!c.old||d<c.old))c.old=d}});
-db.customers.forEach(cu=>{const c=m[cu.id];if(c)c.adv=(cu.advances||[]).reduce((s,a)=>s+Number(a.amount||0),0)});
+(db.customers||[]).forEach(cu=>{
+m[cu.id]={key:cu.id,id:cu.id,name:cu.name||'—',contact:cu.contact||'',city:cu.city||'',email:cu.email||'',creditLimit:Number(cu.creditLimit||0),bal:0,adv:0,last:'',old:'',age:{c:0,a30:0,a60:0,a60p:0},unpaid:[],fu:cu.followUp||null,hasBills:false};
+});
+db.invoices.filter(x=>x.status==='Finalized').forEach(x=>{
+const k=x.customerId||('n:'+(x.customer?.name||''));
+let c=m[k];
+if(!c){c=m[k]={key:k,id:x.customerId||'',name:x.customer?.name||'—',contact:x.customer?.contact||'',city:x.customer?.city||'',email:x.customer?.email||'',creditLimit:0,bal:0,adv:0,last:'',old:'',age:{c:0,a30:0,a60:0,a60p:0},unpaid:[],fu:null,hasBills:false};}
+c.hasBills=true;
+const b=balanceDue(x); c.bal+=b;
+(x.payments||[]).forEach(p=>{if((p.date||'')>c.last)c.last=p.date});
+if(b>0.005){
+const d=x.dueDate||x.date||''; if(d&&(!c.old||d<c.old))c.old=d;
+const bk=bucketOf(x);
+if(bk==='0')c.age.c+=b; else if(bk==='1')c.age.a30+=b; else if(bk==='31')c.age.a60+=b; else c.age.a60p+=b;
+c.unpaid.push({inv:x,bal:b,days:daysLate(x),overdue:isOverdue(x)});
+}
+});
+(db.customers||[]).forEach(cu=>{const c=m[cu.id];if(c)c.adv=(cu.advances||[]).reduce((s,a)=>s+Number(a.amount||0),0);});
+Object.values(m).forEach(c=>c.unpaid.sort((a,b)=>String(a.inv.dueDate||a.inv.date||'9999').localeCompare(String(b.inv.dueDate||b.inv.date||'9999'))));
 return Object.values(m);
 }
 function renderCustTab(){
-if(!id('custBody')) return;
-const q=(id('custSearch')?.value||'').toLowerCase(), st='padding:6px 8px;min-height:34px';
-const rows=custSummary().filter(c=>!q||c.name.toLowerCase().includes(q)).sort((a,b)=>b.bal-a.bal);
-id('custBody').innerHTML=rows.length?rows.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td class="right">₹ ${money(c.bal)}</td><td class="right">${c.adv?'₹ '+money(c.adv):'—'}</td><td>${esc(c.last)||'—'}</td><td>${c.bal>0?esc(c.old)||'—':'—'}</td><td style="white-space:nowrap">${c.id?`<button class="btn muted" style="${st}" onclick="printJournalCustomerStatement('${c.id}')">A/c Statement</button> <button class="btn muted" style="${st}" onclick="openCustomerHistory('${c.id}')">Item-wise</button> <button class="btn success" style="${st}" onclick="openCustReceipt('${c.id}')">Receipt</button>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="center">Koi customer nahi.</td></tr>';
+const body=id('custBody'); if(!body) return;
+const st='padding:6px 8px;min-height:34px';
+const all=custSummary();
+const totBal=all.reduce((s,c)=>s+c.bal,0), totOver=all.reduce((s,c)=>s+(c.age.a30+c.age.a60+c.age.a60p),0), totAdv=all.reduce((s,c)=>s+c.adv,0), dueCount=all.filter(c=>c.bal>0.005).length;
+const stEl=id('jrnlCustStats');
+if(stEl) stEl.innerHTML=`
+<div class="stat-card"><div class="sub">TOTAL BAAKI</div><div class="stat" style="font-size:20px;color:#fbbf24">₹ ${money(totBal)}</div></div>
+<div class="stat-card"><div class="sub">OVERDUE (1+ DIN)</div><div class="stat" style="font-size:20px;color:#fb7185">₹ ${money(totOver)}</div></div>
+<div class="stat-card"><div class="sub">TOTAL ADVANCE</div><div class="stat" style="font-size:20px;color:#34d399">₹ ${money(totAdv)}</div></div>
+<div class="stat-card"><div class="sub">BAAKI WALE CUSTOMERS</div><div class="stat" style="font-size:20px">${dueCount} / ${all.length}</div></div>`;
+const q=(id('jrnlCustSearch')?.value||'').toLowerCase().trim(), f=id('jrnlCustFilter')?.value||'all', sortBy=id('jrnlCustSort')?.value||'bal';
+let rows=all.filter(c=>{
+if(q&&![c.name,c.contact,c.city].join(' ').toLowerCase().includes(q)) return false;
+if(f==='due'&&!(c.bal>0.005)) return false;
+if(f==='overdue'&&!((c.age.a30+c.age.a60+c.age.a60p)>0.005)) return false;
+if(f==='advance'&&!(c.adv>0.005)) return false;
+if(f==='clear'&&!(c.hasBills&&c.bal<=0.005)) return false;
+return true;
+});
+rows.sort((a,b)=>{
+if(sortBy==='name') return String(a.name).localeCompare(String(b.name));
+if(sortBy==='old') return String(a.old||'9999').localeCompare(String(b.old||'9999'));
+if(sortBy==='last') return String(b.last||'').localeCompare(String(a.last||''));
+return b.bal-a.bal;
+});
+jrnlCustLastKeys=rows.map(c=>c.key);
+const sa=id('jrnlCustSelAll'); if(sa) sa.checked=rows.length>0&&rows.every(c=>jrnlCustSel.has(c.key));
+const bb=id('jrnlCustBulkBar'); if(bb) bb.classList.toggle('hidden',jrnlCustSel.size===0);
+const sc=id('jrnlCustSelCount'); if(sc) sc.textContent=jrnlCustSel.size?jrnlCustSel.size+' selected':'';
+if(!all.length){ body.innerHTML='<tr><td colspan="10" class="center">Koi customer nahi — Customers Directory se add karo.<br><br><button class="btn primary" onclick="showPage(\'customers\')">Customers Directory kholo</button></td></tr>'; return; }
+if(!rows.length){ body.innerHTML='<tr><td colspan="10" class="center">Is filter/search me koi customer nahi.</td></tr>'; return; }
+body.innerHTML=rows.map(c=>{
+const over=c.age.a30+c.age.a60+c.age.a60p;
+const ageHtml=c.bal<=0.005?'—':[
+c.age.c>0.005?`<div class="sub">Current ₹ ${money(c.age.c)}</div>`:'',
+c.age.a30>0.005?`<div class="sub" style="color:#fb7185">1-30 din ₹ ${money(c.age.a30)}</div>`:'',
+c.age.a60>0.005?`<div class="sub" style="color:#fb7185">31-60 din ₹ ${money(c.age.a60)}</div>`:'',
+c.age.a60p>0.005?`<div class="sub" style="color:#fb7185">60+ din ₹ ${money(c.age.a60p)}</div>`:''
+].filter(Boolean).join('')||'—';
+let clHtml='—';
+if(c.creditLimit>0){
+const pct=Math.round(c.bal/c.creditLimit*100);
+const col=pct>=100?'#fb7185':pct>=80?'#fbbf24':'inherit';
+clHtml=`<div>₹ ${money(Math.min(c.bal,c.creditLimit))} / ₹ ${money(c.creditLimit)}</div><div class="sub" style="color:${col};font-weight:700">${pct}%${pct>=100?' · LIMIT CROSS':''}</div>`;
+}
+const fu=c.fu||{};
+const today=new Date().toISOString().slice(0,10);
+const fuDue=fu.nextDate&&fu.nextDate<today&&c.bal>0.005;
+const fuHtml=!c.id?'—':`<div style="cursor:pointer" onclick="openCustFollowUp('${jrnlQk(c.key)}')" title="Follow-up set karo"><div class="sub">Last: ${esc(fu.lastReminder||'—')}</div><div class="sub" style="${fuDue?'color:#fbbf24;font-weight:700':''}">Next: ${esc(fu.nextDate||'—')}${fuDue?' · due':''}</div>${fu.note?`<div class="sub">${esc(String(fu.note).slice(0,40))}${String(fu.note).length>40?'…':''}</div>`:''}<span class="sub">✏️</span></div>`;
+const exp=jrnlCustExp.has(c.key);
+const main=`<tr><td><input type="checkbox" ${jrnlCustSel.has(c.key)?'checked':''} onchange="custToggleSel('${jrnlQk(c.key)}',this.checked)" style="width:18px;height:18px"></td><td><button class="btn muted" style="${st};padding:6px 8px" onclick="custToggleExp('${jrnlQk(c.key)}')" title="${exp?'Band karo':'Unpaid invoices dekho'}">${exp?'▾':'▸'}</button> <b>${esc(c.name)}</b>${!c.hasBills?'<div class="sub">No bills yet</div>':''}${c.city||c.contact?`<div class="sub">${esc([c.city,c.contact].filter(Boolean).join(' · '))}</div>`:''}</td><td class="right" style="${over>0.005?'color:#fb7185;font-weight:700':''}">₹ ${money(c.bal)}</td><td>${ageHtml}</td><td class="right">${c.adv>0.005?'₹ '+money(c.adv):'—'}</td><td>${clHtml}</td><td>${esc(c.last)||'—'}</td><td>${c.bal>0.005?esc(c.old)||'—':'—'}</td><td>${fuHtml}</td><td style="white-space:nowrap">${c.bal>0.005?`<button class="btn primary" style="${st}" onclick="custWa('${jrnlQk(c.key)}')">WhatsApp</button> `:''}${c.id?`<button class="btn muted" style="${st}" onclick="printJournalCustomerStatement('${jrnlQk(c.key)}')">A/c Statement</button> <button class="btn muted" style="${st}" onclick="openCustomerHistory('${jrnlQk(c.key)}')">Item-wise</button> <button class="btn success" style="${st}" onclick="openCustReceipt('${jrnlQk(c.key)}')">Receipt</button>`:''}</td></tr>`;
+if(!exp) return main;
+const det=c.unpaid.length?`<table><thead><tr><th>Invoice</th><th>Date</th><th>Due Date</th><th class="right">Balance</th><th>Late</th><th>Actions</th></tr></thead><tbody>${c.unpaid.map(u=>`<tr><td><b>${esc(u.inv.invoiceNumber)}</b></td><td>${esc(u.inv.date||'')}</td><td>${esc(u.inv.dueDate||'—')}</td><td class="right">₹ ${money(u.bal)}</td><td>${u.days?`<span class="badge overdue">${u.days} din late</span>`:'—'}</td><td style="white-space:nowrap"><button class="btn primary" style="${st}" onclick="openPaymentModal('${jrnlQk(u.inv.id)}')">Payment lo</button> <button class="btn muted" style="${st}" onclick="dueWa('${jrnlQk(u.inv.id)}')">WhatsApp</button></td></tr>`).join('')}</tbody></table>`:'<div class="sub">Koi baaki invoice nahi.</div>';
+return main+`<tr><td colspan="10" style="background:rgba(99,102,241,.06)"><div class="section-title" style="margin-bottom:8px">Unpaid invoices — ${esc(c.name)}</div>${det}${c.id?`<div style="margin-top:10px"><button class="btn muted" style="${st}" onclick="openCustFollowUp('${jrnlQk(c.key)}')">Follow-up set karo</button></div>`:''}</td></tr>`;
+}).join('');
+}
+function custToggleSel(key,on){ if(on) jrnlCustSel.add(key); else jrnlCustSel.delete(key); renderCustTab(); }
+function custToggleAll(on){
+if(on) jrnlCustLastKeys.forEach(k=>jrnlCustSel.add(k));
+else jrnlCustLastKeys.forEach(k=>jrnlCustSel.delete(k));
+renderCustTab();
+}
+function custClearSel(){ jrnlCustSel.clear(); renderCustTab(); }
+function custToggleExp(key){ if(jrnlCustExp.has(key)) jrnlCustExp.delete(key); else jrnlCustExp.add(key); renderCustTab(); }
+function custRowByKey(key){ return custSummary().find(c=>c.key===key)||null; }
+function custWaText(c){
+const s=db.settings||{};
+const lines=(c.unpaid||[]).slice(0,8).map((u,i)=>`${i+1}) ${u.inv.invoiceNumber} — ₹ ${money(u.bal)}${u.overdue?` (${u.days} din late, due ${u.inv.dueDate})`:(u.inv.dueDate?` (due ${u.inv.dueDate})`:'')}`).join('\n');
+const more=(c.unpaid||[]).length>8?`\n...aur ${(c.unpaid||[]).length-8} invoice`:'';
+const upi=s.upiId?`\nUPI: ${s.upiId}`:'';
+return `Hello ${c.name||''},\nThis is a payment reminder from ${s.company||'our company'}.\nYour outstanding balance is ₹ ${money(c.bal)}:\n${lines}${more}\n\nKindly make the payment at the earliest.${upi}\nThank you.`+ieCreditMsg('payment reminder');
+}
+function custWa(key){
+const c=custRowByKey(key); if(!c) return;
+if(!(c.bal>0.005)){ try{toast('Is customer ka koi baaki nahi.','#6b7280')}catch(e){} return; }
+const phone=reminderPhone(c.contact||'');
+waShare('https://wa.me/'+phone+'?text='+encodeURIComponent(custWaText(c)));
+}
+function custBulkWa(){
+const rows=[...jrnlCustSel].map(k=>custRowByKey(k)).filter(c=>c&&c.bal>0.005);
+if(!rows.length){alert('Pehle baaki wale customers select karo.');return;}
+id('custBulkWaBody').innerHTML=rows.map(c=>`<tr><td><b>${esc(c.name)}</b>${c.contact?`<div class="sub">${esc(c.contact)}</div>`:''}</td><td class="right">₹ ${money(c.bal)}</td><td style="white-space:nowrap"><button class="btn primary" style="padding:6px 10px;min-height:34px" onclick="custWa('${jrnlQk(c.key)}')">WhatsApp</button></td></tr>`).join('');
+id('custBulkWaNote').textContent='Browser ek saath kai chats nahi kholne deta, isliye har customer ke liye alag se dabao. ('+rows.length+' selected)';
+id('custBulkWaModal').classList.add('show');
+}
+function custBulkCSV(){
+const rows=[...jrnlCustSel].map(k=>custRowByKey(k)).filter(Boolean);
+if(!rows.length){alert('Pehle customers select karo.');return;}
+let csv=['Customer,Contact,City,Baaki,Overdue,Advance,Credit Limit,Last Payment,Oldest Due,Next Follow-up'];
+rows.forEach(c=>{
+const over=c.age.a30+c.age.a60+c.age.a60p;
+csv.push([c.name,c.contact||'',c.city||'',money(c.bal),money(over),money(c.adv),c.creditLimit>0?money(c.creditLimit):'',c.last||'',c.old||'',(c.fu&&c.fu.nextDate)||''].map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(','));
+});
+downloadBlob(ieCreditCsv(csv,'journal customers'),'IE-JOURNAL-CUSTOMERS.csv','text/csv');
+}
+let custFuCustId='';
+function openCustFollowUp(key){
+const cu=(db.customers||[]).find(x=>x.id===key); if(!cu){alert('Is customer ka follow-up nahi set kar sakte.');return;}
+custFuCustId=key;
+const fu=cu.followUp||{};
+id('custFuTitle').textContent='Follow-up — '+(cu.name||'Customer');
+id('custFuLast').value=fu.lastReminder||'';
+id('custFuNext').value=fu.nextDate||'';
+id('custFuNote').value=fu.note||'';
+id('custFuModal').classList.add('show');
+}
+function custFollowUpSave(){
+const cu=(db.customers||[]).find(x=>x.id===custFuCustId); if(!cu){closeModal('custFuModal');return;}
+const d=v=>{const s=String(v||'').trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:'';};
+const last=d(id('custFuLast')?.value), next=d(id('custFuNext')?.value), note=String(id('custFuNote')?.value||'').trim();
+if(!last&&!next&&!note){ delete cu.followUp; }
+else cu.followUp={lastReminder:last,nextDate:next,note:note};
+saveDB(); closeModal('custFuModal'); renderCustTab();
+try{toast('Follow-up save ho gaya.','#15803d')}catch(e){}
+}
+function custFollowUpClear(){
+const cu=(db.customers||[]).find(x=>x.id===custFuCustId); if(!cu){closeModal('custFuModal');return;}
+delete cu.followUp; saveDB(); closeModal('custFuModal'); renderCustTab();
 }
 function openCustReceipt(cid){
 const sel=id('custRcCust');
@@ -30196,7 +30378,7 @@ try{
   }
 }catch(e){}
 /* Creation / edit entry points (buttons and keyboard shortcuts both call these). */
-['newInvoice','docNew','openCustomerModal','openItemModal','openVendorModal','openPaymentModal','addPayment','addRow','docAddRow','finalizeInvoice','holdBill','duplicateLastRow','openPBPayModal','openVoiceInvoice','poAddRow','pbAddRow'].forEach(function(n){
+['newInvoice','docNew','openCustomerModal','openItemModal','openVendorModal','openPaymentModal','addPayment','addRow','docAddRow','finalizeInvoice','holdBill','duplicateLastRow','openPBPayModal','openVoiceInvoice','poAddRow','pbAddRow','openCustReceipt','custRcSave','openCustFollowUp','custFollowUpSave','custFollowUpClear'].forEach(function(n){
   audWrap(n,audBlockMsg('Auditor access is view-only. Creating or editing is not allowed.'));
 });
 /* Auth-overlay guards: never bounce an active auditor back to login. */
