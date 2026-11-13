@@ -12,7 +12,7 @@
 <div class="l">Loading...</div>
 <script>
   // Online: hamesha fresh billing.html. Offline: Service Worker cache se kholega.
-  function go() { window.location.replace('billing.html?v=' + Date.now()); }
+  function go() { window.location.replace('billing.html?v=' + Date.now() + '&apk=1'); }
   var gone = false;
   function once() { if (!gone) { gone = true; go(); } }
   if ('serviceWorker' in navigator) {
