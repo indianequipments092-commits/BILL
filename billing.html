@@ -23422,6 +23422,8 @@ chevup:['s','','<path d="M6 15l6-6 6 6"/>']
 var M={'✅':'ok','✔':'tick','✓':'tick','✓✓':'tick','☑️':'ok','☑':'ok','✕':'x','✘':'x','❌':'no','⚠️':'warn','⚠':'warn','🚫':'ban','⛔':'ban','📤':'up','📲':'up','⬇️':'down','⬇':'down','👇':'down','📄':'doc','🧾':'rcpt','🔥':'flame','🎁':'gift','💎':'gem','📊':'chart','🔍':'search','💰':'money','💸':'money','✨':'spark','💥':'spark','🧹':'spark','✏️':'edit','✎':'edit','💬':'chat','📦':'box','✉':'mail','📧':'mail','📨':'mail','🔒':'lock','🗑️':'trash','🗑':'trash','🎤':'mic','📷':'cam','🎉':'party','🎊':'party','🔔':'bell','🎨':'palette','🥇':'medal','🥈':'medal','⭐':'star','☆':'star','👍':'like','⚙️':'gear','❓':'help','❔':'help','💳':'card','🔢':'hash','🔤':'text','👑':'crown','📋':'clip','⬜':'sq','📘':'book','📕':'book','📎':'attach','🚚':'truck','📝':'note','📢':'mega','🌙':'moon','☀️':'sun','👤':'user','💾':'save','☁':'cloud','⏹':'stop','📁':'folder','🗂️':'folder','🆓':'free','🆕':'tag','💼':'brief','📈':'trend','🚀':'rocket','📱':'phone','🟢':'dotg','🔴':'dotr','⚪':'dotw','👋':'hand','🤝':'link','⚔️':'bolt','🚩':'flag','🏢':'bld','🖨️':'print','🔑':'key','🔗':'link','➕':'plus','⏳':'hour','🔄':'refresh','↺':'refresh','⎋':'out','➤':'plane','👥':'users','🔕':'belloff','⏸':'pause','📌':'pin','📴':'phoneoff','🕘':'clock','📒':'ledger','🧪':'flask','💡':'bulb','📥':'inbox','🧭':'compass','🇮🇳':'flagin','🛒':'cart','📜':'scroll','💵':'cash','📑':'docs','🏭':'factory','🏬':'store','🏦':'bank','🗓':'calendar','🛡':'shield','🧮':'calc','🏠':'home','←':'left','→':'right','⬆':'up','⬅':'left','➡':'right','⇄':'switch','↩':'undo','⌃':'chevup','🖨':'print','⚙':'gear','🗂':'folder','🔐':'lock','🔎':'search','✍️':'edit','💹':'trend','🏷':'tag','📃':'doc','🔁':'refresh','📚':'book','⚡':'bolt','↑':'up','↓':'down'};
 var keys=Object.keys(M).sort(function(a,b){return b.length-a.length;}).map(function(k){return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');});
 var RE=new RegExp('('+keys.join('|')+')\uFE0F?','g');
+var APPMODE=false;try{APPMODE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())||/[?&]apk=1/.test(location.search);}catch(e){APPMODE=false;}
+if(APPMODE){try{document.documentElement.classList.add('icss');}catch(e){}}
 function svg(n){var d=I[n];if(!d)return null;var u='url(#ig-'+d[0]+')';
 return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(d[1]?'<g fill="'+u+'" fill-opacity=".28" stroke="none">'+d[1]+'</g>':'')+'<g fill="none" stroke="'+u+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+d[2]+'</g></svg>';}
 window.ic=function(n){return '<i class="ic ic-'+d0(n)+'" data-ic="'+n+'">'+(svg(n)||'')+'</i>';};
@@ -23468,6 +23470,8 @@ button:active>.ic,a:active>.ic,.btn:active .ic,[onclick]:active>.ic{transform:sc
 .btn:active,button:active{transform:scale(.97)}
 .btn.primary .ic,.btn.danger .ic,.btn.success .ic{filter:brightness(2.4) saturate(.4) drop-shadow(0 1px 2px rgba(0,0,0,.25))}
 @media(prefers-reduced-motion:reduce){.ic,.btn{transition:none!important}}
+html.icss .ic,html.icss .ic-g,html.icss .ic-r,html.icss .ic-a,html.icss .ic-y,html.icss .ic-c,html.icss .ic-k,html.icss .ic-s{filter:drop-shadow(0 2px 3px rgba(15,23,42,.20))}
+html.icss button:active>.ic,html.icss a:active>.ic,html.icss .btn:active .ic,html.icss [onclick]:active>.ic{filter:drop-shadow(0 0 6px currentColor)}
 </style>
 <div id="appToastBox" style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:100001;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none"></div>
 <script>function appToast(msg,type){
