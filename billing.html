@@ -1425,7 +1425,11 @@ body.apk-nav #docHome .apk-card .dz-card .dz-ico svg{width:28px;height:28px}
 body.apk-nav #docHome .apk-card .dz-card .dz-t{grid-area:t;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:16px;font-weight:700;letter-spacing:0;color:var(--text-main)}
 body.apk-nav #docHome .apk-card .dz-card .dz-d{grid-area:d;font-size:13px;line-height:1.4;color:var(--text-muted)}
 body.apk-nav #docHome .apk-card .dz-card .dz-n{margin:0;font-size:12px;font-weight:700;color:var(--c);background:var(--cbg);padding:4px 10px;border-radius:999px;white-space:nowrap}
-/* Per-Document History v2.3 — Balanced (Variant 25 of the 25 history previews):
+/* Per-Document History v2.4 — Balanced (Variant 25 of the 25 history previews)
+   + Bill-History parity: soft-delete (Deleted view, restore, delete forever),
+   scan-based Duplicates view (same-number groups), FY filter (Apr-Mar).
+   Deleted docs stay in db.documents with deletedAt (no new arrays); live lists,
+   counts, pickers and number-uniqueness checks all exclude deletedAt docs.
    compact cards instead of the wide table; 3 primary actions (Open / Preview /
    Share) + a ... menu for the other 6; status chips instead of the status dropdown;
    Export Excel as a small green button in the header; floating pill bulk bar.
@@ -1445,17 +1449,21 @@ body.apk-nav #docHome .apk-card .dz-card .dz-create{flex:1;display:inline-flex;a
 body.apk-nav #docHome .apk-card .dz-card .dz-create svg{width:16px;height:16px;flex:none}
 body.apk-nav #docHome .apk-card .dz-card .dz-create:active{transform:scale(.94);opacity:.9}
 @media (max-width:420px){body.apk-nav #docHome .apk-card .dz-card .dz-hist,body.apk-nav #docHome .apk-card .dz-card .dz-create{padding:12px 14px;font-size:15px}body.apk-nav #docHome .apk-card .dz-card .dz-hist svg,body.apk-nav #docHome .apk-card .dz-card .dz-create svg{width:15px;height:15px}}
-#docHistory .dh-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+#docHistory .dh-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 #docHistory .dh-back{flex:none;padding:7px 10px;font-size:13px;white-space:nowrap}
 #docHistory .dh-title{flex:1;min-width:0;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 #docHistory .dh-title h1{font-size:16px;font-weight:800;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #docHistory .dh-count{font-size:11px;font-weight:700;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border-color);padding:3px 8px;border-radius:999px;white-space:nowrap}
 #docHistory .dh-export{flex:none;padding:7px 12px;font-size:13px;font-weight:700;background:#16a34a;border-color:#16a34a;color:#fff;white-space:nowrap}
 #docHistory .dh-export:active{transform:scale(.96)}
+#docHistory .dh-view{flex:none;padding:7px 10px;font-size:12px;font-weight:700;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-main);border-radius:999px;white-space:nowrap;cursor:pointer}
+#docHistory .dh-view.on{background:#4F7CFF;border-color:#4F7CFF;color:#fff}
+#docHistory .dh-view:active{transform:scale(.96)}
+#docHistory .dh-head-acts{display:flex;gap:8px;flex-wrap:wrap}
 #docHistory .dh-filters{background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px;padding:12px;display:grid;gap:10px;margin-bottom:12px}
-#docHistory .dh-f1{display:flex;gap:8px}
-#docHistory .dh-f1 input{flex:1;min-width:0;font-size:13px;padding:8px 10px}
-#docHistory .dh-f1 select{flex:none;width:150px;font-size:13px;padding:8px 6px}
+#docHistory .dh-f1{display:flex;gap:8px;flex-wrap:wrap}
+#docHistory .dh-f1 input{flex:2 1 180px;min-width:0;font-size:13px;padding:8px 10px}
+#docHistory .dh-f1 select{flex:1 1 120px;min-width:0;font-size:13px;padding:8px 6px}
 #docHistory .dh-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 #docHistory .dh-chips::-webkit-scrollbar{display:none}
 #docHistory .dh-chip{flex:none;border:1px solid var(--border-color);background:transparent;color:var(--text-main);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
@@ -1500,6 +1508,12 @@ body.apk-nav #docHome .apk-card .dz-card .dz-create:active{transform:scale(.94);
 #docHistory .dh-bb{padding:6px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
 #docHistory .dh-bb-del{border-color:#dc2626;background:#dc2626;color:#fff}
 #docHistory .dh-empty{padding:26px 12px;text-align:center;color:var(--text-muted);font-size:13px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:12px}
+#docHistory .dh-del{font-size:12px;color:var(--text-muted);white-space:nowrap}
+#docHistory .dh-a-restore{background:#16a34a;border-color:#16a34a;color:#fff}
+#docHistory .dh-a-forever{background:#dc2626;border-color:#dc2626;color:#fff}
+#docHistory .dh-dup-h{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:#d97706;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:800}
+#docHistory .dh-bb-restore{border-color:#16a34a;background:#16a34a;color:#fff}
+#docHistory .dh-bb-forever{border-color:#dc2626;background:#dc2626;color:#fff}
 body.apk-nav #docHistory .dh-bulk{bottom:76px}
 /* APK Home: "Search everything" bar on top of Dashboard Overview */
 #apkSrch{display:none}
@@ -6584,7 +6598,7 @@ saveDB();
 }
 function chatOpenProformaPicker(){
 if(!chatConnId){ alert('Pehle chat kholo.'); return; }
-if(typeof db==='undefined'||!db||!Array.isArray(db.documents)||!db.documents.filter(x=>x.type==='proforma').length){ alert('Is company me koi proforma nahi hai. Pehle Documents me proforma banao.'); return; }
+if(typeof db==='undefined'||!db||!Array.isArray(db.documents)||!db.documents.filter(x=>x.type==='proforma'&&!x.deletedAt).length){ alert('Is company me koi proforma nahi hai. Pehle Documents me proforma banao.'); return; }
 id('chatProformaPickerSearch').value='';
 id('chatProformaPickerModal').classList.add('show');
 chatRenderProformaPicker();
@@ -6592,7 +6606,7 @@ chatRenderProformaPicker();
 function chatRenderProformaPicker(){
 const box=id('chatProformaPickerList'); if(!box) return;
 const q=(id('chatProformaPickerSearch')?.value||'').trim().toLowerCase();
-const rows=(db.documents||[]).filter(x=>x.type==='proforma').filter(d=>!q||String(d.number||'').toLowerCase().includes(q))
+const rows=(db.documents||[]).filter(x=>x.type==='proforma'&&!x.deletedAt).filter(d=>!q||String(d.number||'').toLowerCase().includes(q))
 .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,40);
 if(!rows.length){ box.innerHTML='<div style="color:var(--text-muted);font-size:12px">Koi proforma nahi mila.</div>'; return; }
 box.innerHTML=rows.map(d=>{
@@ -6604,7 +6618,7 @@ return `<div class="pf-co-row" style="cursor:pointer;display:flex;justify-conten
 }).join('');
 }
 function chatSendProforma(docId){
-const d=(db.documents||[]).find(x=>x.id===docId&&x.type==='proforma'); if(!d||!chatConnId) return;
+const d=(db.documents||[]).find(x=>x.id===docId&&x.type==='proforma'&&!x.deletedAt); if(!d||!chatConnId) return;
 if(!d.totals) docCalc(d);
 const s=db.settings||{};
 const seller=chatSellerPayload();
@@ -6715,7 +6729,7 @@ if(!chatConnId){ alert('Pehle chat kholo.'); return; }
 chatGenDocPickerKind=kind;
 const label=CHAT_GENDOC_LABELS[kind]||'Document';
 id('chatGenDocPickerTitle').textContent=label+' Bhejo';
-const hasAny=kind==='po'?(db.purchaseOrders||[]).length:(db.documents||[]).filter(x=>x.type===kind).length;
+const hasAny=kind==='po'?(db.purchaseOrders||[]).length:(db.documents||[]).filter(x=>x.type===kind&&!x.deletedAt).length;
 if(typeof db==='undefined'||!db||!hasAny){ alert('Is company me koi '+label+' nahi hai. Pehle bana lo.'); return; }
 id('chatGenDocPickerSearch').value='';
 id('chatGenDocPickerModal').classList.add('show');
@@ -6730,7 +6744,7 @@ if(kind==='po'){
 rows=(db.purchaseOrders||[]).filter(p=>!q||String(p.poNumber||'').toLowerCase().includes(q))
 .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,40);
 } else {
-rows=(db.documents||[]).filter(x=>x.type===kind).filter(d=>!q||String(d.number||'').toLowerCase().includes(q))
+rows=(db.documents||[]).filter(x=>x.type===kind&&!x.deletedAt).filter(d=>!q||String(d.number||'').toLowerCase().includes(q))
 .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,40);
 }
 if(!rows.length){ box.innerHTML='<div style="color:var(--text-muted);font-size:12px">Kuch nahi mila.</div>'; return; }
@@ -6758,7 +6772,7 @@ if(kind==='po'){
 const p=(db.purchaseOrders||[]).find(x=>x.id===docOrPoId); if(!p) return;
 payload={po:JSON.parse(JSON.stringify(p)),seller};
 } else {
-const d=(db.documents||[]).find(x=>x.id===docOrPoId&&x.type===kind); if(!d) return;
+const d=(db.documents||[]).find(x=>x.id===docOrPoId&&x.type===kind&&!x.deletedAt); if(!d) return;
 if(!d.totals) docCalc(d);
 payload={doc:docClone(d),seller};
 }
@@ -8807,11 +8821,11 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
     <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn primary" onclick="docCustClose()">Done</button></div>
   </div></div>
 
-<!-- Per-Document History (v2.3 Balanced) — redesigned history page: compact cards,
+<!-- Per-Document History (v2.4 Balanced) — redesigned history page: compact cards,
      status chips, 3 primary actions + ... menu, floating bulk bar. App AND browser. -->
 <div id="docHistory" class="page hidden">
-  <div class="dh-head"><button class="btn muted dh-back" onclick="showPage('documents')">‹ Back</button><div class="dh-title"><h1 id="docHistTitle">History</h1><span class="dh-count" id="docHistCount"></span></div><button class="btn dh-export" onclick="docHistExportExcel()">📊 Excel</button></div>
-  <div class="dh-filters">
+  <div class="dh-head"><button class="btn muted dh-back" onclick="docHistBack()">‹ Back</button><div class="dh-title"><h1 id="docHistTitle">History</h1><span class="dh-count" id="docHistCount"></span></div><div class="dh-head-acts"><button class="btn dh-export" onclick="docHistExportExcel()">📊 Excel</button><button class="btn dh-view" id="docHistTrashBtn" onclick="docHistSetView('trash')">🗑 Deleted (<span id="docHistTrashCount">0</span>)</button><button class="btn dh-view" id="docHistDupBtn" onclick="docHistSetView('dup')">⚠ Duplicates (<span id="docHistDupCount">0</span>)</button></div></div>
+  <div class="dh-filters" id="docHistFilters">
     <div class="dh-f1"><input id="docHistSearch" oninput="ieDeb('renderDocHistory')" placeholder="Search number / customer..."><select id="docHistSort" onchange="renderDocHistory()">
         <option value="date_desc">Date (Newest First)</option>
         <option value="date_asc">Date (Oldest First)</option>
@@ -8820,7 +8834,7 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
         <option value="amt_desc">Amount (High-Low)</option>
         <option value="amt_asc">Amount (Low-High)</option>
         <option value="cust_asc">Customer (A-Z)</option>
-      </select></div>
+      </select><select id="docHistFY" onchange="renderDocHistory()" aria-label="Financial year"><option value="">All Years</option></select></div>
     <div class="dh-chips" id="docHistStatusChips"></div>
     <div class="dh-f3"><div class="dh-date"><label>From</label><input id="docHistFrom" type="date" onchange="renderDocHistory()"></div><div class="dh-date"><label>To</label><input id="docHistTo" type="date" onchange="renderDocHistory()"></div></div>
   </div>
@@ -8828,9 +8842,11 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
   <div class="dh-bulk" id="docHistBulk" hidden>
     <label><input type="checkbox" id="docHistSelAll" onchange="docHistToggleAll(this.checked)"> All</label>
     <span class="dh-sel" id="docHistSelCount">0 selected</span>
-    <button class="dh-bb" onclick="docHistBulkPdf('download')">⬇ PDF</button>
-    <button class="dh-bb" onclick="docHistBulkPdf('share')">Share</button>
-    <button class="dh-bb dh-bb-del" onclick="docHistBulkDelete()">Delete</button>
+    <button class="dh-bb" id="docHistBulkPdfBtn" onclick="docHistBulkPdf('download')">⬇ PDF</button>
+    <button class="dh-bb" id="docHistBulkShareBtn" onclick="docHistBulkPdf('share')">Share</button>
+    <button class="dh-bb dh-bb-del" id="docHistBulkDelBtn" onclick="docHistBulkDelete()">Delete</button>
+    <button class="dh-bb dh-bb-restore" id="docHistBulkRestoreBtn" onclick="docHistBulkRestore()" hidden>Restore</button>
+    <button class="dh-bb dh-bb-forever" id="docHistBulkForeverBtn" onclick="docHistBulkForever()" hidden>Delete Forever</button>
   </div>
 </div>
 
@@ -10378,7 +10394,7 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     </div>
   </div>
 </div>
-<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.3 • 15 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
+<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.4 • 15 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
 <nav id="apkBar" aria-label="Main"><button type="button" data-tab="home" onclick="apkTab('home')"><b>🏠</b><span>Home</span></button><button type="button" data-tab="voucher" onclick="apkTab('voucher')"><b>🧾</b><span>Voucher</span></button><button type="button" data-tab="parties" onclick="apkTab('parties')"><b>👥</b><span>Parties &amp; Stock</span><u id="apkDot"></u></button><button type="button" data-tab="accounts" onclick="apkTab('accounts')"><b>📒</b><span>Accounts</span></button><button type="button" data-tab="more" onclick="apkTab('more')"><b>⋯</b><span>More</span></button></nav><button type="button" id="apkFab" onclick="newInvoice()">＋ Create Invoice</button>
 </div>
 
@@ -21486,7 +21502,7 @@ const el2=id('docCust_stateCode'); if(el2) el2.value=code;
 function docSetNumber(el){
 const v=el.value.trim();
 if(!v){el.value=docCur.number;return;}
-const dup=db.documents.find(x=>x.type===docCur.type&&x.number===v&&x.id!==docCur.id);
+const dup=db.documents.find(x=>x.type===docCur.type&&x.number===v&&x.id!==docCur.id&&!x.deletedAt);
 if(dup){alert('This number is already used by another '+DOC_TYPES[docCur.type].label+'. Use a different number.');el.value=docCur.number;return;}
 docCur.number=v; docDirty=true;
 }
@@ -21762,7 +21778,7 @@ function docSave(){
 if(!docCur) return false;
 if(!String(docCur.customer.name||'').trim()){alert('Customer name is required.');return false;}
 if(!String(docCur.number||'').trim()){alert('Document number is required.');return false;}
-const dup=db.documents.find(x=>x.type===docCur.type&&x.number===docCur.number&&x.id!==docCur.id);
+const dup=db.documents.find(x=>x.type===docCur.type&&x.number===docCur.number&&x.id!==docCur.id&&!x.deletedAt);
 if(dup){alert('This number is already used by another '+DOC_TYPES[docCur.type].label+'.');return false;}
 docCalc(docCur);
 docCur.updatedAt=new Date().toISOString();
@@ -21783,7 +21799,7 @@ return '';
 }
 function docSetFilter(f){docFilter=f;renderDocList()}
 function renderDocList(){
-const all=db.documents||[];
+const all=(db.documents||[]).filter(x=>!x.deletedAt);
 const cnt=t=>all.filter(x=>x.type===t).length;
 const put=(k,n)=>{const e=id(k);if(e)e.textContent=n+' saved';};
 put('dzCntQuotation',cnt('quotation'));put('dzCntChallan',cnt('challan'));put('dzCntProforma',cnt('proforma'));
@@ -21829,9 +21845,9 @@ docToast('Duplicated as '+n.number);
 }
 function docDelete(docId){
 const f=db.documents.find(x=>x.id===docId); if(!f) return;
-if(!confirm('Delete '+DOC_TYPES[f.type].label+' '+f.number+'? This cannot be undone.')) return;
-db.documents=db.documents.filter(x=>x.id!==docId);
-saveDB(); renderDocList(); docToast('Deleted.');
+if(!confirm('Delete '+DOC_TYPES[f.type].label+' '+f.number+'? It will move to Deleted and can be restored later.')) return;
+f.deletedAt=new Date().toISOString();
+saveDB(); renderDocList(); if(typeof renderDocHistory==='function')renderDocHistory(); docToast('Moved to Deleted.');
 }
 function docConvertOpen(docId){
 let src;
@@ -28384,26 +28400,76 @@ if(inp)inp.addEventListener('input',function(){docFilter(inp.value)});
 })();
 </script>
 <script id="apk-docs-history-js">
+/* Per-Document History v2.4 — APP-ONLY. One history page per document type, opened
+   from the History button on the app Documents list. v2.4 adds Bill-History parity:
+   Deleted view (soft-delete via deletedAt, restore with number-clash -> new number,
+   delete forever), scan-based Duplicates view (live docs grouped by same number),
+   FY filter (Apr-Mar, mirrors invoiceFY/populateFYFilter). No new PDF engine,
+   no auditor logic (see report). Browser #documents untouched. */
+/* (v2.4 note: the v1.9.2 header below is kept for history; v2.3 Balanced superseded Variant 1.) */
 /* Per-Document History v1.9.2 — APP-ONLY. Classic Full Page (Variant 1): one history page
    per document type, opened from the History button on the app Documents list.
    Reuses the Saved Documents row actions (docEdit / docPreviewOpen / docPrintOpen /
    docConvertOpen / docDuplicate / sendPickOpen / docDelete), docStatusClass, the
    docShowPrices amount logic and the docPdfItems + IEPDF bulk PDF engine.
    No new PDF engine, no auditor logic (see report). Browser #documents untouched. */
-let docHistType=null, docHistSel={}, docHistCache=[], docHistStatusSel='';
+let docHistType=null, docHistSel={}, docHistCache=[], docHistStatusSel='', docHistView='list';
 function docHistoryOpen(type){
  if(!DOC_TYPES[type])return;
- docHistType=type; docHistSel={}; docHistStatusSel='';
+ docHistType=type; docHistSel={}; docHistStatusSel=''; docHistView='list';
  var s=id('docHistSearch'); if(s)s.value='';
  var f=id('docHistFrom'); if(f)f.value='';
  var t=id('docHistTo'); if(t)t.value='';
  var so=id('docHistSort'); if(so)so.value='date_desc';
+ var fy=id('docHistFY'); if(fy)fy.value='';
  showPage('docHistory');
 }
+/* v2.4: FY of a doc — mirrors invoiceFY: FY embedded in the number wins,
+   else fyForDate(date || createdAt). Indian FY Apr-Mar. */
+function docFY(x){
+ var m=String(x?.number||'').match(/(\d{4}-\d{2})/);
+ if(m) return m[1];
+ return fyForDate(x?.date||x?.createdAt||new Date());
+}
+/* v2.4: FY options for this type's LIVE docs + current FY, newest first —
+   mirrors populateFYFilter. Preserves the current selection across re-renders. */
+function populateDocHistFY(){
+ var sel=id('docHistFY'); if(!sel) return;
+ var cur=sel.value||'';
+ var fys=new Set((db.documents||[]).filter(function(x){return x.type===docHistType&&!x.deletedAt}).map(docFY));
+ fys.add(fyForDate(new Date()));
+ var sorted=[...fys].sort(function(a,b){return b.localeCompare(a)});
+ sel.innerHTML='<option value="">All Years</option>'+sorted.map(function(fy){return '<option value="'+fy+'"'+(fy===cur?' selected':'')+'>FY '+fy+'</option>'}).join('');
+}
+/* v2.4: deleted docs of this type, most recently deleted first. */
+function docHistTrashDocs(){
+ return (db.documents||[]).filter(function(x){return x.type===docHistType&&x.deletedAt}).slice().sort(function(a,b){return String(b.deletedAt||'').localeCompare(String(a.deletedAt||''))});
+}
+/* v2.4: Duplicates is SCAN-BASED (adaptation — see report): docs have no parked-
+   duplicates array and docDuplicate always assigns a new number, so same-number
+   docs can only arise via import/restore. Groups the type's LIVE docs by
+   String(number); groups of 2+ are duplicates. Mirrors Bill History's
+   number-matching rule (same number) while grouping, as the brief asks. */
+function docHistDupGroups(){
+ var live=(db.documents||[]).filter(function(x){return x.type===docHistType&&!x.deletedAt});
+ var byNum={};
+ live.forEach(function(x){var k=String(x.number||''); (byNum[k]=byNum[k]||[]).push(x)});
+ return Object.keys(byNum).filter(function(k){return byNum[k].length>1}).sort().map(function(k){return {number:k,docs:byNum[k].slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))})}});
+}
+function docHistSetView(v){
+ if(v!=='list'&&v!=='trash'&&v!=='dup')return;
+ docHistView=v; docHistSel={};
+ renderDocHistory();
+}
+function docHistBack(){
+ if(docHistView!=='list'){ docHistSetView('list'); return; }
+ showPage('documents');
+}
 function docHistFiltered(){
- var all=(db.documents||[]).filter(function(x){return x.type===docHistType});
+ var all=(db.documents||[]).filter(function(x){return x.type===docHistType&&!x.deletedAt});
  var q=(id('docHistSearch')?.value||'').trim().toLowerCase();
  var st=docHistStatusSel||'';
+ var fy=id('docHistFY')?.value||'';
  var from=id('docHistFrom')?.value||'';
  var to=id('docHistTo')?.value||'';
  var sortBy=id('docHistSort')?.value||'date_desc';
@@ -28411,6 +28477,7 @@ function docHistFiltered(){
   var cust=String(x.customer?.name||'');
   if(q&&!(String(x.number||'')+' '+cust).toLowerCase().includes(q))return false;
   if(st&&x.status!==st)return false;
+  if(fy&&docFY(x)!==fy)return false;
   if(from&&(x.date||'')<from)return false;
   if(to&&(x.date||'')>to)return false;
   return true;
@@ -28428,27 +28495,8 @@ function docHistFiltered(){
  });
  return {all:all,rows:arr};
 }
-function renderDocHistory(){
- if(!docHistType)return;
- var T=DOC_TYPES[docHistType]; if(!T)return;
- var tt=id('docHistTitle'); if(tt)tt.textContent=T.label+' History';
- var chips=id('docHistStatusChips');
- if(chips){
-  chips.innerHTML='<button type="button" class="dh-chip'+(docHistStatusSel===''?' on':'')+'" onclick="docHistSetStatus(\'\')">All</button>'+T.statuses.map(function(s){return '<button type="button" class="dh-chip'+(docHistStatusSel===s?' on':'')+'" onclick="docHistSetStatus(\''+esc(s)+'\')">'+esc(s)+'</button>'}).join('');
- }
- var res=docHistFiltered(), all=res.all, rows=res.rows;
- docHistCache=rows;
- var cc=id('docHistCount'); if(cc)cc.textContent=all.length+' saved';
- var body=id('docHistBody'); if(!body)return;
- var selCount=rows.filter(function(x){return docHistSel[x.id]}).length;
- var bulk=id('docHistBulk'); if(bulk)bulk.hidden=selCount<1;
- var sc=id('docHistSelCount'); if(sc)sc.textContent=selCount+' selected';
- var sa=id('docHistSelAll'); if(sa)sa.checked=rows.length>0&&rows.every(function(x){return docHistSel[x.id]});
- if(!rows.length){
-  body.innerHTML='<div class="dh-empty">'+(all.length?'No documents match this filter.':'No '+T.label.toLowerCase()+' yet. Create one from the list.')+'</div>';
-  return;
- }
- body.innerHTML=rows.map(function(x){
+function docHistCardHtml(x){
+
   var priced=docShowPrices(x), amt='\u20B9 '+money(x.totals?.grand);
   return '<div class="dh-card" data-id="'+x.id+'">'+
   '<div class="dh-l1"><input type="checkbox" '+(docHistSel[x.id]?'checked':'')+' onchange="docHistToggle(\''+x.id+'\',this.checked)" aria-label="Select '+esc(x.number)+'">'+
@@ -28469,7 +28517,89 @@ function renderDocHistory(){
   '<button type="button" class="dh-mi" onclick="docHistMenuCloseAll();sendPickOpen(\''+x.type+'\',\''+x.id+'\')">Send</button>'+
   '<button type="button" class="dh-mi dh-mi-del" onclick="docHistMenuCloseAll();docHistDelete(\''+x.id+'\')">Delete</button>'+
   '</div></div></div></div></div>';
- }).join('');
+ 
+}
+function renderDocHistory(){
+ if(!docHistType)return;
+ var T=DOC_TYPES[docHistType]; if(!T)return;
+ populateDocHistFY();
+ var trash=docHistTrashDocs();
+ var groups=docHistDupGroups();
+ var dupDocs=0; groups.forEach(function(g){dupDocs+=g.docs.length});
+ var tc=id('docHistTrashCount'); if(tc)tc.textContent=trash.length;
+ var dc=id('docHistDupCount'); if(dc)dc.textContent=dupDocs;
+ var tb=id('docHistTrashBtn'); if(tb)tb.classList.toggle('on',docHistView==='trash');
+ var db2=id('docHistDupBtn'); if(db2)db2.classList.toggle('on',docHistView==='dup');
+ var tt=id('docHistTitle');
+ var flt=id('docHistFilters'); if(flt)flt.style.display=docHistView==='list'?'':'none';
+ var chips=id('docHistStatusChips');
+ if(chips){
+  chips.innerHTML='<button type="button" class="dh-chip'+(docHistStatusSel===''?' on':'')+'" onclick="docHistSetStatus(\'\')">All</button>'+T.statuses.map(function(s){return '<button type="button" class="dh-chip'+(docHistStatusSel===s?' on':'')+'" onclick="docHistSetStatus(\''+esc(s)+'\')">'+esc(s)+'</button>'}).join('');
+ }
+ var body=id('docHistBody'); if(!body)return;
+ var bulk=id('docHistBulk');
+ var pdfB=id('docHistBulkPdfBtn'), shB=id('docHistBulkShareBtn'), delB=id('docHistBulkDelBtn'), resB=id('docHistBulkRestoreBtn'), forB=id('docHistBulkForeverBtn');
+ var cc=id('docHistCount');
+ if(docHistView==='trash'){
+  if(tt)tt.textContent=T.label+' — Deleted';
+  if(cc)cc.textContent=trash.length+' deleted';
+  docHistCache=trash;
+  var selT=trash.filter(function(x){return docHistSel[x.id]}).length;
+  if(bulk)bulk.hidden=selT<1;
+  if(pdfB)pdfB.hidden=true; if(shB)shB.hidden=true; if(delB)delB.hidden=true;
+  if(resB)resB.hidden=false; if(forB)forB.hidden=false;
+  var scT=id('docHistSelCount'); if(scT)scT.textContent=selT+' selected';
+  var saT=id('docHistSelAll'); if(saT)saT.checked=trash.length>0&&trash.every(function(x){return docHistSel[x.id]});
+  if(!trash.length){
+   body.innerHTML='<div class="dh-empty">No deleted '+T.label.toLowerCase()+'.</div>';
+   return;
+  }
+  body.innerHTML=trash.map(function(x){
+   var priced=docShowPrices(x), amt='\u20B9 '+money(x.totals?.grand);
+   return '<div class="dh-card" data-id="'+x.id+'">'+
+   '<div class="dh-l1"><input type="checkbox" '+(docHistSel[x.id]?'checked':'')+' onchange="docHistToggle(\''+x.id+'\',this.checked)" aria-label="Select '+esc(x.number)+'">'+
+   '<b class="dh-num">'+esc(x.number)+'</b>'+
+   '<span class="dh-st '+docHistStatusClass(x.status)+'">'+esc(x.status||'Draft')+'</span></div>'+
+   '<div class="dh-l2"><span class="dh-cust">'+esc(x.customer?.name||'\u2014')+'</span><span class="dh-dt">'+esc(docDateFmt(x.date))+'</span></div>'+
+   '<div class="dh-l3">'+(priced?'<b class="dh-amt">'+amt+'</b>':'')+
+   '<span class="dh-del">Deleted On '+esc((x.deletedAt||'').slice(0,10))+'</span>'+
+   '<div class="dh-acts">'+
+   '<button type="button" class="dh-a dh-a-restore" onclick="docHistRestore(\''+x.id+'\')">Restore</button>'+
+   '<button type="button" class="dh-a dh-a-forever" onclick="docHistDeleteForever(\''+x.id+'\')">Delete Forever</button>'+
+   '</div></div></div>';
+  }).join('');
+  return;
+ }
+ if(docHistView==='dup'){
+  if(tt)tt.textContent=T.label+' — Duplicates';
+  if(cc)cc.textContent=dupDocs+(dupDocs===1?' duplicate':' duplicates');
+  var flat=[]; groups.forEach(function(g){flat=flat.concat(g.docs)});
+  docHistCache=flat;
+  if(bulk)bulk.hidden=true;
+  if(!groups.length){
+   body.innerHTML='<div class="dh-empty">No duplicates found.</div>';
+   return;
+  }
+  body.innerHTML=groups.map(function(g){
+   return '<div class="dh-dup-h">⚠ Duplicate number '+esc(g.number)+' — '+g.docs.length+' documents</div>'+g.docs.map(docHistCardHtml).join('');
+  }).join('');
+  return;
+ }
+ if(tt)tt.textContent=T.label+' History';
+ var res=docHistFiltered(), all=res.all, rows=res.rows;
+ docHistCache=rows;
+ if(cc)cc.textContent=all.length+' saved';
+ if(pdfB)pdfB.hidden=false; if(shB)shB.hidden=false; if(delB)delB.hidden=false;
+ if(resB)resB.hidden=true; if(forB)forB.hidden=true;
+ var selCount=rows.filter(function(x){return docHistSel[x.id]}).length;
+ if(bulk)bulk.hidden=selCount<1;
+ var sc=id('docHistSelCount'); if(sc)sc.textContent=selCount+' selected';
+ var sa=id('docHistSelAll'); if(sa)sa.checked=rows.length>0&&rows.every(function(x){return docHistSel[x.id]});
+ if(!rows.length){
+  body.innerHTML='<div class="dh-empty">'+(all.length?'No documents match this filter.':'No '+T.label.toLowerCase()+' yet. Create one from the list.')+'</div>';
+  return;
+ }
+ body.innerHTML=rows.map(docHistCardHtml).join('');
 }
 function docHistStatusClass(s){
  if(s==='Sent')return 'dh-st-sent';
@@ -28522,15 +28652,59 @@ function docHistBulkPdf(mode){
  if(mode==='share'){ IEPDF.sharePdfs(items,function(){docToast('Shared.')}); }
  else IEPDF.savePdfs(items);
 }
+function docHistRestore(docId){
+ var f=(db.documents||[]).find(function(x){return x.id===docId}); if(!f||!f.deletedAt)return;
+ var clash=(db.documents||[]).find(function(x){return x.type===f.type&&x.number===f.number&&x.id!==f.id&&!x.deletedAt});
+ if(clash){
+  if(!confirm('A live '+DOC_TYPES[f.type].label+' already uses number '+f.number+'. Restore with a new number?'))return;
+  f.number=docNextNo(f.type);
+ }
+ delete f.deletedAt;
+ saveDB(); renderDocList(); renderDocHistory();
+ docToast('Restored '+f.number+'.');
+}
+function docHistDeleteForever(docId){
+ var f=(db.documents||[]).find(function(x){return x.id===docId}); if(!f)return;
+ if(!confirm('Permanently delete this '+DOC_TYPES[f.type].label+'? This CANNOT be undone and the data will be lost forever.'))return;
+ db.documents=db.documents.filter(function(x){return x.id!==docId});
+ saveDB(); renderDocList(); renderDocHistory();
+ docToast('Permanently deleted.');
+}
+function docHistBulkRestore(){
+ var ids=Object.keys(docHistSel); if(!ids.length)return;
+ var T=DOC_TYPES[docHistType];
+ var restored=0, skipped=0;
+ ids.forEach(function(idv){
+  var f=(db.documents||[]).find(function(x){return x.id===idv&&x.deletedAt});
+  if(!f)return;
+  var clash=(db.documents||[]).find(function(x){return x.type===f.type&&x.number===f.number&&x.id!==f.id&&!x.deletedAt});
+  if(clash){skipped++;return;}
+  delete f.deletedAt; restored++;
+ });
+ if(!restored){alert(skipped+' document'+(skipped>1?'s':'')+' could not be restored \u2014 their number is already used by a live '+T.label+'. Restore them one by one to get a new number.');return;}
+ docHistSel={};
+ saveDB(); renderDocList(); renderDocHistory();
+ docToast('Restored '+restored+' document'+(restored>1?'s':'')+(skipped?' ('+skipped+' skipped \u2014 number in use)':'')+'.');
+}
+function docHistBulkForever(){
+ var ids=Object.keys(docHistSel); if(!ids.length)return;
+ var T=DOC_TYPES[docHistType];
+ if(!confirm('Permanently delete '+ids.length+' '+T.label+(ids.length>1?'s':'')+'? This CANNOT be undone and the data will be lost forever.'))return;
+ db.documents=db.documents.filter(function(x){return !docHistSel[x.id]});
+ docHistSel={};
+ saveDB(); renderDocList(); renderDocHistory();
+ docToast('Permanently deleted '+ids.length+' document'+(ids.length>1?'s':'')+'.');
+}
 function docHistBulkDelete(){
  var ids=Object.keys(docHistSel);
  if(!ids.length)return;
  var T=DOC_TYPES[docHistType];
- if(!confirm('Delete '+ids.length+' '+T.label+(ids.length>1?'s':'')+'? This cannot be undone.'))return;
- db.documents=db.documents.filter(function(x){return !docHistSel[x.id]});
+ if(!confirm('Delete '+ids.length+' '+T.label+(ids.length>1?'s':'')+'? They will move to Deleted and can be restored later.'))return;
+ var now=new Date().toISOString();
+ db.documents.forEach(function(x){if(docHistSel[x.id])x.deletedAt=now;});
  docHistSel={};
  saveDB(); renderDocList(); renderDocHistory();
- docToast('Deleted '+ids.length+' document'+(ids.length>1?'s':'')+'.');
+ docToast('Moved '+ids.length+' document'+(ids.length>1?'s':'')+' to Deleted.');
 }
 function docHistExportExcel(){
  var rows=docHistCache, T=DOC_TYPES[docHistType];
