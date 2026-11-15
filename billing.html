@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg-dark: #090d16;
@@ -1532,19 +1532,101 @@ body.apk-nav #ieSpot .sp-list{padding-bottom:calc(16px + env(safe-area-inset-bot
 #ieSpot .sp-recent .sp-tip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 
-<style id="apk-home-v26-css">
-/* Home Dashboard v2.6 — Sectioned Cards #7 (APP-ONLY, Peak Level style).
-   Grouped section cards with small-caps headers, per the #7 preview definition. */
-body.apk-nav #dashboard .dash-sec{margin-top:14px}
-body.apk-nav #dashboard .dash-sec>h4{font-size:12px;font-weight:800;letter-spacing:.8px;color:var(--text-muted);text-transform:uppercase;padding:0 4px;margin:0 0 8px;display:flex;align-items:center;gap:6px}
-body.apk-nav #dashboard .dash-sec>h4 svg{width:14px;height:14px;flex:none}
-body.apk-nav #dashboard .dash-sec .dashboard{margin:0}
-body.apk-nav #dashboard .dash-sec .stat-card{margin-bottom:8px}
-body.apk-nav #dashboard .dash-sec .stat-card:last-child{margin-bottom:0}
-body.apk-nav #dashboard .dash-row2{display:flex;justify-content:space-between;align-items:center;gap:10px}
-body.apk-nav #dashboard .dash-l{min-width:0}
-body.apk-nav #dashboard .dash-chip{flex:none;font-size:11px;font-weight:700;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border-color);padding:4px 10px;border-radius:999px;white-space:nowrap}
-body.apk-nav #dashboard .dash-sec .stat-card>.sub:last-child{margin-top:6px}
+<style id="apk-home-v27-css">
+/* Home Dashboard v2.7 — Emerald Premium #2 (APP-ONLY).
+   Whole-Home rebuild matching preview variant #2 "Emerald Premium" exactly:
+   white page, Manrope, ink-black hero, emerald accents, mint tints.
+   Replaces v2.6 sectioning wholesale (v2.6 CSS+JS removed, not layered).
+   Every rule is scoped under body.apk-nav: the browser dashboard is untouched. */
+body.apk-nav{background:#fff}
+body.apk-nav .main{background:#fff}
+body.apk-nav #dashboard{background:#fff;padding:0 8px 34px;font-family:'Manrope','Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;color:#0C1512}
+body.apk-nav #dashboard>.top{display:none}
+/* Kill the base .stat-card indigo glow (::after) on Home: #2 cards are clean. */
+body.apk-nav #dashboard .stat-card::after{display:none}
+/* Header: IE (ink) + BILLING (emerald), mint bell */
+body.apk-nav .mobile-header{background:#fff;border-bottom:0;box-shadow:none;padding:14px 20px 10px}
+body.apk-nav #apkBrandName{font-family:'Manrope','Plus Jakarta Sans',system-ui,sans-serif;font-size:21px;font-weight:800;letter-spacing:-.01em;color:#0C1512}
+body.apk-nav #apkBrandName b{color:#0E9F6E;font-weight:800}
+body.apk-nav .notif-bell-btn{width:42px;height:42px;border-radius:50%;background:#E9F9F0;color:#047857;border:0;position:relative;display:flex;align-items:center;justify-content:center}
+body.apk-nav .notif-bell-btn svg{width:19px;height:19px}
+/* Search: mint pill, round white mic/camera buttons */
+body.apk-nav #apkSrch{background:#F0FAF4;border:0;border-radius:999px;box-shadow:none;height:52px;padding:7px 7px 7px 16px;margin:2px 0 16px;gap:9px}
+body.apk-nav #apkSrch .as-main{font-size:14.5px;font-weight:600;color:#6B7A72;padding:0;gap:9px}
+body.apk-nav #apkSrch .as-main svg{width:19px;height:19px;color:#047857}
+body.apk-nav #apkSrch .as-ic{width:38px;height:38px;border-radius:50%;border:0;background:#fff;color:#047857;box-shadow:0 2px 8px rgba(4,120,87,.12);font-size:18px}
+body.apk-nav #apkSrch .as-ic svg{width:18px;height:18px}
+/* Hero: ink-black card, huge white amount, emerald chip */
+body.apk-nav #dashboard .h27-hero{background:#0C1512;border:0;border-radius:24px;padding:20px;margin:16px 0 0;color:#fff}
+body.apk-nav #dashboard .h27-hero .h27-lab{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.14em;color:#5FD3A5;text-transform:uppercase}
+body.apk-nav #dashboard .h27-hero .h27-lab svg{width:15px;height:15px;flex:none}
+body.apk-nav #dashboard .h27-hero .stat{font-size:36px!important;font-weight:800;line-height:1.12;letter-spacing:-.01em;margin-top:6px;color:#fff}
+body.apk-nav #dashboard .h27-hero-foot{display:flex;align-items:center;gap:8px;margin-top:12px}
+body.apk-nav #dashboard .h27-hero #statTotInvN{font-size:11.5px;font-weight:800;background:#0E9F6E;color:#fff;padding:4px 11px;border-radius:999px;white-space:nowrap}
+body.apk-nav #dashboard .h27-hero .h27-fy{font-size:12px;font-weight:700;color:#9FB3AA;white-space:nowrap}
+/* Duo: Outstanding (red) + Collected (green) */
+body.apk-nav #dashboard .h27-duo{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:11px}
+body.apk-nav #dashboard .h27-money{background:#fff;border:1px solid #EEF1EE;border-radius:20px;padding:15px}
+body.apk-nav #dashboard .h27-money .h27-lab{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.09em;color:#75827B;line-height:1.4;text-transform:uppercase}
+body.apk-nav #dashboard .h27-money .h27-lab svg{width:14px;height:14px;flex:none;color:#0E9F6E}
+body.apk-nav #dashboard .h27-money .stat{font-size:20px!important;font-weight:800;margin-top:7px;letter-spacing:-.01em;color:#0C1512}
+body.apk-nav #dashboard .h27-money.h27-out .stat{color:#D92D20!important}
+body.apk-nav #dashboard .h27-money.h27-col .stat{color:#0B7A55!important}
+body.apk-nav #dashboard .h27-money .h27-sub{font-size:11px;font-weight:700;color:#75827B;margin-top:3px}
+/* Today strip: mint, tap = Day Close */
+body.apk-nav #dashboard .h27-today{background:#E9F9F0;border:0;border-radius:20px;padding:15px;margin-top:11px;display:flex;align-items:center;gap:12px;cursor:pointer}
+body.apk-nav #dashboard .h27-today .h27-t-ic{width:40px;height:40px;flex:none;border-radius:14px;background:#0E9F6E;color:#fff;display:flex;align-items:center;justify-content:center}
+body.apk-nav #dashboard .h27-today .h27-t-ic svg{width:19px;height:19px}
+body.apk-nav #dashboard .h27-today .h27-t-mid{flex:1;min-width:0}
+body.apk-nav #dashboard .h27-today .h27-lab{display:flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#047857;text-transform:uppercase}
+body.apk-nav #dashboard .h27-today .stat{font-size:21px!important;font-weight:800;color:#0C1512;margin-top:2px}
+body.apk-nav #dashboard .h27-today .h27-sub{font-size:11.5px;font-weight:600;color:#4C665B;margin-top:1px}
+body.apk-nav #dashboard .h27-today .h27-chev{margin-left:auto;color:#047857;flex:none;display:flex}
+body.apk-nav #dashboard .h27-today .h27-chev svg{width:19px;height:19px}
+/* Mini grid: 5 cards, Inventory Items full-width */
+body.apk-nav #dashboard .h27-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:11px}
+body.apk-nav #dashboard .h27-mini{background:#FBFCFB;border:1px solid #EEF1EE;border-radius:18px;padding:13px 14px}
+body.apk-nav #dashboard .h27-mini .h27-lab{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#75827B;line-height:1.4;text-transform:uppercase}
+body.apk-nav #dashboard .h27-mini .h27-lab svg{width:14px;height:14px;flex:none;color:#0E9F6E}
+body.apk-nav #dashboard .h27-mini .stat{font-size:19px!important;font-weight:800;color:#0C1512;margin-top:6px}
+body.apk-nav #dashboard .h27-mini .h27-sub{font-size:11px;font-weight:700;color:#75827B;margin-top:2px}
+body.apk-nav #dashboard .h27-mini.h27-wide{grid-column:1/-1}
+/* Sections: flat on the white page, no cards */
+body.apk-nav #dashboard>.card{background:transparent;border:0;box-shadow:none;padding:0;margin-top:24px!important}
+body.apk-nav #dashboard .section-title{font-size:17.5px;font-weight:800;letter-spacing:-.01em;color:#0C1512;margin:0 0 6px;display:flex;justify-content:space-between;align-items:center}
+body.apk-nav #dashboard .h27-more{font-size:12px;font-weight:800;color:#047857;background:none;border:0;display:flex;align-items:center;gap:2px;padding:0;cursor:pointer;font-family:inherit;white-space:nowrap}
+body.apk-nav #dashboard .h27-more svg{width:14px;height:14px}
+/* Recent Invoices rows */
+body.apk-nav #recentBills .h27-irow{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F0F3F0;align-items:flex-start;cursor:pointer}
+body.apk-nav #recentBills .h27-irow:last-child{border-bottom:0}
+body.apk-nav #recentBills .h27-ava{width:42px;height:42px;flex:none;border-radius:14px;background:#E9F9F0;color:#047857;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center}
+body.apk-nav #recentBills .h27-mid{flex:1;min-width:0}
+body.apk-nav #recentBills .h27-nm{font-size:13.5px;font-weight:800;line-height:1.35;color:#0C1512}
+body.apk-nav #recentBills .h27-no{font-size:12px;font-weight:700;color:#75827B;margin-top:2px}
+body.apk-nav #recentBills .h27-rgt{margin-left:auto;text-align:right;flex:none}
+body.apk-nav #recentBills .h27-amt{font-size:15.5px;font-weight:800;color:#0C1512}
+body.apk-nav #recentBills .badge.finalized{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;color:#047857;background:#E9F9F0;border:0;padding:3px 8px;border-radius:999px;margin-top:5px;margin-left:0}
+body.apk-nav #recentBills .badge.finalized svg{width:12px;height:12px}
+/* Top Customers rows */
+body.apk-nav #topCustomers .h27-crow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #F0F3F0;cursor:pointer}
+body.apk-nav #topCustomers .h27-crow:last-child{border-bottom:0}
+body.apk-nav #topCustomers .h27-rank{width:30px;height:30px;flex:none;border-radius:10px;background:#0C1512;color:#5FD3A5;font-size:13.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
+body.apk-nav #topCustomers .h27-mid{flex:1;min-width:0}
+body.apk-nav #topCustomers .h27-nm{font-size:13.5px;font-weight:800;line-height:1.35;color:#0C1512}
+body.apk-nav #topCustomers .h27-sub{font-size:11.5px;font-weight:600;color:#75827B;margin-top:2px}
+body.apk-nav #topCustomers .h27-rgt{margin-left:auto;text-align:right;flex:none}
+body.apk-nav #topCustomers .h27-amt{font-size:15.5px;font-weight:800;color:#0C1512;white-space:nowrap}
+body.apk-nav #topCustomers .h27-crow .btn.muted{color:#047857;background:#fff;border:1px solid #A7F3D0;border-radius:999px;font-size:11.5px;font-weight:800;padding:4px 10px!important;min-height:26px!important;margin:6px 0 0}
+/* FAB: solid emerald pill */
+body.apk-nav[data-apk-page="dashboard"] #apkFab{background:#0E9F6E;border-radius:999px;box-shadow:0 14px 30px rgba(14,159,110,.40);font-family:'Manrope','Plus Jakarta Sans',system-ui,sans-serif;font-size:15px;font-weight:800;padding:0 20px;min-height:50px;bottom:calc(88px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:7px}
+body.apk-nav #apkFab svg{width:19px;height:19px}
+/* Bottom nav: white, emerald active pill */
+body.apk-nav #apkBar{background:#fff;border-top:1px solid #EEF1EE;padding:8px 6px calc(14px + env(safe-area-inset-bottom,0px))}
+body.apk-nav #apkBar button{color:#93A29A;font-family:'Manrope','Plus Jakarta Sans',system-ui,sans-serif;font-size:10.5px;font-weight:700;padding:5px 0 2px;min-height:48px;border-radius:14px;gap:3px}
+body.apk-nav #apkBar b{font-size:22px;line-height:1;filter:none;opacity:1;color:inherit;display:flex}
+body.apk-nav #apkBar b svg{width:22px;height:22px}
+body.apk-nav #apkBar span{font-size:10.5px;font-weight:700}
+body.apk-nav #apkBar button.on{color:#047857;background:#E9F9F0}
 </style>
 <style>
 @font-face{font-family:'IE Typewriter';font-style:normal;font-weight:400;font-display:swap;src:url(data:font/woff2;base64,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) format('woff2');}
@@ -10426,7 +10508,7 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     </div>
   </div>
 </div>
-<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.6 • 15 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
+<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.7 • 15 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
 <nav id="apkBar" aria-label="Main"><button type="button" data-tab="home" onclick="apkTab('home')"><b>🏠</b><span>Home</span></button><button type="button" data-tab="voucher" onclick="apkTab('voucher')"><b>🧾</b><span>Voucher</span></button><button type="button" data-tab="parties" onclick="apkTab('parties')"><b>👥</b><span>Parties &amp; Stock</span><u id="apkDot"></u></button><button type="button" data-tab="accounts" onclick="apkTab('accounts')"><b>📒</b><span>Accounts</span></button><button type="button" data-tab="more" onclick="apkTab('more')"><b>⋯</b><span>More</span></button></nav><button type="button" id="apkFab" onclick="newInvoice()">＋ Create Invoice</button>
 </div>
 
@@ -28589,98 +28671,235 @@ if(inp)inp.addEventListener('input',function(){docFilter(inp.value)});
 })();
 </script>
 
-<script id="apk-home-v26-js">
-/* Home Dashboard v2.6 — Sectioned Cards #7 (APP-ONLY). Runs only when body.apk-nav
+<script id="apk-home-v27-js">
+/* Home Dashboard v2.7 — Emerald Premium #2 (APP-ONLY). Runs only when body.apk-nav
    is present (the APK; the browser never has it, so the browser dashboard is untouched).
-   Moves the existing .stat-card nodes into grouped sections (Sales / Money In / Today /
-   Overview) with #7 headers. All stat ids stay intact, so dashGstStats / dayTodayCard /
-   refreshAll keep filling them by id; the Day Close card keeps its onclick. */
+   Rebuilds the WHOLE Home page to match preview variant #2 "Emerald Premium" exactly:
+   white page, Manrope, ink-black hero, emerald accents, mint tints. Replaces the v2.6
+   sectioning wholesale (v2.6 CSS+JS removed). All stat ids stay intact, so dashGstStats /
+   dayTodayCard / refreshAll keep filling them by id; the Day Close card keeps its onclick,
+   the FAB keeps newInvoice(), nav keeps apkTab(), View keeps openCustomerHistory().
+   Money is shown preview-style (no space after ₹) on Home only, display-only. */
 (function(){
 try{
 var B=document.body;if(!B.classList.contains('apk-nav'))return;
 var dash=document.getElementById('dashboard');
-if(!dash||dash.getAttribute('data-apk-home-v26'))return;
-dash.setAttribute('data-apk-home-v26','1');
+if(!dash||dash.getAttribute('data-apk-home-v27'))return;
+dash.setAttribute('data-apk-home-v27','1');
+function esc2(s){try{return esc(String(s==null?'':s));}catch(e){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}}
+function svg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
+var IC={
+trend:svg('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>'),
+wallet:svg('<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>'),
+coins:svg('<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>'),
+cal:svg('<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>'),
+fileText:svg('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>'),
+receipt:svg('<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/>'),
+pen:svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
+users:svg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+pkg:svg('<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>'),
+bell:svg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'),
+mic:svg('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>'),
+cam:svg('<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>'),
+plus:svg('<path d="M5 12h14"/><path d="M12 5v14"/>'),
+chev:svg('<path d="m9 18 6-6-6-6"/>'),
+home:svg('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
+book:svg('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>'),
+ellipsis:svg('<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>'),
+bcheck:svg('<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>')
+};
 function cardOf(statId){var el=document.getElementById(statId);return el?el.closest('.stat-card'):null;}
 var cInv=cardOf('statTotInv'),cBos=cardOf('statTotBos'),cToday=cardOf('statToday'),
 cCount=cardOf('statInvoices'),cDraft=cardOf('statDrafts'),cCust=cardOf('statCustomers'),
 cItems=cardOf('statItems'),cOut=cardOf('statOutstanding'),cColl=cardOf('statCollected');
 if(!cInv||!cBos||!cToday||!cCount||!cDraft||!cCust||!cItems||!cOut||!cColl)return;
-var IC={
-trend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
-wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
-cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
-grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>'};
-function sec(title,icon,cards){
- var s=document.createElement('div');s.className='dash-sec';
- var h=document.createElement('h4');h.innerHTML=icon+title;s.appendChild(h);
- var g=document.createElement('div');g.className='dashboard';
- cards.forEach(function(c){g.appendChild(c);});
- s.appendChild(g);return s;
-}
-/* #7 chip row: label + big number left, the card's sub text as a pill on the right. */
-function chipCard(card,subId){
- var sub=subId?document.getElementById(subId):null;
- if(!sub)return;
- var row=document.createElement('div');row.className='dash-row2';
- var left=document.createElement('div');left.className='dash-l';
- while(card.firstChild){left.appendChild(card.firstChild);}
- left.removeChild(sub);
- sub.classList.add('dash-chip');
- card.appendChild(row);row.appendChild(left);row.appendChild(sub);
-}
-/* Chip with caller-supplied text (used for the Outstanding "N customer(s)" chip). */
-function chipText(card,txt){
- var c=document.createElement('span');c.className='dash-chip';c.textContent=txt;
- var row=document.createElement('div');row.className='dash-row2';
- var left=document.createElement('div');left.className='dash-l';
- while(card.firstChild){left.appendChild(card.firstChild);}
- card.appendChild(row);row.appendChild(left);row.appendChild(c);
- return c;
-}
-chipCard(cInv,'statTotInvN');
-chipCard(cBos,'statTotBosN');
-var outChip=chipText(cOut,'');
-outChip.id='dashOutChip';outChip.style.display='none';
-/* Today keeps its sub-line ("0 bill(s) - Collection") under the row, plus the #7 chip. */
+/* Label = first child .sub; prepend icon, mark h27-lab. */
+function lab(card,icon){var l=card.children[0];if(!l)return null;l.classList.add('h27-lab');l.innerHTML=icon+esc2(l.textContent.trim());return l;}
+/* HERO: ink-black card. Label + big amount + footer (bill chip + FY). */
+cInv.classList.add('h27-hero');
+lab(cInv,IC.trend);
 (function(){
- var sub=document.getElementById('statTodayN');
- if(!sub)return;
- var row=document.createElement('div');row.className='dash-row2';
- var left=document.createElement('div');left.className='dash-l';
- var chip=document.createElement('span');chip.className='dash-chip';chip.textContent='Tap = Day Close';
- while(cToday.firstChild){if(cToday.firstChild===sub)break;left.appendChild(cToday.firstChild);}
- cToday.removeChild(sub);
- cToday.appendChild(row);row.appendChild(left);row.appendChild(chip);
- cToday.appendChild(sub);
+ var sub=document.getElementById('statTotInvN');if(!sub)return;
+ sub.classList.add('h27-chip');
+ var foot=document.createElement('div');foot.className='h27-hero-foot';
+ foot.appendChild(sub);
+ var fy=document.createElement('span');fy.className='h27-fy';
+ try{fy.textContent='Financial Year '+fyForDate(new Date());}catch(e){fy.textContent='Financial Year 2026-27';}
+ foot.appendChild(fy);
+ cInv.appendChild(foot);
 })();
-var sSales=sec('Sales',IC.trend,[cInv,cBos]);
-var sMoney=sec('Money In',IC.wallet,[cOut,cColl]);
-var sToday=sec('Today',IC.cal,[cToday]);
-var sOver=sec('Overview',IC.grid,[cCount,cDraft,cCust,cItems]);
+/* DUO: Outstanding (red) + Collected (green). */
+var duo=document.createElement('div');duo.className='h27-duo';
+cOut.classList.add('h27-money','h27-out');lab(cOut,IC.wallet);
+var outSub=document.createElement('div');outSub.className='h27-sub';outSub.id='h27OutSub';cOut.appendChild(outSub);
+cColl.classList.add('h27-money','h27-col');lab(cColl,IC.coins);
+var colSub=document.createElement('div');colSub.className='h27-sub';colSub.textContent='Is mahine';cColl.appendChild(colSub);
+duo.appendChild(cOut);duo.appendChild(cColl);
+/* TODAY: mint strip, tap = Day Close (card keeps its onclick). */
+cToday.classList.add('h27-today');
+(function(){
+ var l=cToday.children[0];if(l)l.classList.add('h27-lab');
+ var v=document.getElementById('statToday'),s=document.getElementById('statTodayN');
+ if(s)s.classList.add('h27-sub');
+ var ic=document.createElement('div');ic.className='h27-t-ic';ic.innerHTML=IC.cal;
+ var mid=document.createElement('div');mid.className='h27-t-mid';
+ if(l)mid.appendChild(l);if(v)mid.appendChild(v);if(s)mid.appendChild(s);
+ var ch=document.createElement('span');ch.className='h27-chev';ch.innerHTML=IC.chev;
+ cToday.appendChild(ic);cToday.appendChild(mid);cToday.appendChild(ch);
+})();
+/* MINI GRID: BOS, Total Invoices, Drafts, Customers, Inventory (wide). */
+var grid=document.createElement('div');grid.className='h27-grid';
+function mini(card,icon,wide){card.classList.add('h27-mini');if(wide)card.classList.add('h27-wide');lab(card,icon);grid.appendChild(card);}
+mini(cBos,IC.fileText,false);
+var bosSub=document.getElementById('statTotBosN');if(bosSub)bosSub.classList.add('h27-sub');
+mini(cCount,IC.receipt,false);
+mini(cDraft,IC.pen,false);
+mini(cCust,IC.users,false);
+mini(cItems,IC.pkg,true);
+/* Place hero/duo/today/grid before the Recent Invoices card; drop old groups. */
 var anchor=null;
 [].slice.call(dash.querySelectorAll(':scope > .card')).forEach(function(c){if(!anchor)anchor=c;});
 var olds=[].slice.call(dash.querySelectorAll(':scope > .dashboard'));
-if(anchor){[sSales,sMoney,sToday,sOver].forEach(function(secEl){dash.insertBefore(secEl,anchor);});}
-else{[sSales,sMoney,sToday,sOver].forEach(function(secEl){dash.appendChild(secEl);});}
+[cInv,duo,cToday,grid].forEach(function(el){if(anchor)dash.insertBefore(el,anchor);else dash.appendChild(el);});
 olds.forEach(function(o){if(o.parentNode)o.parentNode.removeChild(o);});
-/* Outstanding chip: "N customer(s)" with baaki — refreshed with the dashboard numbers. */
-function updateOutChip(){
+/* Section headings: "Sab dekho" links. */
+function sabDekho(titleText,fn){
+ var cards=[].slice.call(dash.querySelectorAll(':scope > .card'));
+ for(var i=0;i<cards.length;i++){
+  var t=cards[i].querySelector('.section-title');if(!t)continue;
+  if(t.textContent.indexOf(titleText)<0)continue;
+  var btn=document.createElement('button');btn.type='button';btn.className='h27-more';
+  btn.innerHTML='Sab dekho '+IC.chev;btn.onclick=fn;t.appendChild(btn);return;
+ }
+}
+sabDekho('Recent Invoices',function(){try{histMode='inv';showPage('history');}catch(e){}});
+sabDekho('Top Customers',function(){try{showPage('customers');}catch(e){}});
+/* Header brand: IE (ink) + BILLING (emerald) — only when the text is exactly
+   "IE BILLING"; a company name stays as-is (existing apkBrand behaviour). */
+function h27brand(){
+ var nm=document.getElementById('apkBrandName');if(!nm)return;
+ if(nm.textContent.trim()==='IE BILLING'&&!nm.querySelector('b'))nm.innerHTML='IE <b>BILLING</b>';
+}
+h27brand();
+if(typeof window.apkBrand==='function'&&!window.apkBrand.__h27){
+ var _ab=window.apkBrand;
+ window.apkBrand=function(){var r=_ab.apply(this,arguments);try{h27brand();}catch(e){}return r;};
+ window.apkBrand.__h27=1;
+}
+/* Bell: Lucide bell icon (badge span untouched). */
+(function(){
+ var bell=document.querySelector('.notif-bell-btn');if(!bell)return;
+ for(var i=0;i<bell.childNodes.length;i++){
+  var n=bell.childNodes[i];
+  if(n.nodeType===3&&n.textContent.indexOf('🔔')!==-1){
+   var sp=document.createElement('span');sp.innerHTML=IC.bell;
+   bell.replaceChild(sp.firstChild,n);break;
+  }
+ }
+})();
+/* Search: Lucide mic + camera (keeps data-a handlers; mic stays hidden without SR). */
+(function(){
+ var srch=document.getElementById('apkSrch');if(!srch)return;
+ var mic=srch.querySelector('[data-a="mic"]');if(mic)mic.innerHTML=IC.mic;
+ var sc=srch.querySelector('[data-a="scan"]');if(sc)sc.innerHTML=IC.cam;
+})();
+/* FAB: emerald pill with plus icon (onclick newInvoice() untouched). */
+(function(){
+ var fab=document.getElementById('apkFab');if(fab)fab.innerHTML=IC.plus+'Create Invoice';
+})();
+/* Bottom nav: Lucide icons (onclick apkTab() untouched; apkDot untouched). */
+(function(){
+ var navMap={home:IC.home,voucher:IC.receipt,parties:IC.users,accounts:IC.book,more:IC.ellipsis};
+ var btns=document.querySelectorAll('#apkBar button[data-tab]');
+ for(var i=0;i<btns.length;i++){
+  var b=btns[i].querySelector('b'),ic=navMap[btns[i].getAttribute('data-tab')];
+  if(b&&ic)b.innerHTML=ic;
+ }
+})();
+/* Outstanding "N customer(s)" sub — refreshed with the dashboard numbers. */
+function outCount(){
  try{
-  var n=0;
-  if(typeof custSummary==='function'){n=custSummary().filter(function(c){return c.bal>0.005;}).length;}
-  else if(window.db&&db.invoices){var seen={};db.invoices.forEach(function(x){if(x.status==='Finalized'&&typeof balanceDue==='function'&&balanceDue(x)>0.005){seen[x.customerId||('n:'+((x.customer&&x.customer.name)||''))]=1;}});n=Object.keys(seen).length;}
-  var c=document.getElementById('dashOutChip');if(!c)return;
-  if(n>0){c.textContent=n+(n===1?' customer':' customers');c.style.display='';}
-  else{c.style.display='none';}
+  if(typeof custSummary==='function'){return custSummary().filter(function(c){return c.bal>0.005;}).length;}
+  if(window.db&&db.invoices){var seen={};db.invoices.forEach(function(x){if(x.status==='Finalized'&&typeof balanceDue==='function'&&balanceDue(x)>0.005){seen[x.customerId||('n:'+((x.customer&&x.customer.name)||''))]=1;}});return Object.keys(seen).length;}
  }catch(e){}
+ return 0;
+}
+/* Recent Invoices rows -> #2 rows (avatar, name, number, amount, Finalized chip).
+   Tap opens Bill History (the full invoice list); order is refreshAll's, untouched. */
+function h27rowsInv(){
+ var rb=document.getElementById('recentBills');if(!rb)return;
+ var rows=[].slice.call(rb.children);
+ rows.forEach(function(row){
+  if(row.classList.contains('h27-irow'))return;
+  if(row.children.length<2)return;
+  var left=row.children[0],right=row.children[1];
+  var b=left.querySelector('b');if(!b)return;
+  var num=b.textContent.trim();
+  var name=left.textContent.replace(num,'').replace(/^[\s\u2014\u2013-]+/,'').trim()||'No customer';
+  var amtB=right.querySelector('b');
+  var amt=amtB?amtB.textContent.replace(/^\u20B9\s*/,'\u20B9').trim():'';
+  var badge=right.querySelector('.badge');
+  var st=badge?badge.textContent.trim():'';
+  var bcls=badge?badge.className.replace('badge','').trim():'';
+  var fin=badge&&badge.classList.contains('finalized');
+  row.removeAttribute('style');row.className='h27-irow';
+  var ava=(name.trim().charAt(0)||'?').toUpperCase();
+  row.innerHTML='<div class="h27-ava">'+esc2(ava)+'</div><div class="h27-mid"><div class="h27-nm">'+esc2(name)+'</div><div class="h27-no">'+esc2(num)+'</div></div><div class="h27-rgt"><div class="h27-amt">'+esc2(amt)+'</div>'+(badge?'<span class="badge '+esc2(bcls)+'">'+(fin?IC.bcheck:'')+esc2(st)+'</span>':'')+'</div>';
+  row.style.cursor='pointer';
+  row.onclick=function(){try{histMode='inv';showPage('history');}catch(e){}};
+ });
+}
+/* Top Customers rows -> #2 rows (ink rank badge, name, count, amount).
+   View button kept (emerald outline); whole-row tap = View. */
+function h27rowsTop(){
+ var el=document.getElementById('topCustomers');if(!el)return;
+ var rows=[].slice.call(el.children);
+ rows.forEach(function(row){
+  if(row.classList.contains('h27-crow'))return;
+  if(row.children.length<2)return;
+  var left=row.children[0],right=row.children[1];
+  var b=left.querySelector('b');if(!b)return;
+  var m=b.textContent.trim().match(/^#(\d+)\s+(.*)$/);
+  var rank=m?m[1]:'';var name=m?m[2]:b.textContent.trim();
+  var sub=left.querySelector('.sub');var cnt=sub?sub.textContent.trim():'';
+  /* Preview-style count: "(1 invoice)" / "(3 invoices)" (app writes "invoices" always). */
+  var cm=cnt.match(/^\((\d+)\s+invoices\)$/);
+  if(cm){var cn=+cm[1];cnt='('+cn+(cn===1?' invoice':' invoices')+')';}
+  var amtB=right.querySelector('b');
+  var amt=amtB?amtB.textContent.replace(/^\u20B9\s*/,'\u20B9').trim():'';
+  var btn=right.querySelector('button');
+  row.removeAttribute('style');row.className='h27-crow';
+  var rgt=document.createElement('div');rgt.className='h27-rgt';
+  var amtDiv=document.createElement('div');amtDiv.className='h27-amt';amtDiv.textContent=amt;rgt.appendChild(amtDiv);
+  if(btn){btn.style.marginLeft='0';rgt.appendChild(btn);}
+  row.innerHTML='<div class="h27-rank">'+esc2(rank)+'</div><div class="h27-mid"><div class="h27-nm">'+esc2(name)+'</div>'+(cnt?'<div class="h27-sub">'+esc2(cnt)+'</div>':'')+'</div>';
+  row.appendChild(rgt);
+  row.style.cursor='pointer';
+  row.addEventListener('click',function(e){if(e.target.closest('button'))return;if(btn)btn.click();});
+ });
+}
+/* Sync after every dashboard fill: preview-style money (no space after ₹),
+   Outstanding sub, brand split, row transforms. */
+function h27sync(){
+ ['statTotInv','statToday','statTotBos','statOutstanding','statCollected'].forEach(function(k){
+  var e=document.getElementById(k);if(e&&e.textContent)e.textContent=e.textContent.replace(/^\u20B9\s*/,'\u20B9');
+ });
+ var n=document.getElementById('statTodayN');if(n&&n.textContent)n.textContent=n.textContent.replace(/\u20B9\s+/g,'\u20B9');
+ var oc=outCount(),os=document.getElementById('h27OutSub');
+ if(os)os.textContent=oc+(oc===1?' customer':' customers');
+ h27brand();
+ h27rowsInv();h27rowsTop();
 }
 if(typeof window.refreshAll==='function'){
  var _ra=window.refreshAll;
- window.refreshAll=function(){var r=_ra.apply(this,arguments);try{updateOutChip();}catch(e){}return r;};
+ window.refreshAll=function(){var r=_ra.apply(this,arguments);try{h27sync();}catch(e){}return r;};
 }
-updateOutChip();
-}catch(e){console.warn('apk-home-v26',e);}
+if(typeof window.renderTopCustomers==='function'){
+ var _rtc=window.renderTopCustomers;
+ window.renderTopCustomers=function(){var r=_rtc.apply(this,arguments);try{h27rowsTop();}catch(e){}return r;};
+}
+h27sync();
+}catch(e){console.warn('apk-home-v27',e);}
 })();
 </script>
 <script id="apk-docs-history-js">
