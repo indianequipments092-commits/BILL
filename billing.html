@@ -9671,11 +9671,40 @@ if(!restored){ try{ if(!currentUser&&typeof showAuthOverlay==='function') showAu
   </div>
 </div>
 
+<style>
+/* Vendors v2.7.4: stats 2x2 on phones, bigger TOTAL, expand detail */
+#vendorStats .stat-card{padding:12px}
+@media(max-width:600px){#vendorStats.dashboard{grid-template-columns:1fr 1fr}}
+#vendorBody .ven-total{font-size:19px;font-weight:800;white-space:nowrap}
+#vendorBody .ven-sub{font-size:11.5px;font-weight:700;margin-top:2px;white-space:nowrap}
+#vendorBody .ven-nogst{color:var(--text-muted);font-weight:700;font-size:12px;background:var(--bg-card-hover);padding:3px 8px;border-radius:999px;white-space:nowrap}
+#vendorBody .ven-ic{width:34px;height:34px;min-height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;text-decoration:none}
+#vendorBody .ven-ic.call{background:rgba(79,124,255,.13);color:#4F7CFF}
+#vendorBody .ven-ic.wa{background:rgba(52,211,153,.16);color:#059669}
+#vendorBody .ven-chev{display:inline-flex;color:var(--text-muted);font-size:16px;line-height:1}
+#vendorBody tr.ven-open .ven-chev{transform:rotate(180deg)}
+#vendorBody tr.ven-row{cursor:pointer}
+#vendorBody tr.ven-row:hover td{background:rgba(99,102,241,.04)}
+#vendorBody tr.ven-detail td{background:rgba(99,102,241,.06)}
+#vendorBody .ven-detail-inner{position:sticky;left:16px;width:min(880px,calc(100vw - 64px))}
+#vendors .ven-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border-color);flex-wrap:wrap}
+</style>
 <!-- Vendors -->
 <div id="vendors" class="page hidden">
   <div class="top"><h1>Vendors / Suppliers</h1><button class="btn primary" onclick="openVendorModal()">+ Add Vendor</button></div>
+  <div class="dashboard" id="vendorStats" style="margin-bottom:14px"></div>
   <div class="card">
+    <div class="grid g2" style="margin-bottom:12px">
+      <div><label>Search</label><input id="vendorSearch" oninput="ieDeb('renderVendors')" placeholder="Naam, city, GSTIN ya mobile se search…" autocomplete="off"></div>
+      <div><label>Sort By</label><select id="vendorSort" onchange="renderVendors()">
+        <option value="name">Naam (A–Z)</option>
+        <option value="due">Sabse zyada baaki</option>
+        <option value="new">Naya – Purana</option>
+      </select></div>
+    </div>
+    <div id="venChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
     <div class="table-wrap"><table><thead><tr><th>Name</th><th>City</th><th>State</th><th>GSTIN</th><th>Contact</th><th>Total Payable</th><th>Actions</th></tr></thead><tbody id="vendorBody"></tbody></table></div>
+    <div class="ven-foot"><span id="venShowing" class="sub"></span><button class="btn" onclick="venExportCSV()">📊 Excel Export</button></div>
   </div>
 </div>
 
@@ -10508,7 +10537,7 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     </div>
   </div>
 </div>
-<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.7.3 • 15 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
+<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.7.4 • 16 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
 <nav id="apkBar" aria-label="Main"><button type="button" data-tab="home" onclick="apkTab('home')"><b>🏠</b><span>Home</span></button><button type="button" data-tab="voucher" onclick="apkTab('voucher')"><b>🧾</b><span>Voucher</span></button><button type="button" data-tab="parties" onclick="apkTab('parties')"><b>👥</b><span>Parties &amp; Stock</span><u id="apkDot"></u></button><button type="button" data-tab="accounts" onclick="apkTab('accounts')"><b>📒</b><span>Accounts</span></button><button type="button" data-tab="more" onclick="apkTab('more')"><b>⋯</b><span>More</span></button></nav><button type="button" id="apkFab" onclick="newInvoice()">＋ Create Invoice</button>
 </div>
 
@@ -10963,6 +10992,38 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
  <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px">
    <button class="btn muted" onclick="closeModal('pbPayModal')">Cancel</button>
    <button class="btn success" onclick="savePBPayment()">Save Payment</button>
+ </div>
+</div></div>
+
+<!-- Vendor Pay Modal -->
+<div class="modal" id="venPayModal"><div class="modalbox">
+ <div class="modalhead"><h2>Payment Karo</h2><button class="x" onclick="closeModal('venPayModal')">✕</button></div>
+ <p class="sub" id="venPayInfo"></p>
+ <div class="grid g2">
+   <div><label>Amount</label><input id="venPayAmount" type="number" step="0.01"></div>
+   <div><label>Date</label><input id="venPayDate" type="date"></div>
+   <div><label>Mode</label><select id="venPayMode"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></div>
+   <div><label>Note</label><input id="venPayNote"></div>
+ </div>
+ <p class="sub" style="margin-top:10px">Sabse purane bill se pehle adjust hoga.</p>
+ <div class="toolbar" style="margin-top:18px;justify-content:flex-end;gap:8px">
+   <button class="btn muted" onclick="closeModal('venPayModal')">Cancel</button>
+   <button class="btn success" onclick="venSavePayment()">Payment Save Karo</button>
+ </div>
+</div></div>
+
+<!-- Vendor Statement Modal -->
+<div class="modal" id="venStmtModal"><div class="modalbox" style="max-width:760px">
+ <div class="modalhead">
+   <h2 id="venStmtTitle">Vendor Statement</h2>
+   <button class="x" onclick="closeModal('venStmtModal')">✕</button>
+ </div>
+ <div class="table-wrap"><div id="venStmtBody"></div></div>
+ <div style="margin-top:14px"><label>WhatsApp number</label><input id="venStmtWaPhone" type="tel" inputmode="tel" placeholder="WhatsApp number — khali ho to khud chunenge" style="width:100%"></div>
+ <div class="toolbar" style="margin-top:14px;justify-content:flex-end;gap:8px;flex-wrap:wrap">
+   <button class="btn muted" onclick="venStmtShare()">Save / Share PDF</button>
+   <button class="btn success" onclick="venStmtWhatsApp()">Share on WhatsApp</button>
+   <button class="btn primary" onclick="closeModal('venStmtModal')">Close</button>
  </div>
 </div></div>
 
@@ -18620,16 +18681,260 @@ if(cur) sel.value=cur;
 }
 function populatePOVendorSelect(){ populateVendorSelectInto('poVendor'); }
 function populatePBVendorSelect(){ populateVendorSelectInto('pbVendor'); }
+/* ---------- Vendors v2.7.4: stats, search/filter/sort, expand, Pay, Statement ---------- */
+window.__venChip=window.__venChip||'all';
+window.__venExp=window.__venExp||new Set();
+window.__venPayVid=null;
+window.__venStmtVid=null;
+window.__venStmtLast=null;
+const VEN_PH_SVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+const VEN_WA_SVG='<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2a9.9 9.9 0 0 0-8.4 15.2L2.1 22l4.9-1.5A9.9 9.9 0 1 0 12.04 2Zm0 1.8a8.1 8.1 0 1 1-4.13 15.06l-.3-.18-3.04.93.97-2.96-.2-.31A8.1 8.1 0 0 1 12.04 3.8Zm-3.1 4.02c-.16 0-.42.06-.64.31-.22.26-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.68 2.72 4.16 3.7 2.06.82 2.48.66 2.93.55.45-.11 1.45-.59 1.66-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.47-.28l-1.62-.8c-.22-.11-.38-.16-.54.11l-.73.9c-.13.16-.26.18-.48.06a6.3 6.3 0 0 1-1.87-1.16 7 7 0 0 1-1.29-1.61c-.14-.23 0-.35.1-.46l.34-.4c.11-.13.22-.22.33-.37.11-.15.06-.28-.03-.39L8.94 7.82Z"/></svg>';
+/* Overdue = unpaid purchase bill whose bill date + Settings "Default due days"
+   has passed. Purchase bills carry NO due-date field; the app's only credit
+   default is db.settings.defDueDays (0 = none -> nothing is overdue). */
+function venDueDate(pb){
+const n=Number((db.settings||{}).defDueDays||0);
+if(!(n>0)) return '';
+const d=new Date(String(pb.date||'').slice(0,10)+'T00:00:00');
+if(isNaN(d.getTime())) return '';
+d.setDate(d.getDate()+n);
+return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function venIsOverdue(pb){
+if(pbBalanceDue(pb)<=0.005) return false;
+const dd=venDueDate(pb); if(!dd) return false;
+return dd < new Date().toISOString().slice(0,10);
+}
+function venBillStatus(pb){
+const paid=pbPaidAmount(pb), grand=Number(pb.totals?.grand||0), bal=pbBalanceDue(pb);
+if(paid-grand>0.005) return {t:'Overpaid',c:'partial'};
+if(bal<=0.005) return {t:'Paid',c:'final'};
+if(venIsOverdue(pb)) return {t:'Overdue',c:'overdue'};
+if(paid>0.005) return {t:'Part Paid',c:'partial'};
+return {t:'Baaki',c:'draft'};
+}
+function venChipCounts(){
+const all=db.vendors||[];
+return {
+all:all.length,
+due:all.filter(function(v){return vendorPayable(v.id)>0.005;}).length,
+clear:all.filter(function(v){return vendorPayable(v.id)<=0.005;}).length,
+gst:all.filter(function(v){return String(v.gst||'').trim();}).length,
+nogst:all.filter(function(v){return !String(v.gst||'').trim();}).length
+};
+}
+function venRows(){
+const q=(id('vendorSearch')?.value||'').toLowerCase().trim();
+const chip=window.__venChip||'all';
+const sort=id('vendorSort')?.value||'name';
+let rows=(db.vendors||[]).map(function(v){
+const bills=(db.purchaseBills||[]).filter(function(x){return x.vendorId===v.id;});
+const due=vendorPayable(v.id);
+const od=bills.filter(venIsOverdue).length;
+const last=bills.reduce(function(m,b){const d=String(b.date||''); return d>m?d:m;},'');
+return {v:v,bills:bills,due:due,od:od,last:last};
+});
+rows=rows.filter(function(r){
+if(chip==='due'&&!(r.due>0.005)) return false;
+if(chip==='clear'&&!(r.due<=0.005)) return false;
+if(chip==='gst'&&!String(r.v.gst||'').trim()) return false;
+if(chip==='nogst'&&String(r.v.gst||'').trim()) return false;
+if(q){const hay=[r.v.name,r.v.city,r.v.state,r.v.gst,r.v.contact].join(' ').toLowerCase(); if(!hay.includes(q)) return false;}
+return true;
+});
+rows.sort(function(a,b){
+if(sort==='due') return b.due-a.due;
+if(sort==='new'){ if((b.last||'')!==(a.last||'')) return String(b.last||'').localeCompare(String(a.last||'')); return String(a.v.name).localeCompare(String(b.v.name)); }
+return String(a.v.name).localeCompare(String(b.v.name));
+});
+return rows;
+}
+function venSetChip(c){ window.__venChip=c; renderVendors(); }
+function venToggleExp(vid){
+if(!window.__venExp) window.__venExp=new Set();
+if(window.__venExp.has(vid)) window.__venExp.delete(vid); else window.__venExp.add(vid);
+renderVendors();
+}
+function venDetailHtml(r){
+const v=r.v;
+const bills=r.bills.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));});
+const tot=bills.reduce(function(s,b){return s+Number(b.totals?.grand||0);},0);
+const paid=bills.reduce(function(s,b){return s+pbPaidAmount(b);},0);
+const rowsHtml=bills.length?bills.map(function(b){
+const st=venBillStatus(b);
+return '<tr><td><b>'+esc(b.pbNumber||'')+'</b></td><td>'+esc(b.date||'')+'</td><td>₹ '+money(Number(b.totals?.grand||0))+'</td><td>₹ '+money(pbPaidAmount(b))+'</td><td style="color:'+(pbBalanceDue(b)>0.005?'#fb7185':'#34d399')+';font-weight:700">₹ '+money(pbBalanceDue(b))+'</td><td><span class="badge '+st.c+'">'+st.t+'</span></td></tr>';
+}).join(''):'';
+return '<tr class="ven-detail"><td colspan="7"><div class="ven-detail-inner">'
++'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span class="sub" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em">Purchase Bills — '+esc(v.name)+'</span>'
++'<span style="display:flex;gap:8px;flex-wrap:wrap">'
++(r.due>0.005?'<button class="btn danger" style="min-height:40px" onclick="venOpenPay(\''+v.id+'\')">Pay ₹ '+money(r.due)+'</button>':'')
++'<button class="btn muted" style="min-height:40px" onclick="venOpenStmt(\''+v.id+'\')">Statement</button></span></div>'
++(bills.length?'<div style="overflow-x:auto;margin-top:10px"><table><thead><tr><th>Bill No</th><th>Date</th><th>Amount</th><th>Paid</th><th>Baaki</th><th>Status</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>':'<p class="sub" style="margin-top:10px">Abhi tak koi purchase bill nahi hai.</p>')
++'<div class="sub" style="margin-top:10px">Total purchase: <b>₹ '+money(tot)+'</b> · Diya gaya: <b>₹ '+money(paid)+'</b> · Baaki: <b>₹ '+money(r.due)+'</b></div>'
++'</div></td></tr>';
+}
 function renderVendors(){
 const body=id('vendorBody'); if(!body) return;
-body.innerHTML=db.vendors.length?db.vendors.map(v=>{
-const due=vendorPayable(v.id);
-return `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.city)}</td><td>${esc(v.state)}</td><td>${esc(v.gst)}</td><td>${esc(v.contact)}</td>
-      <td style="color:${due>0.005?'#fb7185':'#34d399'}">₹ ${money(due)}</td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap;min-width:140px"><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="editVendor('${v.id}')">Edit</button>
-      <button class="btn danger" style="padding:6px 8px;min-height:34px" onclick="deleteVendor('${v.id}')">Delete</button></div></td></tr>`;
-}).join(''):'<tr><td colspan="7" class="center">Koi vendor add nahi hua.</td></tr>';
+const all=db.vendors||[];
+if(window.__venExp){ window.__venExp.forEach(function(x){ if(!all.some(function(v){return v.id===x;})) window.__venExp.delete(x); }); }
+else window.__venExp=new Set();
+const statsEl=id('vendorStats');
+if(statsEl){
+const totPay=all.reduce(function(s,v){return s+vendorPayable(v.id);},0);
+const odN=(db.purchaseBills||[]).filter(venIsOverdue).length;
+const clearN=all.filter(function(v){return vendorPayable(v.id)<=0.005;}).length;
+statsEl.innerHTML='<div class="stat-card"><div class="sub">TOTAL VENDORS</div><div class="stat" style="font-size:20px">'+all.length+'</div></div>'
++'<div class="stat-card"><div class="sub">TOTAL PAYABLE</div><div class="stat" style="font-size:20px;color:#fb7185">₹ '+money(totPay)+'</div></div>'
++'<div class="stat-card"><div class="sub">OVERDUE BILLS</div><div class="stat" style="font-size:20px;color:#fbbf24">'+odN+'</div></div>'
++'<div class="stat-card"><div class="sub">CLEAR VENDORS</div><div class="stat" style="font-size:20px;color:#34d399">'+clearN+'</div></div>';
+}
+const chipsEl=id('venChips');
+if(chipsEl){
+const c=venChipCounts(); const cur=window.__venChip||'all';
+const defs=[['all','Sab'],['due','Baaki wale'],['clear','Clear'],['gst','GST wale'],['nogst','Bina GST']];
+chipsEl.innerHTML=defs.map(function(d){return '<button class="btn '+(cur===d[0]?'primary':'muted')+'" style="min-height:38px;border-radius:999px" onclick="venSetChip(\''+d[0]+'\')">'+d[1]+' ('+c[d[0]]+')</button>';}).join('');
+}
+const rows=venRows();
+const showEl=id('venShowing'); if(showEl) showEl.textContent=rows.length+' of '+all.length+' vendors dikh rahe hain';
+if(!all.length){ body.innerHTML='<tr><td colspan="7" class="center">Koi vendor add nahi hua.</td></tr>'; populatePOVendorSelect(); populatePBVendorSelect(); return; }
+if(!rows.length){ body.innerHTML='<tr><td colspan="7" class="center">Koi vendor nahi mila — search ya filter badal ke dekho.</td></tr>'; populatePOVendorSelect(); populatePBVendorSelect(); return; }
+body.innerHTML=rows.map(function(r){
+const v=r.v, open=window.__venExp.has(v.id);
+const ph=reminderPhone(v.contact||'');
+const waHtml=ph?'<a class="ven-ic wa" href="https://wa.me/'+ph+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="WhatsApp">'+VEN_WA_SVG+'</a>':'';
+const callHtml=ph?'<a class="ven-ic call" href="tel:+'+ph+'" onclick="event.stopPropagation()" aria-label="Call">'+VEN_PH_SVG+'</a>':'';
+const main='<tr class="ven-row'+(open?' ven-open':'')+'" onclick="venToggleExp(\''+v.id+'\')">'
++'<td><b>'+esc(v.name)+'</b>'+(r.bills.length?'<div class="sub">'+r.bills.length+(r.bills.length===1?' bill':' bills')+(r.last?' · Last purchase '+esc(r.last):'')+'</div>':'<div class="sub">Koi purchase bill nahi</div>')+'</td>'
++'<td>'+esc(v.city)+'</td>'
++'<td>'+esc(v.state)+'</td>'
++'<td>'+(String(v.gst||'').trim()?esc(v.gst):'<span class="ven-nogst">Bina GST</span>')+'</td>'
++'<td><div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span>'+esc(v.contact||'—')+'</span>'+callHtml+waHtml+'</div></td>'
++'<td style="color:'+(r.due>0.005?'#fb7185':'#34d399')+'"><div class="ven-total">₹ '+money(r.due)+'</div>'
++(r.due>0.005?'<div class="ven-sub" style="color:'+(r.od?'#fb7185':'var(--text-muted)')+'">'+(r.od?r.od+' bill overdue':'dena baaki hai')+'</div>':'<div class="ven-sub" style="color:#34d399">Clear ✓</div>')
++'</td>'
++'<td><div style="display:flex;gap:6px;flex-wrap:wrap;min-width:140px;align-items:center"><button class="btn muted" style="padding:6px 8px;min-height:34px" onclick="event.stopPropagation();editVendor(\''+v.id+'\')">Edit</button>'
++'<button class="btn danger" style="padding:6px 8px;min-height:34px" onclick="event.stopPropagation();deleteVendor(\''+v.id+'\')">Delete</button>'
++'<span class="ven-chev">'+(open?'▾':'▸')+'</span></div></td></tr>';
+return main+(open?venDetailHtml(r):'');
+}).join('');
 populatePOVendorSelect(); populatePBVendorSelect();
+}
+function venExportCSV(){
+const rows=venRows();
+if(!rows.length){alert('Export ke liye koi vendor nahi hai');return;}
+let csv=['Name,City,State,GSTIN,Contact,Total Payable (Rs),Purchase Bills,Last Purchase'];
+rows.forEach(function(r){
+csv.push([r.v.name,r.v.city||'',r.v.state||'',r.v.gst||'-',r.v.contact||'',money(r.due),r.bills.length,r.last||'-'].map(function(v){return '"'+String(v??'').replaceAll('"','""')+'"';}).join(','));
+});
+downloadBlob(ieCreditCsv(csv,'vendors'),'IE-VENDORS.csv','text/csv');
+try{toast(rows.length+' vendors ki Excel file download ho gayi');}catch(e){}
+}
+/* Pay: vendor-level sheet (preview jaisa). Writes through the EXISTING
+   pb.payments record shape (same as savePBPayment), oldest bill first. */
+function venOpenPay(vid){
+const v=(db.vendors||[]).find(function(x){return x.id===vid;}); if(!v) return;
+window.__venPayVid=vid;
+const due=vendorPayable(vid);
+id('venPayInfo').textContent=v.name+' · '+(v.city||'')+' — Total dena baaki: ₹ '+money(due);
+id('venPayAmount').value=due>0?due:'';
+id('venPayDate').value=new Date().toISOString().slice(0,10);
+id('venPayMode').value='Cash';
+id('venPayNote').value='';
+id('venPayModal').classList.add('show');
+}
+function venSavePayment(){
+const v=(db.vendors||[]).find(function(x){return x.id===window.__venPayVid;}); if(!v){closeModal('venPayModal');return;}
+let amt=Number(id('venPayAmount')?.value||0);
+if(!amt||amt<=0){alert('Valid amount daalo');return;}
+const due=vendorPayable(v.id);
+if(amt>due) amt=due;
+const date=id('venPayDate')?.value||new Date().toISOString().slice(0,10);
+const mode=id('venPayMode')?.value||'Cash';
+const note=id('venPayNote')?.value||'';
+let left=amt;
+const bills=(db.purchaseBills||[]).filter(function(x){return x.vendorId===v.id;}).slice().sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||''));});
+bills.forEach(function(b){
+if(left<=0.005) return;
+const add=Math.min(pbBalanceDue(b),left);
+if(add<=0.005) return;
+if(!b.payments) b.payments=[];
+b.payments.push({id:crypto.randomUUID(),amount:+add.toFixed(2),date:date,mode:mode,note:note});
+left=+(left-add).toFixed(2);
+});
+saveDB(); closeModal('venPayModal');
+if(typeof renderPurchaseBills==='function'){try{renderPurchaseBills();}catch(e){}}
+renderVendors();
+try{toast('₹ '+money(amt)+' payment save ho gaya — '+v.name);}catch(e){}
+}
+/* Vendor statement: in-app modal (soaModal pattern). No print-tab path. */
+function venOpenStmt(vid){
+const v=(db.vendors||[]).find(function(x){return x.id===vid;}); if(!v) return;
+window.__venStmtVid=vid;
+const bills=(db.purchaseBills||[]).filter(function(x){return x.vendorId===vid;}).slice().sort(function(a,b){return String(a.date||'').localeCompare(String(b.date||''));});
+const tot=bills.reduce(function(s,b){return s+Number(b.totals?.grand||0);},0);
+const paid=bills.reduce(function(s,b){return s+pbPaidAmount(b);},0);
+const bal=bills.reduce(function(s,b){return s+pbBalanceDue(b);},0);
+window.__venStmtLast={vid:vid,name:v.name,rows:bills.map(function(b){return {no:b.pbNumber||'',date:b.date||'',amt:Number(b.totals?.grand||0),paid:pbPaidAmount(b),bal:pbBalanceDue(b),st:venBillStatus(b).t};}),tot:tot,paid:paid,bal:bal};
+id('venStmtTitle').textContent='Vendor Statement — '+v.name;
+const bodyEl=id('venStmtBody');
+bodyEl.innerHTML=(bills.length?'<table><thead><tr><th>Bill No</th><th>Date</th><th>Amount</th><th>Paid</th><th>Baaki</th><th>Status</th></tr></thead><tbody>'
++bills.map(function(b){const st=venBillStatus(b);return '<tr><td><b>'+esc(b.pbNumber||'')+'</b></td><td>'+esc(b.date||'')+'</td><td style="text-align:right">₹ '+money(Number(b.totals?.grand||0))+'</td><td style="text-align:right">₹ '+money(pbPaidAmount(b))+'</td><td style="text-align:right;color:'+(pbBalanceDue(b)>0.005?'#fb7185':'#34d399')+';font-weight:700">₹ '+money(pbBalanceDue(b))+'</td><td><span class="badge '+st.c+'">'+st.t+'</span></td></tr>';}).join('')+'</tbody></table>'
+:'<div class="sub">Koi purchase bill nahi hai.</div>')
++'<div style="margin-top:12px;font-size:14px">Total purchase: <b>₹ '+money(tot)+'</b> · Diya gaya: <b>₹ '+money(paid)+'</b> · <b style="color:'+(bal>0.005?'#fb7185':'#34d399')+'">Baaki: ₹ '+money(bal)+'</b></div>';
+const ph=id('venStmtWaPhone'); if(ph) ph.value=v.contact||'';
+id('venStmtModal').classList.add('show');
+}
+async function venStmtBuildPdf(){
+const L=window.__venStmtLast; if(!L) return null;
+await soaLoadPdfLibs();
+const jsPDF=window.jspdf.jsPDF;
+const rs=function(v){return 'Rs. '+money(v);};
+const s=db.settings||{};
+const v=(db.vendors||[]).find(function(x){return x.id===L.vid;})||{};
+const gen=new Date().toLocaleString('en-IN');
+const doc=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+const W=doc.internal.pageSize.getWidth();
+doc.setFont('helvetica','bold');doc.setFontSize(15);
+doc.text('Vendor Statement',40,36);
+doc.setFont('helvetica','normal');doc.setFontSize(10);
+let y=54;
+const nm='Vendor: '+(L.name||'');
+const nmLines=doc.splitTextToSize(nm,W-80); doc.text(nmLines,40,y); y+=14*nmLines.length;
+if(v.gst){doc.text('GSTIN: '+v.gst,40,y); y+=14;}
+const addr=[v.address,v.city,v.state].filter(Boolean).join(', ');
+if(addr){const al=doc.splitTextToSize(addr,W-80); doc.text(al,40,y); y+=14*al.length;}
+doc.text('Company: '+(s.company||''),40,y); y+=14;
+doc.text('Generated: '+gen,40,y);
+const rows=(L.rows||[]).map(function(r){return [r.no||'',r.date||'',rs(r.amt),rs(r.paid),rs(r.bal),r.st||''];});
+doc.autoTable({
+startY:y+14,
+head:[['Bill No','Date','Amount','Paid','Baaki','Status']],
+body:rows.length?rows:[['','','','','','No records']],
+styles:{fontSize:9,cellPadding:4},
+headStyles:{fillColor:[30,58,95]},
+columnStyles:{2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}},
+foot:[[{content:'Total Payable',colSpan:4,styles:{halign:'right'}},rs(L.bal),'']],
+footStyles:{fillColor:[240,244,248],textColor:[0,0,0],fontStyle:'bold'}
+});
+soaPdfFooter(doc);
+return doc.output('blob');
+}
+async function venStmtShare(){
+const L=window.__venStmtLast; if(!L) return;
+let blob;
+try{ blob=await venStmtBuildPdf(); }
+catch(e){ console.warn(e); try{toast('PDF ke liye internet chahiye — online aakar dobara try karo');}catch(e2){alert('PDF ke liye internet chahiye — online aakar dobara try karo');} return; }
+if(!blob) return;
+downloadBlob(blob,'Statement-'+(L.name||'vendor').replace(/[^a-z0-9]+/gi,'-')+'.pdf','application/pdf');
+}
+function venStmtWhatsApp(){
+const L=window.__venStmtLast; if(!L) return;
+let text='Vendor Statement — '+(L.name||'')+'\nTotal purchase: Rs. '+money(L.tot)+'\nDiya gaya: Rs. '+money(L.paid)+'\nBaaki: Rs. '+money(L.bal);
+text+=ieCreditMsg('vendor statement');
+let num=((id('venStmtWaPhone')&&id('venStmtWaPhone').value)||'').replace(/[^0-9]/g,'');
+if(num.length===11&&num.charAt(0)==='0') num=num.slice(1);
+if(num.length===10) num='91'+num;
+waShare('https://wa.me/'+(num?num:'')+'?text='+encodeURIComponent(text));
 }
 const PO_DEFAULT_TERMS='Please mention our PO number on all invoices, challans and correspondence.\nMaterial must match the specification and quantity ordered; we reserve the right to reject non-conforming goods.\nDelivery must be made on or before the delivery date mentioned above.\nA GST tax invoice must accompany the material.\nSubject to Vadodara jurisdiction.';
 let poRowsData=[], editingPOId=null, poAdvModalId=null;
