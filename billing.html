@@ -10769,6 +10769,16 @@ var ph=document.getElementById('pfPhoto');if(ph)new MutationObserver(pf2Update).
         <div style="text-align:center;font-weight:700;margin-top:8px;font-size:13px;color:var(--text-main)">Theme 8 — Blue Tax Invoice</div>
         <div style="text-align:center;font-size:11px;color:var(--text-muted)">Sirf Tax Invoice ke liye: light-blue headers, Bill To / Ship To, GST columns, bank + summary box, QR aur signatory. Baki documents purane look me rahenge</div>
       </div>
+      <div id="themeCard9" class="theme-pick-card" onclick="pickDocTheme('9')" style="border:2px solid var(--border-color);border-radius:10px;padding:10px;cursor:pointer;background:#fff">
+        <div style="border:1px solid #000;padding:6px;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff">
+          <div style="border:1.5px dashed #0d9488;height:22px;margin-bottom:4px;font-size:7px;display:flex;align-items:center;justify-content:center;color:#0d9488;font-weight:700">LETTERHEAD SPACE</div>
+          <div style="text-align:center;font-weight:700;font-size:12px;margin-bottom:3px">Tax Invoice</div>
+          <div style="display:flex;border:1px solid #000;font-size:7px;min-height:22px"><div style="flex:1;padding:2px;border-right:1px solid #000">Buyer / Consignee</div><div style="flex:1;padding:2px">Invoice No. &middot; Dated &middot; Dispatch</div></div>
+          <div style="font-size:7px;text-align:center;margin-top:3px">This is a Computer Generated Invoice</div>
+        </div>
+        <div style="text-align:center;font-weight:700;margin-top:8px;font-size:13px;color:var(--text-main)">Theme 9 — Arial PDF (Test)</div>
+        <div style="text-align:center;font-size:11px;color:var(--text-muted)">Theme 7 jaisa hi — bas Download/Share PDF Arial naam se banega (Tally-style test). Screen aur Print bilkul Theme 7 jaisa</div>
+      </div>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn success" onclick="applyDocTheme()">Apply Theme</button><button class="btn muted" type="button" id="btnChangeColour" onclick="icOpenColorModal()">🎨 Change Colour</button><button class="btn muted" type="button" onclick="icOpenFontModal()">🔤 Change Font</button><button class="btn muted" type="button" id="btnT6Customize" style="display:none" onclick="t6OpenCustomize()">⚙️ Customize</button><button class="btn muted" type="button" id="btnT7Setup" style="display:none" onclick="t7OpenSetup()">🖨️ Setup</button></div>
   </div>
@@ -10921,7 +10931,7 @@ Promise.resolve(typeof saveSettings==='function'?saveSettings():null).then(funct
     </div>
   </div>
 </div>
-<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.8.6 • 26 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
+<div id="apkVoucher" class="page hidden apk-page"><div class="top"><h1>Voucher</h1></div><div class="apk-stats" id="apkStats"><div class="apk-stat"><span class="apk-stat-l">Aaj ki sale</span><b id="apkStatToday">—</b></div><div class="apk-stat"><span class="apk-stat-l">Pending</span><b id="apkStatDue">—</b></div><div class="apk-stat"><span class="apk-stat-l">Invoices</span><b id="apkStatCount">—</b></div></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-blue"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Invoice <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-gst="1" onclick="openInvoiceEditor()"><span class="ai">🧾</span><span class="apk-at"><span class="al">Create Invoice</span><span class="apk-ad">Make a new GST invoice</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="histMode='inv';showPage('history')"><span class="ai">📜</span><span class="apk-at"><span class="al">Bill History</span><span class="apk-ad">All past invoices</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Bill of Supply <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openBosEditor()"><span class="ai">📄</span><span class="apk-at"><span class="al">Create BOS</span><span class="apk-ad">Make a bill of supply</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openBosHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">BOS History</span><span class="apk-ad">All past BOS bills</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Cash Memo <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openCashEditor()"><span class="ai">💵</span><span class="apk-at"><span class="al">Create Cash Memo</span><span class="apk-ad">Make a quick cash memo</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openCashHistory()"><span class="ai">🗂</span><span class="apk-at"><span class="al">Cash Memo History</span><span class="apk-ad">All past cash memos</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Aur <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="openDocuments()"><span class="ai">📑</span><span class="apk-at"><span class="al">Create Documents</span><span class="apk-ad">Quotations, letters & more</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('journal')"><span class="ai">📒</span><span class="apk-at"><span class="al">Payment Journal</span><span class="apk-ad">Track dues & receipts</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkParties" class="page hidden apk-page"><div class="top"><h1>Parties &amp; Stock</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-green"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Parties <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('customers')"><span class="ai">👥</span><span class="apk-at"><span class="al">Customers</span><span class="apk-ad">Your buyers & parties</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('vendors')"><span class="ai">🏭</span><span class="apk-at"><span class="al">Vendors</span><span class="apk-ad">Your suppliers</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-teal"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Stock <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('inventory')"><span class="ai">📦</span><span class="apk-at"><span class="al">Inventory</span><span class="apk-ad">Stock items & rates</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('invAdv')"><span class="ai">🏬</span><span class="apk-at"><span class="al">Godown &amp; Mfg</span><span class="apk-ad">Godowns & manufacturing</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Purchase <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('purchaseOrders')"><span class="ai">📝</span><span class="apk-at"><span class="al">Purchase Orders</span><span class="apk-ad">Orders given to vendors</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('purchaseBills')"><span class="ai">🧾</span><span class="apk-at"><span class="al">Purchase Bills</span><span class="apk-ad">Bills from vendors</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkAccounts" class="page hidden apk-page"><div class="top"><h1>Accounts</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Accounting <span class="apk-sec-n">• 8</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('acctVouchers')"><span class="ai">📘</span><span class="apk-at"><span class="al">Vouchers</span><span class="apk-ad">Cash & bank vouchers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctLedgers')"><span class="ai">📚</span><span class="apk-at"><span class="al">Ledgers &amp; Groups</span><span class="apk-ad">Party & account ledgers</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctReports')"><span class="ai">📊</span><span class="apk-at"><span class="al">Reports</span><span class="apk-ad">Sales, purchase & GST reports</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctRecon')"><span class="ai">🏦</span><span class="apk-at"><span class="al">Bank Reconciliation</span><span class="apk-ad">Match bank with books</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctPdc')"><span class="ai">🗓</span><span class="apk-at"><span class="al">Post-dated Cheques</span><span class="apk-ad">Cheques to be cleared</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctControl')"><span class="ai">🛡</span><span class="apk-at"><span class="al">Audit &amp; Security</span><span class="apk-ad">Audit trail, PIN & roles</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-gst="1" onclick="showPage('acctGst')"><span class="ai">🧮</span><span class="apk-at"><span class="al">GST &amp; Tax</span><span class="apk-ad">GST returns & tax</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('acctExt')"><span class="ai">💹</span><span class="apk-at"><span class="al">Cost, Budget &amp; Assets</span><span class="apk-ad">Costs, budgets & assets</span></span><span class="apk-ac">›</span></button></div></div></div><div id="apkMore" class="page hidden apk-page"><div class="top"><h1>More</h1></div><div class="apk-search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg><input type="search" placeholder="Search…" aria-label="Search this page" autocomplete="off"></div><div class="apk-nores" hidden>No matching actions — try a different search.</div><div class="apk-prof" onclick="showPage('profile')"><img id="apkPhoto" alt="" style="display:none"><div class="apk-ic" id="apkIc">?</div><div class="apk-pi"><div class="apk-pn" id="apkName">My Account</div><div class="apk-pc" id="apkCo"></div><span class="apk-plan" id="apkPlan" style="display:none"></span></div><button type="button" class="apk-sw" onclick="event.stopPropagation();switchCompany()" aria-label="Switch company">⇄</button></div><div class="apk-card t-purple"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Social <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="chat" onclick="showPage('chats')"><span class="ai">💬</span><span class="apk-at"><span class="al">Chats</span><span class="apk-ad">Talk to parties & staff</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('search')"><span class="ai">🔎</span><span class="apk-at"><span class="al">Find People</span><span class="apk-ad">Search people nearby</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-slate"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Tools <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile" data-plan="analytics" onclick="showPage('analytics')"><span class="ai">📈</span><span class="apk-at"><span class="al">Analytics</span><span class="apk-ad">Business insights</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="showPage('chequePrint')"><span class="ai">🖨</span><span class="apk-at"><span class="al">Print Cheque</span><span class="apk-ad">Print cheques</span></span><span class="apk-ac">›</span></button></div></div><div class="apk-card t-indigo"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Settings <span class="apk-sec-n">• 2</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPage('settings')"><span class="ai">⚙️</span><span class="apk-at"><span class="al">Settings</span><span class="apk-ad">App settings</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-plan="backup" onclick="showPage('backup')"><span class="ai">☁️</span><span class="apk-at"><span class="al">Backup / Restore</span><span class="apk-ad">Backup & restore data</span></span><span class="apk-ac">›</span></button></div></div><div class="paid-only"><div class="apk-card t-amber"><button type="button" class="apk-sec-h" aria-expanded="true"><span class="apk-sec-t">Subscription <span class="apk-sec-n">• 3</span></span><span class="apk-sec-c">›</span></button><div class="apk-grid"><button type="button" class="apk-tile"  onclick="showPlanOverlay()"><span class="ai">⭐</span><span class="apk-at"><span class="al">Manage</span><span class="apk-ad">Manage subscription</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile" data-feature-flag="referral_program" onclick="openReferralPage()"><span class="ai">🎁</span><span class="apk-at"><span class="al">Referral</span><span class="apk-ad">Invite & earn rewards</span></span><span class="apk-ac">›</span></button><button type="button" class="apk-tile"  onclick="openOffersPage()"><span class="ai">🏷</span><span class="apk-at"><span class="al">Offer</span><span class="apk-ad">Offers & discounts</span></span><span class="apk-ac">›</span></button></div></div></div><div class="apk-list"><button type="button" onclick="toggleTheme();apkSync()"><span>🌙 Dark Mode</span><i class="apk-tg" id="apkTg"></i></button><button type="button" onclick="openModal('helpModal')"><span>📃 Terms</span></button><div class="apk-ver"><span>📱 APK Version</span><b>v2.8.7 • 26 Nov 2026</b></div><button type="button" class="dng" onclick="authSignOut()"><span>⎋ Logout</span></button></div></div></main>
 <nav id="apkBar" aria-label="Main"><button type="button" data-tab="home" onclick="apkTab('home')"><b>🏠</b><span>Home</span></button><button type="button" data-tab="voucher" onclick="apkTab('voucher')"><b>🧾</b><span>Voucher</span></button><button type="button" data-tab="parties" onclick="apkTab('parties')"><b>👥</b><span>Parties &amp; Stock</span><u id="apkDot"></u></button><button type="button" data-tab="accounts" onclick="apkTab('accounts')"><b>📒</b><span>Accounts</span></button><button type="button" data-tab="more" onclick="apkTab('more')"><b>⋯</b><span>More</span></button></nav><button type="button" id="apkFab" onclick="newInvoice()">＋ Create Invoice</button>
 </div>
 
@@ -14723,7 +14733,7 @@ function invPrintStylesBase(){
 let css=getPrintStyles();
 const C=icDocColor('invoice'); if(!C) return css;
 const th=String((db.settings||{}).docTheme||'2');
-if(th==='6'||th==='7') return css;
+if(th==='6'||th==='7'||th==='9') return css;
 const rf=function(a,b){css=css.split(a).join(b)};
 if(th==='1') rf('--gold:#a9793c','--gold:'+C);
 else if(th==='3'){rf('--acc:#1d4ed8','--acc:'+C);rf('--acc-soft:#e3eafc','--acc-soft:'+icMix(C,'#ffffff',0.88));}
@@ -15684,7 +15694,7 @@ if((db.settings||{}).docTheme==='1') return getPrintStylesTheme1();
 if((db.settings||{}).docTheme==='3') return getPrintStylesTheme3();
 if((db.settings||{}).docTheme==='4') return getPrintStylesTheme4();
 if((db.settings||{}).docTheme==='5') return getPrintStylesTheme5();
-if((db.settings||{}).docTheme==='6'||(db.settings||{}).docTheme==='7') return getPrintStylesTheme6();
+if((db.settings||{}).docTheme==='6'||(db.settings||{}).docTheme==='7'||(db.settings||{}).docTheme==='9') return getPrintStylesTheme6();
 return `
 @page{size:A4 portrait;margin:8mm}
 *{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
@@ -21726,6 +21736,7 @@ if(!copies.length){alert('Kam se kam ek copy (Original/Duplicate/Triplicate) sel
 IEPDF.choose(kind,function(combined){
 closeModal('outputModal');
 syncForm();ensureInvoiceHeaderData();recalc();
+if(t9IsOn()){t9InvAction(current,copies,combined,kind);return;}
 const items=invPdfItems(copies,combined);
 if(kind==='share') IEPDF.sharePdfs(items,function(){shareInvoice();});
 else IEPDF.savePdfs(items);
@@ -21754,6 +21765,7 @@ const copies=order.map(i=>labels[i]);
 if(!copies.length){alert('Kam se kam ek copy select karo.');return;}
 close();
 IEPDF.choose(kind,function(combined){
+if(t9IsOn()){t9InvAction(JSON.parse(JSON.stringify(inv)),copies,combined,kind);return;}
 const items=invPdfItems(copies,combined,JSON.parse(JSON.stringify(inv)));
 if(kind==='share') IEPDF.sharePdfs(items,function(){ if(navigator.share) navigator.share({title:inv.invoiceNumber,text:'Invoice '+inv.invoiceNumber+ieCreditMsg('invoice')}).catch(()=>{}); });
 else IEPDF.savePdfs(items);
@@ -21819,13 +21831,14 @@ alert('Settings saved successfully.');
 let _pickedDocTheme=null;
 function pickDocTheme(v){
 _pickedDocTheme=v;
-const c1=id('themeCard1'), c2=id('themeCard2'), c3=id('themeCard3'), c4=id('themeCard4'), c5=id('themeCard5'), c6=id('themeCard6'), c7=id('themeCard7'), c8=id('themeCard8');
+const c1=id('themeCard1'), c2=id('themeCard2'), c3=id('themeCard3'), c4=id('themeCard4'), c5=id('themeCard5'), c6=id('themeCard6'), c7=id('themeCard7'), c8=id('themeCard8'), c9=id('themeCard9');
 if(c7) c7.style.borderColor=(v==='7')?'#0d9488':'var(--border-color)';
 if(c8) c8.style.borderColor=(v==='8')?'#0d9488':'var(--border-color)';
-const sb7=id('btnT7Setup'); if(sb7) sb7.style.display=(v==='7')?'':'none';
+if(c9) c9.style.borderColor=(v==='9')?'#0d9488':'var(--border-color)';
+const sb7=id('btnT7Setup'); if(sb7) sb7.style.display=(v==='7'||v==='9')?'':'none';
 if(c6) c6.style.borderColor=(v==='6')?'#0d9488':'var(--border-color)';
-const cb=id('btnChangeColour'); if(cb) cb.style.display=(v==='6'||v==='7'||v==='8')?'none':'';
-const cz=id('btnT6Customize'); if(cz) cz.style.display=(v==='6'||v==='7')?'':'none';
+const cb=id('btnChangeColour'); if(cb) cb.style.display=(v==='6'||v==='7'||v==='8'||v==='9')?'none':'';
+const cz=id('btnT6Customize'); if(cz) cz.style.display=(v==='6'||v==='7'||v==='9')?'':'none';
 if(c1) c1.style.borderColor=(v==='1')?'#0d9488':'var(--border-color)';
 if(c2) c2.style.borderColor=(v==='2')?'#0d9488':'var(--border-color)';
 if(c3) c3.style.borderColor=(v==='3')?'#0d9488':'var(--border-color)';
@@ -21836,8 +21849,8 @@ function applyDocTheme(){
 const v=_pickedDocTheme||db.settings.docTheme||'2';
 db.settings.docTheme=v;
 saveDB();
-const names={'1':'Theme 1 — Premium Traditional','2':'Theme 2 — Premium/Modern','3':'Theme 3 — Ultra Premium','4':'Theme 4 — Most Advanced','5':'Theme 5 — Bold Corporate','6':'Theme 6 — Tally Format','7':'Theme 7 — Letterhead Format','8':'Theme 8 — Blue Tax Invoice'};
-alert(v==='8'?'Theme applied: Theme 8 — Blue Tax Invoice. Ye sirf Tax Invoice me lagega. Baki sab documents (Bill of Supply, Cash Memo, Quotation etc.) purane look me hi rahenge.':v==='7'?'Theme applied: Theme 7 — Letterhead Format. Ye bilkul Theme 6 jaisa hai (Customize, Change Font sab same). Extra: Setup button me Letterhead ON/OFF, upar ke design, background image, size aur PDF/Print milega.':v==='6'?'Theme applied: Theme 6 — Tally Format. Ab ye 13 documents Tally format mein banenge: Tax Invoice, Bill of Supply, Cash Memo (Without GST), Cash Memo (With GST), Quotation, Proforma Invoice, Sales Order, Delivery Challan, Purchase Order, Purchase Bill, Work Order, Gate Pass aur Packing Slip. Salary Slip aur Rent Receipt purane look mein rahenge. Har document ki setting alag hai: Customize kholo aur document chuno.':'Theme applied: '+(names[v]||v)+'. Sabhi 6 documents (Invoice, Quotation, Proforma, Delivery Challan, Purchase Bill, Purchase Order) is theme mein banenge.');
+const names={'1':'Theme 1 — Premium Traditional','2':'Theme 2 — Premium/Modern','3':'Theme 3 — Ultra Premium','4':'Theme 4 — Most Advanced','5':'Theme 5 — Bold Corporate','6':'Theme 6 — Tally Format','7':'Theme 7 — Letterhead Format','8':'Theme 8 — Blue Tax Invoice','9':'Theme 9 — Arial PDF (Test)'};
+alert(v==='9'?'Theme applied: Theme 9 — Arial PDF (Test). Theme 7 jaisa hi — bas Download/Share PDF Arial naam se banega (test ke liye). Screen aur Print bilkul Theme 7 jaisa.':v==='8'?'Theme applied: Theme 8 — Blue Tax Invoice. Ye sirf Tax Invoice me lagega. Baki sab documents (Bill of Supply, Cash Memo, Quotation etc.) purane look me hi rahenge.':v==='7'?'Theme applied: Theme 7 — Letterhead Format. Ye bilkul Theme 6 jaisa hai (Customize, Change Font sab same). Extra: Setup button me Letterhead ON/OFF, upar ke design, background image, size aur PDF/Print milega.':v==='6'?'Theme applied: Theme 6 — Tally Format. Ab ye 13 documents Tally format mein banenge: Tax Invoice, Bill of Supply, Cash Memo (Without GST), Cash Memo (With GST), Quotation, Proforma Invoice, Sales Order, Delivery Challan, Purchase Order, Purchase Bill, Work Order, Gate Pass aur Packing Slip. Salary Slip aur Rent Receipt purane look mein rahenge. Har document ki setting alag hai: Customize kholo aur document chuno.':'Theme applied: '+(names[v]||v)+'. Sabhi 6 documents (Invoice, Quotation, Proforma, Delivery Challan, Purchase Bill, Purchase Order) is theme mein banenge.');
 }
 function loadSettingsUI(){
 let s=db.settings||DEFAULT_SETTINGS;
@@ -23094,6 +23107,7 @@ const copies=DOC_TYPES[d.type].copies.filter((c,i)=>id('dzCopy'+i)?.checked);
 if(!copies.length){alert('Select at least one copy.');return;}
 closeModal('docPrintModal');
 docCalc(d);
+if(t9IsOn()&&(docPrintMode==='download'||docPrintMode==='share')){t9DocAction(d,copies,combined,docPrintMode);return;}
 if(docPrintMode==='download') { IEPDF.savePdfs(docPdfItems(d,copies,combined)); return; }
 if(docPrintMode==='share') { const sid=docPrintSrcId; IEPDF.sharePdfs(docPdfItems(d,copies,combined),function(){docShare(sid);}); return; }
 if(combined) docOpenWindow(docFullHTML(d,copies));
@@ -23109,15 +23123,15 @@ function pvBtn(a,ic,lb){return '<button type="button" onclick="pvOpen(\''+a+'\')
 function pvArrows(k){
  PV_K=k;
  var t=pvEff(k),n=parseInt(t,10)||2,def=String((db.settings||{}).docTheme||'2'),L=document.getElementById('pvL'+k),R=document.getElementById('pvR'+k),P=document.getElementById('pvP'+k);
- if(L)L.disabled=n<=1;if(R)R.disabled=n>=8;
- var dots='';for(var i=1;i<=8;i++)dots+='<span class="pvd'+(i===n?' on':'')+'" onclick="pvGo(\''+k+'\','+i+')"></span>';
- var b='';if(n!==6&&n!==7&&n!==8)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7)b+=pvBtn('cust','⚙️','Customize');if(n===7)b+=pvBtn('setup','🖨️','Setup');b+='<button type="button" class="pvgold" onclick="pvOpen(\'share\')"><span>📤</span>Share</button>';
+ if(L)L.disabled=n<=1;if(R)R.disabled=n>=9;
+ var dots='';for(var i=1;i<=9;i++)dots+='<span class="pvd'+(i===n?' on':'')+'" onclick="pvGo(\''+k+'\','+i+')"></span>';
+ var b='';if(n!==6&&n!==7&&n!==8&&n!==9)b+=pvBtn('col','🎨','Colour');b+=pvBtn('font','🔤','Font');if(n===6||n===7||n===9)b+=pvBtn('cust','⚙️','Customize');if(n===7||n===9)b+=pvBtn('setup','🖨️','Setup');b+='<button type="button" class="pvgold" onclick="pvOpen(\'share\')"><span>📤</span>Share</button>';
  if(P)P.innerHTML='<div class="pvr1"><div class="pvd-w">'+dots+'</div><b>Theme '+n+'</b>'+(t===def?'<i>Default</i>':'<button type="button" class="pvdef" onclick="pvMakeDefault(\''+k+'\')">Isse default banao</button>')+'</div><div class="pvr2">'+b+'</div>'}
 function pvRerender(k){
  if(k==='inv'){var c=document.getElementById('previewCanvas');if(c)c.srcdoc=pvInvHtml()}
  else{var d=docPrevDoc;if(!d)return;var T=DOC_TYPES[d.type],f=id('docPrevFrame');f.srcdoc=pvWith(PV.doc,function(){return docFullHTML(d,[T.copies[0]],true)})}
  pvArrows(k)}
-function pvGo(k,n){if(n<1||n>8)return;PV[k]=String(n);pvRerender(k)}
+function pvGo(k,n){if(n<1||n>9)return;PV[k]=String(n);pvRerender(k)}
 function pvNav(k,dir){pvGo(k,(parseInt(pvEff(k),10)||2)+dir)}
 function pvOpen(a){
  if(a==='share'){window.PV_NEXT=pvEff(PV_K);if(PV_K==='doc')docPrintOpen(window.PV_DOCID,'share');else openOutputModal();return}
@@ -30230,7 +30244,7 @@ function t6Date(s){
  if(!s)return '';var m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return String(s);
  return m[3]+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]+'-'+m[1].slice(2);
 }
-function t6On(){var v=String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'');return v==='6'||v==='7'}
+function t6On(){var v=String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'');return v==='6'||v==='7'||v==='9'}
 function t6BaseCss(){
 return `
 @page{size:A4 portrait;margin:8mm}
@@ -30338,7 +30352,7 @@ function t6Scope(css,vn,first){
 }
 function getPrintStylesTheme6(){
  var k6=String((db&&db.settings&&db.settings.docTheme)||'');
- if(!_t6css||_t6cssK!==k6){var b=t6BaseCss()+(k6==='6'?T6_TIGHT:'')+(k6==='7'?T7_TIGHT:'')+((k6==='6'||k6==='7')?T6_PARTY:''),o='',n,c;for(n=0;n<4;n++){c=b;if(n&1)c=t6MakeThin(c);if(n&2)c=t6MakeLarge(c);o+=t6Scope(c,n,n===0)}_t6css=o;_t6cssK=k6}
+ if(!_t6css||_t6cssK!==k6){var b=t6BaseCss()+(k6==='6'?T6_TIGHT:'')+(k6==='7'||k6==='9'?T7_TIGHT:'')+((k6==='6'||k6==='7'||k6==='9')?T6_PARTY:''),o='',n,c;for(n=0;n<4;n++){c=b;if(n&1)c=t6MakeThin(c);if(n&2)c=t6MakeLarge(c);o+=t6Scope(c,n,n===0)}_t6css=o;_t6cssK=k6}
  return _t6css;
 }
 function t6Variant(){return (t6IsThin()?1:0)+(t6IsBig()?2:0)}
@@ -30401,7 +30415,7 @@ function t6CustHtml(k){
  var d=k?t6DocDef(k):null,box='background:var(--sidebar-bg,#0d1322);color:var(--text-main,#fff);width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 18px 24px;border:1px solid var(--border-color)';
  var h='<div style="'+box+'">';
  if(!d){
-  h+='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">⚙️ Theme '+(t7On()?'7':'6')+' — Customize</div><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6CloseCustomize()">✕</button></div>'
+  h+='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">⚙️ Theme '+(t9No())+' — Customize</div><button type="button" class="btn muted" style="min-height:36px;padding:6px 12px" onclick="t6CloseCustomize()">✕</button></div>'
    +'<div class="sub" style="margin-top:6px;font-size:12px">Document chuno — har document ki apni alag setting hoti hai.</div>';
   if(t7On()&&typeof t7SqOn==='function'){var sqo=t7SqOn();h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border:1px solid var(--border-color);border-radius:12px"><div><b style="font-size:14px">Tally Squeeze (sab documents)</b><div class="sub" style="margin-top:2px;font-size:12px">ON: Seller / Buyer / Consignee limit se zyada bhare (Seller 7, Buyer/Consignee 6 lines) tabhi text upar-neeche se thoda dabega. Limit ke andar kuch nahi badlega.</div></div><button type="button" class="btn '+(sqo?'success':'muted')+'" style="min-width:76px" onclick="t7SqToggle()">'+(sqo?'ON':'OFF')+'</button></div>'}
   h+=t6WmHtml();
@@ -30692,6 +30706,471 @@ function t6InvoiceBuild(inv,copy,opts){
 }
 </script>
 
+<script id="theme9-arial-pdf">
+/* ===== THEME 9 — Theme 7 jaisa hi, bas Download/Share PDF Arial naam se (Tally-style test).
+   Screen + Print bilkul Theme 7 jaisa (alias — Theme 7 ko haath nahi lagta).
+   Sirf Download/Share PDF jsPDF se banta hai: text Helvetica metrics se banta hai (Arial
+   ke barabar), phir PDF ke font naam Helvetica -> Arial badal diye jate hain (embed nahi
+   hota — jaise Tally Helvetica karta hai). Phone pe viewer substitute dikhata hai,
+   PC pe asli Arial. "Rs. " likha jata hai (₹ WinAnsi me nahi hota).
+   Known v1 limits: UPI QR nahi banta, stamp image nahi lagti, letterhead design sirf
+   khali jagah + background image (agar ho) — description ka naam bold, baaki normal. ===== */
+function t9No(){var v=String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'');return (v==='6'||v==='7'||v==='9')?v:'6'}
+function t9IsOn(){var v=String(window.PV_SHARE_TH||window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'');return v==='9'}
+function t9Strip(s){return String(s==null?'':s).replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#8377;/g,'Rs. ').replace(/\s+/g,' ').trim()}
+function t9AddrLines(addr,city,pin){var L=String(addr||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);var last=String(city||'')+(pin?' - '+pin:'');if(last)L.push(last);return L}
+function t9StLine(state,code){return 'State Name : '+(state||'—')+', Code : '+(code||(typeof stateCodeFor==='function'?stateCodeFor(state):'')||'—')}
+
+/* ---- invoice (Tax Invoice / Bill of Supply / Cash Memo) ka data — t6InvoiceBuild jaisa ---- */
+function t9InvData(inv,copy){
+ var s=db.settings||{},bos=isBos(inv),ext=!!(typeof chatPreviewInvoice!=='undefined'&&chatPreviewInvoice&&chatPreviewInvoice.external&&chatPreviewInvoice.seller===s);
+ var t=inv.totals||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,subTotal:0,discount:0,roundOff:0,grand:0};
+ var same=true;if(inv.taxType==='igst')same=false;else if(inv.taxType==='cgst_sgst')same=true;else{var a=String(inv.companyState||'').trim().toLowerCase(),b=String((inv.customer||{}).state||'').trim().toLowerCase();same=!a||!b||a===b}
+ var cu=inv.customer||{},title=invLabel(inv,bos),cuNm=cu.name||(isCash(inv)?'Cash Sale':'—'),cashM=isCash(inv);
+ var items=(inv.items||[]).filter(function(r){return r.itemId});
+ var byRate={},byHsn={},hk=[];
+ items.forEach(function(r){var g=Number(r.gst||0),z=byRate[g]=byRate[g]||{cg:0,sg:0,ig:0};z.cg+=Number(r.cgst||0);z.sg+=Number(r.sgst||0);z.ig+=Number(r.igst||0);
+  var k=(r.hsn||'')+'|'+g,h=byHsn[k];if(!h){h=byHsn[k]={hsn:r.hsn||'',g:g,t:0,cg:0,sg:0,ig:0};hk.push(k)}h.t+=Number(r.taxable||0);h.cg+=Number(r.cgst||0);h.sg+=Number(r.sgst||0);h.ig+=Number(r.igst||0)});
+ var rates=Object.keys(byRate).map(Number).sort(function(a,b){return a-b});
+ var units={},qsum=0;items.forEach(function(r){var u=rowPUnit(r,r.unit||'Nos');units[u]=1;qsum+=rowIsAlt(r)?Number(rowBaseQty(r)||0):Number(r.qty||0)});
+ var ul=Object.keys(units),qtxt=ul.length===1?(parseFloat(qsum.toFixed(3))+' '+ul[0]):'';
+ var rows=items.map(function(r,i){
+  var name=String(r.itemName||'').trim(),d=String(r.description||'').trim(),sz=r.size?('Size: '+r.size):'';
+  var sub=[];if(d&&name.toLowerCase()!==d.toLowerCase())sub.push(d);if(sz)sub.push(sz);
+  var q=rowIsAlt(r)?rowPQty(r,r.qty):(r.qty+' '+(r.unit||'Nos'));
+  var ds=Number(r.disc||0);
+  return {no:String(i+1),name:name||d,sub:sub,hsn:String(r.hsn||''),qty:String(q),rate:money(r.rate),per:String(rowPUnit(r,r.unit||'Nos')),disc:ds>0?ds+' %':'',amt:money(r.taxable)};
+ });
+ var mx=[];
+ function txr(label,rate,amt,neg){mx.push({label:label,rate:rate===''?'':String(rate),per:rate===''?'':'%',amt:(neg?'(-)':'')+money(amt)})}
+ if(!bos)rates.forEach(function(g){var z=byRate[g];if(same){txr('Output CGST',g/2,z.cg);txr('Output SGST',g/2,z.sg)}else txr('Output IGST',g,z.ig)});
+ if(Number(t.discount)>0)txr(t.discInTaxable?'Discount (in Taxable)':'Less : Discount','',t.discount,!t.discInTaxable);
+ if(Number(t.roundOff)!==0)txr(Number(t.roundOff)<0?'Less : Round Off':'Round Off','',Math.abs(t.roundOff),Number(t.roundOff)<0);
+ var hsn=null;
+ if(!bos){
+  var T=0,CG=0,SG=0,IG=0,TX=0,hr=[];
+  hk.forEach(function(k){var h=byHsn[k],tx2=h.cg+h.sg+h.ig;T+=h.t;CG+=h.cg;SG+=h.sg;IG+=h.ig;TX+=tx2;
+   hr.push(same?[h.hsn,money(h.t),h.g/2+'%',money(h.cg),h.g/2+'%',money(h.sg),money(tx2)]:[h.hsn,money(h.t),h.g+'%',money(h.ig),money(tx2)])});
+  hsn={same:same,rows:hr,tot:same?['Total',money(T),'',money(CG),'',money(SG),money(TX)]:['Total',money(T),'',money(IG),money(TX)],words:t6Words(TX)};
+ }
+ var sc=inv.companyStateCode||s.stateCode||(typeof stateCodeFor==='function'?stateCodeFor(s.state):'')||'';
+ var seller={name:s.company||'',logo:(t6IsLogo()&&s.logo)?s.logo:'',lines:[]};
+ t9AddrLines(s.address||'','', '').forEach(function(a){seller.lines.push({t:a,b:0})});
+ if(!bos)seller.lines.push({t:'GSTIN/UIN : '+(ext?(s.gstin||'—'):(s.gstin||'')),b:0});
+ seller.lines.push({t:'State Name : '+(s.state||'')+', Code : '+sc,b:0});
+ if(s.phone)seller.lines.push({t:'Contact : '+s.phone,b:0});
+ if(s.email)seller.lines.push({t:'E-Mail : '+s.email,b:0});
+ var buyer={head:'Buyer (Bill to)',name:cuNm,lines:[]};
+ t9AddrLines(cu.address||'',cu.city||'',cu.pin||'').forEach(function(a){buyer.lines.push({t:a,b:0})});
+ if(!bos)buyer.lines.push({t:'GSTIN/UIN : '+(cu.gst||'—'),b:0});
+ buyer.lines.push({t:t9StLine(cu.state,cu.stateCode),b:0});
+ if(cu.contact)buyer.lines.push({t:'Contact : '+cu.contact,b:0});
+ if(cu.email)buyer.lines.push({t:'E-Mail : '+cu.email,b:0});
+ buyer.lines.push({t:'Place of Supply : '+(cu.state||'—'),b:0});
+ var cons=null;
+ if(t6IsCons()){
+  var CG=getConsignee(inv);
+  if(CG.legacy){var sl=String(inv.shipTo||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);cons={head:'Consignee (Ship to)',name:sl[0]||'—',lines:sl.slice(1).map(function(x){return {t:x,b:0}})}}
+  else if(CG.same){cons={head:'Consignee (Ship to)',name:cuNm,lines:[]};t9AddrLines(cu.address||'',cu.city||'',cu.pin||'').forEach(function(a){cons.lines.push({t:a,b:0})});if(!bos)cons.lines.push({t:'GSTIN/UIN : '+(cu.gst||'—'),b:0});cons.lines.push({t:t9StLine(cu.state,cu.stateCode),b:0})}
+  else{cons={head:'Consignee (Ship to)',name:CG.name||'—',lines:[]};t9AddrLines(CG.address||'',CG.city||'',CG.pin||'').forEach(function(a){cons.lines.push({t:a,b:0})});if(!bos)cons.lines.push({t:'GSTIN/UIN : '+(CG.gst||'—'),b:0});cons.lines.push({t:t9StLine(CG.state,CG.stateCode),b:0});if(CG.contact)cons.lines.push({t:'Contact : '+CG.contact,b:0})}
+ }
+ var right=[
+  {l:cashM?'Cash Memo No.':bos?'Bill No.':'Invoice No.',v:String(inv.invoiceNumber||'')},
+  {l:'Dated',v:t6Date(inv.date)},
+  {l:'Delivery Note',v:String(inv.deliveryNote||'')},
+  {l:'Mode/Terms of Payment',v:String(inv.payment||'')},
+  {l:'Reference No. & Date.',v:String(inv.supplierRef||'')},
+  {l:'Other References',v:String(inv.otherRef||'')},
+  {l:"Buyer's Order No.",v:String(inv.buyerOrderNo||'')},
+  {l:'Dated',v:t6Date(inv.buyerOrderDate)},
+  {l:'Dispatch Doc No.',v:String(inv.dispatchDocNo||'')},
+  {l:'Delivery Note Date',v:t6Date(inv.deliveryNoteDate)},
+  {l:'Dispatched through',v:String(inv.transport||'')},
+  {l:'Destination',v:String(inv.destination||cu.city||'')}
+ ];
+ if(t6IsLr()&&t6IsMv()){right.push({l:'Bill of Lading/LR-RR No.',v:String(inv.lrNo||'')});right.push({l:'Motor Vehicle No.',v:String(inv.vehicleNo||'')})}
+ else if(t6IsLr())right.push({l:'Bill of Lading/LR-RR No.',v:String(inv.lrNo||''),f:1});
+ else if(t6IsMv())right.push({l:'Motor Vehicle No.',v:String(inv.vehicleNo||''),f:1});
+ right.push({l:'Terms of Delivery',v:String(inv.termsOfDelivery||''),w:1});
+ var bank={set:!!(s.bankName||s.accNo),ext:ext,rows:[["A/c Holder's Name",s.accName||''],['Bank Name',s.bankName||''],['A/c No.',s.accNo||''],['Branch & IFS Code',[s.bankBranch||'',s.ifsc||''].filter(Boolean).join(' & ')]]};
+ return {kind:'invoice',title:title,no:String(inv.invoiceNumber||''),copy:copy||'ORIGINAL FOR RECIPIENT',
+  lh:{on:t7Hide(),h:(t7Cfg().h||4),bg:t7Cfg().bg||''},
+  hideSeller:t7Hide()&&!t6Get(null,'sell'),seller:seller,buyer:buyer,cons:cons,right:right,
+  items:rows,taxRows:mx,qtxt:qtxt,grand:t.grand,words:t6Words(t.grand),hsn:hsn,noPrices:false,hasDisc:true,
+  tw:[],bank:bank,pan:s.pan||'',terms:null,
+  decl:'We declare that this '+(cashM?'cash memo':bos?'bill':'invoice')+' shows the actual price of the goods described and that all particulars are true and correct.',
+  cs:null,notes:inv.notes||'',foot:'This is a Computer Generated '+(cashM?'Cash Memo':bos?'Bill':'Invoice')};
+}
+
+/* ---- baaki documents (Quotation, Proforma, Sales Order, Challan, PO, PB...) ka data — t6DocBuild jaisa ---- */
+function t9DocData(d,copy){
+ var s=db.settings||{},T=DOC_TYPES[d.type]||T6X[d.type],kind=d.type;
+ var ext=!!(typeof docPrevExternalSeller!=='undefined'&&docPrevExternalSeller&&docPrevExternalSeller===s);
+ if(!d.totals&&typeof docCalc==='function')docCalc(d);
+ var t=d.totals||{taxable:0,cgst:0,sgst:0,igst:0,tax:0,subTotal:0,discount:0,roundOff:0,grand:0,same:true};
+ var same=t.same!==false,prices=docShowPrices(d),cu=d.customer||{};
+ var items=(d.items||[]).filter(docRowValid);
+ var no=String(d.number||'');
+ var hasDisc=kind==='pb'&&items.some(function(r){return Number(r.discountPercent)>0});
+ var byRate={},byHsn={},hk=[];
+ items.forEach(function(r){var g=Number(r.gst||0),z=byRate[g]=byRate[g]||{cg:0,sg:0,ig:0};z.cg+=Number(r.cgst||0);z.sg+=Number(r.sgst||0);z.ig+=Number(r.igst||0);
+  var k=(r.hsn||'')+'|'+g,h=byHsn[k];if(!h){h=byHsn[k]={hsn:r.hsn||'',g:g,t:0,cg:0,sg:0,ig:0};hk.push(k)}h.t+=Number(r.taxable||0);h.cg+=Number(r.cgst||0);h.sg+=Number(r.sgst||0);h.ig+=Number(r.igst||0)});
+ var rates=Object.keys(byRate).map(Number).sort(function(a,b){return a-b});
+ var taxed=prices&&Number(t.tax)>0;
+ function qtyOf(r){return rowIsAlt(r)?rowPQty(r,r.qty):(String(+r.qty)+' '+(r.unit||'Nos'))}
+ var rows=items.map(function(r,i){
+  var name=String(r.itemName||'').trim(),dd=String(r.description||'').trim(),sz=r.size?('Size: '+r.size):'';
+  var sub=[];if(dd&&name.toLowerCase()!==dd.toLowerCase())sub.push(dd);if(sz)sub.push(sz);
+  var o={no:String(i+1),name:name,sub:sub,hsn:String(r.hsn||''),qty:String(qtyOf(r))};
+  if(prices){o.rate=(String(r.rate).trim()!==''?money(r.rate):'');o.per=String(rowPUnit(r,r.unit||'Nos'));o.disc=(hasDisc&&Number(r.discountPercent)>0)?String(+r.discountPercent):'';o.amt=money(r.taxable)}
+  else o.remarks=String(r.remarks||'').trim();
+  return o;
+ });
+ var units={},qsum=0;items.forEach(function(r){var u=rowPUnit(r,r.unit||'Nos');units[u]=1;qsum+=rowIsAlt(r)?Number(rowBaseQty(r)||0):Number(r.qty||0)});
+ var ul=Object.keys(units),qtxt=ul.length===1?(parseFloat(qsum.toFixed(3))+' '+ul[0]):'';
+ var mx=[];
+ function txr(label,rate,amt,neg){mx.push({label:label,rate:rate===''?'':String(rate),per:rate===''?'':'%',amt:(neg?'(-)':'')+money(amt)})}
+ if(prices){
+  if(taxed)rates.forEach(function(g){var z=byRate[g];if(same){txr('Output CGST',g/2,z.cg);txr('Output SGST',g/2,z.sg)}else txr('Output IGST',g,z.ig)});
+  if(Number(t.discount)>0)txr(t.discInTaxable?'Discount (in Taxable)':'Less : Discount','',t.discount,!t.discInTaxable);
+  if(Number(t.roundOff)!==0)txr(Number(t.roundOff)<0?'Less : Round Off':'Round Off','',Math.abs(t.roundOff),Number(t.roundOff)<0);
+ }
+ var hsn=null;
+ if(taxed){
+  var TT=0,CG=0,SG=0,IG=0,TX=0,hr=[];
+  hk.forEach(function(k){var h=byHsn[k],tx2=h.cg+h.sg+h.ig;TT+=h.t;CG+=h.cg;SG+=h.sg;IG+=h.ig;TX+=tx2;
+   hr.push(same?[h.hsn,money(h.t),h.g/2+'%',money(h.cg),h.g/2+'%',money(h.sg),money(tx2)]:[h.hsn,money(h.t),h.g+'%',money(h.ig),money(tx2)])});
+  hsn={same:same,rows:hr,tot:same?['Total',money(TT),'',money(CG),'',money(SG),money(TX)]:['Total',money(TT),'',money(IG),money(TX)],words:t6Words(TX)};
+ }
+ var sc=d.companyStateCode||s.stateCode||(typeof stateCodeFor==='function'?stateCodeFor(s.state):'')||'';
+ var seller={name:s.company||'',logo:'',lines:[]};
+ t9AddrLines(s.address||'','','').forEach(function(a){seller.lines.push({t:a,b:0})});
+ seller.lines.push({t:'GSTIN/UIN : '+(ext?(s.gstin||'—'):(s.gstin||'')),b:0});
+ seller.lines.push({t:'State Name : '+(s.state||'')+', Code : '+sc,b:0});
+ if(s.phone)seller.lines.push({t:'Contact : '+s.phone,b:0});
+ if(s.email)seller.lines.push({t:'E-Mail : '+s.email,b:0});
+ var partyHead={quotation:'Quotation to',proforma:'Buyer (Bill to)',salesorder:'Customer (Bill to)',challan:'Consignee (Ship to)',workorder:'Work given to (Contractor)',gatepass:'Issued to',packingslip:'Consignee (Ship to)',po:'Supplier (Vendor)',pb:'Supplier (Billed by)'}[kind];
+ var buyer={head:partyHead||'Buyer (Bill to)',name:cu.name||'—',lines:[]};
+ t9AddrLines(cu.address||'',cu.city||'',cu.pin||'').forEach(function(a){buyer.lines.push({t:a,b:0})});
+ buyer.lines.push({t:'GSTIN/UIN : '+(cu.gst||'—'),b:0});
+ buyer.lines.push({t:t9StLine(cu.state,cu.stateCode),b:0});
+ if(cu.contact)buyer.lines.push({t:'Contact : '+cu.contact,b:0});
+ if(cu.email)buyer.lines.push({t:'E-Mail : '+cu.email,b:0});
+ if(prices&&kind!=='po'&&kind!=='pb')buyer.lines.push({t:'Place of Supply : '+(cu.state||'—'),b:0});
+ var cons=null;
+ if(t6IsCons()){
+  var shipLines=String(d.shipTo||'').split('\n').map(function(x){return x.trim()}).filter(Boolean);
+  if(shipLines.length){var ch=({challan:'Deliver to',packingslip:'Deliver to',gatepass:'Going to',workorder:'Site Address'}[kind]||'Consignee (Ship to)');cons={head:ch,name:shipLines[0],lines:shipLines.slice(1).map(function(x){return {t:x,b:0}})}}
+ }
+ var dateStr=t6Date(d.date),dest=d.destination||cu.city||'';
+ var poTxt=[d.poNo,d.poDate?'dt. '+t6Date(d.poDate):''].filter(Boolean).join(' ');
+ var C;
+ if(kind==='quotation')C=[['Quotation No.',no],['Dated',dateStr],['Valid Until',t6Date(d.validUntil)],['Enquiry Ref. & Date.',[d.refNo,d.refDate?'dt. '+t6Date(d.refDate):''].filter(Boolean).join(' ')],['Kind Attention',d.kindAttn],['Mode/Terms of Payment',d.paymentTerms],['Delivery / Lead Time',d.deliveryTime],['Destination',dest]];
+ else if(kind==='proforma')C=[['Proforma Invoice No.',no],['Dated',dateStr],['Valid Until',t6Date(d.validUntil)],["Buyer's Order No. & Date",poTxt],['Mode/Terms of Payment',d.paymentTerms],['Delivery / Lead Time',d.deliveryTime],['Dispatched through',d.despatch],['Destination',dest]];
+ else if(kind==='salesorder')C=[['Sales Order No.',no],['Dated',dateStr],['Valid Until',t6Date(d.validUntil)],["Buyer's Order No. & Date",poTxt],['Mode/Terms of Payment',d.paymentTerms],['Delivery / Lead Time',d.deliveryTime],['Dispatched through',d.despatch],['Destination',dest]];
+ else if(kind==='workorder')C=[['Work Order No.',no],['Dated',dateStr],['Complete By',t6Date(d.validUntil)],['Customer PO / Ref',d.poNo],['Mode/Terms of Payment',d.paymentTerms],['Site / Work Location',d.destination||cu.city||'']];
+ else if(kind==='po')C=[['Purchase Order No.',no],['Dated',dateStr],['Delivery By',t6Date(d.deliveryDate)],['Vendor Ref.',d.vendorRef],['Mode/Terms of Payment',d.paymentTerms],['Advance Required',d.advTxt],['Advance Due By',t6Date(d.advDue)]];
+ else if(kind==='pb')C=[['Purchase Bill No.',no],['Dated',dateStr],["Vendor's Bill No.",d.vendorBillNo],['Against PO',d.poRef]];
+ else if(kind==='gatepass')C=[['Gate Pass No.',no],['Dated',dateStr],['Purpose',d.purpose],['Invoice No.',d.invoiceNo],['Motor Vehicle No.',d.vehicleNo],['Dispatched through',d.transporter],['Driver Name & Contact',[d.driverName,d.driverContact].filter(Boolean).join(', ')],['Destination',dest]];
+ else if(kind==='packingslip')C=[['Packing Slip No.',no],['Dated',dateStr],['Invoice No.',d.invoiceNo],["Buyer's Order No. & Date",poTxt],['Dispatched through',d.transporter],['Motor Vehicle No.',d.vehicleNo],['Bill of Lading/LR-RR No.',d.lrNo],['Destination',dest]];
+ else C=[['Delivery Challan No.',no],['Dated',dateStr],['Purpose',d.purpose],["Buyer's Order No. & Date",poTxt],['Invoice No.',d.invoiceNo],['E-Way Bill No.',d.ewayBill],['Dispatched through',d.transporter],['Motor Vehicle No.',d.vehicleNo],['Bill of Lading/LR-RR No.',d.lrNo],['Driver Name & Contact',[d.driverName,d.driverContact].filter(Boolean).join(', ')],['Destination',dest]];
+ C=C.filter(function(c){return !(c[0]==='Bill of Lading/LR-RR No.'&&!t6IsLr())&&!(c[0]==='Motor Vehicle No.'&&!t6IsMv())});
+ var right=C.map(function(c,i){return {l:c[0],v:String(c[1]||''),w:0,f:(i===C.length-1&&C.length%2===1)?1:0}});
+ if(d.srcRef)right.push({l:'Against',v:String(d.srcRef),w:0,f:1});
+ var adv=(kind==='proforma'&&Number(d.advancePercent)>0)?+(t.grand*Number(d.advancePercent)/100).toFixed(2):0;
+ var tw=[];
+ if(adv>0)tw.push({pre:'Advance Payable ('+d.advancePercent+'%) : ',bold:'Rs. '+money(adv)+'  |  Balance before dispatch : Rs. '+money(t.grand-adv)});
+ if(d.t6Extra){var ex=t9Strip(d.t6Extra);if(ex)tw.push({pre:ex,bold:''})}
+ if(d.notes)tw.push({pre:'Remarks : '+String(d.notes).replace(/\n/g,' '),bold:''});
+ var termLines=String(d.terms||'').split('\n').map(function(x){return x.replace(/^\s*\d+[\.\)]\s*/,'').trim()}).filter(Boolean);
+ var bank=null;
+ if(!T6_NOBANK[kind])bank={set:!!(s.bankName||s.accNo),ext:ext,rows:[["A/c Holder's Name",s.accName||''],['Bank Name',s.bankName||''],['A/c No.',s.accNo||''],['Branch & IFS Code',[s.bankBranch||'',s.ifsc||''].filter(Boolean).join(' & ')]]};
+ var cs=null;
+ if(!T6_NOCS[kind]){var acc2=(kind==='po'?'Order accepted by vendor.':kind==='workorder'?'Work order accepted.':kind==='gatepass'?'Goods received.':kind==='salesorder'?'Order accepted.':kind==='proforma'?'Payment received / order confirmed.':'Accepted by customer.');
+  cs={text:acc2+'  Date : ____________',label:(kind==='po'?'Vendor':kind==='workorder'?'Contractor':kind==='gatepass'?'Receiver / Driver':'Customer')+' Signature & Stamp'}}
+ var leftNote='';
+ if(kind==='gatepass')leftNote='Goods checked and allowed to leave the premises.';
+ else if(kind==='packingslip')leftNote='Packed and checked as per this slip.';
+ else if(kind==='challan')leftNote='Received the above goods in good condition.';
+ return {kind:kind,title:T.label,no:no,copy:copy||'ORIGINAL FOR RECIPIENT',
+  lh:{on:t7Hide(),h:(t7Cfg().h||4),bg:t7Cfg().bg||''},
+  hideSeller:t7Hide()&&!t6Get(null,'sell'),seller:seller,buyer:buyer,cons:cons,right:right,
+  items:rows,taxRows:mx,qtxt:qtxt,grand:t.grand,words:t6Words(t.grand),hsn:hsn,noPrices:!prices,hasDisc:hasDisc,
+  tw:tw,bank:bank,pan:(kind!=='challan'&&kind!=='gatepass'&&kind!=='packingslip'&&s.pan)?s.pan:'',terms:termLines,
+  decl:'',cs:cs,notes:'',leftNote:leftNote,foot:'This is a Computer Generated '+T.label};
+}
+
+/* ---- renderer: D (t9InvData / t9DocData) ko jsPDF page(s) me banata hai. Sab text helvetica
+   se banta hai; Arial naam baad me byte-level badla jata hai (t9DocToBlob). ---- */
+function t9RenderInto(doc,D,first){
+ var PW=595.28,PH=841.89,M=23,CW=PW-2*M;
+ if(!first)doc.addPage();
+ var pg0=doc.internal.getNumberOfPages();
+ var y=M;
+ function F(st,sz){doc.setFont('helvetica',st);doc.setFontSize(sz)}
+ function SPL(t,w,st,sz){F(st,sz);return doc.splitTextToSize(String(t==null?'':t),Math.max(8,w))}
+ function LN(x1,yy,x2){doc.setDrawColor(0);doc.setLineWidth(0.5);doc.line(x1,yy,x2,yy)}
+ function VL(x,yy1,yy2){doc.setDrawColor(0);doc.setLineWidth(0.5);doc.line(x,yy1,x,yy2)}
+ function BX(x,yy,w,h){doc.setDrawColor(0);doc.setLineWidth(0.5);doc.rect(x,yy,w,h)}
+ function contHead(){
+  F('bold',8.5);doc.text(D.title+' No. '+D.no,M,M-8);
+  F('normal',8.5);doc.text('Page '+doc.internal.getNumberOfPages()+' of ___T9TOTAL___',PW-M,M-8,{align:'right'});
+  LN(M,M-4,PW-M);
+ }
+ function measure(entries,w){var ls=[],h=3;entries.forEach(function(e){var sz=e.sz||8.25,lh=e.lh||Math.round(sz*1.2);var ws=SPL(e.t,w,e.b?'bold':'normal',sz);ws.forEach(function(t){ls.push({t:t,b:e.b,sz:sz,lh:lh})});h+=lh*ws.length});return {lines:ls,h:h}}
+ function drawLines(lines,x,yy,w){var cy=yy;lines.forEach(function(L){var ws=SPL(L.t,w,L.b?'bold':'normal',L.sz);ws.forEach(function(t){F(L.b?'bold':'normal',L.sz);doc.text(t,x,cy+L.lh*0.78);cy+=L.lh})});return cy}
+ /* letterhead: pre-printed paper ke liye khali jagah (background image ho to lagao) */
+ if(D.lh&&D.lh.on){var lhH=(D.lh.h||4)*28.3465;if(D.lh.bg){try{var fmt=/^data:image\/png/i.test(D.lh.bg)?'PNG':'JPEG';doc.addImage(D.lh.bg,fmt,M,y,CW,lhH,undefined,'FAST')}catch(e){}}y+=lhH}
+ /* title row */
+ F('bold',12.75);doc.text(D.title,PW/2,y+11,{align:'center'});
+ F('italic',7.5);doc.text('( '+D.copy+' )',PW-M,y+11,{align:'right'});
+ y+=16;
+ /* ---- header grid ---- */
+ var HL=CW/2,HR=CW/2;
+ var boxes=[];
+ if(!D.hideSeller){var se={name:D.seller.name,logo:D.seller.logo,entries:[{t:D.seller.name,b:1,sz:9}].concat(D.seller.lines)};boxes.push(se)}
+ boxes.push({name:D.buyer.name,entries:[{t:D.buyer.head,b:0,sz:7.5},{t:D.buyer.name,b:1,sz:9}].concat(D.buyer.lines)});
+ if(D.cons)boxes.push({name:D.cons.name,entries:[{t:D.cons.head,b:0,sz:7.5},{t:D.cons.name,b:1,sz:9}].concat(D.cons.lines)});
+ var bms=boxes.map(function(b){var w=HL-9-((b.logo)?42:0);var m=measure(b.entries,w);if(b.logo)m.h=Math.max(m.h,40.5);return m});
+ var leftH=0;bms.forEach(function(m){leftH+=m.h});
+ /* right cells: 2-col grid; w/f cell poori row */
+ var rows=[],cur=[];
+ D.right.forEach(function(c){if(c.w||c.f){if(cur.length)rows.push(cur);rows.push([c]);cur=[]}else{cur.push(c);if(cur.length===2){rows.push(cur);cur=[]}}});
+ if(cur.length)rows.push(cur);
+ var cellH=rows.map(function(r){var hs=r.map(function(c){var vs=c.v?SPL(c.v,(r.length===2?HR/2:HR)-9,'bold',8.25):[];var h=3+9+10*vs.length;var mn=c.w?27:21,mne=c.w?22.5:16.5;return Math.max(h,c.v?mn:mne)});return Math.max.apply(null,hs)});
+ var rightH=0;cellH.forEach(function(h){rightH+=h});
+ var HH=Math.max(leftH,rightH);
+ var hy=y;
+ BX(M,hy,CW,HH);
+ LN(M+HL,hy,M+HL,hy+HH);
+ /* left boxes */
+ var ly=hy;
+ boxes.forEach(function(b,bi){
+  var m=bms[bi],bh=m.h;
+  if(bi===boxes.length-1)bh=HH-(ly-hy);
+  if(bi<boxes.length-1)LN(M,ly+bh,M+HL,ly+bh);
+  var tx=M+4.5;
+  if(b.logo){try{var fmt=/^data:image\/png/i.test(b.logo)?'PNG':'JPEG';doc.addImage(b.logo,fmt,M+4.5,ly+2,37.5,37.5,undefined,'FAST')}catch(e){}tx+=42}
+  drawLines(m.lines,tx,ly+1.5,HL-9-((b.logo)?42:0));
+  ly+=bh;
+ });
+ /* right cells */
+ var ry=hy;
+ rows.forEach(function(r,ri){
+  var rh=cellH[ri];if(ri===rows.length-1)rh=hy+HH-ry;
+  if(ri<rows.length-1)LN(M+HL,ry+rh,PW-M,ry+rh);
+  if(r.length===2)VL(M+HL+HR/2,ry,ry+rh);
+  r.forEach(function(c,ci){
+   var cx=M+HL+(r.length===2?ci*HR/2:0),cw=r.length===2?HR/2:HR;
+   F('normal',7.5);doc.text(c.l,cx+4.5,ry+1.5+7);
+   if(c.v){var vs=SPL(c.v,cw-9,'bold',8.25),vy=ry+1.5+9+8;vs.forEach(function(t){F('bold',8.25);doc.text(t,cx+4.5,vy);vy+=10})}
+  });
+  ry+=rh;
+ });
+ y=hy+HH;
+ /* ---- items table ---- */
+ var heads,aligns,fixed=[];
+ if(D.noPrices){heads=['Sl','Description of Goods','HSN','Quantity','Remarks'];fixed=[26,0,56,64,120];aligns=['center','left','center','right','left']}
+ else if(D.hasDisc){heads=['Sl',D.kind==='workorder'?'Description of Work':'Description of Goods','HSN','Quantity','Rate','per','Disc. %','Amount'];fixed=[26,0,56,64,58,32,38,70];aligns=['center','left','center','right','right','center','right','right']}
+ else{heads=['Sl',D.kind==='workorder'?'Description of Work':'Description of Goods','HSN','Quantity','Rate','per','Amount'];fixed=[26,0,56,64,58,32,70];aligns=['center','left','center','right','right','center','right']}
+ var fsum=0;fixed.forEach(function(w){fsum+=w});fixed[1]=CW-fsum;
+ var colStyles={};fixed.forEach(function(w,i){colStyles[i]={cellWidth:w,halign:aligns[i]}});
+ var boldCols=D.noPrices?[3]:(D.hasDisc?[3,7]:[3,6]);
+ boldCols.forEach(function(i){colStyles[i].fontStyle='bold'});
+ var body=[],descMap={};
+ D.items.forEach(function(it,i){
+  var dt=it.name+(it.sub&&it.sub.length?'\n'+it.sub.join('\n'):'');
+  descMap[i]={name:it.name,sub:it.sub||[]};
+  if(D.noPrices)body.push([it.no,dt,it.hsn,it.qty,it.remarks||'']);
+  else if(D.hasDisc)body.push([it.no,dt,it.hsn,it.qty,it.rate,it.per,it.disc,it.amt]);
+  else body.push([it.no,dt,it.hsn,it.qty,it.rate,it.per,it.amt]);
+ });
+ D.taxRows.forEach(function(x){
+  function cell(t,st,al){return {content:t,styles:{fontStyle:st,halign:al}}}
+  if(D.noPrices)return;
+  if(D.hasDisc)body.push(['',cell(x.label,'bolditalic','right'),'','',cell(x.rate,'italic','right'),cell(x.per,'italic','center'),'',cell(x.amt,'bolditalic','right')]);
+  else body.push(['',cell(x.label,'bolditalic','right'),'','',cell(x.rate,'italic','right'),cell(x.per,'italic','center'),cell(x.amt,'bolditalic','right')]);
+ });
+ var footRow;
+ if(D.noPrices)footRow=['','Total Quantity','',D.qtxt,''];
+ else if(D.hasDisc)footRow=['','Total','',D.qtxt,'','','','Rs. '+money(D.grand)];
+ else footRow=['','Total','',D.qtxt,'','','Rs. '+money(D.grand)];
+ function didPage(data){if(doc.internal.getNumberOfPages()>pg0)contHead()}
+ function didCell(data){
+  if(data.section!=='body'||data.column.index!==1)return;
+  var di=descMap[data.row.index];if(!di)return;
+  var c=data.cell;
+  doc.setFillColor(255,255,255);doc.rect(c.x+0.5,c.y+0.5,c.width-1,c.height-1,'F');
+  var x=c.x+3,w=c.width-6,yy=c.y+2;
+  F('bold',8.25);var nl=SPL(di.name,w,'bold',8.25);nl.forEach(function(t){doc.text(t,x,yy+6.5);yy+=10});
+  F('italic',7.5);di.sub.forEach(function(s){var sl=SPL(s,w,'italic',7.5);sl.forEach(function(t){doc.text(t,x,yy+6);yy+=9})});
+ }
+ doc.autoTable({
+  startY:y,head:[heads],body:body,foot:[footRow],
+  styles:{font:'helvetica',fontSize:8.25,cellPadding:2,lineColor:0,lineWidth:0.5,textColor:0,fillColor:255,valign:'top'},
+  headStyles:{fontStyle:'bold',fontSize:7.9,fillColor:255,textColor:0},
+  footStyles:{fontStyle:'bold',fontSize:8.25,fillColor:255,textColor:0},
+  columnStyles:colStyles,margin:{left:M,right:M,top:M,bottom:24},
+  didDrawPage:didPage,didDrawCell:didCell
+ });
+ y=doc.lastAutoTable.finalY;
+ /* ---- amount in words ---- */
+ function twLine(pre,bold){
+  var full=pre+bold;
+  var lines=SPL(full,CW-9,'normal',8.25);
+  var hh=3+10*lines.length+3;
+  if(y+hh>PH-24){doc.addPage();y=M;contHead()}
+  var yy=y+1.5;
+  if(lines.length===1){
+   F('normal',8.25);doc.text(pre,M+4.5,yy+7);
+   if(bold){var pw=doc.getTextWidth(pre);F('bold',8.25);doc.text(bold,M+4.5+pw,yy+7)}
+  }else{
+   lines.forEach(function(t){F('normal',8.25);doc.text(t,M+4.5,yy+7);yy+=10});
+  }
+  y+=hh;LN(M,y,PW-M);y+=1;
+  return;
+ }
+ /* amount words block (label + bold words + E. & O.E) */
+ (function(){
+  var wl=SPL(D.words,CW-100,'bold',9);
+  var hh=3+7.5+11*wl.length+3;
+  if(y+hh>PH-24){doc.addPage();y=M;contHead()}
+  F('normal',7.5);doc.text('Amount Chargeable (in words)',M+4.5,y+1.5+7);
+  F('normal',7.5);doc.text('E. & O.E',PW-M-4.5,y+1.5+7,{align:'right'});
+  F('bold',9);var yy=y+1.5+7+11;wl.forEach(function(t){doc.text(t,M+4.5,yy);yy+=11});
+  y+=hh;LN(M,y,PW-M);y+=1;
+ })();
+ /* HSN summary */
+ if(D.hsn){
+  var hh2=D.hsn.same?['HSN/SAC','Taxable Value','CGST Rate','CGST Amount','SGST Rate','SGST Amount','Total Tax']:['HSN/SAC','Taxable Value','IGST Rate','IGST Amount','Total Tax'];
+  var hw=D.hsn.same?[0,80,60,80,60,80,80]:[0,90,70,90,90];
+  var hs2=0;hw.forEach(function(w){hs2+=w});hw[0]=CW-hs2;
+  var cs2={};hw.forEach(function(w,i){cs2[i]={cellWidth:w,halign:i===0?'left':'right'}});
+  doc.autoTable({
+   startY:y+2,head:[hh2],body:D.hsn.rows,foot:[D.hsn.tot],
+   styles:{font:'helvetica',fontSize:7.9,cellPadding:2,lineColor:0,lineWidth:0.5,textColor:0,fillColor:255,valign:'top'},
+   headStyles:{fontStyle:'bold',fontSize:7.9,fillColor:255,textColor:0},
+   footStyles:{fontStyle:'bold',fontSize:7.9,fillColor:255,textColor:0},
+   columnStyles:cs2,margin:{left:M,right:M,top:M,bottom:24},
+   didDrawPage:didPage
+  });
+  y=doc.lastAutoTable.finalY+1;
+  twLine('Tax Amount (in words) : ',D.hsn.words);
+ }
+ /* advance / extra / notes lines */
+ D.tw.forEach(function(t){twLine(t.pre,t.bold)});
+ /* ---- bottom block (keep together) ---- */
+ var leftW=CW*0.6,rightW=CW*0.4;
+ var leftEntries=[];
+ if(D.leftNote){
+  leftEntries.push({t:D.leftNote,b:0,sz:8.25});
+  leftEntries.push({t:' ',b:0,sz:8.25});
+  leftEntries.push({t:(D.kind==='gatepass'?'Security Name, Signature & Stamp':D.kind==='packingslip'?'Packed by / Checked by':"Receiver's Name, Signature & Stamp"),b:1,sz:8.25});
+ }else{
+  if(D.pan)leftEntries.push({t:"Company's PAN : "+D.pan,b:0,sz:8.25});
+  if(D.bank){leftEntries.push({t:"Company's Bank Details",b:0,sz:8.25,ul:1});D.bank.rows.forEach(function(r){leftEntries.push({t:r[0]+' : '+r[1],b:0,sz:8.25})});if(!D.bank.set)leftEntries.push({t:'Bank details not set — add them in Settings',b:0,sz:8.25})}
+  if(D.decl)leftEntries.push({t:'Declaration',b:0,sz:8.25,ul:1});
+  if(D.decl){var dl=SPL(D.decl,leftW-9,'normal',8.25);dl.forEach(function(t){leftEntries.push({t:t,b:0,sz:8.25,lh:10,pre:1})})}
+ }
+ var leftM=measure(leftEntries.filter(function(e){return !e.pre}),leftW-9);
+ var leftH=Math.max(78,leftM.h+ (D.decl? (SPL(D.decl,leftW-9,'normal',8.25).length*10):0) + 4);
+ var tbH=0;
+ if((D.terms&&D.terms.length)||D.cs){
+  var th=3;if(D.terms)D.terms.forEach(function(t,i){var tl=SPL((i+1)+'. '+t,leftW-9,'normal',8.25);th+=10*tl.length});
+  tbH=Math.max(46.5,th+4);
+ }
+ if(y+leftH+tbH+16>PH-24){doc.addPage();y=M;contHead()}
+ var byT=PH-24-leftH-tbH-16; if(byT>y)y=byT; // Theme 7 print me signature block page ke neeche hota hai — same yahan
+ var by=y;
+ LN(M,by,PW-M);
+ /* left column */
+ var lyy=by+2;
+ leftEntries.forEach(function(e){
+  if(e.pre)return;
+  if(e.ul){F('normal',e.sz||8.25);var tw2=doc.getTextWidth(e.t);doc.text(e.t,M+4.5,lyy+7);doc.setDrawColor(0);doc.setLineWidth(0.5);doc.line(M+4.5,lyy+8.5,M+4.5+tw2,lyy+8.5);lyy+=10;return}
+  F(e.b?'bold':'normal',e.sz||8.25);var ws=SPL(e.t,leftW-9,e.b?'bold':'normal',e.sz||8.25);ws.forEach(function(t){doc.text(t,M+4.5,lyy+7);lyy+=10});
+ });
+ if(D.decl){var dyy=lyy;SPL(D.decl,leftW-9,'normal',8.25).forEach(function(t){F('normal',8.25);doc.text(t,M+4.5,dyy+7);dyy+=10})}
+ /* right column: for COMPANY + signatory */
+ VL(M+leftW,by,by+leftH);
+ F('bold',8.25);doc.text('for '+D.seller.name,M+leftW+rightW/2,by+10,{align:'center'});
+ F('normal',8.25);doc.text('Authorised Signatory',M+leftW+rightW/2,by+leftH-8,{align:'center'});
+ var ey=by+leftH;
+ /* terms + customer signature row (docs only) */
+ if((D.terms&&D.terms.length)||D.cs){
+  LN(M,ey,PW-M);
+  var tyy=ey+2;
+  if(D.terms){F('normal',8.25);doc.text('Terms & Conditions',M+4.5,tyy+7);tyy+=10;D.terms.forEach(function(t,i){var tl=SPL((i+1)+'. '+t,leftW-9,'normal',8.25);tl.forEach(function(x){F('normal',8.25);doc.text(x,M+4.5,tyy+7);tyy+=10})})}
+  if(D.cs){VL(M+leftW,ey,ey+tbH);F('normal',8.25);var cl=SPL(D.cs.text,rightW-9,'normal',8.25);var cy2=ey+2;cl.forEach(function(t){doc.text(t,M+leftW+4.5,cy2+7);cy2+=10});F('bold',8.25);var ll=SPL(D.cs.label,rightW-9,'bold',8.25);ll.forEach(function(t){doc.text(t,M+leftW+rightW/2,ey+tbH-8-(ll.length-1)*10,{align:'center'})})}
+  ey+=tbH;
+ }
+ y=ey;
+ /* footer */
+ y+=4;
+ F('normal',7.5);doc.text(D.foot,PW/2,y+7,{align:'center'});
+ y+=12;
+}
+
+/* ---- Helvetica -> Arial (byte-level, embed nahi hota) ---- */
+function t9DocToBlob(doc){
+ var u8=new Uint8Array(doc.output('arraybuffer'));
+ var s='',CH=8192,i;
+ for(i=0;i<u8.length;i+=CH){s+=String.fromCharCode.apply(null,u8.subarray(i,Math.min(u8.length,i+CH)))}
+ s=s.replace(/\/BaseFont \/(Helvetica-BoldOblique|Helvetica-Bold|Helvetica-Oblique|Helvetica)\b/g,function(m,n){return '/BaseFont /'+{'Helvetica-BoldOblique':'Arial-BoldItalic','Helvetica-Bold':'Arial-Bold','Helvetica-Oblique':'Arial-Italic','Helvetica':'Arial'}[n]});
+ var out=new Uint8Array(s.length);
+ for(i=0;i<s.length;i++)out[i]=s.charCodeAt(i)&255;
+ return new Blob([out],{type:'application/pdf'});
+}
+function t9BaseName(kind,obj){return String((kind==='inv'?obj.invoiceNumber:obj.number)||'document').replace(/[\\\/:*?"<>|]+/g,'-')}
+async function t9BuildFiles(kind,obj,copies,combined){
+ await soaLoadPdfLibs();
+ var jsPDF=window.jspdf.jsPDF;
+ var files=[];
+ function renderOne(c,doc,first){
+  var D=kind==='inv'?t9InvData(obj,c):t9DocData(obj,c);
+  t9RenderInto(doc,D,first);
+  try{doc.putTotalPages('___T9TOTAL___')}catch(e){}
+ }
+ if(combined){
+  var doc=new jsPDF({unit:'pt',format:'a4'});
+  copies.forEach(function(c,i){renderOne(c,doc,i===0)});
+  files.push({name:t9BaseName(kind,obj)+'.pdf',blob:t9DocToBlob(doc)});
+ }else{
+  copies.forEach(function(c){
+   var d2=new jsPDF({unit:'pt',format:'a4'});
+   renderOne(c,d2,true);
+   files.push({name:t9BaseName(kind,obj)+'-'+String(c).split(' ')[0]+'.pdf',blob:t9DocToBlob(d2)});
+  });
+ }
+ return files;
+}
+async function t9Deliver(files,mode){
+ var shared=0;
+ for(var i=0;i<files.length;i++){
+  var f=files[i];
+  if(mode==='share'){
+   var ok=false;
+   try{var file=new File([f.blob],f.name,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:f.name});ok=true}
+   }catch(e){ok=false}
+   if(ok){shared++;continue}
+  }
+  downloadBlob(f.blob,f.name,'application/pdf');
+ }
+ var msg=mode==='share'?(shared?shared+' PDF share ho gayi':'PDF download ho gayi — Files se share kar lo'):files.length+' PDF download ho gayi (Theme 9 • Arial)';
+ try{if(typeof toast==='function')toast(msg);else alert(msg)}catch(e){alert(msg)}
+}
+async function t9DocAction(d,copies,combined,mode){
+ try{var files=await t9BuildFiles('doc',d,copies,combined);await t9Deliver(files,mode)}
+ catch(e){console.warn(e);try{soaPdfOfflineMsg()}catch(e2){alert('PDF nahi ban payi — online aakar dobara try karo')}}
+}
+async function t9InvAction(inv,copies,combined,kind){
+ try{var files=await t9BuildFiles('inv',inv,copies,combined);await t9Deliver(files,kind==='share'?'share':'download')}
+ catch(e){console.warn(e);try{soaPdfOfflineMsg()}catch(e2){alert('PDF nahi ban payi — online aakar dobara try karo')}}
+}
+
+</script>
+
 <script id="theme8">
 /* ===== THEME 8 = Tax Invoice only (blue-header "DEMO PRIME TRADERS" style). Baki sab documents purane look me ===== */
 function t8On(){return String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'')==='8'}
@@ -30838,7 +31317,7 @@ var gtS=(function(){var tx='₹ '+money(t.grand),em=0;for(var i=0;i<tx.length;i+
 var T7_DESIGNS=[['blank','Bilkul Khali'],['executive','Executive Center'],['corporate','Corporate Left'],['prestige','Prestige Band'],['accent','Modern Accent'],['signature','Signature Elegant'],['frame','Frame Elite'],['diagonal','Diagonal Premium']];
 var T7_ARTS=[['none','Koi nahi'],['wave','Wave Flow'],['geo','Geo Shape'],['corner','Corner Swoosh'],['stripes','Diagonal Ribbon'],['gold','Gold Frame']];
 var T7_FONTS=['Arial','Georgia','Times New Roman','Verdana','Trebuchet MS','Courier New'];
-function t7On(){return String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'')==='7'}
+function t7On(){var v=String(window.PV_OVR||(db&&db.settings&&db.settings.docTheme)||'');return v==='7'||v==='9'}
 function t7Cfg(){var s=db.settings=db.settings||{};var c=s.t7=s.t7||{};
  if(c.on===undefined)c.on=false;if(!c.design)c.design='blank';if(!c.h)c.h=4;if(!c.color)c.color='#0b3d6e';if(!c.font)c.font='Arial';if(c.bg===undefined)c.bg='';if(!c.bgFit)c.bgFit='cover';if(!c.art)c.art='none';if(c.dx===undefined)c.dx=0;if(c.dy===undefined)c.dy=0;return c}
 function t7Hide(){return t7On()&&!!t7Cfg().on}
@@ -30983,7 +31462,7 @@ function t7Out(kind,mode){
 function t7CloseSetup(){var m=document.getElementById('t7SetupModal');if(m)m.style.display='none'}
 function t7SetupHtml(){
  var c=t7Cfg(),btn='min-height:36px;padding:6px 12px',box='background:var(--sidebar-bg,#0d1322);color:var(--text-main,#fff);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 18px 26px;border:1px solid var(--border-color)';
- var h='<div id="t7Box" style="'+box+'"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">🖨️ Theme 7 — Letterhead Setup</div><button type="button" class="btn muted" style="'+btn+'" onclick="t7CloseSetup()">✕</button></div>';
+ var h='<div id="t7Box" style="'+box+'"><div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:800">🖨️ Theme '+(t9No())+' — Letterhead Setup</div><button type="button" class="btn muted" style="'+btn+'" onclick="t7CloseSetup()">✕</button></div>';
  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px"><div><b style="font-size:14px">Letterhead Mode</b><div class="sub" style="margin-top:2px;font-size:12px">ON: aapki company ka header (logo, naam, address, GSTIN, PAN) bill se hat jayega aur upar neeche chuna hua design / khali jagah aayegi. OFF: bilkul Theme 6 jaisa.</div></div><button type="button" class="btn '+(c.on?'success':'muted')+'" style="min-width:76px" onclick="t7Toggle()">'+(c.on?'ON':'OFF')+'</button></div>';
  h+='<div style="margin-top:18px"><b style="font-size:14px">Upar ki jagah ka design</b><div class="sub" style="font-size:12px;margin:2px 0 8px">Company detail Settings se hi aati hai. Design chuno:</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">';
  T7_DESIGNS.forEach(function(d){var sel=c.design===d[0];
